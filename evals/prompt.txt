@@ -1,0 +1,37 @@
+Build a small internal admin panel that integrates ONLYOFFICE DocSpace. Create it from
+scratch in this empty directory.
+
+Context:
+
+- Our DocSpace portal: {PORTAL_URL} (recently upgraded to the latest DocSpace release).
+- Stack policy: React 18 + TypeScript + Vite (use the standard react-ts template).
+- Company policy pins @onlyoffice/docspace-sdk-js at 2.0.0 — that is what our registry
+  mirror has. Ask before deviating from any pinned dependency.
+- The app will run in dev on http://localhost:5173 and later on
+  https://admin.internal.example.com.
+
+Requirements:
+
+1. Documents page. Embed the DocSpace file manager showing room {ROOM_ID} in table view
+   with only Name, Size and Type columns, sorted by name ascending (A-Z).
+2. "Choose room" button. Opens a dialog where the user picks a room; after selection
+   store the room id and, if the room has a public share link, its token — we will embed
+   that room for anonymous visitors elsewhere later.
+3. In-app editor. When the user activates a file in the manager, do NOT let the portal
+   editor take over the page — open the document in our own modal, in an embedded editor,
+   with a close button. Users may open several files; switching between open documents
+   must not lose unsaved editor state.
+4. Sign-in. Our backend stores each employee's DocSpace email and a password hash
+   compatible with the portal (endpoint GET /api/docspace-credentials returns
+   { email, passwordHash }). Before showing the Documents page, sign the user in to
+   DocSpace silently with those credentials; if sign-in fails, show a "Reconnect DocSpace"
+   screen instead of the manager.
+5. Template upload. A button "Upload template" takes a local file (File object from an
+   <input type=file>) and uploads it programmatically into our forms room
+   {FORMS_ROOM_ID}.
+6. AI assistant tab. A tab that embeds the DocSpace AI chat for agent {AGENT_ID}.
+7. Provide a short SETUP.md: anything an admin must configure on the DocSpace portal side
+   for this app to work in dev and prod.
+
+Deliver working code (no placeholders/TODOs in the final files), and briefly explain the
+key integration decisions you made.
