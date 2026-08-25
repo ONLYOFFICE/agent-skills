@@ -1,0 +1,93 @@
+{
+  "skill_name": "plugin-sdk",
+  "evals": [
+    {
+      "id": 0,
+      "name": "file-type-and-actions",
+      "mode": "build",
+      "prompt": "we use our own .journal text format at work and docspace just offers download for it. want a plugin that does three things: clicking a .journal opens it in a viewer inside docspace with our own icon on the file, there's a way to make a new one where you type the name and it lands in the folder you're looking at, and right-clicking a .journal lets you push it to our archive service - that one should ask for the archive url and a format (zip or tar.gz) and complain right away if the url doesn't start with https",
+      "expected_output": "A built plugin with File + MainButton + ContextMenu + API scopes. The File item claims .journal with the dot and ships a fileRowIcon. Creation goes through the portal's own create dialog, appending the extension in onSave because the host does not. Upload uses the two-step session flow and unwraps .response. The archive dialog is a declarative tree with live validation: updateProps on the input plus updateContext on an error label addressed by contextName, the error colour from var(--input-error-color), a comboBox kept in sync from onSelect, and an onLoad returning header, body and footer together.",
+      "files": [],
+      "assertions": [
+        "dist/plugin.zip exists",
+        "validate-plugin.mjs --invoke reports zero errors",
+        "package.json depends on @onlyoffice/docspace-plugin-sdk ^2.1.0, not 3.x",
+        "File, MainButton, ContextMenu and API scopes are declared, implemented, and each registers at least one item",
+        "the File map is keyed by the extension with its leading dot, because the click dispatch matches it against the file's fileExst",
+        "a fileRowIcon is shipped - the host uses that one icon at every size, and fileTileIcon is dead data",
+        "the context menu item is restricted to the extension via fileExt",
+        "creation goes through showCreateDialogModal with createDialogProps rather than a hand-built modal",
+        "onSave appends the extension itself - the dialog's extension field only drives the checkbox",
+        "the upload is the two-step session flow: create_session, then the returned location verbatim",
+        "API responses are unwrapped via .response before fields are read",
+        "every node in the archive dialog is shaped as { component, props } using the Components enum",
+        "modalDialogProps carries displayType, dialogHeader, dialogBody, onClose and onLoad",
+        "the modal onLoad returns every section the dialog has, since the host assigns header, body and footer together",
+        "the comboBox options are objects with key and label, and selectedOption is kept in sync via updateProps from onSelect",
+        "the error text uses var(--input-error-color) rather than a hardcoded red or the nonexistent --error-color",
+        "the error label is addressed by contextName and updated with updateContext in the same message that updates the input",
+        "network and parsing failures are caught and surfaced rather than left to reject",
+        "items are registered inside onLoadCallback and window.Plugins.<X> matches pluginName"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "settings-events-and-progress",
+      "mode": "build",
+      "prompt": "need an admin-facing plugin for our docspace. a settings page with our webhook url, an environment dropdown (production / staging) and a \"notify on changes\" toggle, saved on the portal. a tab in a room's info panel showing how much space the room takes and who owns it, in red when it's over a limit the admin sets. it should also notice when rooms get created or renamed. and exporting rooms to our storage takes a few minutes, so people need to see how far along it is instead of sitting on a dialog - ideally they can kick off several at once. a small icon in the left sidebar opening the recent activity list would be nice too. half the team is on dark theme, so it has to look right there.",
+      "expected_output": "A built plugin with Settings + InfoPanel + EventListener + ArticleButton + ContextMenu + API scopes. Settings persist via saveSettings from the save button and are parsed defensively in setAdminPluginSettingsValue. The info panel tab fetches in its own onLoad behind a skeleton. Event handlers take no arguments and return only toasts or item updates. The sidebar body is a 32x32 interactive icon. Bulk export is a context menu group action (isGroupAction/onGroupClick) rather than a main-button entry with a room selector, and its progress goes through the portal's floating operations button, added once and then updated. Colours come from theme variables.",
+      "files": [],
+      "assertions": [
+        "dist/plugin.zip exists",
+        "validate-plugin.mjs --invoke reports zero errors and zero component warnings",
+        "Settings, InfoPanel, EventListener, ArticleButton, ContextMenu and API scopes are declared, implemented, and each item scope registers at least one item",
+        "the settings save button returns saveSettings with the serialized settings string",
+        "setAdminPluginSettingsValue parses the stored string defensively and tolerates null",
+        "stored settings are not read during onLoadCallback, where they are not yet available",
+        "the environment comboBox options are {key, label} objects and selectedOption is kept in sync via updateProps from onSelect",
+        "the toggleButton onChange takes no arguments and flips isChecked via updateProps",
+        "the toggle sits in a box with explicit dimensions, since the control has no intrinsic size",
+        "the info panel tab fetches its content in the item's own onLoad rather than in onLoadCallback",
+        "the info panel item filters by user role with usersTypes, the plural form this scope reads",
+        "eventType values come from the Events enum, not bare strings",
+        "eventHandler takes no arguments, because the host's wrapper passes none",
+        "the event handler returns only toasts or item updates - other actions are ignored once an event has fired",
+        "the article button body is an iconButton carrying its own onClick, since the 32x32 slot has none and clips anything larger",
+        "bulk export is a context menu item with isGroupAction and onGroupClick, taking the user's own selection rather than opening a room selector",
+        "progress is reported through Actions.addFloatingOperationsButton rather than by keeping a modal open",
+        "each operation carries id, label, operation, alert and completed, with operation from the FloatingOperationType enum",
+        "the button is added once and advanced with updateFloatingOperationsButton, since an update sent first is a silent no-op",
+        "no hardcoded hex colors in component props - theme variables instead, so it survives the dark theme",
+        "items are registered inside onLoadCallback and window.Plugins.<X> matches pluginName"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "extend-with-external-tool",
+      "mode": "build",
+      "prompt": "here is our room-notes plugin, already installed on the portal and working. two things people keep asking for. first, somewhere personal to see all their own notes at once, not one room at a time. second, we have an internal notes editor at https://notes.example.com/edit - it should open inside docspace rather than a new tab, and when someone saves there the plugin should let them know it went through. heads up that the editor is on a different domain than the portal.",
+      "expected_output": "The existing project is extended in place: ProfileMenu and PostMessage added to scopes and implemented together, version bumped, name and pluginName untouched, the existing context menu item still registered, the project's own conventions (locales.ts) followed. The editor is embedded in an aside iFrame carrying a DOM id, its origin listed in cspDomains, and the message listener sits on window.parent with an origin check, raising a toast through the portal-supplied postMessageCallback.",
+      "files": [
+        "fixtures/working-plugin/"
+      ],
+      "assertions": [
+        "dist/plugin.zip exists and was rebuilt after the edit",
+        "validate-plugin.mjs --invoke reports zero errors",
+        "ProfileMenu and PostMessage are added to package.json:scopes and implemented in the same change",
+        "the profile menu item registers in the bundle and its onClick takes no arguments, since that scope has no onItemClick",
+        "the profile menu item filters by user role with usersType, the singular form this scope reads",
+        "name stays room-notes and pluginName stays RoomNotes, since the portal keys the installed plugin by them",
+        "version is bumped above 1.2.0, without which the portal serves the cached bundle",
+        "the existing room-notes-edit context menu item is still registered and still works",
+        "the project is edited in place rather than regenerated, and labels go through locales.ts as the project already does",
+        "cspDomains in package.json lists the editor's origin - spelled cspDomains, not the scpDomains typo that silently does nothing",
+        "the iFrame node carries a DOM id, without which sendPostMessage cannot address it",
+        "the editor opens in an aside rather than a bare modal, which caps at 280px and does not scroll",
+        "the message listener is attached to window.parent, because plugin code runs inside a hidden iframe",
+        "the listener checks event.origin before trusting the message",
+        "the confirmation is raised by invoking the postMessageCallback the portal handed over",
+        "new item keys are namespaced with the manifest name and do not collide with the existing one"
+      ]
+    }
+  ]
+}

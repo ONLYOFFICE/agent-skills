@@ -1,8 +1,8 @@
 {
   "name": "docspace",
   "displayName": "ONLYOFFICE DocSpace SDK",
-  "version": "0.1.0",
-  "description": "Agent skills for building integrations with ONLYOFFICE DocSpace SDKs. Currently: embed-sdk — embedding DocSpace into web apps via the Embed SDK (@onlyoffice/docspace-sdk-js): modes, config, authentication, events, editor automation, troubleshooting.",
+  "version": "0.2.0",
+  "description": "Agent skills for building integrations with ONLYOFFICE DocSpace SDKs. embed-sdk — embedding DocSpace into web apps via the Embed SDK (@onlyoffice/docspace-sdk-js): modes, config, authentication, events, editor automation, troubleshooting. plugin-sdk — building, auditing and explaining DocSpace plugins via the Plugins SDK (@onlyoffice/docspace-plugin-sdk): scopes, items, actions, declarative UI, plus offline scaffolding and validation scripts.",
   "author": {
     "name": "Ascensio System SIA",
     "email": "integration@onlyoffice.com",
@@ -17,6 +17,7 @@
     "sdk",
     "embed",
     "iframe",
+    "plugins",
     "document-management"
   ],
   "skills": "./skills"

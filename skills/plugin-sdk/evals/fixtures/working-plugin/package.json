@@ -1,0 +1,29 @@
+{
+  "name": "room-notes",
+  "version": "1.2.0",
+  "description": "Keeps a short note against each room",
+  "author": "Eval fixture",
+  "license": "Apache-2.0",
+  "homepage": "",
+  "main": "index.ts",
+  "private": true,
+  "pluginName": "RoomNotes",
+  "logo": "logo.svg",
+  "nameLocale": {},
+  "descriptionLocale": {},
+  "scopes": ["ContextMenu"],
+  "scripts": {
+    "build": "webpack && npx build-docspace-plugin",
+    "format": "npx prettier --write ."
+  },
+  "dependencies": {
+    "@onlyoffice/docspace-plugin-sdk": "^2.1.0"
+  },
+  "devDependencies": {
+    "prettier": "2.8.6",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3",
+    "webpack": "^5.108.3",
+    "webpack-cli": "^7.1.0"
+  }
+}
