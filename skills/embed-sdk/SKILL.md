@@ -109,7 +109,7 @@ Read the mode's reference file before writing code.
 | Anonymous public room | `public-room` | `initPublicRoom` | `src`, `requestToken` | [public-room](references/modes/public-room.md) |
 | Upload UI | `uploader` | `initUploader` | `src`, `id` (folder) | [uploader](references/modes/uploader.md) |
 | Forms gallery | `forms` | `initForms` | `src`, `id` (room) | [forms](references/modes/forms.md) |
-| AI chat | `chat` | `initChat` | `src`, `agentId` | [chat](references/modes/chat.md) |
+| AI chat | `chat` | `initChat` | `src` (`agentId` optional) | [chat](references/modes/chat.md) |
 | Personal files | `personal` | `initPersonal` | `src` | [personal](references/modes/personal.md) |
 | Programmatic form filling inside the editor | `editor` + connector | — | — | [editor-automation](references/editor-automation.md) |
 
@@ -128,7 +128,7 @@ Violating any of these produces integrations that look right but fail.
 
 1. `id` is required for editor/viewer. Without it the frame opens an empty `/doceditor`
    with no explicit error.
-2. `agentId` is required for chat; `requestToken` is required for public-room.
+2. `requestToken` is required for public-room. `agentId` is optional for chat (omit → user chat).
 3. Sort API values differ from enum key names: `FilterSortBy.Name = "AZ"`,
    `ModifiedDate = "DateAndTime"`, `CreationDate = "DateAndTimeCreation"`. A handwritten
    `sortBy: "Name"` silently returns an unsorted list — always use the enum constants.
