@@ -1,105 +1,112 @@
 # Talking to the DocSpace REST API
 
-Only relevant with the `API` scope declared. The portal hands the plugin its own base URLs and nothing else — there is no token, and none is needed: requests travel on the signed-in user's session.
+| Code runs in | Use | Needs `API` scope | Unwraps `response` | Auth |
+|---|---|---|---|---|
+| A **React component** | `usePluginAPI()` — [react.md → API client](react.md#the-api-client) | no | yes — you get the payload | automatic |
+| A **class-side callback** (menu click, file click, event, create-dialog `onSave`) | `fetch` against `getAPI()` | yes | no — read `.response` yourself | session cookies: `credentials: "include"` |
 
-## Building the base URL
+Where a feature has both halves — a click that opens a panel — fetch in the component; the click hands over the id.
 
-`getAPI()` returns three parts that must be joined carefully, because any of them may be empty or carry stray slashes:
+## From the class: `getAPI()` and `fetch`
+
+`getAPI()` returns `{ origin, proxy, prefix }`; any part may be empty or carry stray slashes, so join carefully, and **lazily** — `setAPI` is guaranteed only before `onLoadCallback`, so a value computed at module scope is empty:
 
 ```ts
 const buildApiUrl = (): string => {
   const { origin, proxy, prefix } = plugin.getAPI();
-
   let url = origin.replace(/\/+$/, "");
-
   for (const part of [proxy, prefix]) {
-    if (!part) continue;
-    const clean = part.trim().replace(/^\/+/, "");
-    if (!clean) continue;
-    url += url.endsWith("/") ? clean : `/${clean}`;
+    const clean = (part ?? "").trim().replace(/^\/+/, "");
+    if (clean) url += `/${clean}`;
   }
+  return url;   // https://portal.example.com/api/2.0
+};
 
-  return url;   // e.g. https://portal.example.com/api/2.0
+const onFileAction = async (id: number): Promise<IMessage> => {
+  try {
+    const res = await fetch(`${buildApiUrl()}/files/file/${id}`, { credentials: "include" });
+    const file = (await res.json()).response;                        // the envelope, class-side
+    if (!file.security?.Download)
+      return { actions: [Actions.showToast], toastProps: [{ type: ToastType.error, title: t("noPermission") }] };
+    const bytes = await fetch(file.viewUrl, { credentials: "include" });
+    const text = bytes.status === 404 ? "" : await bytes.text();     // 404 = no content stream yet (below)
+    …
+    return { actions: [Actions.showToast], toastProps: [{ type: ToastType.success, title: t("done") }] };
+  } catch {
+    return { actions: [Actions.showToast], toastProps: [{ type: ToastType.error, title: t("failed") }] };   // nothing catches this for you
+  }
 };
 ```
 
-Build it lazily — on first use, not in `onLoadCallback` — because `setAPI` is guaranteed only to have run before that callback, and caching a value computed too early is a classic source of empty URLs.
+Forgetting `.response` yields an object that looks plausible and has none of the fields. Inside a component the opposite holds — `.response` is `undefined`.
 
-## Responses are wrapped
+## Permissions
 
-Every endpoint wraps its payload in a `response` field:
+Files and folders carry a `security` map (`Read`, `Edit`, `Download`, `Delete`, `Rename`, `Move`, `Copy`, `CopyLink`, … — the `FilesSecurity`/`Security` enums). Check it before offering or performing an action; a 403 afterwards is the same fact learned late. Item-level filters (`security`, `itemSecurity`, `fileSecurity` in [items.md](items.md)) do the same declaratively.
 
-```ts
-const res = await fetch(`${apiUrl}/files/file/${id}`, { credentials: "include" });
-const file = (await res.json()).response;
-```
+## Endpoints to start from
 
-Forgetting `.response` yields an object that looks plausible in the debugger and has none of the fields you want.
-
-## Check permissions before acting
-
-Files and folders carry a `security` map, and the portal expects plugins to respect it. Acting without checking produces a 403 the user cannot interpret:
-
-```ts
-if (!file.security?.Download) return { actions: [Actions.showToast], toastProps: [/* … */] };
-```
-
-Keys match the `FilesSecurity` and `Security` enums — `Read`, `Edit`, `Download`, `Delete`, `Rename`, `Move`, `Copy`, `CopyLink`, and so on.
-
-## Endpoints in practice
-
-These are the ones the official plugins actually use.
+The handful the official plugins reach for. **Everything else is in the [ONLYOFFICE DocSpace API reference](https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts/)** (sections: Files, Rooms, People, Group, Portal, Settings, Security, ThirdParty, …) — look endpoints and their query parameters up there rather than recalling them; a path remembered from another product answers 404.
 
 | Purpose | Request |
 |---|---|
 | File metadata | `GET /files/file/{id}` |
-| Folder contents | `GET /files/{folderId}` |
-| Folder metadata | `GET /files/folder/{folderId}` |
-| Rename / edit a file | `PUT /files/file/{id}` with `{ title }` |
-| Replace file contents | `PUT /files/{id}/update` with `FormData` |
-| Mark as recently used | `POST /files/file/{id}/recent` |
-| Current user | `GET /people/@self` |
-| People list | `GET /people` |
-| Rooms | `GET /files/rooms` |
+| Folder contents / metadata | `GET /files/{folderId}` / `GET /files/folder/{folderId}` |
+| Create a file | `POST /files/{folderId}/file` `{ title }` — plus `enableExternalExt: true` for an extension the portal has no editor for (below) |
+| Rename | `PUT /files/file/{id}` `{ title }` |
+| Replace file contents | `PUT /files/{id}/update`, `FormData` with the bytes under **`file`** (below) |
+| Mark as recent | `POST /files/file/{id}/recent` |
+| Current user / people | `GET /people/@self` (a component has `useCurrentUser()`) / `GET /people` |
+| Rooms / members | `GET /files/rooms` / `GET /files/rooms/{id}/share` |
 
-Reading a file's bytes does not go through the API: use `file.viewUrl` from its metadata.
+List endpoints page with `count` + `startIndex` and take filter/sort as query params (`params` of `api.get`); `total` arrives beside the rows, whose field the endpoint names (`folders`, `files`, `items`). Page and search in the request, as the portal's own screens do.
+
+### A file's contents are not part of the API
+
+Metadata is JSON; the **bytes** are a `fetch` of the `viewUrl` the metadata carries (same origin, cookies), and a write is a multipart `PUT`:
+
+```ts
+const info = await api.get<TFile>(`/files/file/${id}`);
+const body = await (await fetch(info.viewUrl, { credentials: "include", signal })).text();   // or .blob()
+
+const form = new FormData();
+form.append("file", new File([newBody], info.title, { type: mimeType }));
+await api.put(`/files/${id}/update`, form);     // class-side: fetch with credentials and NO Content-Type of your own
+```
+
+**A record with no content stream answers 404 on its own `viewUrl`, while its metadata answers 200.** The portal creates the record first and the bytes arrive on the first write, so a file the plugin just created through the create dialog reads as missing — and for a format the portal has no editor for, that is every file until someone saves it once. This is the *first* thing a user does with a plugin that owns an extension: create one, open it. A viewer that reports the 404 shows them an error page over an empty file they just made.
+
+So a 404 here is an empty document, not a failure — but it is the only status that is:
+
+```ts
+const response = await fetch(info.viewUrl, { credentials: "include", signal });
+if (response.status === 404) return { text: EMPTY, readable: true };    // no stream yet — normal for a new file
+if (!response.ok) return { text: EMPTY, readable: false };              // 403, 5xx, network — unknown, not empty
+return { text: await response.text(), readable: true };
+```
+
+Carry that `readable` flag into the editor and **refuse to save while it is false**: a write is a whole-file replace, so saving over content that merely could not be read is the one failure here that destroys data.
+
+Do not try to predict the 404 from the metadata instead. `GET /files/file/{id}` reports size as **`contentLength`, a formatted string** (`"0 bytes"`) — there is no number to compare. `pureContentLength` is a real field elsewhere in the Files API, but zero values are omitted from these payloads, so on exactly the empty file you are trying to detect it is `undefined` and `info.pureContentLength === 0` is never true. That is why the branch is on the response status and the safety is in the save gate.
+
+### Creating a file whose extension the portal does not own
+
+`POST /files/{folderId}/file` with `{ title }` works for formats the portal has an editor for. For any other extension pass `enableExternalExt: true`, or the portal refuses or rewrites the extension. A `File`-scope plugin wants the flag on **every** create path, the one behind the create dialog included — and appends its own extension itself; neither the dialog nor the API does.
 
 ## Uploading a file
 
-Two steps — create a session, then post the bytes to the location it returns:
+Create a session, then post the bytes to the returned location — a full URL, so plain `fetch`:
 
 ```ts
-const session = await fetch(`${apiUrl}/files/${folderId}/upload/create_session`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json;charset=utf-8" },
-  credentials: "include",
-  body: JSON.stringify({ createOn: new Date().toISOString(), fileName, fileSize }),
-});
-
-const { location } = (await session.json()).response.data;
-
+const session = await api.post<{ data: { location: string } }>(`/files/${folderId}/upload/create_session`,
+  { createOn: new Date().toISOString(), fileName, fileSize: blob.size });
 const form = new FormData();
 form.append("file", new File([blob], fileName));
-
-await fetch(location, { method: "POST", body: form, credentials: "include" });
+await fetch(session.data.location, { method: "POST", body: form, credentials: "include" });
 ```
 
-The second request goes to the location verbatim — do not prefix it with the API URL.
+Class-side the location is under `.response.data.location`.
 
 ## Third-party origins
 
-Any host outside the portal must be listed in `cspDomains` in `package.json`, or the portal's Content-Security-Policy blocks the request. Note the spelling: `cspDomains`. Two official plugins carry a typo (`scpDomains`) which silently does nothing — a good reminder that this field fails quietly.
-
-Those origins are appended to the **portal's** CSP, not just the plugin's, so list only what is genuinely called.
-
-## Errors
-
-Nothing wraps plugin callbacks in `try/catch`, so an unhandled rejection here surfaces as a broken click with no explanation. Catch, and tell the user:
-
-```ts
-try {
-  // …
-} catch {
-  return { actions: [Actions.showToast], toastProps: [{ type: ToastType.error, title: t("error.generic") }] };
-}
-```
+Any host outside the portal must be in `cspDomains` in `package.json` — spelled exactly so (`scpDomains` is a real shipped typo that does nothing) — or the CSP blocks the request from component and class alike. Those origins widen the **portal's** CSP, so list only what you call. Third-party requests always go through `fetch`; `usePluginAPI()` refuses absolute URLs.

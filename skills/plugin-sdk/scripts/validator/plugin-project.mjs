@@ -15,9 +15,8 @@
  */
 
 /*
- * The project under audit, as facts rather than judgements: it reads and never decides.
- * Comments are stripped from the source text, and the SDK is imported from the audited
- * project rather than from this repository. See README.md.
+ * The project under audit, as facts rather than judgements. Comments are stripped from the
+ * source text, and the SDK is imported from the audited project rather than from this repository.
  */
 
 import * as fs from "node:fs";
@@ -41,15 +40,22 @@ const walkFiles = (dir) =>
 const stripComments = (text) =>
   text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 
+const BUILD_CONFIG_FILES = [
+  "vite.config.ts",
+  "vite.config.mts",
+  "vite.config.js",
+  "vite.config.mjs",
+  "webpack.config.js",
+  "webpack.config.cjs",
+];
+
 export class PluginProject {
   #assetEntries;
   #sourceText;
+  #assetsDir;
+  #srcDir;
 
-  /**
-   * @param {string} dir - already resolved to an absolute path
-   * @returns {Promise<PluginProject>}
-   * @throws {FatalProjectError} when there is no readable manifest to audit
-   */
+  /** @throws {FatalProjectError} when there is no readable manifest to audit */
   static async load(dir) {
     const packageJsonPath = path.join(dir, "package.json");
 
@@ -74,12 +80,12 @@ export class PluginProject {
     this.manifest = manifest;
 
     this.packageJsonPath = path.join(dir, "package.json");
-    this.assetsDir = path.join(dir, "assets");
-    this.srcDir = path.join(dir, "src");
+    this.#assetsDir = path.join(dir, "assets");
+    this.#srcDir = path.join(dir, "src");
     this.bundlePath = path.join(dir, "dist", "plugin.js");
     this.zipPath = path.join(dir, "dist", "plugin.zip");
 
-    /** The SDK the project installed, and the action strings it exports. */
+    /** The SDK the project installed, and its version. */
     this.sdk = null;
     this.sdkVersion = undefined;
   }
@@ -101,31 +107,24 @@ export class PluginProject {
     return fs.existsSync(path.join(this.dir, "node_modules"));
   }
 
-  /** Prefer the SDK's own action list over this tool's table - it is the authority on
-   * which strings exist, and may know ones the contract does not. */
+  /** The SDK's own action list - the authority on which strings exist. */
   get sdkActions() {
     return this.sdk ? Object.values(this.sdk.Actions ?? {}) : [];
   }
 
-  // --- assets ---------------------------------------------------------------
-
   get hasAssetsDir() {
-    return fs.existsSync(this.assetsDir);
+    return fs.existsSync(this.#assetsDir);
   }
 
-  /**
-   * One entry per thing directly inside assets/, read once - several checks ask.
-   *
-   * @returns {Array<{ name: string, isDirectory: boolean, extension: string, bytes: number }>}
-   */
+  /** One entry per thing directly inside assets/, read once. */
   get assetEntries() {
     if (!this.hasAssetsDir) return [];
 
-    this.#assetEntries ??= fs.readdirSync(this.assetsDir, { withFileTypes: true }).map((entry) => ({
+    this.#assetEntries ??= fs.readdirSync(this.#assetsDir, { withFileTypes: true }).map((entry) => ({
       name: entry.name,
       isDirectory: entry.isDirectory(),
       extension: path.extname(entry.name).toLowerCase(),
-      bytes: entry.isDirectory() ? 0 : fs.statSync(path.join(this.assetsDir, entry.name)).size,
+      bytes: entry.isDirectory() ? 0 : fs.statSync(path.join(this.#assetsDir, entry.name)).size,
     }));
 
     return this.#assetEntries;
@@ -136,16 +135,14 @@ export class PluginProject {
     return this.assetEntries.filter((entry) => !entry.isDirectory).map((entry) => entry.name);
   }
 
-  // --- sources --------------------------------------------------------------
-
   get hasSrcDir() {
-    return fs.existsSync(this.srcDir);
+    return fs.existsSync(this.#srcDir);
   }
 
   get sourceFiles() {
     if (!this.hasSrcDir) return [];
 
-    return walkFiles(this.srcDir).filter((file) => /\.(ts|tsx|js|jsx)$/.test(file));
+    return walkFiles(this.#srcDir).filter((file) => /\.(ts|tsx|js|jsx)$/.test(file) && !file.endsWith(".d.ts"));
   }
 
   /** Every source file, concatenated with comments removed. Read once. */
@@ -161,56 +158,76 @@ export class PluginProject {
 
   get entryFile() {
     return ["index.ts", "index.tsx", "index.js"].find((file) =>
-      fs.existsSync(path.join(this.srcDir, file)),
+      fs.existsSync(path.join(this.#srcDir, file)),
     );
   }
 
-  // --- files and dependencies ----------------------------------------------
-
-  fileSize(absolutePath) {
-    return fs.statSync(absolutePath).size;
+  get buildConfigFile() {
+    return BUILD_CONFIG_FILES.find((file) => fs.existsSync(path.join(this.dir, file)));
   }
 
-  exists(absolutePath) {
-    return fs.existsSync(absolutePath);
+  get buildConfigText() {
+    const file = this.buildConfigFile;
+    return file ? stripComments(fs.readFileSync(path.join(this.dir, file), "utf8")) : "";
   }
 
-  readFile(absolutePath) {
-    return fs.readFileSync(absolutePath);
+  /** The roots a dependency is resolved from - the project, then its node_modules. */
+  get #resolutionRoots() {
+    return [this.packageJsonPath, path.join(this.dir, "node_modules")];
   }
 
-  readText(absolutePath) {
-    return fs.readFileSync(absolutePath, "utf8");
-  }
-
-  /** Resolves a dependency from the audited project rather than from this tool. */
-  async import(name) {
-    for (const from of [this.packageJsonPath, path.join(this.dir, "node_modules")]) {
+  #resolve(name, from = this.#resolutionRoots) {
+    for (const root of from) {
       try {
-        const resolved = createRequire(from).resolve(name);
-        return await import(pathToFileURL(resolved).href);
+        return createRequire(root).resolve(name);
       } catch {
         /* try the next resolution root */
       }
     }
-
     return null;
   }
 
+  async #import(name, from) {
+    const resolved = this.#resolve(name, from);
+    return resolved ? import(pathToFileURL(resolved).href) : null;
+  }
+
+  /**
+   * jszip ships with the SDK, not with the plugin. Installed from npm it is hoisted next to
+   * the project; from a tarball or a checkout it stays under the SDK's own node_modules.
+   */
   async loadJsZip() {
-    return (await this.import("jszip"))?.default ?? null;
+    const sdkDir = this.#sdkDir();
+    const roots = sdkDir ? [...this.#resolutionRoots, path.join(sdkDir, "package.json")] : undefined;
+    const jszip = await this.#import("jszip", roots);
+    return jszip ? jszip.default ?? jszip : null;
+  }
+
+  /**
+   * The installed SDK's directory. Its package.json is not on its `exports` map, so resolve
+   * the entry point and walk up to the package root.
+   */
+  #sdkDir() {
+    const entry = this.#resolve(SDK_PACKAGE);
+    if (!entry) return null;
+
+    let dir = path.dirname(entry);
+    while (dir !== path.dirname(dir)) {
+      const candidate = path.join(dir, "package.json");
+      if (fs.existsSync(candidate) && readJson(candidate).name === SDK_PACKAGE) return dir;
+      dir = path.dirname(dir);
+    }
+    return null;
   }
 
   async #resolveSdk() {
-    this.sdk = await this.import(SDK_PACKAGE);
+    this.sdk = await this.#import(SDK_PACKAGE);
     if (!this.sdk) return;
 
-    try {
-      this.sdkVersion = readJson(
-        createRequire(this.packageJsonPath).resolve(`${SDK_PACKAGE}/package.json`),
-      ).version;
-    } catch {
-      this.sdkVersion = this.manifest.dependencies?.[SDK_PACKAGE];
-    }
+    const sdkDir = this.#sdkDir();
+
+    this.sdkVersion = sdkDir
+      ? readJson(path.join(sdkDir, "package.json")).version
+      : this.manifest.dependencies?.[SDK_PACKAGE];
   }
 }

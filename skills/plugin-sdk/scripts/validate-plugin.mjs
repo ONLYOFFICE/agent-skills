@@ -17,20 +17,12 @@
  */
 
 /*
- * Validates a DocSpace plugin project against the portal loader contract: manifest,
- * archive and bundle coherence, plus a runtime smoke test in a sandbox. The tables it
- * applies live in contract.mjs; the passes underneath it are in validator/README.md.
+ * Validates a DocSpace plugin project against the portal loader contract.
  *
- * Usage:
- *   node scripts/validate-plugin.mjs <pluginDir> [options]
+ *   node scripts/validate-plugin.mjs <pluginDir> [--invoke] [--json]
  *
- * Options:
- *   --no-runtime  skip loading dist/plugin.js in a sandbox
- *   --invoke      also call every item callback with a dummy id and validate
- *                 the returned IMessage (may hit the network - opt in)
- *   --json        machine-readable report on stdout
- *
- * Exit code 1 when there is at least one ERROR.
+ * --invoke also calls every item callback with a dummy id and validates the returned
+ * IMessage (may hit the network - opt in). Exit code 1 when there is at least one ERROR.
  */
 
 import * as path from "node:path";
@@ -47,10 +39,7 @@ const parseArgs = (argv) => {
   return {
     dir: path.resolve(argv.find((arg) => !arg.startsWith("--")) ?? "."),
     json: flags.has("--json"),
-    options: {
-      runtime: !flags.has("--no-runtime"),
-      invoke: flags.has("--invoke"),
-    },
+    options: { invoke: flags.has("--invoke") },
   };
 };
 
@@ -105,12 +94,12 @@ const main = async () => {
   const findings = new Findings();
   const context = { project, findings, options };
 
-  // Order matters for the reader, not for correctness: the manifest first, then
-  // what was built from it, then what it does when run.
+  // The manifest first, then what was built from it, then what it does when run - and a
+  // module whose imports the portal cannot resolve never loads, so the runtime pass needs
+  // what the archive pass found.
   await new ProjectChecks(context).run();
-  await new ArchiveChecks(context).run();
-
-  const runtimeChecks = new RuntimeChecks(context);
+  const archive = await new ArchiveChecks(context).run();
+  const runtimeChecks = new RuntimeChecks(context, archive);
   await runtimeChecks.run();
 
   const report = { project, findings, runtime: runtimeChecks.report };
@@ -124,7 +113,6 @@ const main = async () => {
 try {
   await main();
 } catch (error) {
-  // There is nothing to report about a directory that is not a plugin project.
   if (!(error instanceof FatalProjectError)) throw error;
 
   console.error(error.message);

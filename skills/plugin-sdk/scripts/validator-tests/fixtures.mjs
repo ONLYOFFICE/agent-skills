@@ -16,8 +16,8 @@
 
 /*
  * The plugin material the suites are built from: manifests, hand-written bundles, sources.
- * Every builder takes the plugin name as a parameter and stays close to the shape a real
- * plugin has - the loader is not fussy, and a fixture that cheats would prove nothing.
+ * Bundles are the shape Vite emits - an ES module with a default export importing what a
+ * React plugin imports - and stay close to a real plugin, since a fixture that cheats proves nothing.
  */
 
 /** A manifest that satisfies every static check. */
@@ -25,154 +25,244 @@ export const manifestFor = (slug, pluginName, overrides = {}) => ({
   name: `fixture-${slug}`,
   pluginName,
   version: "1.0.0",
+  runtime: "module",
   logo: "logo.svg",
   scopes: ["ContextMenu"],
-  scripts: { build: "webpack && npx build-docspace-plugin" },
+  scripts: { build: "vite build && npx build-docspace-plugin" },
   ...overrides,
 });
 
-/** What a well-behaved click returns. */
-export const TOAST_MESSAGE = `return { actions: ["show-toast"], toastProps: [{ type: "success", title: "done" }] };`;
+/** A vite.config.ts that keeps every host-provided package external. */
+export const VITE_CONFIG = `
+export default {
+  build: {
+    lib: { entry: "src/index.ts", formats: ["es"] },
+    rollupOptions: {
+      external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@docspace\\/ui-kit(\\/.*)?$/],
+    },
+  },
+};
+`;
+
+const TOAST_MESSAGE = `return { actions: ["show-toast"], toastProps: [{ type: "success", title: "done" }] };`;
+
+/** The IPlugin members every fixture class carries. */
+const pluginMembers = `
+  status: "active",
+  updateStatus(s) { this.status = s; },
+  getStatus() { return this.status; },
+  setOnLoadCallback(cb) { this.onLoadCallback = cb; },`;
 
 /**
- * A one-item ContextMenu plugin - the baseline every other fixture varies. `filters` and
- * `click` are source text, since what is under test is often a literal the SDK would type
- * away: "owner" for "Owner", "showToast" for "show-toast".
+ * A one-map plugin - the skeleton every map-scope fixture varies: which map, what
+ * onLoadCallback does, and whether it is handed over by `export default` or the SDK 2 way.
+ */
+const mapScopePlugin = ({
+  field = "items",
+  adder = "addContextMenuItem",
+  getter = "getContextMenuItems",
+  onLoadBody = "",
+  exportDefault = true,
+  windowPlugins,
+  imports = "",
+  prelude = "",
+}) => `${imports}${prelude}
+const plugin = {${pluginMembers}
+  ${field}: new Map(),
+  async onLoadCallback() { ${onLoadBody} },
+  ${adder}(i) { this.${field}.set(i.key, i); },
+  ${getter}() { return this.${field}; },
+};
+${windowPlugins ? `window.Plugins = window.Plugins || {};\nwindow.Plugins.${windowPlugins} = plugin;\n` : ""}${exportDefault ? "export default plugin;\n" : ""}`;
+
+/**
+ * A one-item ContextMenu plugin - the baseline. It imports what a Vite build of a React
+ * plugin imports, so the loader's rewriting is exercised. `filters` and `click` are source
+ * text, since what is under test is often a literal the SDK would type away: "owner" for
+ * "Owner", "showToast" for "show-toast".
  */
 export const contextMenuPlugin = ({
-  pluginName,
   itemKey = "fixture-good-item",
-  // "Owner" is the UsersType *value*; "owner" is the enum key and matches nobody.
   filters = `usersTypes: ["Owner"]`,
   click = TOAST_MESSAGE,
-}) => `
-window.Plugins.${pluginName} = {
-  status: "active",
-  items: new Map(),
-  onLoadCallback: async function () {
+  imports = `import { jsx } from "react/jsx-runtime";\nimport { useState } from "react";\nimport { Button, ButtonSize } from "@docspace/ui-kit";\nimport { usePluginActions } from "@onlyoffice/docspace-plugin-sdk/react";`,
+}) =>
+  mapScopePlugin({
+    imports,
+    prelude: `\nconst Panel = () => jsx("div", { children: "panel" });`,
+    onLoadBody: `
     this.items.set("${itemKey}", {
       key: "${itemKey}",
       label: "Do the thing",
       icon: "logo.svg",
       ${filters},
-      onItemClick: async function () {
+      async onItemClick() {
         ${click}
       },
     });
-  },
-  updateStatus: function (s) { this.status = s; },
-  getStatus: function () { return this.status; },
-  setOnLoadCallback: function (cb) { this.onLoadCallback = cb; },
-  addContextMenuItem: function (item) { this.items.set(item.key, item); },
-  getContextMenuItems: function () { return this.items; },
-};
-`;
+  `,
+  });
 
-/** A plugin whose onLoadCallback runs arbitrary code - used for the throwing cases. */
-export const onLoadPlugin = ({ pluginName, onLoadBody = "" }) => `
-window.Plugins.${pluginName} = {
-  status: "active", items: new Map(),
-  onLoadCallback: async function () { ${onLoadBody} },
-  updateStatus: function (s) { this.status = s; },
-  getStatus: function () { return this.status; },
-  setOnLoadCallback: function (cb) { this.onLoadCallback = cb; },
-  addContextMenuItem: function (i) { this.items.set(i.key, i); },
-  getContextMenuItems: function () { return this.items; },
-};
-`;
+/**
+ * A ContextMenu plugin registering one bulk item. `isGroupAction` decides which of the two
+ * forms it is; the item never carries onItemClick - the shape the host expects from a group
+ * action and refuses from a plain one.
+ */
+export const groupActionPlugin = ({ isGroupAction = true }) =>
+  mapScopePlugin({
+    onLoadBody: `
+    this.items.set("fixture-bulk", {
+      key: "fixture-bulk",
+      label: "Push all of them",
+      icon: "logo.svg",
+      isGroupAction: ${isGroupAction},
+      async onGroupClick() {
+        ${TOAST_MESSAGE}
+      },
+    });
+  `,
+  });
+
+/** A plugin whose onLoadCallback runs arbitrary code - for the throwing cases. */
+export const onLoadPlugin = ({ onLoadBody = "" }) => mapScopePlugin({ onLoadBody });
+
+/** A bundle with no default export - the SDK 2 shape, registering on window.Plugins. */
+export const noDefaultExportPlugin = () =>
+  mapScopePlugin({ exportDefault: false, windowPlugins: "FixtureNoDefault" });
+
+/** An ArticleButton plugin that registers nothing at load time. */
+export const articleButtonPlugin = () =>
+  mapScopePlugin({ field: "ab", adder: "addArticleButtonItem", getter: "getArticleButtonItems" });
 
 /**
  * Three scopes at once with a defect in each: wrong filter fields, actions without their
- * payloads, a missing icon, an InfoPanel getter that never receives an item. `registerAs`
- * is separate from `pluginName` so the bundle can register under the wrong global.
+ * payloads, a missing icon, an InfoPanel getter that never receives an item.
  */
-export const multiScopePlugin = ({ registerAs }) => `
-window.Plugins.${registerAs} = {
-  status: "active",
+export const multiScopePlugin = () => `
+const plugin = {${pluginMembers}
   contextItems: new Map(),
   mainItems: new Map(),
-  onLoadCallback: async function () {
+  async onLoadCallback() {
     this.contextItems.set("k", { key: "k", label: "l", icon: "nope.svg", usersType: ["owner"],
-      onItemClick: async function () { return { actions: ["show-toast"] }; } });
+      async onItemClick() { return { actions: ["show-toast"] }; } });
     this.mainItems.set("m", { key: "m", label: "l", icon: "logo.svg", usersTypes: ["owner"],
-      onClick: async function () { return { actions: ["show-modal"] }; } });
+      async onClick() { return { actions: ["show-modal"] }; } });
   },
-  updateStatus: function (s) { this.status = s; },
-  getStatus: function () { return this.status; },
-  setOnLoadCallback: function (cb) { this.onLoadCallback = cb; },
-  getContextMenuItems: function () { return this.contextItems; },
-  getMainButtonItems: function () { return this.mainItems; },
-  getInfoPanelItems: function () { return new Map(); },
+  getContextMenuItems() { return this.contextItems; },
+  getMainButtonItems() { return this.mainItems; },
+  getInfoPanelItems() { return new Map(); },
 };
+export default plugin;
 `;
 
-/** An ArticleButton plugin that registers nothing - the map it cannot refresh later. */
-export const articleButtonPlugin = ({ pluginName }) => `
-window.Plugins.${pluginName} = {
-  status: "active", ab: new Map(),
-  onLoadCallback: async function () {},
-  updateStatus: function (s) { this.status = s; },
-  getStatus: function () { return this.status; },
-  setOnLoadCallback: function (cb) { this.onLoadCallback = cb; },
-  addArticleButtonItem: function (i) { this.ab.set(i.key, i); },
-  getArticleButtonItems: function () { return this.ab; },
+/**
+ * React-surface scopes: an InfoPanel tab with a component, one with a JSX element by mistake,
+ * one with the deprecated body, one with nothing, and an ArticleNavigation item with a wrong section.
+ */
+export const reactItemsPlugin = () => `
+import { jsx } from "react/jsx-runtime";
+const Tab = () => jsx("p", { children: "tab" });
+const Page = () => jsx("p", { children: "page" });
+const plugin = {${pluginMembers}
+  tabs: new Map(),
+  nav: new Map(),
+  async onLoadCallback() {
+    this.tabs.set("fixture-react-good", { key: "fixture-react-good", subMenu: { name: "Good" }, component: Tab });
+    this.tabs.set("fixture-react-element", { key: "fixture-react-element", subMenu: { name: "Element" }, component: jsx(Tab, {}) });
+    this.tabs.set("fixture-react-legacy", { key: "fixture-react-legacy", subMenu: { name: "Legacy" },
+      body: { children: [] }, onLoad: async () => ({ body: { children: [] } }) });
+    this.tabs.set("fixture-react-empty", { key: "fixture-react-empty", subMenu: { name: "Empty" } });
+    this.nav.set("fixture-react-page", { key: "fixture-react-page", label: "Page", icon: "logo.svg", component: Page, appears: ["Dashboard"] });
+  },
+  getInfoPanelItems() { return this.tabs; },
+  getArticleNavigationItems() { return this.nav; },
 };
+export default plugin;
 `;
 
 /** A File plugin whose onClick reads the file object the host passes it. */
-export const filePlugin = ({ pluginName }) => `
-window.Plugins.${pluginName} = {
-  status: "active", files: new Map(),
-  onLoadCallback: async function () {
+export const filePlugin = () => `
+const plugin = {${pluginMembers}
+  files: new Map(),
+  async onLoadCallback() {
     this.files.set(".thing", { extension: ".thing", fileTypeName: "Thing",
-      onClick: async function (file) {
+      async onClick(file) {
         return { actions: ["show-toast"], toastProps: [{ type: "info", title: file.title.toUpperCase() }] };
       } });
   },
-  updateStatus: function (s) { this.status = s; },
-  getStatus: function () { return this.status; },
-  setOnLoadCallback: function (cb) { this.onLoadCallback = cb; },
-  addFileItem: function (i) { this.files.set(i.extension, i); },
-  getFileItems: function () { return this.files; },
+  addFileItem(i) { this.files.set(i.extension, i); },
+  getFileItems() { return this.files; },
 };
+export default plugin;
+`;
+
+/** A Settings plugin: `settings` is source text for the ISettings object it registers. */
+export const settingsPlugin = ({ settings }) => `
+import { jsx } from "react/jsx-runtime";
+const SettingsPage = () => jsx("p", { children: "settings" });
+const plugin = {${pluginMembers}
+  adminPluginSettings: null,
+  async onLoadCallback() { this.adminPluginSettings = ${settings}; },
+  setAdminPluginSettings(s) { this.adminPluginSettings = s; },
+  setAdminPluginSettingsValue() {},
+  getAdminPluginSettings() { return this.adminPluginSettings; },
+};
+export default plugin;
 `;
 
 // --- sources ----------------------------------------------------------------
 //
-// The validator reads src/ separately from the bundle, so a fixture's source has to
-// mention the same members its bundle defines - otherwise static checks fire for reasons
-// the suite is not testing.
+// The validator reads src/ separately from the bundle, so a fixture's source has to mention
+// the same members its bundle defines - otherwise static checks fire for reasons the suite
+// is not testing.
 
-export const contextMenuSource = ({ pluginName }) => `
-window.Plugins.${pluginName} = plugin || {};
-addContextMenuItem(item);
-getContextMenuItems();
-const item = { icon: "logo.svg" };
-`;
+/** A source naming the given members, with an icon reference and optional extra lines. */
+export const pluginSource = ({
+  adders = [],
+  getters = [],
+  members = [],
+  icon = "logo.svg",
+  windowPlugins,
+  exportDefault = true,
+  extra = "",
+}) =>
+  [
+    windowPlugins ? `window.Plugins.${windowPlugins} = plugin || {};` : "const plugin = {};",
+    ...adders.map((adder) => `${adder}(item);`),
+    ...getters.map((getter) => `${getter}();`),
+    ...members.map((member) => `${member}();`),
+    icon ? `const item = { icon: "${icon}" };` : "",
+    extra,
+    exportDefault ? "export default plugin;" : "",
+  ]
+    .filter(Boolean)
+    .join("\n") + "\n";
 
-/**
- * Plugins often lift the global name into a constant, and reading only the dotted form
- * would reject a working plugin - worse than missing a broken one.
- */
-export const sourceRegisteringViaConstant = ({ pluginName }) => `
-const PLUGIN_GLOBAL_NAME = "${pluginName}";
-window.Plugins = window.Plugins || {};
-window.Plugins[PLUGIN_GLOBAL_NAME] = plugin;
-addContextMenuItem(item);
-getContextMenuItems();
-const item = { icon: "logo.svg" };
-`;
+export const contextMenuSource = () => pluginSource({ adders: ["addContextMenuItem"], getters: ["getContextMenuItems"] });
+
+/** The SDK 2 registration, with no default export. */
+export const windowPluginsSource = ({ pluginName }) =>
+  pluginSource({ adders: ["addContextMenuItem"], getters: ["getContextMenuItems"], windowPlugins: pluginName, exportDefault: false });
+
+/** Exports the plugin and still assigns window.Plugins - harmless, worth a word. */
+export const sourceWithWindowPlugins = ({ pluginName }) =>
+  pluginSource({ adders: ["addContextMenuItem"], getters: ["getContextMenuItems"], windowPlugins: pluginName });
 
 /** Carries a commented-out icon: comments must be stripped before scanning. */
-export const multiScopeSource = ({ registerAs }) => `
-window.Plugins.${registerAs} = plugin || {};
-getContextMenuItems();
-getMainButtonItems();
-getInfoPanelItems();
-const item = { icon: "nope.svg" };
-// const commented = { icon: "also-missing.svg" };
-`;
+export const multiScopeSource = () =>
+  pluginSource({
+    getters: ["getContextMenuItems", "getMainButtonItems", "getInfoPanelItems"],
+    icon: "nope.svg",
+    extra: `// const commented = { icon: "also-missing.svg" };`,
+  });
 
 /** Minimal source for a scope other than ContextMenu. */
-export const scopeSource = ({ pluginName, adder, getter }) =>
-  `window.Plugins.${pluginName} = plugin || {};\n${adder}(item);\n${getter}();\n`;
+export const scopeSource = ({ adder, getter, members = [] }) =>
+  pluginSource({ adders: adder ? [adder] : [], getters: getter ? [getter] : [], members, icon: null });
+
+/** The common project shape: a ContextMenu plugin under a fresh manifest. */
+export const contextMenuProject = (slug, pluginName, { bundle, click, src } = {}) => ({
+  pkg: manifestFor(slug, pluginName),
+  bundle: bundle ?? contextMenuPlugin(click === undefined ? {} : { click }),
+  src: src ?? contextMenuSource(),
+});

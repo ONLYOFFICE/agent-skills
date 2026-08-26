@@ -15,84 +15,109 @@
  */
 
 /*
- * The declarative tree the host renders without a net, and the line between two severities:
- * a missing required prop is an ERROR because the nearest error boundary is the application
- * shell; a value with no host styles is a WARN, since the control merely renders wrong.
+ * Modals. A React modal is a component handed over as dialogBodyComponent; the SDK 2
+ * declarative form still renders but is deprecated, so it is recognised and warned about
+ * rather than walked.
  */
 
-import { contextMenuPlugin, contextMenuSource, manifestFor } from "../fixtures.mjs";
+import { contextMenuProject, contextMenuSource } from "../fixtures.mjs";
 
-export const title = "component trees and modals";
+export const title = "modals";
 
 export default ({ workspace, check }) => {
-  // A modal with no onLoad (the SDK marks it required) holding a button with
-  // neither size nor onClick. Both throw during render.
-  const missingProps = workspace.validateProject(
-    "ui",
-    {
-      pkg: manifestFor("ui", "FixtureUi"),
-      bundle: contextMenuPlugin({
-        pluginName: "FixtureUi",
-        click: `return { actions: ["show-modal"], modalDialogProps: {
-         displayType: "modal",
-         dialogBody: { children: [{ component: "button", props: { label: "Go" } }] },
-         onClose: function () { return { actions: ["close-modal"] }; },
-       } };`,
-      }),
-      src: contextMenuSource({ pluginName: "FixtureUi" }),
-    },
-    "--invoke",
-  );
+  const modalProject = (slug, pluginName, click) => contextMenuProject(slug, pluginName, { click });
 
-  check("a modal without onLoad is an error", missingProps.mentions("onLoad is not a function"));
-  check(
-    "a component missing a required prop is an error",
-    missingProps.mentions("button without size") && missingProps.mentions("button without onClick"),
-  );
-
-  // --- values that compile against the SDK and render wrong on the portal ------
-  //
-  // ButtonSize.extraSmall emits "extra-small" where the host has "extraSmall";
-  // InputSize.big/huge have no styles; a comboBox matches by label; borderProp is ignored.
-
-  const deadValues = workspace.validateProject(
-    "visual",
-    {
-      pkg: manifestFor("visual", "FixtureVisual"),
-      bundle: contextMenuPlugin({
-        pluginName: "FixtureVisual",
-        click: `return { actions: ["show-modal"], modalDialogProps: {
-         displayType: "modal",
-         dialogBody: { borderProp: "1px solid red", children: [
-           { component: "button", props: { label: "Go", size: "extra-small", onClick: function () {} } },
-           { component: "input", props: { value: "", size: "big", onChange: function () {} } },
-           { component: "comboBox", props: {
-             options: [{ key: "a", label: "Same" }, { key: "b", label: "Same" }],
-             selectedOption: { key: "a", label: "Same" },
-           } },
-           { component: "comboBox", props: {
-             options: [{ label: "No key" }],
-             selectedOption: { key: "x", label: "No key" },
-           } },
-         ] },
-         onClose: function () { return { actions: ["close-modal"] }; },
-         onLoad: async function () { return { newDialogBody: { children: [] } }; },
-       } };`,
-      }),
-      src: contextMenuSource({ pluginName: "FixtureVisual" }),
-    },
+  const reactModal = workspace.validateProject(
+    "react-modal",
+    modalProject("rm", "FixtureRm", `return { actions: ["show-modal"], modalDialogProps: { dialogHeader: "Hi", dialogBodyComponent: Panel } };`),
     "--invoke",
   );
 
   check(
-    'the dead "extra-small" button size is a warning',
-    deadValues.warningsMention('button size "extra-small"'),
+    "a modal with dialogBodyComponent and no onLoad or onClose passes",
+    reactModal.ok && !reactModal.warningCodes.includes("deprecated"),
+    reactModal.messageSummary,
   );
-  check('the dead "big" input size is a warning', deadValues.warningsMention('input size "big"'));
+
+  const elementModal = workspace.validateProject(
+    "element-modal",
+    modalProject("em", "FixtureEm", `return { actions: ["show-modal"], modalDialogProps: { dialogBodyComponent: jsx(Panel, {}), dialogFooter: { children: [] } } };`),
+    "--invoke",
+  );
+
   check(
-    "duplicate comboBox labels are a warning",
-    deadValues.warningsMention("duplicate option labels"),
+    "a JSX element as dialogBodyComponent is an error",
+    elementModal.errorsMention("component is a JSX element"),
+    elementModal.messageSummary,
   );
-  check("a comboBox option without key is an error", deadValues.errorsMention("has no key"));
-  check("a string borderProp is a warning", deadValues.warningsMention("borderProp is a CSS string"));
+  check(
+    "a declarative footer on a React modal is a deprecation warning",
+    elementModal.warningsMention("has no footer slot"),
+  );
+
+  const emptyModal = workspace.validateProject(
+    "empty-modal",
+    modalProject("empty", "FixtureEmpty", `return { actions: ["show-modal"], modalDialogProps: { dialogHeader: "Hi" } };`),
+    "--invoke",
+  );
+
+  check(
+    "a modal with neither body nor component is an error",
+    emptyModal.errorsMention("neither dialogBodyComponent nor dialogBody"),
+  );
+
+  const legacyModal = workspace.validateProject(
+    "legacy-modal",
+    modalProject("lm", "FixtureLm", `return { actions: ["show-modal"], modalDialogProps: { displayType: "modal", dialogBody: { children: [] } } };`),
+    "--invoke",
+  );
+
+  check(
+    "a declarative dialogBody is a deprecation warning",
+    legacyModal.warningCodes.includes("deprecated") && legacyModal.warningsMention("dialogBody"),
+  );
+  check(
+    "a declarative modal without onClose is an error",
+    legacyModal.errorsMention("declarative modal without onClose"),
+  );
+
+  // The label a form is written to show, and does not.
+
+  const formProject = (slug, pluginName, field) =>
+    contextMenuProject(slug, pluginName, {
+      src: `${contextMenuSource()}\nconst Form = () => <FieldContainer ${field}><TextInput /></FieldContainer>;\n`,
+    });
+
+  const unlabelled = workspace.validateProject(
+    "field-no-label",
+    formProject("fnl", "FixtureFnl", `isVertical labelText={t("url")}`),
+  );
+
+  check(
+    "a FieldContainer with labelText and no labelVisible is warned about",
+    unlabelled.warningCodes.includes("ui-kit") && unlabelled.warningsMention("labelVisible"),
+    unlabelled.messageSummary,
+  );
+
+  const labelled = workspace.validateProject(
+    "field-labelled",
+    formProject("fl", "FixtureFl", `isVertical labelVisible labelText={t("url")}`),
+  );
+
+  check(
+    "the same field with labelVisible is quiet",
+    !labelled.warningCodes.includes("ui-kit"),
+    labelled.messageSummary,
+  );
+
+  const errorOnly = workspace.validateProject(
+    "field-error-only",
+    formProject("feo", "FixtureFeo", `hasError errorMessage={t("httpsOnly")}`),
+  );
+
+  check(
+    "a FieldContainer with no labelText at all is not a finding",
+    !errorOnly.warningCodes.includes("ui-kit"),
+    errorOnly.messageSummary,
+  );
 };

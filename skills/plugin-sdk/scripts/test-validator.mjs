@@ -17,11 +17,9 @@
  */
 
 /*
- * Self-test for validate-plugin.mjs: throwaway projects in the OS temp dir, validated
- * with --json, asserting which finding codes appear. It never invokes npm, so it says
- * nothing about whether a project builds. See validator-tests/README.md.
- *
- *   node scripts/test-validator.mjs      exit code 1 when any expectation fails
+ * Self-test for validate-plugin.mjs: throwaway projects in the OS temp dir, validated with
+ * --json, asserting which finding codes appear. It never invokes npm, so it says nothing
+ * about whether a project builds. Exit code 1 when any expectation fails.
  */
 
 import { Expectations, FixtureWorkspace } from "./validator-tests/harness.mjs";
@@ -32,8 +30,7 @@ import * as runtimeSuite from "./validator-tests/suites/runtime.mjs";
 import * as sdkDriftSuite from "./validator-tests/suites/sdk-drift.mjs";
 import * as uiSuite from "./validator-tests/suites/ui.mjs";
 
-// Listed rather than discovered: the order is the one a reader wants, and a suite that is
-// not imported is visibly not run.
+// Listed rather than discovered: a suite that is not imported is visibly not run.
 const SUITES = [manifestSuite, itemsSuite, uiSuite, runtimeSuite, sdkDriftSuite];
 
 const workspace = new FixtureWorkspace();
@@ -42,11 +39,7 @@ const expectations = new Expectations();
 try {
   for (const suite of SUITES) {
     expectations.section(suite.title);
-
-    suite.default({
-      workspace,
-      check: (label, ok, detail) => expectations.check(label, ok, detail),
-    });
+    suite.default({ workspace, check: expectations.check });
   }
 } finally {
   workspace.cleanup();

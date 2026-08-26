@@ -18,37 +18,18 @@
 
 /*
  * Scaffolds a DocSpace plugin project: a class implementing every interface its declared
- * scopes require, with build config and assets in place. It registers no items on purpose,
- * carrying a TODO per scope. See generator/README.md; run with no arguments for the options.
+ * scopes require, a Vite + React build with the host-provided packages external, the packed
+ * ui-kit and SDK, placeholder assets. It registers no items on purpose - a TODO per scope.
+ * Run with no arguments for the options.
  */
 
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { CliError, USAGE, parseCliOptions } from "./generator/options.mjs";
-import { PluginGenerator } from "./generator/plugin-generator.mjs";
+import { generate } from "./generator/plugin-generator.mjs";
 
-const scriptsDir = path.dirname(fileURLToPath(import.meta.url));
-const templatesDir = path.join(scriptsDir, "..", "templates");
-
-const reportScaffold = (options, result) => {
-  console.log(`Scaffolded ${options.pluginName} (${options.name}) in ${result.targetDir}`);
-  console.log(`  scopes:       ${options.scopeNames.join(", ")}`);
-  console.log(`  registered:   window.Plugins.${options.pluginName}`);
-  console.log(`  placeholders: ${result.iconPaths.join(", ")} - replace these with real icons`);
-
-  if (result.registersItems) {
-    console.log(
-      `\nNo items are registered yet - src/index.ts has a TODO per scope inside onLoadCallback.`,
-    );
-    console.log(
-      `Until each declared scope registers at least one item, validate-plugin.mjs reports`,
-    );
-    console.log(`it as an error, so write the items before validating.`);
-  }
-
-  console.log(`\nNext: cd ${result.targetDir} && npm install && npm run build`);
-};
+const templatesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "templates");
 
 const main = () => {
   const argv = process.argv.slice(2);
@@ -59,16 +40,30 @@ const main = () => {
   }
 
   const options = parseCliOptions(argv);
-  const result = new PluginGenerator(options, { templatesDir }).generate();
+  const result = generate(options, { templatesDir });
 
-  reportScaffold(options, result);
+  console.log(`Scaffolded ${options.pluginName} (${options.name}) in ${result.targetDir}`);
+  console.log(`  scopes:       ${options.scopeNames.join(", ")}`);
+  console.log(`  runtime:      module - the portal imports dist/plugin.js and reads its default export`);
+  console.log(`  ui-kit:       ${result.uiKitTarball}, copied into the project with the tarballs it depends on`);
+
+  if (result.sdkTarball)
+    console.log(`  sdk:          ${result.sdkTarball}, installed from the tarball until 3.0.0 is on npm`);
+
+  console.log(`  placeholders: ${result.iconPaths.join(", ")} - replace these with real icons`);
+
+  if (result.hasItemScopes)
+    console.log(
+      `\nNo items are registered yet - src/index.ts has a TODO per scope inside onLoadCallback.\nUntil each declared scope registers at least one item, validate-plugin.mjs reports\nit as an error, so write the items (and their .tsx components) before validating.`,
+    );
+
+  console.log(`\nNext: cd ${result.targetDir} && npm install && npm run build`);
 };
 
 try {
   main();
 } catch (error) {
-  // A CliError is something the caller can fix; anything else is a bug and deserves
-  // its stack trace.
+  // A CliError is something the caller can fix; anything else is a bug and deserves its stack trace.
   if (!(error instanceof CliError)) throw error;
 
   console.error(`error: ${error.message}`);

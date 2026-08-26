@@ -15,35 +15,28 @@
  */
 
 /*
- * What the bundle actually does: load it, await onLoadCallback, read the maps the loader
- * would read, and with --invoke call the item callbacks. This is the pass that catches a
- * mismatched name or an unfilled scope - invisible by reading. Shapes live in shapes.mjs.
+ * What the bundle actually does: import it the way the portal would, await onLoadCallback,
+ * read the maps the loader would read, and with --invoke call the class-side callbacks.
+ * Shapes live in shapes.mjs.
  */
 
-import { SCOPE_CONTRACT } from "../contract.mjs";
+import * as fs from "node:fs";
+
+import { MODULE_RUNTIME, SCOPE_CONTRACT } from "../contract.mjs";
 import { Check } from "./findings.mjs";
 import {
   CALLBACK_TIMEOUT_MS,
-  createSandbox,
+  importModuleBundle,
   isMissingHostApi,
-  runBundle,
+  resolveHostModules,
   withTimeout,
 } from "./sandbox.mjs";
 import { ShapeChecks } from "./shapes.mjs";
 
 /** Members of IPlugin the loader uses on every plugin, whatever it declares. */
-const REQUIRED_PLUGIN_MEMBERS = [
-  "status",
-  "getStatus",
-  "updateStatus",
-  "onLoadCallback",
-  "setOnLoadCallback",
-];
+const REQUIRED_PLUGIN_MEMBERS = ["status", "getStatus", "updateStatus", "onLoadCallback", "setOnLoadCallback"];
 
-/**
- * A file as the host passes it to IFileItem.onClick - handing it a bare id instead
- * would make a correct File plugin look like it throws.
- */
+/** A file as the host passes it to IFileItem.onClick. */
 const FILE_STUB = {
   id: 1,
   title: "example.txt",
@@ -57,81 +50,53 @@ const FILE_STUB = {
   fileSecurity: {},
 };
 
-const GROUP_STUB = [{ id: 1, itemType: "file" }];
-
 const isFn = (value) => typeof value === "function";
 
 /**
- * Which callbacks a scope's item exposes and what the host calls each with. `kind` says
- * how to read the result: an IMessage, or the {body} the async loaders resolve to.
+ * Which callbacks a scope's item exposes and what the host calls each with. A React
+ * `component` has nothing to invoke. ContextMenu and MainButton: onItemClick supersedes
+ * onClick, and a group action is a separate entry point called with the selection.
  */
+const INVOCATIONS = {
+  File: (item) => (isFn(item.onClick) ? [["onClick", () => item.onClick(FILE_STUB)]] : []),
+  ProfileMenu: (item) => (isFn(item.onClick) ? [["onClick", () => item.onClick()]] : []),
+  EventListener: (item) => (isFn(item.eventHandler) ? [["eventHandler", () => item.eventHandler()]] : []),
+  InfoPanel: (item) => (isFn(item.subMenu?.onClick) ? [["subMenu.onClick", () => item.subMenu.onClick(1)]] : []),
+  ArticleButton: () => [],
+  ArticleNavigation: () => [],
+};
+
 const invocationsFor = (scope, item) => {
+  if (INVOCATIONS[scope]) return INVOCATIONS[scope](item);
+
   const calls = [];
-  const message = (name, run) => calls.push({ name, run, kind: "message" });
-  const body = (name, run) => calls.push({ name, run, kind: "body" });
-
-  if (scope === "File") {
-    if (isFn(item.onClick)) message("onClick", () => item.onClick(FILE_STUB));
-    return calls;
-  }
-
-  if (scope === "ProfileMenu") {
-    if (isFn(item.onClick)) message("onClick", () => item.onClick());
-    return calls;
-  }
-
-  if (scope === "EventListener") {
-    if (isFn(item.eventHandler))
-      message("eventHandler", () => item.eventHandler());
-    return calls;
-  }
-
-  if (scope === "InfoPanel") {
-    if (isFn(item.subMenu?.onClick))
-      message("subMenu.onClick", () => item.subMenu.onClick(1));
-    if (isFn(item.onLoad)) body("onLoad", () => item.onLoad());
-    return calls;
-  }
-
-  if (scope === "ArticleButton") {
-    if (isFn(item.onLoad)) body("onLoad", () => item.onLoad());
-    return calls;
-  }
-
-  // ContextMenu and MainButton: onItemClick supersedes onClick, and a group
-  // action is a separate entry point the host calls with the selection.
-  if (isFn(item.onItemClick)) message("onItemClick", () => item.onItemClick(1));
-  else if (isFn(item.onClick)) message("onClick", () => item.onClick(1));
-
-  if (isFn(item.onGroupClick))
-    message("onGroupClick", () => item.onGroupClick(GROUP_STUB));
-
+  if (isFn(item.onItemClick)) calls.push(["onItemClick", () => item.onItemClick(1)]);
+  else if (isFn(item.onClick)) calls.push(["onClick", () => item.onClick(1)]);
+  if (isFn(item.onGroupClick)) calls.push(["onGroupClick", () => item.onGroupClick([{ id: 1, itemType: "file" }])]);
   return calls;
 };
 
 export class RuntimeChecks extends Check {
-  constructor(context) {
+  /** @param {{ bundleImportsResolvable: boolean }} archive - what the archive pass found */
+  constructor(context, archive) {
     super(context);
 
+    this.archive = archive;
     this.shapes = new ShapeChecks(context);
-
-    /*
-     * `keys` names what `items` only counts, so a caller reading the report need not
-     * guess which `key:` literals in the source were the registered ones.
-     */
-    this.report = { loaded: false, items: {}, keys: {} };
+    this.report = { loaded: false, items: {} };
   }
 
   async run() {
-    if (!this.project.isBuilt || !this.options.runtime) return;
+    if (!this.project.isBuilt) return;
 
-    const sandbox = createSandbox();
-    const plugin = this.#loadPlugin(sandbox);
+    const plugin = await this.#loadModulePlugin();
     if (!plugin) return;
 
     this.report.loaded = true;
 
-    this.#checkPluginMembers(plugin);
+    for (const member of REQUIRED_PLUGIN_MEMBERS)
+      if (plugin[member] === undefined)
+        this.error("runtime", `IPlugin member ${member} is missing on the registered plugin`);
 
     const onLoadFailed = await this.#runOnLoadCallback(plugin);
 
@@ -141,63 +106,79 @@ export class RuntimeChecks extends Check {
       await this.#checkScope(plugin, scope, onLoadFailed);
   }
 
-  /** @returns the registered plugin object, or null when there is nothing to check. */
-  #loadPlugin(sandbox) {
-    try {
-      runBundle(sandbox, this.project.readText(this.project.bundlePath));
-    } catch (e) {
-      if (isMissingHostApi(e))
-        this.warn(
-          "runtime",
-          `the bundle needs a browser API the validator does not stub (${e.message}) - the runtime checks were skipped, so verify this one on a portal`,
-        );
-      else
-        this.error(
-          "runtime",
-          `the bundle threw while loading: ${e.message}. Top-level code runs as soon as the portal injects the script, so nothing after that point is ever registered`,
-        );
-
+  /** @returns the module's default export, or null when there is nothing to check. */
+  async #loadModulePlugin() {
+    if (!this.archive.bundleImportsResolvable) {
+      this.warn(
+        "runtime",
+        "the bundle imports a package the portal does not provide (reported above), so it cannot be loaded here either - the runtime checks were skipped",
+      );
       return null;
     }
 
-    const plugin = sandbox.Plugins?.[this.project.pluginName];
+    const hostModules = resolveHostModules(this.project);
 
-    if (!plugin) {
-      const registered = Object.keys(sandbox.Plugins ?? {});
-
-      this.error(
+    if (hostModules.missing.length) {
+      this.warn(
         "runtime",
-        `the bundle did not register window.Plugins.${this.project.pluginName}${
-          registered.length ? ` (it registered: ${registered.join(", ")})` : ""
-        }`,
+        `${hostModules.missing.join(", ")} ${hostModules.missing.length > 1 ? "are" : "is"} not installed in the project, so the bundle cannot be imported here - run npm install and validate again; the runtime checks were skipped`,
       );
+      return null;
     }
 
-    return plugin ?? null;
+    let plugin;
+
+    try {
+      plugin = await withTimeout(
+        importModuleBundle(fs.readFileSync(this.project.bundlePath, "utf8"), hostModules),
+        CALLBACK_TIMEOUT_MS,
+        "importing dist/plugin.js",
+      );
+    } catch (e) {
+      this.#reportLoadFailure(e);
+      return null;
+    }
+
+    if (!plugin || typeof plugin !== "object") {
+      this.error(
+        "runtime",
+        `dist/plugin.js has no default export - with "runtime": "${MODULE_RUNTIME}" the portal imports the bundle and reads \`default\`; export the plugin instance (export default plugin)`,
+      );
+      return null;
+    }
+
+    return plugin;
   }
 
-  #checkPluginMembers(plugin) {
-    for (const member of REQUIRED_PLUGIN_MEMBERS)
-      if (plugin[member] === undefined)
-        this.error(
-          "runtime",
-          `IPlugin member ${member} is missing on the registered plugin`,
-        );
+  #reportLoadFailure(e) {
+    const message = e?.message ?? "";
+
+    if (isMissingHostApi(e))
+      this.warn(
+        "runtime",
+        `the bundle needs a browser API the validator does not stub (${e.message}) - the runtime checks were skipped, so verify this one on a portal`,
+      );
+    else if (/inside a plugin component/.test(message))
+      this.error(
+        "runtime",
+        `the bundle threw while loading: ${e.message}. Hooks only work inside the component DocSpace renders; at module scope or inside a plain callback they throw, and the plugin never registers`,
+      );
+    else if (/Cannot find module 'react'/.test(message) && /docspace-plugin-sdk/.test(message))
+      this.warn(
+        "runtime",
+        `the SDK could not find react from where it is installed (${message.split("\n")[0]}) - this happens when the SDK is linked from a checkout rather than installed from a tarball or npm, so its peer dependency resolves outside the project. Install it from a packed tarball (npm pack) to run the runtime checks; the portal itself is unaffected`,
+      );
+    else
+      this.error(
+        "runtime",
+        `the bundle threw while loading: ${e.message}. Top-level code runs as soon as the portal loads the bundle, so nothing after that point is ever registered`,
+      );
   }
 
-  /**
-   * The portal awaits this during installation, so a throw aborts the plugin with no
-   * CSS, no items and nothing in the console.
-   *
-   * @returns {Promise<boolean>} whether it failed
-   */
+  /** The portal awaits this during installation, so a throw aborts the plugin silently. */
   async #runOnLoadCallback(plugin) {
     try {
-      await withTimeout(
-        plugin.onLoadCallback?.(),
-        CALLBACK_TIMEOUT_MS,
-        "onLoadCallback",
-      );
+      await withTimeout(plugin.onLoadCallback?.(), CALLBACK_TIMEOUT_MS, "onLoadCallback");
       return false;
     } catch (e) {
       if (isMissingHostApi(e))
@@ -224,10 +205,7 @@ export class RuntimeChecks extends Check {
         "getStatus() is hide after onLoadCallback - the host stops here and renders nothing. Intentional only if the plugin hides itself until it is configured",
       );
     else if (status !== "active")
-      this.error(
-        "runtime",
-        `getStatus() returned "${status}", expected "active" or "hide"`,
-      );
+      this.error("runtime", `getStatus() returned "${status}", expected "active" or "hide"`);
   }
 
   async #checkScope(plugin, scope, onLoadFailed) {
@@ -238,10 +216,9 @@ export class RuntimeChecks extends Check {
     if (contract.members) {
       for (const member of contract.members)
         if (typeof plugin[member] !== "function")
-          this.error(
-            "runtime",
-            `scope "${scope}" requires ${member}() on the plugin instance`,
-          );
+          this.error("runtime", `scope "${scope}" requires ${member}() on the plugin instance`);
+
+      if (scope === "Settings") this.#checkSettings(plugin);
       return;
     }
 
@@ -250,18 +227,36 @@ export class RuntimeChecks extends Check {
 
     const entries = [...items];
     this.report.items[scope] = entries.length;
-    this.report.keys[scope] = entries.map(([key]) => key);
 
     // With a failed onLoadCallback an empty map is a consequence, not a separate defect.
-    if (entries.length === 0 && !onLoadFailed)
-      this.#reportEmptyMap(scope, contract);
+    if (entries.length === 0 && !onLoadFailed) this.#reportEmptyMap(scope, contract);
 
     for (const [key, item] of entries) {
       this.shapes.item(scope, contract, key, item);
 
-      if (this.options.invoke)
-        await this.#invokeItemCallbacks(scope, key, item);
+      if (this.options.invoke) await this.#invokeItemCallbacks(scope, key, item);
     }
+  }
+
+  #checkSettings(plugin) {
+    let settings;
+
+    try {
+      settings = plugin.getAdminPluginSettings?.();
+    } catch (e) {
+      this.error("runtime", `getAdminPluginSettings() threw: ${e.message}`);
+      return;
+    }
+
+    if (!settings) {
+      this.error(
+        "runtime",
+        'scope "Settings" is declared but getAdminPluginSettings() returns nothing after onLoadCallback - call setAdminPluginSettings({ component: SettingsPage }) there, or the settings aside stays empty',
+      );
+      return;
+    }
+
+    this.shapes.settings(settings);
   }
 
   /** @returns the map, or null when the getter is unusable (already reported). */
@@ -275,10 +270,7 @@ export class RuntimeChecks extends Check {
       return null;
     }
 
-    if (
-      !(items instanceof Map) &&
-      !(items && typeof items.forEach === "function")
-    ) {
+    if (!(items instanceof Map) && !(items && typeof items.forEach === "function")) {
       this.error("runtime", `${contract.getter}() did not return a Map`);
       return null;
     }
@@ -286,25 +278,14 @@ export class RuntimeChecks extends Check {
     return items;
   }
 
-  /**
-   * An empty map at load time is legitimate only if the plugin registers items later and
-   * an update*Items action exists to re-read them. ArticleButton has none.
-   */
+  /** An empty map at load time is legitimate only if items are registered later and refreshed. */
   #reportEmptyMap(scope, contract) {
-    const registersSomewhere = new RegExp(`\\b${contract.adder}\\s*\\(`).test(
-      this.project.sourceText,
-    );
-    const { refresh } = contract;
+    const registersSomewhere = new RegExp(`\\b${contract.adder}\\s*\\(`).test(this.project.sourceText);
 
-    if (registersSomewhere && refresh)
+    if (registersSomewhere)
       this.warn(
         "runtime",
-        `${contract.getter}() is empty after onLoadCallback - fine only if the plugin registers items later and then sends Actions.${refresh}`,
-      );
-    else if (registersSomewhere)
-      this.error(
-        "runtime",
-        `${contract.getter}() is empty after onLoadCallback and the SDK has no update${scope}Items action to refresh it - an item registered later never reaches the portal`,
+        `${contract.getter}() is empty after onLoadCallback - fine only if the plugin registers items later and then sends Actions.${contract.refresh}`,
       );
     else
       this.error(
@@ -314,21 +295,19 @@ export class RuntimeChecks extends Check {
   }
 
   async #invokeItemCallbacks(scope, key, item) {
-    for (const call of invocationsFor(scope, item)) {
-      const where = `${scope} item "${key}" ${call.name}`;
+    for (const [name, run] of invocationsFor(scope, item)) {
+      const where = `${scope} item "${key}" ${name}`;
 
       try {
-        const result = await withTimeout(
-          call.run(),
-          CALLBACK_TIMEOUT_MS,
-          where,
-        );
-
-        if (call.kind === "body")
-          this.shapes.componentTree(`${where} body`, result?.body);
-        else this.shapes.message(`${scope} item "${key}"`, result);
+        const result = await withTimeout(run(), CALLBACK_TIMEOUT_MS, where);
+        this.shapes.message(`${scope} item "${key}"`, result);
       } catch (e) {
-        this.warn("message", `${where} threw: ${e.message}`);
+        if (/inside a plugin component/.test(e?.message ?? ""))
+          this.error(
+            "message",
+            `${where} threw: ${e.message}. A class-side callback has no runtime context - read the id it is given, open a modal or a toast through the returned IMessage, and use the hooks inside the component instead`,
+          );
+        else this.warn("message", `${where} threw: ${e.message}`);
       }
     }
   }

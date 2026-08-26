@@ -15,44 +15,41 @@
  */
 
 /*
- * The command line: argv in, validated options out. Everything a caller can get
- * wrong is rejected here, before a file is written - a half scaffolded project is
- * worse than none. This file knows a valid request, not what a plugin looks like.
+ * The command line: argv in, validated options out. Everything a caller can get wrong is
+ * rejected here, before a file is written.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { SCOPES } from "../contract.mjs";
-import { SCOPE_SPECS } from "./scopes.mjs";
 
-/**
- * A problem the person running the script can fix. The entry point prints these
- * as `error: <message>` and exits 1; anything else escapes as a stack trace,
- * which is what a bug in here deserves.
- */
+/** A problem the person running the script can fix; printed as `error: <message>`, exit 1. */
 export class CliError extends Error {}
 
 export const USAGE = `Usage:
   node scripts/generate-plugin.mjs --name my-plugin --plugin-name MyPlugin \\
-    --scopes ContextMenu,MainButton --dir ./my-plugin
+    --scopes ContextMenu,ArticleNavigation --dir ./my-plugin
 
 Options:
   --name          portal identifier, lower case, [a-z_-]        (required)
-  --plugin-name   JS class name == window.Plugins.<pluginName>  (required)
+  --plugin-name   JS class name, also the plugin's identity     (required)
   --scopes        comma separated, see contract.mjs             (required)
   --dir           target directory (default: ./<name>)
   --description   one line description for the manifest
   --author        manifest author
   --locales       comma separated extra locales, e.g. ru,de     (en is always present)
+  --ui-kit        a packed @docspace/ui-kit (docspace-ui-kit-*.tgz) or a directory
+                  holding it together with the tarballs it depends on - and, while the
+                  SDK is unpublished, the packed SDK; defaults to the copies vendored
+                  in this skill's vendor/ directory
   --force         write into a non-empty directory`;
 
 const readFlag = (argv, flagName) => {
   const at = argv.indexOf(`--${flagName}`);
   return at === -1 ? undefined : argv[at + 1];
 };
-
-const hasFlag = (argv, flagName) => argv.includes(`--${flagName}`);
 
 const readList = (value) =>
   (value ?? "")
@@ -66,54 +63,66 @@ const requireFlag = (argv, flagName) => {
   return value;
 };
 
-/** The packer lower-cases the name anyway, so a capital here silently renames the plugin. */
-const assertPortalName = (name) => {
-  if (!/^[a-z][a-z_-]*$/.test(name))
-    throw new CliError(
-      `--name "${name}" must be lower case letters, - and _ only (the packer lower-cases it anyway)`,
-    );
-};
+const isUiKitTarball = (fileName) => /^docspace-ui-kit-.*\.tgz$/.test(fileName);
+const isPluginSdkTarball = (fileName) => /^onlyoffice-docspace-plugin-sdk-.*\.tgz$/.test(fileName);
 
-/** It becomes window.Plugins.<pluginName>, so it has to be addressable as one. */
-const assertClassName = (pluginName) => {
-  if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(pluginName))
-    throw new CliError(
-      `--plugin-name "${pluginName}" must be a valid JS identifier - it becomes window.Plugins.${pluginName}`,
-    );
-};
+const VENDOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "vendor");
 
 /**
- * A scope has to be in the portal contract *and* have a generation spec. Missing
- * either one would generate a class that claims an interface it does not implement.
+ * The packed kit and its neighbours: every tarball next to the kit travels with it (the kit's
+ * own package.json names `file:` tarballs npm resolves against the project), and `sdk` is the
+ * packed SDK if one is vendored - only while 3.0.0 is unpublished.
+ * @returns {{ kit: string, sdk: string | undefined, all: string[] }}
  */
-const assertKnownScopes = (scopeNames) => {
-  for (const scopeName of scopeNames)
-    if (!SCOPES.includes(scopeName) || !SCOPE_SPECS[scopeName])
-      throw new CliError(`unknown scope "${scopeName}" (known: ${SCOPES.join(", ")})`);
+const resolveVendoredTarballs = (value) => {
+  const given = path.resolve(value ?? VENDOR_DIR);
+
+  if (!fs.existsSync(given))
+    throw new CliError(
+      value
+        ? `--ui-kit ${value} does not exist`
+        : `the vendored ui-kit is missing from ${given} - restore vendor/ or pass --ui-kit`,
+    );
+
+  const isDir = fs.statSync(given).isDirectory();
+  const dir = isDir ? given : path.dirname(given);
+
+  const tarballs = fs
+    .readdirSync(dir)
+    .filter((fileName) => fileName.endsWith(".tgz"))
+    .map((fileName) => path.join(dir, fileName));
+
+  const kit = isDir ? tarballs.find((tarball) => isUiKitTarball(path.basename(tarball))) : given;
+
+  if (!kit || !isUiKitTarball(path.basename(kit)))
+    throw new CliError(
+      `${value ? `--ui-kit ${value}` : given} holds no docspace-ui-kit-*.tgz - pack the kit from libs/ui-kit in a DocSpace client checkout (pnpm build && pnpm pack)`,
+    );
+
+  const all = tarballs.includes(kit) ? tarballs : [kit, ...tarballs];
+
+  return { kit, sdk: all.find((tarball) => isPluginSdkTarball(path.basename(tarball))), all };
 };
 
-const assertTargetUsable = (targetDir, force) => {
-  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0 && !force)
-    throw new CliError(`${targetDir} is not empty - pass --force to write into it anyway`);
-};
-
-/**
- * @returns {{
- *   name: string, pluginName: string, scopeNames: string[], targetDir: string,
- *   description: string, author: string, extraLocales: string[],
- * }}
- */
 export const parseCliOptions = (argv) => {
   const name = requireFlag(argv, "name");
   const pluginName = requireFlag(argv, "plugin-name");
   const scopeNames = readList(requireFlag(argv, "scopes"));
 
-  assertPortalName(name);
-  assertClassName(pluginName);
-  assertKnownScopes(scopeNames);
+  // The packer lower-cases the name anyway, so a capital here would silently rename the plugin.
+  if (!/^[a-z][a-z_-]*$/.test(name))
+    throw new CliError(`--name "${name}" must be lower case letters, - and _ only (the packer lower-cases it anyway)`);
+
+  if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(pluginName))
+    throw new CliError(`--plugin-name "${pluginName}" must be a valid JS identifier - it becomes the plugin class name`);
+
+  for (const scopeName of scopeNames)
+    if (!SCOPES.includes(scopeName))
+      throw new CliError(`unknown scope "${scopeName}" (known: ${SCOPES.join(", ")})`);
 
   const targetDir = path.resolve(readFlag(argv, "dir") ?? `./${name}`);
-  assertTargetUsable(targetDir, hasFlag(argv, "force"));
+  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0 && !argv.includes("--force"))
+    throw new CliError(`${targetDir} is not empty - pass --force to write into it anyway`);
 
   return {
     name,
@@ -123,5 +132,6 @@ export const parseCliOptions = (argv) => {
     description: readFlag(argv, "description") ?? `DocSpace plugin ${name}`,
     author: readFlag(argv, "author") ?? "",
     extraLocales: readList(readFlag(argv, "locales")),
+    vendoredTarballs: resolveVendoredTarballs(readFlag(argv, "ui-kit")),
   };
 };

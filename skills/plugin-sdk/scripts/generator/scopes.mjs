@@ -15,32 +15,21 @@
  */
 
 /*
- * The scopes a plugin can declare, from the generator's point of view: contract.mjs
- * says what the loader calls, SCOPE_SPECS below adds only what it cannot express.
- * See README.md - adding a scope means an entry in both.
+ * What each scope adds to the generated code beyond what contract.mjs expresses. Adding a
+ * scope means an entry in both. Per scope, all optional: `types` extra SDK type imports,
+ * `members` class members for the scopes that keep no item map, `extraMethods` methods
+ * beyond adder/getter/updater, `icons` asset file names, `note` the surprise written into
+ * the registration TODO. The `note` strings are generated output - keep them stable.
  */
 
-import { SCOPES, SCOPE_CONTRACT } from "../contract.mjs";
+import { SCOPE_CONTRACT } from "../contract.mjs";
 
-/** Types every generated plugin imports, whatever it declares. */
 const BASE_SDK_TYPES = ["IPlugin", "PluginStatus", "PluginLocale"];
 
-/**
- * Per scope, all optional:
- *
- *   types        extra SDK type imports the emitted code needs
- *   members      class members, for the scopes that keep no item map
- *   extraMethods methods beyond the adder/getter/updater, given the contract
- *   icons        asset file names its items reference
- *   note         the surprise, written into the registration TODO
- */
 export const SCOPE_SPECS = {
-  /*
-   * API: lets the plugin call the DocSpace REST API. Not a map scope - setAPI runs
-   * after the bundle executes, so reading these at module scope captures empty strings.
-   */
+  // The portal's base URLs for class-side callbacks; a component has usePluginAPI() instead.
   API: {
-    members: () => `  origin = "";
+    members: `  origin = "";
 
   proxy = "";
 
@@ -78,21 +67,18 @@ export const SCOPE_SPECS = {
 `,
   },
 
-  /*
-   * Settings: an admin-facing settings page. Not a map scope - the stored settings come
-   * back as a raw string, *after* installation, so nothing may assume them in onLoadCallback.
-   */
   Settings: {
     types: ["ISettings"],
 
-    members: () => `  adminPluginSettings: ISettings | null = null;
+    members: `  adminPluginSettings: ISettings | null = null;
 
   setAdminPluginSettings = (settings: ISettings | null): void => {
     this.adminPluginSettings = settings;
   };
 
-  // The portal hands settings back as the raw string the plugin saved earlier,
-  // and it arrives *after* installation - so parse defensively.
+  // The portal hands the stored settings back as the raw string the plugin saved, and
+  // it arrives *after* installation. A component reads them with usePluginSettings()
+  // instead; this exists for class-side callbacks that need them, so parse defensively.
   setAdminPluginSettingsValue = (settings: string | null): void => {
     if (!settings) return;
 
@@ -105,9 +91,10 @@ export const SCOPE_SPECS = {
 
   getAdminPluginSettings = (): ISettings | null => this.adminPluginSettings;
 `,
+
+    note: "call this.setAdminPluginSettings({ component: SettingsPage }) here, where SettingsPage loads with settings.load() in a useEffect and saves through settings.setSaveButton(...)",
   },
 
-  /* ContextMenu: an item in the right-click menu of a file, folder or room. */
   ContextMenu: {
     // The only scope whose loader interface also exposes the keys of its map.
     extraMethods: ({ field }) => `  getContextMenuItemsKeys = (): string[] => Array.from(this.${field}.keys());
@@ -115,54 +102,39 @@ export const SCOPE_SPECS = {
 
     icons: ["icon-16.svg"],
 
-    note: "the host reads usersTypes (plural) here, and fileExt/fileType decide which rows the item appears on",
+    note: "the host reads usersTypes (plural) here, and fileExt/fileType decide which rows the item appears on; a modal opened from onItemClick gets no current file, so capture the id in the closure",
   },
 
-  /* InfoPanel: a tab in the info panel of a file or room. */
   InfoPanel: {
-    note: "body is a declarative component tree, and subMenu names the tab; fetch in the item's own onLoad rather than in onLoadCallback",
+    note: "component is a React component rendered as the tab; it reads the selected file with useCurrentFile() and fetches in a useEffect, so no onLoad and no body",
   },
 
-  /* MainButton: an entry under the portal's main "Actions" button. */
   MainButton: {
     icons: ["icon-16.svg"],
 
     note: "the host reads usersType (singular) here - the plural spelling is silently ignored",
   },
 
-  /* ProfileMenu: an entry in the current user's profile menu. */
   ProfileMenu: {
     icons: ["icon-16.svg"],
 
     note: "onClick is mandatory here and takes no arguments; the host reads usersType (singular)",
   },
 
-  /*
-   * EventListener: reacts to something happening in the portal. The one scope the SDK
-   * gives no updater for - re-adding by the same key overwrites, which is the rebuild path.
-   */
   EventListener: {
     note: "eventHandler takes no arguments, and once an event has fired the host honours only item updates and toasts - other actions are ignored",
   },
 
-  /*
-   * File: claims a file extension - custom row and tile icons, custom open action.
-   * Its map is keyed by extension rather than by a key field.
-   */
   File: {
     icons: ["icon-32.svg", "icon-96.svg"],
 
     note: "the map is keyed by extension, so claiming one that another plugin also claims means the last plugin loaded wins",
   },
 
-  /*
-   * PostMessage: two-way messaging with a page embedded in an iFrame. Not a map scope -
-   * the portal forwards the page's messages to the callback stored here, so set it first.
-   */
   PostMessage: {
     types: ["IPostMessageCallbackMessage"],
 
-    members: () => `  postMessageCallback: (message: IPostMessageCallbackMessage) => void = () => {};
+    members: `  postMessageCallback: (message: IPostMessageCallbackMessage) => void = () => {};
 
   setPostMessageCallback = (callback: (message: IPostMessageCallbackMessage) => void): void => {
     this.postMessageCallback = callback;
@@ -173,78 +145,37 @@ export const SCOPE_SPECS = {
 `,
   },
 
-  /*
-   * ArticleButton: a persistent entry point in the sidebar. No updateArticleButtonItems
-   * exists, so an item registered after installation never arrives - an empty map is terminal.
-   */
   ArticleButton: {
-    note: "the whole portal shows at most five article buttons across all plugins, and nothing can refresh this map after installation",
+    note: "component renders into a hard 32x32 slot with overflow hidden - an IconButton from the kit, nothing wider; the whole portal shows at most five across all plugins",
+  },
+
+  ArticleNavigation: {
+    icons: ["icon-20.svg"],
+
+    note: "key becomes the page URL (/p/<key>) so it must be unique across every installed plugin; appears pins the entry to Section.Files / Accounts / Settings; the component is a whole page - lay it out with the kit's Heading and Text",
   },
 };
 
-// A scope in the contract but not in this table would generate a class that cannot
-// satisfy the interface it claims. Fail on any run rather than in someone's build.
-const unspecified = SCOPES.filter((scopeName) => !SCOPE_SPECS[scopeName]);
+/** camelCased scope name, for where a scope has to appear inside an identifier. */
+export const camelCase = (name) => `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
 
-if (unspecified.length > 0)
-  throw new Error(`scripts/generator/scopes.mjs has no spec for ${unspecified.join(", ")}`);
+/** The scopes one plugin declares, paired with their contract and spec, plus the derived lists. */
+export const selectScopes = (scopeNames) => {
+  const all = scopeNames.map((name) => ({ name, contract: SCOPE_CONTRACT[name], spec: SCOPE_SPECS[name] }));
+  const itemMapScopes = all.filter(({ contract }) => contract.field);
 
-/** One declared scope: its portal contract paired with its generation spec. */
-class SelectedScope {
-  constructor(name) {
-    this.name = name;
-    this.contract = SCOPE_CONTRACT[name];
-    this.spec = SCOPE_SPECS[name];
+  const sdkTypes = new Set(BASE_SDK_TYPES);
+  for (const { contract, spec } of all) {
+    sdkTypes.add(contract.iface);
+    if (contract.item) sdkTypes.add(contract.item);
+    for (const type of spec.types ?? []) sdkTypes.add(type);
   }
 
-  /** True for scopes the loader reads through a Map; API, Settings and PostMessage
-   * are plain members on the class instead. */
-  get keepsItemMap() {
-    return Boolean(this.contract.field);
-  }
-
-  /** camelCased scope name, used where a scope has to appear inside an identifier. */
-  get camelCaseName() {
-    return `${this.name.charAt(0).toLowerCase()}${this.name.slice(1)}`;
-  }
-}
-
-/** The scopes one plugin declares, as the rest of the generator wants to ask about them. */
-export class ScopeSelection {
-  constructor(scopeNames) {
-    this.names = [...scopeNames];
-    this.scopes = this.names.map((name) => new SelectedScope(name));
-  }
-
-  /** Only these register items, so only these get a map, an adder and a TODO. */
-  get itemMapScopes() {
-    return this.scopes.filter((scope) => scope.keepsItemMap);
-  }
-
-  get registersItems() {
-    return this.itemMapScopes.length > 0;
-  }
-
-  /** Interfaces the generated class declares, base contract first. */
-  get implementedInterfaces() {
-    return ["IPlugin", ...this.scopes.map((scope) => scope.contract.iface)];
-  }
-
-  /** Everything the generated class imports from the SDK, deduplicated and sorted. */
-  get sdkTypes() {
-    const types = new Set(BASE_SDK_TYPES);
-
-    for (const { contract, spec } of this.scopes) {
-      types.add(contract.iface);
-      if (contract.item) types.add(contract.item);
-      for (const extraType of spec.types ?? []) types.add(extraType);
-    }
-
-    return [...types].sort();
-  }
-
-  /** Icon files the declared scopes reference, in declaration order, deduplicated. */
-  get itemIconFiles() {
-    return [...new Set(this.scopes.flatMap((scope) => scope.spec.icons ?? []))];
-  }
-}
+  return {
+    all,
+    itemMapScopes,
+    implementedInterfaces: ["IPlugin", ...all.map(({ contract }) => contract.iface)],
+    sdkTypes: [...sdkTypes].sort(),
+    itemIconFiles: [...new Set(all.flatMap(({ spec }) => spec.icons ?? []))],
+  };
+};

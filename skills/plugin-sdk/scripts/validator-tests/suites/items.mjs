@@ -24,9 +24,11 @@ import {
   contextMenuPlugin,
   contextMenuSource,
   filePlugin,
+  groupActionPlugin,
   manifestFor,
   multiScopePlugin,
   multiScopeSource,
+  reactItemsPlugin,
   scopeSource,
 } from "../fixtures.mjs";
 
@@ -34,9 +36,6 @@ export const title = "items, filters and messages";
 
 export default ({ workspace, check }) => {
   // --- filter fields, payloads and a scope that registers nothing ---------------
-  //
-  // The manifest suite's broken bundle, registered under the right name: the defects the
-  // mismatch masked become visible, which is why an audit fixes the name first.
 
   const items = workspace.validateProject(
     "filter",
@@ -44,8 +43,8 @@ export default ({ workspace, check }) => {
       pkg: manifestFor("filter", "FixtureFilter", {
         scopes: ["ContextMenu", "MainButton", "InfoPanel"],
       }),
-      bundle: multiScopePlugin({ registerAs: "FixtureFilter" }),
-      src: multiScopeSource({ registerAs: "FixtureFilter" }),
+      bundle: multiScopePlugin(),
+      src: multiScopeSource(),
     },
     "--invoke",
   );
@@ -76,10 +75,9 @@ export default ({ workspace, check }) => {
   const values = workspace.validateProject("values", {
     pkg: manifestFor("values", "FixtureValues"),
     bundle: contextMenuPlugin({
-      pluginName: "FixtureValues",
       filters: `usersTypes: ["admin"], devices: ["phone"]`,
     }),
-    src: contextMenuSource({ pluginName: "FixtureValues" }),
+    src: contextMenuSource(),
   });
 
   check(
@@ -88,6 +86,75 @@ export default ({ workspace, check }) => {
     "the enum keys are camelCase but the host matches the PascalCase values",
   );
   check("a devices value outside the enum is an error", values.mentions('contains "phone"'));
+
+  // --- bulk actions: the group form is a different item ------------------------
+
+  const groupOnly = workspace.validateProject(
+    "group-action",
+    {
+      pkg: manifestFor("group-action", "FixtureGroup", { scopes: ["ContextMenu"] }),
+      bundle: groupActionPlugin({ isGroupAction: true }),
+      src: contextMenuSource(),
+    },
+    "--invoke",
+  );
+
+  check(
+    "a group action with only onGroupClick is accepted",
+    !groupOnly.errorsMention("onItemClick"),
+    groupOnly.errorSummary,
+  );
+
+  const groupUnmarked = workspace.validateProject(
+    "group-unmarked",
+    {
+      pkg: manifestFor("group-unmarked", "FixtureUnmarked", { scopes: ["ContextMenu"] }),
+      bundle: groupActionPlugin({ isGroupAction: false }),
+      src: contextMenuSource(),
+    },
+    "--invoke",
+  );
+
+  check(
+    "onGroupClick without isGroupAction is an error, since the host calls onItemClick",
+    groupUnmarked.errorsMention("not marked isGroupAction"),
+    groupUnmarked.errorSummary,
+  );
+
+  // --- React surfaces: component or body, never neither --------------------------
+
+  const react = workspace.validateProject("react-items", {
+    pkg: manifestFor("react", "FixtureReact", { scopes: ["InfoPanel", "ArticleNavigation"] }),
+    bundle: reactItemsPlugin(),
+    src: `getInfoPanelItems(); getArticleNavigationItems(); const item = { icon: "logo.svg" }; export default plugin;`,
+  });
+
+  check(
+    "an item with a React component and no body passes the shape check",
+    !react.hasFindingMentioning('"fixture-react-good"'),
+    react.messageSummary,
+  );
+  check(
+    "a JSX element where a component is expected is an error",
+    react.errorsMention('"fixture-react-element" component is a JSX element'),
+    react.messageSummary,
+  );
+  check(
+    "the deprecated body and onLoad are warnings, and the tree is not walked",
+    react.warningCodes.includes("deprecated") &&
+      react.hasFindingMentioning('"fixture-react-legacy"', "body") &&
+      react.hasFindingMentioning('"fixture-react-legacy"', "onLoad"),
+    react.messageSummary,
+  );
+  check(
+    "an item with neither component nor body is an error",
+    react.errorsMention('"fixture-react-empty" has neither component nor body'),
+  );
+  check(
+    "an appears value outside Section is an error",
+    react.errorsMention('appears contains "Dashboard"'),
+    react.messageSummary,
+  );
 
   // --- callbacks get the argument the host would pass --------------------------
   //
@@ -98,8 +165,8 @@ export default ({ workspace, check }) => {
     "file",
     {
       pkg: manifestFor("file", "FixtureFile", { scopes: ["File"] }),
-      bundle: filePlugin({ pluginName: "FixtureFile" }),
-      src: scopeSource({ pluginName: "FixtureFile", adder: "addFileItem", getter: "getFileItems" }),
+      bundle: filePlugin(),
+      src: scopeSource({ adder: "addFileItem", getter: "getFileItems" }),
     },
     "--invoke",
   );
@@ -117,10 +184,9 @@ export default ({ workspace, check }) => {
     {
       pkg: manifestFor("action", "FixtureAction"),
       bundle: contextMenuPlugin({
-        pluginName: "FixtureAction",
         click: `return { actions: ["showToast"], toastProps: [{ type: "success", title: "done" }] };`,
       }),
-      src: contextMenuSource({ pluginName: "FixtureAction" }),
+      src: contextMenuSource(),
     },
     "--invoke",
   );
@@ -129,5 +195,29 @@ export default ({ workspace, check }) => {
     "an action given as the enum key is an error",
     !action.ok && action.hasFindingMentioning('"showToast"', 'the value is "show-toast"'),
     action.messageSummary,
+  );
+
+  // --- a hook called from a class-side callback ---------------------------------
+  //
+  // A context menu click has no runtime context; the hooks only work inside the component
+  // DocSpace renders. The finding has to say that rather than "threw".
+
+  const hookInCallback = workspace.validateProject(
+    "hook-in-callback",
+    {
+      pkg: manifestFor("hook", "FixtureHook"),
+      bundle: contextMenuPlugin({
+        click: `const { showToast } = usePluginActions(); showToast({ type: "success", title: "x" });`,
+      }),
+      src: contextMenuSource(),
+    },
+    "--invoke",
+  );
+
+  check(
+    "a hook called from a callback is an error that names the fix",
+    hookInCallback.errorCodes.includes("message") &&
+      hookInCallback.mentions("A class-side callback has no runtime context"),
+    hookInCallback.messageSummary,
   );
 };

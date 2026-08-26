@@ -15,9 +15,8 @@
  */
 
 /*
- * What a check produces, and how a check is wired up. Every finding carries a level, a
- * code and a sentence saying what the *user* would observe; the codes are the report's
- * contract, read by test-validator.mjs and the grader. README.md defines the levels.
+ * A finding carries a level, a code and a sentence saying what the *user* would observe.
+ * Codes and message phrases are what test-validator.mjs asserts on. README.md defines the levels.
  */
 
 export class Findings {
@@ -56,18 +55,8 @@ export class Findings {
   }
 }
 
-/**
- * Base for a group of checks: subclasses get the project, the findings to write into and
- * the options, and implement run(). Nothing else is shared.
- */
+/** Base for a group of checks: the project, the findings to write into, the options. */
 export class Check {
-  /**
-   * @param {{
-   *   project: import("./plugin-project.mjs").PluginProject,
-   *   findings: Findings,
-   *   options: { runtime: boolean, invoke: boolean },
-   * }} context
-   */
   constructor({ project, findings, options }) {
     this.project = project;
     this.findings = findings;
@@ -84,9 +73,5 @@ export class Check {
 
   info(code, message) {
     this.findings.info(code, message);
-  }
-
-  async run() {
-    throw new Error(`${this.constructor.name} does not implement run()`);
   }
 }

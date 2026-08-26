@@ -15,84 +15,102 @@
  */
 
 /*
- * The shapes the host reads at runtime - items, returned messages, component trees - all
- * checked against real values from the sandbox, in one class because a modal from a click
- * and a body registered at load time are the same shapes. README.md explains the levels.
+ * The shapes the host reads at runtime - items, returned messages, the React components they
+ * carry - checked against real values from the imported bundle. Deprecated declarative fields
+ * are recognised and warned about, not walked.
  */
 
 import {
   ACTION_PAYLOAD,
-  COMPONENT_PROPS,
   DEVICES,
   EVENT_TYPES,
   KNOWN_ACTIONS,
-  RENDERED_BUTTON_SIZES,
-  RENDERED_INPUT_SIZES,
+  SECTIONS,
   USERS_TYPES,
 } from "../contract.mjs";
-
-/** Deep enough for any real tree; a cycle would otherwise recurse forever. */
-const MAX_TREE_DEPTH = 20;
+import { Check } from "./findings.mjs";
 
 /** `Actions.showModal` is "show-modal": the enum key is the usual mistake. */
 const asActionValue = (key) =>
   `${key}`.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 
-export class ShapeChecks {
-  /**
-   * @param {{
-   *   findings: import("./findings.mjs").Findings,
-   *   project: import("./plugin-project.mjs").PluginProject,
-   * }} context
-   */
-  constructor({ findings, project }) {
-    this.findings = findings;
-    this.project = project;
-  }
+/** A function, or a memo/forwardRef object - never a JSX *element* (`component: <Panel />`). */
+const isReactComponent = (value) =>
+  typeof value === "function" ||
+  (value !== null && typeof value === "object" && "$$typeof" in value && !("props" in value));
 
-  error(code, message) {
-    this.findings.error(code, message);
-  }
+const isReactElement = (value) =>
+  value !== null && typeof value === "object" && "type" in value && "props" in value;
 
-  warn(code, message) {
-    this.findings.warn(code, message);
-  }
-
-  // --- items ----------------------------------------------------------------
-
+export class ShapeChecks extends Check {
   /** One registered item, against the contract of the scope that registered it. */
   item(scope, contract, key, item) {
     const where = `${scope} item "${key}"`;
 
     for (const field of contract.required)
-      if (item[field] === undefined)
-        this.error("item", `${where} has no ${field}`);
+      if (item[field] === undefined) this.error("item", `${where} has no ${field}`);
+
+    if (contract.oneOf) this.#checkOneOf(where, contract.oneOf, item);
+    if (contract.deprecated) this.#checkDeprecatedFields(where, contract, item);
+
+    if (item.component !== undefined) this.#component(where, item.component);
 
     this.#checkFilterFieldName(where, scope, contract, item);
 
-    this.filterValues(where, contract.filter, item[contract.filter]);
-    this.filterValues(where, "devices", item.devices);
+    this.#filterValues(where, contract.filter, item[contract.filter]);
+    this.#filterValues(where, "devices", item.devices);
 
-    // The tab body and the article button body are rendered as-is at load time.
-    this.componentTree(`${where} body`, item.body);
-
-    if (
-      typeof item.icon === "string" &&
-      !this.project.assetNames.includes(item.icon)
-    )
+    if (typeof item.icon === "string" && !this.project.assetNames.includes(item.icon))
       this.error("item", `${where} icon "${item.icon}" is not in assets/`);
 
     this.#checkScopeSpecifics(where, scope, item);
 
-    // A scope keyed by extension has no room for a prefix - the key has to be exactly
-    // the file's own extension, or the click never dispatches.
+    // A scope keyed by extension has no room for a prefix.
     if (contract.key === "key") this.#checkKeyIsNamespaced(where, key);
+  }
+
+  #checkOneOf(where, alternatives, item) {
+    const present = alternatives.filter((field) => item[field] !== undefined);
+
+    if (present.length === 0)
+      this.error(
+        "item",
+        `${where} has neither ${alternatives.join(" nor ")} - the portal has nothing to render for it`,
+      );
+    else if (present.length > 1)
+      this.warn(
+        "item",
+        `${where} has both ${present.join(" and ")} - the portal renders ${present[0]} and ignores the rest`,
+      );
+  }
+
+  #checkDeprecatedFields(where, contract, item) {
+    for (const field of contract.deprecated)
+      if (item[field] !== undefined)
+        this.warn(
+          "deprecated",
+          `${where} uses ${field}, which SDK 3 deprecates - a React component passed as \`component\` replaces it (and loads its own data in a useEffect). The declarative tree is not checked here`,
+        );
+  }
+
+  #component(where, value) {
+    if (isReactComponent(value)) return;
+
+    if (isReactElement(value))
+      this.error(
+        "item",
+        `${where} component is a JSX element (<Something />) - DocSpace expects the component itself (component: Something), which it renders with the plugin runtime in context`,
+      );
+    else
+      this.error(
+        "item",
+        `${where} component is ${typeof value}, not a React component - the portal calls it as a function during render`,
+      );
   }
 
   /** The host reads a different field name per scope; the wrong one is skipped in silence. */
   #checkFilterFieldName(where, scope, contract, item) {
-    const wrongFilter =
-      contract.filter === "usersTypes" ? "usersType" : "usersTypes";
+    const wrongFilter = contract.filter === "usersTypes" ? "usersType" : "usersTypes";
 
     if (item[wrongFilter] !== undefined)
       this.error(
@@ -103,48 +121,53 @@ export class ShapeChecks {
 
   #checkScopeSpecifics(where, scope, item) {
     if (scope === "EventListener" && !EVENT_TYPES.includes(item.eventType))
-      this.error(
-        "item",
-        `${where} eventType "${item.eventType}" is not a known Events value`,
-      );
+      this.error("item", `${where} eventType "${item.eventType}" is not a known Events value`);
 
-    if (
-      scope === "ContextMenu" &&
-      !item.onItemClick &&
-      !item.onClick &&
-      !item.items
-    )
-      this.error(
-        "item",
-        `${where} has neither onItemClick/onClick nor nested items`,
-      );
+    if (scope === "ContextMenu") {
+      // A group item is shown only for a multi-selection and only onGroupClick is called for it.
+      if (item.isGroupAction && !item.onGroupClick)
+        this.error(
+          "item",
+          `${where} is a group action but has no onGroupClick - the host calls nothing else for a multi-selection`,
+        );
 
-    if (
-      scope === "ContextMenu" &&
-      item.items?.some((child) => child.items?.length)
-    )
-      this.warn(
-        "item",
-        `${where} nests deeper than 2 levels - the host caps nesting at maxDepth 2`,
-      );
+      if (!item.isGroupAction && !item.onItemClick && !item.onClick && !item.items)
+        this.error(
+          "item",
+          item.onGroupClick
+            ? `${where} has only onGroupClick but is not marked isGroupAction - the host calls onItemClick for a single selection, so the click does nothing`
+            : `${where} has neither onItemClick/onClick nor nested items`,
+        );
+
+      if (item.items?.some((child) => child.items?.length))
+        this.warn("item", `${where} nests deeper than 2 levels - the host caps nesting at maxDepth 2`);
+    }
+
+    if (scope === "ArticleNavigation" && item.appears !== undefined) {
+      if (!Array.isArray(item.appears))
+        this.error("item", `${where} appears must be an array of Section values`);
+      else
+        for (const section of item.appears)
+          if (!SECTIONS.includes(section))
+            this.error(
+              "item",
+              `${where} appears contains "${section}", which is not a Section value (${SECTIONS.join(", ")}) - the entry is shown in no section at all`,
+            );
+    }
   }
 
   /** Item keys share one host-wide map per scope, across every installed plugin. */
   #checkKeyIsNamespaced(where, key) {
     const pluginSlug = this.project.manifest.name;
 
-    if (
-      pluginSlug &&
-      typeof key === "string" &&
-      !key.toLowerCase().includes(pluginSlug.toLowerCase())
-    )
+    if (pluginSlug && typeof key === "string" && !key.toLowerCase().includes(pluginSlug.toLowerCase()))
       this.warn(
         "item",
         `${where} key is not namespaced - prefix it with "${pluginSlug}-", the manifest's name spelled exactly as it appears there (not pluginName, and not a squashed slug of it). Item keys share one host-wide map per scope, so a generic key collides with another plugin's and one evicts the other`,
       );
   }
 
-  filterValues(where, field, value) {
+  #filterValues(where, field, value) {
     if (value === undefined) return;
 
     if (!Array.isArray(value)) {
@@ -162,25 +185,39 @@ export class ShapeChecks {
         );
   }
 
-  // --- messages -------------------------------------------------------------
+  /** The ISettings object the settings aside renders. */
+  settings(settings) {
+    const where = "the Settings page";
+
+    if (settings.component === undefined && settings.settings === undefined) {
+      this.error(
+        "item",
+        `${where} has neither component nor settings - the settings aside opens on an empty block`,
+      );
+      return;
+    }
+
+    if (settings.component !== undefined) this.#component(where, settings.component);
+
+    for (const field of ["settings", "saveButton", "onLoad"])
+      if (settings[field] !== undefined)
+        this.warn(
+          "deprecated",
+          `${where} uses ${field}, which SDK 3 deprecates - pass a React component as \`component\`; it loads with usePluginSettings().load() and saves through setSaveButton()`,
+        );
+  }
 
   /** An IMessage as a callback returned it: known actions, and their payloads. */
   message(where, message) {
     if (message === undefined || message === null) return;
 
     if (!Array.isArray(message.actions)) {
-      this.warn(
-        "message",
-        `${where} returned a message without an actions array`,
-      );
+      this.warn("message", `${where} returned a message without an actions array`);
       return;
     }
 
-    // Prefer the SDK the project installed - it is the authority on which action strings
-    // exist, and may know ones this tool does not.
-    const validActions = this.project.sdkActions.length
-      ? this.project.sdkActions
-      : KNOWN_ACTIONS;
+    // The installed SDK is the authority on which action strings exist.
+    const validActions = this.project.sdkActions.length ? this.project.sdkActions : KNOWN_ACTIONS;
 
     for (const action of message.actions) {
       if (!validActions.includes(action)) {
@@ -189,9 +226,7 @@ export class ShapeChecks {
         this.error(
           "message",
           `${where} returns action "${action}", which is not an Actions value${
-            validActions.includes(asValue)
-              ? ` - that looks like the enum key; the value is "${asValue}"`
-              : ""
+            validActions.includes(asValue) ? ` - that looks like the enum key; the value is "${asValue}"` : ""
           }. The host matches on the string, so it does nothing`,
         );
         continue;
@@ -205,160 +240,69 @@ export class ShapeChecks {
         );
     }
 
-    if (message.modalDialogProps !== undefined)
-      this.modal(where, message.modalDialogProps);
+    if (message.modalDialogProps !== undefined) this.#modal(where, message.modalDialogProps);
+    if (message.mediaViewerProps !== undefined) this.#mediaViewer(where, message.mediaViewerProps);
   }
 
-  /** IModalDialog has two mandatory callbacks that are easy to leave out. */
-  modal(where, modal) {
+  /** IModalDialog: a React body via dialogBodyComponent, or the deprecated dialogBody - never neither. */
+  #modal(where, modal) {
     if (!modal || typeof modal !== "object") return;
 
-    if (typeof modal.onLoad !== "function")
+    const hasComponent = modal.dialogBodyComponent !== undefined;
+    const hasBody = modal.dialogBody !== undefined;
+
+    if (!hasComponent && !hasBody) {
       this.error(
         "message",
-        `${where} opens a modal whose onLoad is not a function - IModalDialog.onLoad is required even when there is nothing async to do; return the body you already built`,
+        `${where} opens a modal with neither dialogBodyComponent nor dialogBody - the dialog opens empty`,
       );
+      return;
+    }
+
+    if (hasComponent) {
+      this.#component(`${where} modal`, modal.dialogBodyComponent);
+
+      if (hasBody)
+        this.warn(
+          "message",
+          `${where} opens a modal with both dialogBodyComponent and dialogBody - the component wins and the tree is ignored`,
+        );
+
+      if (modal.dialogFooter !== undefined)
+        this.warn(
+          "deprecated",
+          `${where} opens a React modal with a declarative dialogFooter - a React dialog has no footer slot; render the buttons inside dialogBodyComponent`,
+        );
+
+      return;
+    }
+
+    this.warn(
+      "deprecated",
+      `${where} opens a modal with a declarative dialogBody, which SDK 3 deprecates - pass a React component as dialogBodyComponent instead. The tree is not checked here`,
+    );
 
     if (typeof modal.onClose !== "function")
+      this.error("message", `${where} opens a declarative modal without onClose - the close button does nothing`);
+  }
+
+  /** IMediaViewer: a React `component`, or the deprecated `content` box. */
+  #mediaViewer(where, viewer) {
+    if (!viewer || typeof viewer !== "object") return;
+
+    if (viewer.component === undefined && viewer.content === undefined) {
       this.error(
         "message",
-        `${where} opens a modal without onClose - the close button does nothing`,
-      );
-
-    if (modal.dialogBody === undefined)
-      this.error("message", `${where} opens a modal without dialogBody`);
-
-    this.componentTree(`${where} modal body`, modal.dialogBody);
-    this.componentTree(`${where} modal footer`, modal.dialogFooter);
-  }
-
-  // --- component trees ------------------------------------------------------
-
-  /**
-   * Walks a declarative UI tree and checks every node can render. `node` is an IBox or a
-   * {component, props} pair; both nest through `children`.
-   */
-  componentTree(where, node, depth = 0) {
-    if (!node || typeof node !== "object" || depth > MAX_TREE_DEPTH) return;
-
-    if (Array.isArray(node)) {
-      for (const child of node) this.componentTree(where, child, depth + 1);
-      return;
-    }
-
-    // A bare IBox carries its children directly; only a component node has props.
-    if (node.component === undefined) {
-      this.#checkBoxProps(where, node);
-      this.componentTree(where, node.children, depth + 1);
-      return;
-    }
-
-    const required = COMPONENT_PROPS[node.component];
-
-    if (required === undefined) {
-      this.error(
-        "component",
-        `${where} uses component "${node.component}", which the host cannot render (known: ${Object.keys(COMPONENT_PROPS).join(", ")})`,
+        `${where} opens the media viewer with neither component nor content - it opens on nothing`,
       );
       return;
     }
 
-    for (const prop of required)
-      if (node.props?.[prop] === undefined)
-        this.error(
-          "component",
-          `${where} has a ${node.component} without ${prop} - nothing wraps the plugin tree in an error boundary, so this throws during render and replaces the whole portal with an error screen`,
-        );
-
-    this.#checkVisuals(where, node);
-
-    this.componentTree(where, node.props?.children, depth + 1);
-  }
-
-  /**
-   * Values that compile against the SDK and then render wrong on the portal. They mostly
-   * do not crash - the plugin ships and the control is collapsed, blank or mismatched.
-   */
-  #checkVisuals(where, node) {
-    const props = node.props ?? {};
-
-    if (
-      node.component === "button" &&
-      typeof props.size === "string" &&
-      !RENDERED_BUTTON_SIZES.includes(props.size)
-    )
+    if (viewer.component !== undefined) this.#component(`${where} media viewer`, viewer.component);
+    else
       this.warn(
-        "component",
-        `${where} button size "${props.size}" has no styles on the portal, so the button renders collapsed - sizes that render: ${RENDERED_BUTTON_SIZES.join(", ")} (ButtonSize.extraSmall is the usual culprit: the SDK emits "extra-small", the host only knows "extraSmall")`,
-      );
-
-    if (
-      node.component === "input" &&
-      typeof props.size === "string" &&
-      !RENDERED_INPUT_SIZES.includes(props.size)
-    )
-      this.warn(
-        "component",
-        `${where} input size "${props.size}" has no styles on the portal, so the field renders collapsed - sizes that render: ${RENDERED_INPUT_SIZES.join(", ")} (InputSize.big and InputSize.huge compile and are dead)`,
-      );
-
-    if (node.component === "comboBox") this.#checkComboBox(where, props);
-
-    if (node.component === "box") this.#checkBoxProps(where, props);
-  }
-
-  #checkComboBox(where, props) {
-    const { options, selectedOption } = props;
-
-    if (options !== undefined && !Array.isArray(options))
-      this.error(
-        "component",
-        `${where} comboBox options must be an array (even when empty) - the host reads options.length during render, and anything else throws and takes the portal down`,
-      );
-
-    if (Array.isArray(options)) {
-      options.forEach((option, index) => {
-        if (!option || typeof option !== "object" || option.key === undefined)
-          this.error(
-            "component",
-            `${where} comboBox option ${index} has no key - the host derives ids from it during render and throws without one`,
-          );
-        else if (option.label === undefined)
-          this.warn(
-            "component",
-            `${where} comboBox option "${String(option.key)}" has no label - the row renders empty`,
-          );
-      });
-
-      // The portal matches the selected option by label, not by key.
-      const labels = options
-        .map((option) => option?.label)
-        .filter((label) => label !== undefined);
-
-      if (new Set(labels).size !== labels.length)
-        this.warn(
-          "component",
-          `${where} comboBox has duplicate option labels - the portal matches the selected option by label, so duplicates grey out and block each other`,
-        );
-    }
-
-    if (
-      selectedOption &&
-      typeof selectedOption === "object" &&
-      (selectedOption.key === undefined || selectedOption.label === undefined)
-    )
-      this.warn(
-        "component",
-        `${where} comboBox selectedOption is missing key or label - the closed control renders blank`,
-      );
-  }
-
-  /** Box props appear both on {component:"box"}.props and directly on bare IBox roots. */
-  #checkBoxProps(where, boxProps) {
-    if (typeof boxProps?.borderProp === "string")
-      this.warn(
-        "component",
-        `${where} box borderProp is a CSS string, which the host silently ignores - use the object form { width, style, color, radius }`,
+        "deprecated",
+        `${where} opens the media viewer with a declarative content box, which SDK 3 deprecates - pass a React component as \`component\`; it reads the file with useCurrentFile()`,
       );
   }
 }

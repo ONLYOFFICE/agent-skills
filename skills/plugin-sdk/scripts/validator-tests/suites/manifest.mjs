@@ -15,9 +15,9 @@
  */
 
 /*
- * The manifest, the assets it points at, and the global the bundle registers under - the
- * cheapest half of the validator, catching the most expensive defect: a name mismatch
- * installs, enables and does nothing, with an empty console.
+ * The manifest, the assets it points at, and how the bundle hands the plugin over - the
+ * cheapest half of the validator, catching the most expensive defect: a bundle without a
+ * default export, or without `runtime: "module"`, installs, enables and does nothing.
  */
 
 import {
@@ -26,7 +26,9 @@ import {
   manifestFor,
   multiScopePlugin,
   multiScopeSource,
-  sourceRegisteringViaConstant,
+  noDefaultExportPlugin,
+  sourceWithWindowPlugins,
+  windowPluginsSource,
 } from "../fixtures.mjs";
 
 export const title = "manifest, assets and registration";
@@ -38,14 +40,14 @@ export default ({ workspace, check }) => {
     "good",
     {
       pkg: manifestFor("good", "FixtureGood"),
-      bundle: contextMenuPlugin({ pluginName: "FixtureGood" }),
-      src: contextMenuSource({ pluginName: "FixtureGood" }),
+      bundle: contextMenuPlugin({}),
+      src: contextMenuSource(),
     },
     "--invoke",
   );
 
   check("valid plugin passes", good.ok, good.errorSummary);
-  check("valid plugin loads in the sandbox", good.runtime.loaded);
+  check("valid plugin loads through its default export", good.runtime.loaded);
   check(
     "valid plugin reports its item count",
     good.runtime.items.ContextMenu === 1,
@@ -64,9 +66,8 @@ export default ({ workspace, check }) => {
         scopes: ["ContextMenu", "MainButton", "InfoPanel", "NotAScope"],
         scripts: { build: "webpack && node ./createZip.js" },
       }),
-      // Registers under the wrong name, which masks everything behind it.
-      bundle: multiScopePlugin({ registerAs: "SomethingElse" }),
-      src: multiScopeSource({ registerAs: "SomethingElse" }),
+      bundle: multiScopePlugin(),
+      src: multiScopeSource(),
     },
     "--invoke",
   );
@@ -76,11 +77,10 @@ export default ({ workspace, check }) => {
   check("unknown scope is an error", bad.mentions('unknown scope "NotAScope"'));
   check("dead createZip build script is an error", bad.errorCodes.includes("pkg.scripts"));
   check("missing logo asset is an error", bad.errorCodes.includes("pkg.logo"));
-  check("react runtime is a warning", bad.warningCodes.includes("pkg.runtime"));
   check(
-    "pluginName mismatch is reported",
-    bad.mentions("window.Plugins.FixtureBad"),
-    "the host merges window.Plugins[pluginName] and silently gets nothing",
+    "a runtime other than module is an error",
+    bad.errorCodes.includes("pkg.runtime") && bad.mentions('"runtime": "react"'),
+    'only "module" is a value the loader knows',
   );
   check("missing icon asset is an error", bad.errorCodes.includes("icon"));
   check(
@@ -89,18 +89,45 @@ export default ({ workspace, check }) => {
     "comments must be stripped before scanning for references",
   );
 
-  // --- registration through a constant ----------------------------------------
+  // --- the SDK 2 shape: window.Plugins, no default export, no runtime ---------------
+  //
+  // The portal imports the bundle and reads `default`. A plugin written against SDK 2
+  // hands nothing over, and without the runtime field its ES module never runs at all.
 
-  const viaConstant = workspace.validateProject("const", {
-    pkg: manifestFor("const", "FixtureConst"),
-    bundle: contextMenuPlugin({ pluginName: "FixtureConst" }),
-    src: sourceRegisteringViaConstant({ pluginName: "FixtureConst" }),
+  const { runtime, ...withoutRuntime } = manifestFor("nodefault", "FixtureNoDefault");
+
+  const sdkTwo = workspace.validateProject("sdk-two", {
+    pkg: withoutRuntime,
+    bundle: noDefaultExportPlugin(),
+    src: windowPluginsSource({ pluginName: "FixtureNoDefault" }),
   });
 
   check(
-    "registration through a constant is accepted",
-    !viaConstant.errorCodes.includes("registration"),
-    viaConstant.errorSummary,
+    "a manifest without runtime is an error that names the fix",
+    sdkTwo.errorCodes.includes("pkg.runtime") && sdkTwo.mentions('"runtime": "module"'),
+    sdkTwo.errorSummary,
+  );
+  check(
+    "a source without export default is an error",
+    sdkTwo.errorCodes.includes("registration") && sdkTwo.mentions("export default"),
+    sdkTwo.errorSummary,
+  );
+  check(
+    "a bundle without a default export is an error",
+    sdkTwo.errorCodes.includes("runtime") && sdkTwo.mentions("no default export"),
+    sdkTwo.messageSummary,
+  );
+
+  const withWindow = workspace.validateProject("with-window", {
+    pkg: manifestFor("window", "FixtureWindow"),
+    bundle: contextMenuPlugin({}),
+    src: sourceWithWindowPlugins({ pluginName: "FixtureWindow" }),
+  });
+
+  check(
+    "window.Plugins next to a default export is a warning, not an error",
+    withWindow.ok && withWindow.warningCodes.includes("registration"),
+    withWindow.errorSummary,
   );
 
   // --- a scope the portal does not know ---------------------------------------
@@ -110,8 +137,8 @@ export default ({ workspace, check }) => {
 
   const unknownScope = workspace.validateProject("nav", {
     pkg: manifestFor("nav", "FixtureNav", { scopes: ["ContextMenu", "Dashboard"] }),
-    bundle: contextMenuPlugin({ pluginName: "FixtureNav" }),
-    src: contextMenuSource({ pluginName: "FixtureNav" }),
+    bundle: contextMenuPlugin({}),
+    src: contextMenuSource(),
   });
 
   check(
@@ -123,6 +150,6 @@ export default ({ workspace, check }) => {
   );
   check(
     "the rejection lists the scopes that are supported",
-    unknownScope.mentions("ContextMenu") && unknownScope.mentions("ArticleButton"),
+    unknownScope.mentions("ContextMenu") && unknownScope.mentions("ArticleNavigation"),
   );
 };

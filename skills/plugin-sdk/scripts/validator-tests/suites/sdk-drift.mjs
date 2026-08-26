@@ -29,8 +29,8 @@ export default ({ workspace, check }) => {
   const withSdk = (slug, pluginName, sdk) => {
     const dir = workspace.write(slug, {
       pkg: manifestFor(slug, pluginName),
-      bundle: contextMenuPlugin({ pluginName }),
-      src: contextMenuSource({ pluginName }),
+      bundle: contextMenuPlugin({}),
+      src: contextMenuSource(),
     });
 
     workspace.installFakeSdk(dir, sdk);
@@ -45,7 +45,7 @@ export default ({ workspace, check }) => {
       .join("\n");
 
   const added = withSdk("drift", "FixtureDrift", {
-    version: "2.1.0",
+    version: "3.0.0",
     extraAction: "show-settings-modal",
     extraUserType: "Guest",
   });
@@ -61,15 +61,23 @@ export default ({ workspace, check }) => {
     added.errorSummary,
   );
 
-  const newMajor = withSdk("drift-major", "FixtureMajor", { version: "3.0.0" });
+  const olderMajor = withSdk("drift-older", "FixtureOlder", { version: "2.1.0" });
 
   check(
-    "an SDK major this tool was not written against is reported",
-    newMajor.hasFindingMentioning("3.0.0") && driftReport(newMajor).includes("3.0.0"),
-    driftReport(newMajor) || "no sdk-drift findings",
+    "an SDK major behind this tool is reported as lacking the React entry",
+    driftReport(olderMajor).includes("2.1.0") && driftReport(olderMajor).includes("no React entry"),
+    driftReport(olderMajor) || "no sdk-drift findings",
   );
 
-  const agreeing = withSdk("drift-agree", "FixtureAgree", { version: "2.1.0" });
+  const newerMajor = withSdk("drift-newer", "FixtureNewer", { version: "4.0.0" });
+
+  check(
+    "an SDK major ahead of this tool is reported",
+    driftReport(newerMajor).includes("4.0.0") && driftReport(newerMajor).includes("ahead of the portal"),
+    driftReport(newerMajor) || "no sdk-drift findings",
+  );
+
+  const agreeing = withSdk("drift-agree", "FixtureAgree", { version: "3.0.0" });
 
   check(
     "an SDK that matches the contract produces no drift noise",

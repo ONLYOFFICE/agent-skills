@@ -15,21 +15,39 @@
  */
 
 /*
- * The built artifacts: dist/plugin.js, dist/plugin.zip and its config.json, plus SDK
- * drift. config.json is where a stale build shows up - the portal reads the archive, not
- * the project - and drift is always a warning, because it is this tool that has aged.
+ * The built artifacts: dist/plugin.js - what it imports and what it bundled -, dist/plugin.zip
+ * and its config.json (where a stale build shows up - the portal reads the archive, not the
+ * project), plus SDK drift, which is always a warning because it is this tool that has aged.
  */
 
-import { PORTAL_LIMITS, SDK_PACKAGE, checkSdkDrift } from "../contract.mjs";
-import { Check } from "./findings.mjs";
+import * as fs from "node:fs";
 
-const megabytes = (bytes) => (bytes / 1e6).toFixed(1);
+import {
+  HOST_PROVIDED_SPECIFIERS,
+  PORTAL_LIMITS,
+  SDK_PACKAGE,
+  UI_KIT_PACKAGE,
+  checkSdkDrift,
+  megabytes,
+} from "../contract.mjs";
+import { Check } from "./findings.mjs";
+import { bareImportsOf, isHostProvided } from "./sandbox.mjs";
+
+/** Text a bundled React leaves in the output, whichever build produced it. */
+const BUNDLED_REACT_MARKERS = [
+  "react.transitional.element",
+  "Symbol.for(\"react.element\")",
+  "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE",
+  "Minified React error",
+];
 
 export class ArchiveChecks extends Check {
+  /** @returns {Promise<{ bundleImportsResolvable: boolean }>} what the runtime pass needs to know */
   async run() {
-    this.#checkBundle();
+    const bundleImportsResolvable = this.#checkBundle();
     this.#checkSdkDrift();
     await this.#checkArchive();
+    return { bundleImportsResolvable };
   }
 
   #checkBundle() {
@@ -37,20 +55,60 @@ export class ArchiveChecks extends Check {
 
     if (!project.isBuilt) {
       this.warn("dist", "dist/plugin.js is missing - run the build before validating the archive");
-      return;
+      return true;
     }
 
-    const bytes = project.fileSize(project.bundlePath);
+    const bytes = fs.statSync(project.bundlePath).size;
     if (bytes > PORTAL_LIMITS.maxFileBytes)
-      this.error("dist", `dist/plugin.js is ${megabytes(bytes)} MB, limit is 5 MB`);
+      this.error("dist", `dist/plugin.js is ${megabytes(bytes)} MB, limit is ${PORTAL_LIMITS.maxFileLabel}`);
+
+    return this.#checkBundleImports(fs.readFileSync(project.bundlePath, "utf8"));
+  }
+
+  /** The same judgement the portal makes, so the finding matches what its console would say. */
+  #checkBundleImports(code) {
+    const imports = bareImportsOf(code);
+    const unresolvable = imports.filter((specifier) => !isHostProvided(specifier));
+
+    for (const specifier of unresolvable) {
+      if (specifier.startsWith(`${UI_KIT_PACKAGE}/`))
+        this.error(
+          "dist",
+          `dist/plugin.js imports "${specifier}" - the portal provides the kit as a single entry point and refuses a subpath; import from "${UI_KIT_PACKAGE}" instead`,
+        );
+      else if (specifier === SDK_PACKAGE)
+        this.error(
+          "dist",
+          `dist/plugin.js imports "${SDK_PACKAGE}" - the SDK root has to be bundled (only its /react entry is host-provided); remove it from rollupOptions.external`,
+        );
+      else
+        this.error(
+          "dist",
+          `dist/plugin.js imports "${specifier}", which DocSpace does not provide - drop it from "external" in the build config so it is bundled into plugin.js. DocSpace provides: ${HOST_PROVIDED_SPECIFIERS.map((s) => `"${s}"`).join(", ")}`,
+        );
+    }
+
+    if (BUNDLED_REACT_MARKERS.some((marker) => code.includes(marker)))
+      this.error(
+        "dist",
+        `dist/plugin.js contains a copy of React - a second React instance has its own contexts, so every SDK hook throws inside the portal's error boundary and the plugin's panels render blank; keep react, react-dom and react/jsx-runtime in rollupOptions.external`,
+      );
+
+    if (!imports.includes("react/jsx-runtime") && !imports.includes("react") && /\bcomponent\s*:/.test(code) === false)
+      this.info(
+        "dist",
+        "dist/plugin.js imports neither react nor react/jsx-runtime - fine for a plugin with no visible surface, unexpected for one that renders components",
+      );
+
+    return unresolvable.length === 0;
   }
 
   #checkSdkDrift() {
     const { project } = this;
 
     if (project.sdk) {
-      for (const { code, message } of checkSdkDrift(project.sdk, project.sdkVersion))
-        this.warn(code, message);
+      for (const message of checkSdkDrift(project.sdk, project.sdkVersion))
+        this.warn("sdk-drift", message);
     } else if (project.hasNodeModules) {
       this.warn(
         "sdk-drift",
@@ -62,15 +120,15 @@ export class ArchiveChecks extends Check {
   async #checkArchive() {
     const { project } = this;
 
-    if (!project.exists(project.zipPath)) {
+    if (!fs.existsSync(project.zipPath)) {
       if (project.isBuilt)
-        this.warn("zip", "dist/plugin.zip is missing - webpack ran but the packer did not");
+        this.warn("zip", "dist/plugin.zip is missing - the bundler ran but the packer did not");
       return;
     }
 
-    const bytes = project.fileSize(project.zipPath);
+    const bytes = fs.statSync(project.zipPath).size;
     if (bytes > PORTAL_LIMITS.maxFileBytes)
-      this.error("zip", `dist/plugin.zip is ${megabytes(bytes)} MB, limit is 5 MB`);
+      this.error("zip", `dist/plugin.zip is ${megabytes(bytes)} MB, limit is ${PORTAL_LIMITS.maxFileLabel}`);
 
     const JSZip = await project.loadJsZip();
 
@@ -79,7 +137,7 @@ export class ArchiveChecks extends Check {
       return;
     }
 
-    const zip = await JSZip.loadAsync(project.readFile(project.zipPath));
+    const zip = await JSZip.loadAsync(fs.readFileSync(project.zipPath));
     const names = Object.keys(zip.files).filter((name) => !zip.files[name].dir);
 
     if (!names.includes("plugin.js")) this.error("zip", "plugin.js is missing from the archive");
@@ -113,6 +171,9 @@ export class ArchiveChecks extends Check {
     expect("version", config.version, manifest.version ?? "");
     expect("scopes", config.scopes, scopes.join(","));
     expect("image", config.image, manifest.logo ?? "");
+    // The loader reads runtime from config.json, so a packer that predates the field
+    // silently turns the module into a classic script.
+    expect("runtime", config.runtime, manifest.runtime);
 
     if (!config.minDocSpaceVersion)
       this.error(

@@ -1,43 +1,41 @@
 # Item shapes per scope
 
-What goes into each scope's map, and what the portal actually does with it — where the item renders, what the callback receives, which fields are read when. Verified against the client this skill targets.
+What goes into each scope's map and what the portal does with it — where the item renders, what the callback receives, which fields are read when. Field types are in the SDK's `.d.ts`; this records the host's behaviour. The user-type filter field differs per scope and is repeated in every table on purpose.
 
-The user-type filter field differs per scope and is the single most common mistake — it is repeated in every table below rather than stated once, because that is where it gets missed.
+Where an item has a visible surface it is a React component passed as `component` ([react.md](react.md)); the SDK 2 `body`/`onLoad` pairs still render, marked deprecated.
 
 ## ContextMenu
 
 | Field | Required | Notes |
 |---|---|---|
-| `key` | ✔ | prefix with the manifest's `name`, spelled exactly as it appears there — the map is portal-wide |
-| `label` | ✔ | |
-| `icon` | ✔ | file name only, 16×16; recolored only where shapes carry explicit `fill` attributes (see [ui-components.md](ui-components.md#the-portals-visual-language)) |
-| `onItemClick` | | `(id: string \| number) => IMessage` — the id of the clicked file/folder/room. Prefer this over the deprecated `onClick` |
-| `onGroupClick` | | `(items: GroupItem[]) => IMessage`, where `GroupItem` is `{ id, itemType: "file" \| "folder" \| "room" }` |
-| `isGroupAction` | | `true` → the item shows only in the **multi-selection** menu, and only when *every* selected entity passes the item's filters; it is hidden for single selection, and `onItemClick`/`onClick` are then never called, so supporting both modes means registering **two items**, one plain and one group. This is the portal's surface for bulk actions — with `fileType: [FilesType.room]` the ticked rooms arrive in `onGroupClick` |
-| `withActiveItem` | | `true` → the selected rows show the portal's "operation in progress" state while your handler runs |
-| `items` | | submenu, max depth 2. **A parent with `items` is never clickable** — its own handlers are ignored. If every child is filtered out, the parent disappears |
+| `key` | ✔ | prefix with the manifest's `name`, verbatim — the map is portal-wide |
+| `label`, `icon` | ✔ | icon: file name only, 16×16 |
+| `onItemClick` | | `(id) => IMessage` — the clicked file/folder/room id. Supersedes the deprecated `onClick` |
+| `onGroupClick` | | `(items: { id, itemType: "file" \| "folder" \| "room" }[]) => IMessage` |
+| `isGroupAction` | | `true` → shows only in the **multi-selection** menu, and only when every selected entity passes the filters; `onItemClick` is then never called. Supporting both modes = **two items**, one plain and one group. This is the portal's surface for bulk actions |
+| `withActiveItem` | | selected rows show the "operation in progress" state while the handler runs |
+| `items` | | submenu, max depth 2. A parent with `items` is never clickable; if every child is filtered out the parent disappears |
 | `fileType` | | `FilesType[]` — `room`, `file`, `folder`, `image`, `video` |
-| `fileExt` | | matched only when the clicked thing has an extension (`file`/`image`/`video`); include the dot |
-| `itemId` | | `(number \| string)[]` — restrict to specific entities by id |
-| `usersTypes` | | **plural** for this scope |
+| `fileExt` | | matched only when the clicked thing has an extension; include the dot |
+| `itemId` | | restrict to specific entity ids |
+| `usersTypes` | | **plural** |
 | `devices` | | |
-| `security` | | every listed `Security` key must be allowed on the **parent folder/room** |
-| `itemSecurity` | | every listed key must be allowed on the **clicked item itself** |
-| `placement` | | `"top"` → first entry; `"topLast"` → just before the first separator; not allowed on nested items |
+| `security` / `itemSecurity` | | every listed `Security` key must be allowed on the **parent folder/room** / on the **clicked item** |
+| `placement` | | `"top"` → first entry; `"topLast"` → before the first separator; not on nested items |
 
-Where it lands: without `placement`, plugin items go into the menu's **"More options" group** behind a separator, in registration order (there is no sorting). Filters are evaluated when the menu opens, not at registration, so role and security changes apply live. Items never show in Trash. Files whose type is `image`/`video` also surface the item in the **media viewer's** context menu.
+Without `placement`, plugin items land in the menu's **"More options"** group behind a separator, in registration order. Filters are evaluated when the menu opens. Items never show in Trash; for `image`/`video` they also appear in the media viewer's menu. A click that needs UI returns `showModal` with a `dialogBodyComponent` — which gets **no current file**; pass the id yourself.
 
 ## MainButton
 
 | Field | Required | Notes |
 |---|---|---|
 | `key`, `label`, `icon` | ✔ | icon 16×16 |
-| `onItemClick` | | `(id: number \| string) => IMessage` — the id of the **current folder** |
-| `items` | | one level of sub-items; defining it disables the parent's own click |
-| `usersType` | | **singular** for this scope |
+| `onItemClick` | | `(id) => IMessage` — the **current folder** id |
+| `items` | | one level of sub-items; disables the parent's own click |
+| `usersType` | | **singular** |
 | `devices` | | |
 
-Where it lands: plugin entries are **not top-level**. The portal groups them all under a single **"More"** sub-entry of the main button (and of the section "+" menu), at a fixed position after the standard create actions. The click handler does nothing when there is no current folder id — on views without a folder context the item is effectively inert.
+Plugin entries are grouped under a single **"More"** sub-entry of the main button and the section "+" menu, after the standard create actions. Inert on views without a folder context. This is the surface for "create a new …"; an action on existing things belongs in `ContextMenu`.
 
 ## ProfileMenu
 
@@ -48,23 +46,25 @@ Where it lands: plugin entries are **not top-level**. The portal groups them all
 | `usersType` | | **singular** |
 | `devices` | | |
 
-Portal quirk: the host also reads a `position` field this scope's SDK type does not declare — it is used verbatim as an index into the profile menu's action array (separators included), appending when out of range. Without it the item lands at the end. Use it only via a cast and only if placement genuinely matters.
+The menu renders the item and nothing else — there is no canvas here, so whatever the feature shows comes from what `onClick` returns: `showModal` for a form, an aside for a list, or `navigate` to an `ArticleNavigation` page of your own for a whole screen. Nothing about the scope restricts it to the viewer's own data; it is simply the entry point that lives in the profile menu, and it is a normal pairing with a page.
+
+Quirk: the host reads an undeclared `position` field as an index into the profile menu's action array (separators included). Cast if placement genuinely matters.
 
 ## InfoPanel
 
 | Field | Required | Notes |
 |---|---|---|
-| `key` | ✔ | the tab's id becomes `info_plugin-<key>` — which is also what `Actions.openInfoPanel` takes as `infoPanelTab` to open **your own tab** programmatically |
-| `subMenu` | ✔ | `{ name: string; onClick?: (id: number) => IMessage }` — `name` is the tab label; `onClick` fires with the selected entity's id **every time the selection changes**, not on tab click only |
-| `body` | ✔ | `IBox` — the tab content |
-| `onLoad` | | `() => Promise<{ body: IBox }>` — only `body` is read from the result |
-| `isHeaderVisible` | | default `true`; `false` removes the file/room title block above your body |
-| `filesType` | | omit → tab shows for everything; `room` → rooms, `folder` → folders, `file` → files (then `filesExsts` can narrow the extensions) |
-| `filesExsts` | | only honoured when `filesType` includes `file` |
+| `key` | ✔ | the tab id becomes `info_plugin-<key>`; also what `openInfoPanel(key)` takes to open your own tab |
+| `subMenu` | ✔ | `{ name, onClick?: (id) => IMessage }` — `name` is the tab label; `onClick` fires on **every selection change**. A React tab rarely needs it |
+| `component` | ✔* | the tab body; `useCurrentFile()` is the selection, live — fetch in an effect keyed on `file?.id` |
+| `isHeaderVisible` | | default `true`; `false` removes the title block above the component |
+| `filesType` | | omit → everything; `room` / `folder` / `file` (then `filesExsts` narrows) |
+| `filesExsts` | | honoured only when `filesType` includes `file` |
 | `usersTypes` | | **plural** |
 | `devices` | | |
+| `body`, `onLoad` | deprecated | ignored when `component` is present |
 
-Where it lands: after the portal's own tabs (Members/Share, History, Details). The panel body is ~337px of usable width on desktop (360px minus its own padding) and **already scrolls** — do not add `overflowProp` to the tab body, size content naturally. The tab is suppressed for Trash, multi-selection and the root folder.
+\* one of `component` or `body`. Renders after the portal's own tabs; ~337px wide and already scrolls — do not add a scroll container. Suppressed for Trash, multi-selection and the root folder.
 
 ## EventListener
 
@@ -72,56 +72,72 @@ Where it lands: after the portal's own tabs (Members/Share, History, Details). T
 |---|---|---|
 | `key` | ✔ | |
 | `eventType` | ✔ | `Events`: `CREATE`, `RENAME`, `ROOM_CREATE`, `ROOM_EDIT`, `CHANGE_COLUMN`, `CHANGE_USER_TYPE`, `CREATE_PLUGIN_FILE` |
-| `eventHandler` | ✔ | takes **no arguments** |
+| `eventHandler` | ✔ | takes **no arguments** — the handler learns only *that* something happened; fetch the details |
 | `usersTypes` | | **plural** |
 | `devices` | | |
 
-Handlers are subscribed as plain `window` listeners on the event name, for as long as the portal shell is mounted.
+Subscribed as plain `window` listeners. From the returned message only toasts and item updates are honoured — a modal is ignored. No `updateEventListenerItem`: re-add to replace.
 
-**`eventHandler` receives nothing.** The portal does pass the DOM event to its wrapper, but the wrapper calls your handler with no arguments, so the handler learns only *that* something happened. Fetch the details yourself.
-
-This scope also has no `updateEventListenerItem` method — re-add to replace.
+```ts
+eventHandler: async () => ({ actions: [Actions.showToast, Actions.updateArticleNavigationItems], toastProps: [{ type: ToastType.info, title: t("roomCreated") }] })
+```
 
 ## File
 
 | Field | Required | Notes |
 |---|---|---|
-| `extension` | ✔ | also the map key. **Must equal the file's extension including the dot** (`".md"`), because the click dispatch matches the map key against the file's `fileExst`. If two plugins claim it, the last loaded wins |
-| `onClick` | ✔ | `(file: File) => IMessage`, where `File` carries `id`, `title`, `fileExst`, `folderId`, `rootFolderId`, `rootFolderType`, `viewUrl`, `webUrl` |
-| `fileTypeName` | | shown as the Type column value in table view (only where the portal itself has no name for the type) |
-| `fileRowIcon` | | file name in `assets/`. The host uses this **one icon at every size** — rows, table and tiles alike — so ship an SVG that reads at both 32px and 96px |
-| `fileTileIcon` | | accepted and carried all the way onto the file object, **and then never rendered** — dead data |
-| `fileSecurity` | | every listed key must be allowed on the clicked file — checked at click time, inside the host's wrapper |
-| `security` | | same, but against the current folder |
+| `extension` | ✔ | also the map key; **must equal the file's extension with the dot** (`".md"`). Two plugins claiming it → the last loaded wins |
+| `onClick` | ✔ | `(file: File) => IMessage` — `File` carries `id`, `title`, `fileExst`, `folderId`, `rootFolderId`, `rootFolderType`, `viewUrl`, `webUrl` |
+| `fileTypeName` | | the Type column value, where the portal has no name of its own |
+| `fileRowIcon` | | file name in `assets/`; used **at every size** (rows, table, tiles) — ship an SVG |
+| `fileTileIcon` | | carried onto the file object and **never rendered** |
+| `fileSecurity` / `security` | | every listed key must be allowed on the clicked file / the current folder, checked at click time |
 | `usersType` | | **singular** |
-| `devices` | | checked at click time rather than at registration |
+| `devices` | | checked at click time |
 
-Where it fires: clicking the file in the file list, the upload panel and version history all route to your `onClick` instead of the portal's own open action. Ctrl/middle-click opens the file's `viewUrl` directly, bypassing the plugin.
+Clicks in the file list, upload panel and version history route to `onClick`; Ctrl/middle-click opens `viewUrl` directly. Opening "in DocSpace" = `showModal` with a `dialogBodyComponent` (an aside for document-like content) or `showMediaViewer` with a `component`, passing the `File` you were given — neither gets a current file from a class-side click. Creating such files needs `enableExternalExt` ([rest-api.md](rest-api.md#creating-a-file-whose-extension-the-portal-does-not-own)).
 
 ## ArticleButton
 
 | Field | Required | Notes |
 |---|---|---|
 | `key` | ✔ | |
-| `body` | ✔ | `IBox`, rendered into a **hard 32×32 slot with `overflow: hidden`** — anything larger is clipped, text does not fit. In practice the body is a single `iconButton` (size 32) or a 32×32 `img` |
-| `onLoad` | | `() => Promise<{ body: IBox }>` |
+| `component` | ✔* | a **32×32 slot with `overflow: hidden`** — text does not fit; in practice one kit `IconButton size={32}` with its own `onClick` |
+| `usersTypes` | | **plural** |
+| `devices` | | |
+| `body`, `onLoad` | deprecated | |
+
+The slot has no click handler of its own. Rendered in **two** sidebars (article and apps) from the same map; each shows at most **five** buttons across all plugins, in registration order — the sixth is dropped silently. A natural way to *open* something (`navigate("/p/<key>")`, an aside, a selector), a poor place for the thing itself.
+
+```tsx
+const SidebarButton = () => {
+  const { navigate } = usePluginActions();
+  return <IconButton size={32} title={t("openReports")} onClick={() => navigate("/p/my-plugin-reports")}
+                     iconNode={<svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="…" /></svg>} />;
+};
+```
+
+## ArticleNavigation
+
+| Field | Required | Notes |
+|---|---|---|
+| `key` | ✔ | the last URL segment — `/p/<key>`, `/accounts/p/<key>` or `/portal-settings/p/<key>` — so unique across **every installed plugin** |
+| `label` | ✔ | sidebar text; a rename needs `updateArticleNavigationItem` + `updateArticleNavigationItems()` |
+| `icon` | ✔ | file name in `assets/`, 20×20 |
+| `component` | ✔ | the whole page. `useCurrentFile()` is `null`; work from `useCurrentUser()` and `usePluginAPI()` |
+| `appears` | | `Section[]` — `Files`, `Accounts`, `Settings`; the entry shows only in those sidebars and the page is reachable only under their paths. Omit → every section |
 | `usersTypes` | | **plural** |
 | `devices` | | |
 
-The slot itself has no click handler — interactivity comes from what you put inside, so the body's component must carry its own `onClick`. There is no refresh action for this scope in the SDK ([host-behavior.md](host-behavior.md) has the fall-through workaround).
+A first-class entry beside Rooms and Documents; the page is a full section — own route, deep-linkable, the portal's header and sidebar around it, no folder context. An unknown key or a section not in `appears` redirects to the root. The scope for anything that is a **screen**: dashboards, lists, a plugin's own workspace.
 
-The portal renders these items in **two** sidebars — the article sidebar and the apps sidebar — from the same map, so one registered item appears in both. Each surface shows at most **five** buttons across all installed plugins combined, in registration order; the sixth is dropped silently.
+```ts
+export const roomsPageItem = (): IArticleNavigationItem => ({
+  key: "my-plugin-rooms", label: t("rooms.navLabel"), icon: "icon-20.svg", component: RoomsPage, appears: [Section.Files],
+});
+// onLoadCallback: this.addArticleNavigationItem(roomsPageItem());  setLanguage: this.updateArticleNavigationItem(roomsPageItem());
+```
 
 ## Enum values worth having at hand
 
-`UsersType` — keys are camelCase, values PascalCase: `owner: "Owner"`, `docSpaceAdmin: "DocSpaceAdmin"`, `roomAdmin: "RoomAdmin"`, `collaborator: "Collaborator"`, `user: "User"`.
-
-`Devices` — `mobile`, `tablet`, `desktop`.
-
-`FilesType` — `room`, `file`, `folder`, `image`, `video`.
-
-`ToastType` — `success`, `error`, `warning`, `info`.
-
-`PluginLocale` — 33 locales, values like `EN_US = "en-US"`, `RU = "ru"`, `PT_BR = "pt-BR"`, `ZH_CN = "zh-CN"`.
-
-`FilesExst` covers the document, spreadsheet, presentation, media and archive extensions DocSpace knows; a plain string works too when the extension is your own.
+`UsersType` — keys camelCase, values PascalCase: `owner: "Owner"`, `docSpaceAdmin: "DocSpaceAdmin"`, `roomAdmin: "RoomAdmin"`, `collaborator: "Collaborator"`, `user: "User"`. `Devices` — `mobile`, `tablet`, `desktop`. `Section` — `Files`, `Accounts`, `Settings`. `ToastType` — `success`, `error`, `warning`, `info`. `PluginLocale` — 33 locales, values like `"en-US"`, `"ru"`, `"pt-BR"`. `FilesExst` covers the extensions DocSpace knows; a plain string works for your own.

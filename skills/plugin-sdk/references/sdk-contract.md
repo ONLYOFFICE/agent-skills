@@ -1,131 +1,65 @@
 # The plugin class contract
 
-What the class must implement. Signatures are from SDK 2.1.0; the target pair and scope list live in [sdk-target.md](sdk-target.md).
+What the class must implement and how the portal uses it. The interfaces themselves are in the installed SDK's types (`@onlyoffice/docspace-plugin-sdk`); this file records what the types do not say. Components are covered in [react.md](react.md).
 
-The SDK contains no runtime logic — its compiled output is enums and nothing else. Every interface here is a shape the portal expects to find on the object you register; nothing enforces it at build time beyond TypeScript.
+The SDK root contains no runtime logic — enums and types only. Every interface is a shape the portal expects to find on the exported object; nothing enforces it beyond TypeScript.
 
-## IPlugin — always required
+## `IPlugin` — always required
 
-```ts
-interface IPlugin {
-  status: PluginStatus;
-  onLoadCallback: () => Promise<void>;
-  updateStatus(status: PluginStatus): void;
-  getStatus(): PluginStatus;
-  setOnLoadCallback(callback: () => Promise<void>): void;
+`status`, `onLoadCallback`, `updateStatus`, `getStatus`, `setOnLoadCallback`; optional `language`/`setLanguage`/`getLanguage` — implement them if the plugin shows any text.
 
-  // optional, but implement them if the plugin shows any text
-  language?: PluginLocale;
-  setLanguage?: (language: PluginLocale) => void;
-  getLanguage?: () => PluginLocale;
-}
-```
+- `PluginStatus` is `active` or `hide`. `hide` from `getStatus()` stops installation before items or CSS are read — a kill switch, disastrous by accident.
+- Write members as **arrow-function class fields**, not methods: the loader calls them from its own code, so `this` has to be bound.
 
-`PluginStatus` is `active` or `hide`. Returning `hide` from `getStatus()` stops installation before any items or CSS are read — useful for a kill switch, disastrous by accident.
-
-Write members as **arrow-function class fields**, not methods. The loader copies the object by spreading it, which detaches ordinary methods from `this`.
-
-## Per-scope interfaces
-
-### API
-
-Gives the plugin the portal's own base URLs. There is no token — requests ride the user's session cookies, so pass `credentials: "include"`.
-
-```ts
-origin: string; proxy: string; prefix: string;
-setOrigin(o: string): void;  getOrigin(): string;
-setProxy(p: string): void;   getProxy(): string;
-setPrefix(p: string): void;  getPrefix(): string;
-setAPI(origin: string, proxy: string, prefix: string): void;
-getAPI(): { origin: string; proxy: string; prefix: string };
-```
-
-`setAPI` runs before `onLoadCallback`, so the values are ready by the time you need them. See [rest-api.md](rest-api.md) for assembling request URLs.
-
-### Settings
-
-```ts
-adminPluginSettings: ISettings | null;
-setAdminPluginSettings(settings: ISettings | null): void;
-setAdminPluginSettingsValue(settings: string | null): void;   // note: a raw string
-getAdminPluginSettings(): ISettings | null;
-```
-
-Settings are stored as an opaque string — whatever the plugin passed to `saveSettings`. It comes back through `setAdminPluginSettingsValue` **after** installation, so parse it there and defensively: a malformed value must not throw, and `null`/`""` is a normal first-run value. They survive a disable/enable cycle.
-
-```ts
-interface ISettings {
-  settings: IBox;          // the declarative form
-  saveButton: ButtonGroup;
-  isLoading?: boolean;
-  onLoad?: () => Promise<{ settings: IBox; saveButton?: ButtonGroup }>;
-}
-```
-
-The block renders in an **aside panel** opened from Integration → Plugins (never inline on the page), with the plugin's metadata (author, version, status, description) rendered by the portal below your `settings` box — do not duplicate it. The portal also **restyles `saveButton`** into its footer: label becomes the localized "Save", size/primary/scale are forced. What remains yours is `onClick` and the loading flags (`withLoadingAfterClick`, `disableWhileRequestRunning`).
-
-Saving is a message, not a call: return `{ actions: [Actions.saveSettings], settings: JSON.stringify(value) }` from the save button. (`saveSettings` also works from other buttons and menu callbacks, and **throws** from non-button form elements — see [host-behavior.md](host-behavior.md); the save button is where it belongs.)
-
-### PostMessage
-
-For plugins whose UI is a third-party page in an iframe.
-
-```ts
-postMessageCallback: (message: IPostMessageCallbackMessage) => void;
-setPostMessageCallback(cb: IPostMessagePlugin["postMessageCallback"]): void;
-getPostMessageCallback(): IPostMessagePlugin["postMessageCallback"];
-```
-
-The direction is easy to get backwards. The **portal** hands you the callback; you invoke it to ask the portal to do something. Listening to your iframe is your own job, and because plugin code runs inside a hidden iframe, the listener goes on `window.parent`:
-
-```ts
-window.parent.addEventListener("message", (e) => { /* … */ });
-```
-
-`IPostMessageCallbackMessage` accepts a restricted action set — no `updateProps`, `updateContext`, `updateStatus`, `sendPostMessage`, `saveSettings`, or any `update*` variant of selector/dialog/media viewer.
-
-### Item-map scopes
-
-ContextMenu, InfoPanel, MainButton, ProfileMenu, EventListener, File and ArticleButton all follow one shape — a `Map`, an adder, a getter, and usually an updater:
-
-```ts
-contextMenuItems: Map<string, IContextMenuItem>;
-addContextMenuItem(item: IContextMenuItem): void;
-getContextMenuItems(): Map<string, IContextMenuItem>;
-updateContextMenuItem(item: IContextMenuItem): void;
-getContextMenuItemsKeys(): string[];     // ContextMenu only
-```
-
-Substitute the scope name throughout. Two exceptions:
-
-- **EventListener** has no `updateEventListenerItem` — re-add to replace, the map overwrites by key.
-- **File** keys its map by `extension`, not `key`; the adder is `addFileItem` and the getter `getFileItems`.
-
-Item field details are in [items.md](items.md).
-
-## Registration
+## How the portal gets the plugin
 
 ```ts
 const plugin = new MyPlugin();
-
-declare global {
-  interface Window {
-    Plugins: Record<string, unknown>;
-  }
-}
-
-window.Plugins.MyPlugin = plugin || {};
-
 export default plugin;
 ```
 
-The key **must** equal `pluginName` in `package.json`. This is the single most common cause of a plugin that installs and does nothing.
+That is the whole registration for a module plugin (`"runtime": "module"` in `package.json`). No `window.Plugins`, no global declaration — a plugin that still assigns one carries dead code. Two consequences of how the export is used ([portal.md → loading sequence](portal.md#the-loading-sequence)):
 
-`window.Plugins` is created by the portal, not by the plugin — which is also why the bundle cannot run outside DocSpace.
+- **The manifest is `Object.assign`ed onto your object** — `name`, `version`, `scopes`, `url`, `enabled`, `settings`, `image`, `description`, …. A class field with one of those names holds the portal's value by the time `onLoadCallback` runs. Name your own state something else (`config`, `savedSettings`).
+- **It is the same object, not a copy.** Module-scope references to `plugin` inside components stay valid, and `plugin.updateContextMenuItem(...)` from a component reaches the live maps — which is how the `update*Items` actions work from React.
+
+## Per-scope interfaces
+
+**API** (`IApiPlugin`): `setAPI(origin, proxy, prefix)`/`getAPI()` and the per-part accessors. Gives class-side callbacks the portal's base URLs; there is no token — requests ride the session cookies (`credentials: "include"`). `setAPI` runs before `onLoadCallback`. A React component does not need this scope ([rest-api.md](rest-api.md)).
+
+**Settings** (`ISettingsPlugin`): `setAdminPluginSettings({ component: SettingsPage })` in `onLoadCallback` registers the page; the component loads and saves through `usePluginSettings()` ([react.md → Settings client](react.md#the-settings-client)). Stored settings are an opaque **string** delivered to `setAdminPluginSettingsValue` **after** installation and again after every `save()` — for class-side callbacks that need them. Parse defensively: `null`/`""` is a normal first-run value, and a throw there breaks installation. They survive a disable/enable cycle. The page renders in an aside with the plugin's metadata rendered by the portal below your component (do not duplicate it) and a Save/Cancel footer the portal owns.
+
+**PostMessage** (`IPostMessagePlugin`): for plugins whose UI is a third-party page in an iframe. The direction is easy to get backwards — the **portal** hands you `postMessageCallback` via `setPostMessageCallback`; you invoke it to ask the portal to do something. Listening to your iframe is your own `window.addEventListener("message", …)` (a module plugin runs in the portal's window), inside a component effect so it cleans up; check `event.origin`; the origin goes in `cspDomains`. Sending the other way is plain DOM: `(document.getElementById(id) as HTMLIFrameElement).contentWindow?.postMessage(...)`. The callback's message accepts a restricted action set — no `updateProps`, `updateContext`, `updateStatus`, `sendPostMessage`, `saveSettings`, or any `update*` of selector/dialog/media viewer.
+
+**Item-map scopes** — ContextMenu, InfoPanel, MainButton, ProfileMenu, EventListener, File, ArticleButton, ArticleNavigation — share one shape: a `Map`, `add<Scope>Item`, `get<Scope>Items`, `update<Scope>Item` (plus `getContextMenuItemsKeys` for ContextMenu). Two exceptions: **EventListener** has no `update…Item` — re-add to replace; **File** keys its map by `extension`, not `key`. Fields per item are in [items.md](items.md).
+
+## Two kinds of callback
+
+| From | Talk to the portal by | Reach the API by | Know the current file by |
+|---|---|---|---|
+| A class-side callback — `onItemClick`, `onClick`, `eventHandler`, `subMenu.onClick`, create-dialog `onSave` | **returning an `IMessage`** (`{ actions: [Actions.showToast], toastProps: [...] }`) | `fetch` against `getAPI()` (needs the `API` scope) | the `id` or `File` argument it was given |
+| A React component | **calling `usePluginActions()`** | `usePluginAPI()` (no scope) | `useCurrentFile()` |
+
+Hooks throw outside a rendered component. The two worlds meet at `showModal`: a callback returns `{ actions: [Actions.showModal], modalDialogProps: { dialogBodyComponent: Panel } }` and `Panel` is React — but `useCurrentFile()` is `null` there, so pass the clicked id through a module variable or a factory ([react.md](react.md#what-usecurrentfile-returns-where)).
+
+**A class-side callback carries its own error handling — all of them, not just the ones that await.** Nothing wraps these: the portal calls the callback, and if it throws or rejects, the `IMessage` never arrives. The click produces no modal, no navigation and no toast, so the user is told nothing and the item reads as broken. Return an error toast instead of letting anything escape:
+
+```ts
+onItemClick = async (id: number): Promise<IMessage> => {
+  try {
+    …
+    return { actions: [Actions.showModal], modalDialogProps: { … } };
+  } catch (error) {
+    return { actions: [Actions.showToast], toastProps: [{ type: ToastType.error, title: message(error) }] };
+  }
+};
+```
+
+Carry the portal's own words in that toast — the `message` of a `PluginApiError`, the status text of a `fetch` — rather than one house phrase for everything. A plugin's failed request does not move the user anywhere the way the portal's own do, so the toast is the entire diagnosis, both for the person clicking and for whoever they report it to. The same applies inside components, where a throw renders the surface as nothing ([react.md](react.md#errors-loading-language-styling)); a `catch` that discards the reason turns a fixable 403 into "it does not work".
 
 ## Localisation
 
-The portal calls `setLanguage(locale)` when the interface language changes. Labels were captured when items were built, so changing the language means **rebuilding the items**:
+The portal calls `setLanguage(locale)` before `onLoadCallback` and again when the interface language changes. Item labels are captured when items are built, so a language change means **rebuilding the items**:
 
 ```ts
 setLanguage = (language: PluginLocale) => {
@@ -134,14 +68,18 @@ setLanguage = (language: PluginLocale) => {
 };
 ```
 
-This is why item factories should be functions returning a fresh object, never module-level constants.
-
-`nameLocale` and `descriptionLocale` in the manifest are separate — the portal reads those itself for the plugin list.
+Hence item factories are functions returning a fresh object, never module-level constants. Components call `t()` at render time and follow the language on their own. `nameLocale`/`descriptionLocale` in the manifest are separate — the portal reads those for the plugin list.
 
 ## Deprecated — do not use in new code
 
-- `IContextMenuItem.onClick` → use `onItemClick`
-- `IMainButtonItem.onClick` → use `onItemClick`
-- `ISeparatorItem` — deprecated and not exported at all
+Still compile and render (SDK 2 forms), recognised by the validator and warned about:
 
-`IProfileMenuItem.onClick` is **not** deprecated: that scope has no `onItemClick`, and its `onClick` takes no arguments.
+- `IInfoPanelItem.body`/`onLoad`, `IArticleButtonItem.body`/`onLoad`, `IMediaViewer.content`/`onLoad` → `component`
+- `IModalDialog.dialogBody`/`dialogFooter`/`onLoad` → `dialogBodyComponent`
+- `ISettings.settings`/`saveButton`/`onLoad` → `component` + `usePluginSettings().setSaveButton`
+- `IContextMenuItem.onClick`, `IMainButtonItem.onClick` → `onItemClick`
+- `ISeparatorItem` — gone
+- `window.Plugins.<pluginName> = plugin` — replaced by the default export; harmless but dead
+- build script `webpack && node ./scripts/createZip.js` → `vite build && npx build-docspace-plugin`
+
+`IProfileMenuItem.onClick` is **not** deprecated: that scope has no `onItemClick`, and its `onClick` takes no arguments. Reading a plugin that still uses the trees: [sdk-2-plugins.md](sdk-2-plugins.md).
