@@ -91,7 +91,7 @@
         "validate-plugin.mjs --invoke reports zero errors",
         "InfoPanel and ProfileMenu are added to package.json:scopes and implemented in the same change",
         "name stays room-notes and pluginName stays RoomNotes, since the portal keys the installed plugin by them",
-        "version is bumped above 1.2.0, without which the portal serves the cached bundle",
+        "version is bumped above the version the project arrived with, without which the portal serves the cached bundle",
         "runtime stays module and the project keeps its Vite config and default export",
         "the existing room-notes-edit context menu item is still registered and still works",
         "the project is edited in place rather than regenerated - locales.ts and NoteModal.tsx survive, labels go through t()",

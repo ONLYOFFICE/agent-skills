@@ -28,6 +28,19 @@ run the evals for skills/plugin-sdk, iteration-4
 
 It spawns two runs per scenario under `<workspace>/iteration-N/eval-<id>/{with_skill,without_skill}/`, grades each against the scenario's `assertions` and opens a viewer. Run the prompts **verbatim** — checks that read chosen words are English-only. Use `without_skill` as the baseline, not `old_skill`.
 
+### Names and versions, so runs can sit on one portal together
+
+The interesting failures only show up on a real portal, and a portal keys an installed plugin by `name` and caches its bundle and icons by `version`. Two runs that pick the same name cannot be installed side by side, and a re-upload that reuses a version serves the old bundle — so the harness fixes both before the run starts:
+
+| | `name` / `pluginName` | `version` |
+|---|---|---|
+| with-skill run | ends in `-skill` / `Skill` | `<N>.0.0` for iteration N |
+| baseline run | no suffix | `<N>.0.0` |
+
+`pluginName` has to stay a JS identifier, so the suffix there is `Skill`, not `-skill`. Both go in the run's instructions, not in the scenario prompt — the prompt is the user's words and stays identical in both arms.
+
+**Scenario 2 is the exception on the name.** It starts from an installed plugin, one assertion pins that the name and `pluginName` survive the change, and the fixture's own item keys are built from the name — renaming it would change what the scenario tests. So its arms are told apart by version alone: set the fixture copy's `version` to `<N>.2.0` before handing it over and let the run bump it as it would anyway. Only one of its two arms can be on a portal at a time.
+
 The model is not deterministic; one run is one sample. For the scenario a change was meant to affect, give a variant several run directories (`with_skill`, `with_skill-2`, …) and compare the spread before reading one changed check as a regression. Baselines are reusable across iterations while the prompt and model are unchanged — copy them forward. Run only the scenarios a change could touch.
 
 ## Adding one
