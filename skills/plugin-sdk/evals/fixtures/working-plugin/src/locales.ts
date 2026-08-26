@@ -26,6 +26,7 @@ export type TStrings = {
   "note.placeholder": string;
   "note.save": string;
   "note.saved": string;
+  "note.cancel": string;
 };
 
 const en: TStrings = {
@@ -34,6 +35,7 @@ const en: TStrings = {
   "note.placeholder": "Anything the next person should know",
   "note.save": "Save",
   "note.saved": "Note saved",
+  "note.cancel": "Cancel",
 };
 
 const de: TStrings = {
@@ -42,6 +44,7 @@ const de: TStrings = {
   "note.placeholder": "Was der Nächste wissen sollte",
   "note.save": "Speichern",
   "note.saved": "Notiz gespeichert",
+  "note.cancel": "Abbrechen",
 };
 
 const translations: Partial<Record<string, TStrings>> = {

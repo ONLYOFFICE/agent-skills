@@ -8,67 +8,25 @@
  * implemented in the same breath or it does nothing at all.
  *
  * It registers one context menu item on rooms, which opens a modal holding a
- * note. The note lives in memory - there is no backend, and the eval is not
- * about persistence.
+ * note. The modal is a React component (NoteModal.tsx); the note lives in
+ * memory - there is no backend, and the eval is not about persistence.
  */
 
 import {
   Actions,
-  ButtonSize,
-  Components,
   FilesType,
-  IBox,
   IContextMenuItem,
   IContextMenuPlugin,
-  IPlugin,
   IMessage,
+  IPlugin,
   ModalDisplayType,
   PluginLocale,
   PluginStatus,
-  ToastType,
   UsersType,
 } from "@onlyoffice/docspace-plugin-sdk";
 
 import { currentLocale, setLocale, t } from "./locales";
-
-const notes = new Map<string, string>();
-
-let draft = "";
-
-const noteBody = (roomId: string): IBox => ({
-  displayProp: "flex",
-  flexDirection: "column",
-  paddingProp: "16px",
-  children: [
-    {
-      component: Components.textArea,
-      props: {
-        value: notes.get(roomId) ?? "",
-        placeholder: t("note.placeholder"),
-        onChange: (value: string) => {
-          draft = value;
-        },
-      },
-    },
-    {
-      component: Components.button,
-      props: {
-        label: t("note.save"),
-        size: ButtonSize.normal,
-        primary: true,
-        scale: true,
-        onClick: (): IMessage => {
-          notes.set(roomId, draft);
-
-          return {
-            actions: [Actions.showToast, Actions.closeModal],
-            toastProps: [{ type: ToastType.success, title: t("note.saved") }],
-          };
-        },
-      },
-    },
-  ],
-});
+import { NoteModal, setTargetRoom } from "./NoteModal";
 
 const editNoteItem = (): IContextMenuItem => ({
   key: "room-notes-edit",
@@ -76,18 +34,17 @@ const editNoteItem = (): IContextMenuItem => ({
   icon: "icon-16.svg",
   fileType: [FilesType.room],
   usersTypes: [UsersType.owner, UsersType.docSpaceAdmin, UsersType.roomAdmin],
-  onItemClick: async (id: string | number): Promise<IMessage> => {
-    const roomId = String(id);
-    draft = notes.get(roomId) ?? "";
+  onItemClick: (id: string | number): IMessage => {
+    // The modal gets no current file from a menu click, so the id is handed over here.
+    setTargetRoom(String(id));
 
     return {
       actions: [Actions.showModal],
       modalDialogProps: {
         displayType: ModalDisplayType.modal,
         dialogHeader: t("note.title"),
-        dialogBody: noteBody(roomId),
-        onClose: () => ({ actions: [Actions.closeModal] }),
-        onLoad: async () => ({ newDialogBody: noteBody(roomId) }),
+        dialogBodyComponent: NoteModal,
+        autoMaxHeight: true,
       },
     };
   },
@@ -133,13 +90,5 @@ class RoomNotes implements IPlugin, IContextMenuPlugin {
 }
 
 const plugin = new RoomNotes();
-
-declare global {
-  interface Window {
-    Plugins: Record<string, unknown>;
-  }
-}
-
-window.Plugins.RoomNotes = plugin || {};
 
 export default plugin;
