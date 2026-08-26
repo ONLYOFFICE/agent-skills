@@ -81,7 +81,7 @@ const KNOWN_KEYS = [
   // forms
   "destination", "libraryId", "headerOffset", "headerHeight",
   // chat
-  "agentId", "fileId", "chatId",
+  "agentId", "entityId", "fileId", "threadId",
   // personal
   "personalDestination",
 ];
@@ -109,7 +109,7 @@ const KNOWN_EVENTS = [
 const MODE_REQUIREMENTS = {
   editor: { errors: ["id"] },
   viewer: { errors: ["id"] },
-  chat: { errors: ["agentId"] },
+  chat: {},
   "public-room": { errors: ["requestToken"] },
   uploader: { warnings: ["id"] },
   forms: { warnings: ["id"] },
