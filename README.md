@@ -11,15 +11,15 @@ Two skills today; the repository layout (`skills/<name>/`) is ready for more.
 | Skill | Purpose |
 |---|---|
 | [`embed-sdk`](skills/embed-sdk/SKILL.md) | Embedding DocSpace into web apps with the [Embed SDK](https://api.onlyoffice.com/docspace/javascript-sdk/get-started/) ([`@onlyoffice/docspace-sdk-js`](https://github.com/ONLYOFFICE/docspace-sdk-js)): mode selection, `TFrameConfig`, authentication (password hash flow, OAuth `getToken`, public room tokens), frame events, instance methods, editor automation, troubleshooting |
-| [`plugin-sdk`](skills/plugin-sdk/SKILL.md) | Building, auditing and explaining DocSpace plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started/) ([`@onlyoffice/docspace-plugin-sdk`](https://github.com/ONLYOFFICE/docspace-plugin-sdk)): the ten scopes, item shapes and filters, actions and payloads, declarative UI, host behaviour, plus offline scripts that scaffold a buildable project and check one against the portal loader contract |
+| [`plugin-sdk`](skills/plugin-sdk/SKILL.md) | Building, auditing and explaining DocSpace plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started/) ([`@onlyoffice/docspace-plugin-sdk`](https://github.com/ONLYOFFICE/docspace-plugin-sdk)): React components built from the portal's `@docspace/ui-kit`, the plugin runtime hooks, the eleven scopes, item shapes and filters, actions and payloads, host behaviour, plus offline scripts that scaffold a buildable Vite project and check one against the portal loader contract |
 
-`embed-sdk` targets **SDK 2.2.0**; `plugin-sdk` targets **SDK 2.1.0 with DocSpace 4.0**.
+`embed-sdk` targets **SDK 2.2.0**; `plugin-sdk` targets **SDK 3.0.0 with DocSpace 4.0**.
 Both follow the router pattern: `SKILL.md` holds the decision tables and critical rules;
 details live in `references/` and are loaded on demand.
 
 Effectiveness is measured, not assumed. The A/B protocol in [`evals/`](evals/README.md)
 compares the same `embed-sdk` integration task with and without the skill against a
-39-checkpoint rubric; `plugin-sdk` carries its own graded scenarios and grader in
+39-checkpoint rubric; `plugin-sdk` carries three graded scenarios in
 [`skills/plugin-sdk/evals/`](skills/plugin-sdk/evals/README.md). Run them after
 substantial content changes.
 
@@ -62,10 +62,11 @@ skills/embed-sdk/
     └── validate-config.mjs    offline TFrameConfig validator
 skills/plugin-sdk/
 ├── SKILL.md             router: build / audit / explain, scope tables, critical rules
-├── references/          SDK contract, item shapes, UI, host behaviour, REST API, recipes
+├── references/          SDK target and contract, React runtime, UI kit, item shapes, host behaviour, REST API, reading SDK 2 plugins
 ├── scripts/             generate-plugin, validate-plugin, test-validator + contract.mjs
-├── templates/           build configs for generated projects
-└── evals/               graded scenarios, fixture plugins and a grader
+├── templates/           Vite/TS config for generated projects
+├── vendor/              packed @docspace/ui-kit (+ the tarballs it needs), copied into every generated project
+└── evals/               graded scenarios and the fixture plugin one of them starts from
 evals/                   A/B evaluation protocol for embed-sdk (task, rubric, operator guide)
 ```
 
@@ -76,7 +77,9 @@ evals/                   A/B evaluation protocol for embed-sdk (task, rubric, op
   kept in sync with `src/types` / `src/enums` of the Embed SDK repository — regenerate on
   every SDK release. For `plugin-sdk` the equivalent single source is
   `skills/plugin-sdk/scripts/contract.mjs`, imported by both its generator and its
-  validator; the version pair it targets lives in `references/sdk-target.md`.
+  validator; the version pair it targets lives in `references/scopes.md`. The packed
+  `@docspace/ui-kit` in `skills/plugin-sdk/vendor/` and `references/ui-kit.md` follow the
+  client's `libs/ui-kit` and change together.
 - Validate the plugin before publishing: `claude plugin validate . --strict`.
 - Quality gate: run the A/B protocol in [`evals/`](evals/README.md) after substantial
   content changes.

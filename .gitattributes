@@ -5,3 +5,4 @@
 *.txt text eol=lf
 *.svg text eol=lf
 skills/plugin-sdk/templates/* text eol=lf
+*.tgz binary
