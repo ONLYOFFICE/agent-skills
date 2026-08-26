@@ -78,7 +78,6 @@ The plugin loaded and rendered, and what the user sees is still wrong. They read
 | A form with **no labels**, though every field has `labelText` | `FieldContainer.labelVisible` defaults to `false` |
 | A panel looks **empty**, but clicking in it and typing works | a `Textarea` as a flex item collapses to ~1px — give it a width |
 | A toggle's label is drawn **over the next row** | `ToggleButton` has no intrinsic size and an absolutely positioned label; the wrapper has to reserve the height the label really occupies, not the switch's 20px |
-| The settings form and the portal's **metadata block look welded together** | the aside puts them flush, with no separator for a React `component` — your component owns its bottom spacing ([react.md](react.md#where-components-render)) |
 | A selector opened from a modal is **visible but dead** | two portal surfaces are open at once and the modal's backdrop covers the selector — close one before opening the other ([react.md → Selectors](react.md#selectors)) |
 | Generated markup is **double-spaced** with nothing extra in the DOM | the modal body inherits `white-space: pre-line` |
 | `file.viewUrl` answers **404 while the metadata answers 200** | no content stream until the first write — that 404 is an empty file, and the metadata cannot tell you so ([rest-api.md](rest-api.md#a-files-contents-are-not-part-of-the-api)) |
