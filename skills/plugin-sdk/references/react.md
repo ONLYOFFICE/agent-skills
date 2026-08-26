@@ -15,9 +15,11 @@ The portal wraps the component in the runtime provider and an error boundary and
 | `IArticleButtonItem.component` | a 32×32 slot in the sidebar, `overflow: hidden` | nothing — a single `IconButton size={32}` is what fits |
 | `IModalDialog.dialogBodyComponent` | body of a modal or aside | header from `dialogHeader`, close cross, padding; **no footer slot** |
 | `IMediaViewer.component` | the media viewer's content area | the viewer's chrome, full screen |
-| `ISettings.component` | the plugin's settings aside | header, the plugin's metadata below your component, a Save/Cancel footer |
+| `ISettings.component` | the plugin's settings aside | header, the plugin's metadata below your component, a Save/Cancel footer — see below |
 
 `component` is the component itself, never an element (`component: Panel`, not `<Panel />`). Components receive **no props** — everything comes from hooks, module scope or closures.
+
+**In the settings aside, holding the bottom edge is your job.** The portal drops your component, its own metadata block (author, version, upload date, description) and the Delete button in as consecutive siblings of one container, with no separator and no spacing between them — the separator it can draw is wired only to the old declarative settings path, never to a `component`. So the metadata block starts exactly where your component's last box ends, and anything that renders taller than the space it reserves is drawn straight through by the portal's text. Two habits keep it apart: end the component with real spacing of its own, and never let the last element be a control whose content sits outside the flow — a `ToggleButton`, whose label is absolutely positioned, is the usual culprit and the reason the two blocks appear welded together.
 
 **On a page, holding the width is your job.** The portal mounts the component with no markup of its own — an error boundary and the runtime provider, nothing else — directly inside the section body, whose only width guard is `max-width: 100vw`. That cap is measured against the viewport, so it does not subtract the sidebar the page sits beside: content wider than the space actually available is stopped by nothing and drags a horizontal scrollbar across the whole portal. Give the root `width: 100%; max-width: 100%; box-sizing: border-box` and `min-width: 0`, and keep every pixel `min-width` inside its own `overflow-x: auto` box. A single control that refuses to shrink does this as thoroughly as a wide table — and it is the harder one to see, because the page looks right until the window narrows.
 
@@ -239,6 +241,7 @@ The portal's own pickers, create dialog, progress button and media viewer are op
 | `Base` | `TBaseSelector` — your own `items: { id, label, icon? }[]` | `{ selectedIds, fileName, isFooterCheckboxChecked }` |
 
 - **It never closes itself** — call `closeSelector()` from `onSubmit` *and* from `headerProps.onCloseClick`.
+- **A selector opened while your modal is open is unreachable.** The portal renders each of its surfaces from its own visibility flag, side by side and uncoordinated, so nothing stops two from being open at once — and the modal's backdrop then covers the selector aside: the user sees it, dimmed, and cannot touch it. The portal's own dialogs avoid this by swapping the selector *into* the dialog, which a plugin cannot do because it does not own those props. So `closeModal()` first, open the selector, and reopen the modal from `onSubmit` and from the close handler, holding the form's values in module scope so nothing is lost across the round trip. The same applies to any pair: **one portal-drawn surface at a time**, and it is your job to sequence them.
 - Only the props the type declares reach the host; anything cast in is dropped.
 - `TFilesSelector.getIsDisabled({ isFirstLoad, isRoot, selectedItemId, … })` is **required**; its boolean disables submit.
 

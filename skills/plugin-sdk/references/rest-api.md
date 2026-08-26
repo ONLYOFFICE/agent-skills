@@ -48,6 +48,15 @@ Files and folders carry a `security` map (`Read`, `Edit`, `Download`, `Delete`, 
 
 The handful the official plugins reach for. **Everything else is in the [ONLYOFFICE DocSpace API reference](https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts/)** (sections: Files, Rooms, People, Group, Portal, Settings, Security, ThirdParty, …) — look endpoints and their query parameters up there rather than recalling them; a path remembered from another product answers 404.
 
+**The API is also typed inside the project.** `@onlyoffice/docspace-api-sdk` is installed as a dependency of the kit — a generated client whose types are the same contract the portal serves:
+
+```
+node_modules/@onlyoffice/docspace-api-sdk/dist/models/*.d.ts        every enum, with its numeric values in a JSDoc line
+node_modules/@onlyoffice/docspace-api-sdk/dist/api/<area>/*.d.ts    every endpoint, with its full parameter list and types
+```
+
+Read those instead of deciding a shape by feel. They answer the questions that otherwise get guessed: whether a query enum wants the number or the name (`SearchArea` is `Active: 0, Archive: 1, Any: 2, …`), what a field on a payload means, which parameters an endpoint takes and in what order. Do not import from the package — it is not on the portal's externals list, so importing it bundles a second HTTP client into the plugin. It is documentation that happens to compile; the request still goes through `usePluginAPI()`.
+
 | Purpose | Request |
 |---|---|
 | File metadata | `GET /files/file/{id}` |
