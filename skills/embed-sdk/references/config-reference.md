@@ -158,9 +158,11 @@ belong to a different SDK version).
 
 | Field | Type | Notes |
 |---|---|---|
-| `agentId` | string \| number | **required** — AI agent room id |
-| `fileId` | string \| number | file to attach on init |
-| `chatId` | string | conversation to resume |
+| `agentId` | string \| number | AI agent room id; omitted → chat bound to the current user |
+| `entityId` | string \| number | room/folder the chat is opened from (workspace context + tool scope; caller needs access); ignored when `agentId` is set |
+| `fileId` | string \| number | file to attach to the composer on init |
+| `threadId` | string | thread to resume (named `chatId` in pre-release 2.2 builds) |
+| `headerOffset` / `headerHeight` | number | in chat mode these are container insets: `padding-inline-start` / `padding-block-start` (px) |
 
 ## Personal mode
 
