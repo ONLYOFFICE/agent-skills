@@ -20,9 +20,11 @@ node skills/plugin-sdk/scripts/validate-plugin.mjs ./my-plugin --invoke
 node skills/plugin-sdk/scripts/test-validator.mjs
 ```
 
-The **generator** writes the plugin class with every member the loader calls, a Vite + React build that keeps the host-provided packages external, and copies in the packed `@docspace/ui-kit` and SDK from `vendor/`. It registers no items by design — a placeholder that survives into an upload is a plugin that looks alive and does the wrong thing.
+The **generator** writes the plugin class with every member the loader calls, a Vite + React build that keeps the host-provided packages external, a typed localisation module for the languages given as `--locales` (validated against `PluginLocale`, since a table filed under `ja` instead of `ja-JP` is never read), the CSS-module declaration and a `typecheck` script, and copies in the packed `@docspace/ui-kit` and SDK from `vendor/`. It registers no items by design — a placeholder that survives into an upload is a plugin that looks alive and does the wrong thing.
 
 The **validator** runs static checks over the manifest, build config, sources and packed archive, then imports the built bundle the way the portal does — as an ES module, against the React and SDK the project installed, with a stand-in for the UI kit — executes `onLoadCallback` and verifies each declared scope registered items with the fields, components and filter values the portal reads. `--invoke` also calls the class-side callbacks and checks every returned action carries its payload.
+
+Finally it **renders every component once** with the project's own React and the SDK's own runtime provider, each surface getting the runtime it really receives (a page and a click-opened dialog get no current file; an info panel tab and the media viewer get one), because a component that throws on first paint is a blank page on the portal with one line in the console. Effects do not run, and nothing reads the CSS: what a stylesheet does to the portal is decided by how it is imported, which is checked, and by rules only a reader can judge.
 
 The **self-test** runs the validator against deliberately broken projects with hand-written bundles and asserts which findings it must and must not produce. It never invokes npm, so it is blind to the toolchain — see *Verifying the toolchain*.
 
@@ -51,11 +53,11 @@ evals/        three graded scenarios and the fixture plugin one of them starts f
 **Verifying the toolchain.** Whether the pinned versions still compile the generated config is not expressed anywhere else, so after touching `scripts/generator/project-files.mjs`, `templates/` or `vendor/`:
 
 ```sh
-node skills/plugin-sdk/scripts/generate-plugin.mjs --name smoke --plugin-name Smoke --scopes <all eleven> --dir ../smoke
-cd ../smoke && npm install && npm run build && node ../agent-skills/skills/plugin-sdk/scripts/validate-plugin.mjs . --invoke
+node skills/plugin-sdk/scripts/generate-plugin.mjs --name smoke --plugin-name Smoke --scopes <all eleven> --locales ru,pt-BR --dir ../smoke
+cd ../smoke && npm install && npm run build && npm run typecheck && node ../agent-skills/skills/plugin-sdk/scripts/validate-plugin.mjs . --invoke
 ```
 
-A missing `dist/plugin.zip` means the toolchain disagrees with itself. Use all eleven scopes — a renamed SDK export only surfaces when every scope's imports are emitted. If you swap the vendored SDK for a checkout, `npm pack` it rather than linking the directory, or the SDK's `react` peer resolves outside the project and the validator cannot import the bundle.
+A missing `dist/plugin.zip` means the toolchain disagrees with itself, and `typecheck` is the only thing that reads the generated types at all — `vite build` strips them, so a broken `locales.ts` or `css-modules.d.ts` builds cleanly. Pass `--locales`, or the extra-language tables are never generated in a smoke run. Use all eleven scopes — a renamed SDK export only surfaces when every scope's imports are emitted. If you swap the vendored SDK for a checkout, `npm pack` it rather than linking the directory, or the SDK's `react` peer resolves outside the project and the validator cannot import the bundle.
 
 ### Keeping it current
 

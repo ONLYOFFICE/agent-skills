@@ -1,6 +1,6 @@
 # Building UI with `@docspace/ui-kit`
 
-The portal's own component library: it reads theme, accent and direction from contexts the portal fills, so a kit `Button` is the portal's button in either theme. Reach for the kit first, plain `div`s with inline styles for layout, raw HTML controls never — an unstyled `<button>` or `<input>` is the one thing that immediately looks foreign.
+The portal's own component library: it reads theme, accent and direction from contexts the portal fills, so a kit `Button` is the portal's button in either theme. Reach for the kit first, plain `div`s with inline styles for layout, a stylesheet where inline styles cannot reach — `:hover`, keyframes, media queries, generated markup — as long as every selector is scoped ([react.md → Scoped CSS](react.md#scoped-css)). Raw HTML controls never: an unstyled `<button>` or `<input>` is the one thing that immediately looks foreign.
 
 **Props are documented in the package itself**, one JSDoc line per prop: `node_modules/@docspace/ui-kit/dist/types/components/<name>/<Name>.types.d.ts` (enums in `<Name>.enums.d.ts`). Read those rather than guessing or casting; this file only records what the types cannot tell you.
 
@@ -35,7 +35,9 @@ For anything you color yourself, use the portal's CSS variables — they flip wi
 | `--input-error-color` | error text and borders |
 | `--status-icon-color-positive` / `--status-warning` | success / warning |
 
-Traps: `--error-color`, `--success-color` and `--border-color` **do not exist** (an invalid `var()` silently inherits); `--warning-color` exists but resolves to the error red. `Text` and `Link` also take `color="accent"`.
+Traps: `--error-color`, `--success-color` and `--border-color` **do not exist** (an invalid `var()` silently inherits); `--warning-color` exists but resolves to the error red.
+
+**A kit `color` prop is a CSS value, not a token** — with one exception. `Text` puts `color` straight into the element's inline `style`, so `color="accent"` is invalid CSS and the text silently inherits whatever colour surrounds it: pass `color="var(--accent-main)"`. `Link` is the exception — it maps the literal `"accent"` to `var(--accent-main)` itself, so both spellings work there. When a kit prop takes a colour and its `.d.ts` says `string`, assume the value reaches `style` unchanged and give it a real CSS value; the component's `.module.scss.js` settles it in one look.
 
 When the theme is needed as a **fact** — a whole palette for generated markup, an asset in two versions, a canvas — `useTheme()` from the kit returns `{ theme, isBase, currentColorScheme }`; `isBase` (`true` = light) is already resolved, there is no `prefers-color-scheme` to consult.
 

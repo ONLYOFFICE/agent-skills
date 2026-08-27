@@ -134,7 +134,11 @@ useEffect(() => {
 }, [api]);
 ```
 
+- **A `FormData` body goes through unchanged** — pass the form as `data` and set no `Content-Type` of your own, or the boundary is lost.
+
 `api` is stable, so pass it into plain functions (`roomsApi(api).list(...)`) and keep React at the boundary. **Do not stash it in a module variable**: the `/react` module is the host's single copy shared by every plugin and every mounted surface, so a module-level slot is neither private nor tied to one mount. The client's type is `PluginAPIClient` from the same subpath. Endpoint details, class-side `fetch` and file bytes are in [rest-api.md](rest-api.md).
+
+**The client itself lives in the portal; the SDK ships only its type.** So no request written against `usePluginAPI()` can be exercised offline — the validator renders components but never lets one reach the network, and there is no local double for the HTTP layer. Anything about a request that only the portal can answer (a multipart body, a form field name, an unusual status) is therefore untested until it runs on a portal: keep such a call in one small function, check the path and the field names against the api-sdk types ([rest-api.md](rest-api.md#endpoints-to-start-from)), and say in the report that it is the part that was not verified locally.
 
 ## The settings client
 
@@ -243,6 +247,45 @@ The portal's own pickers, create dialog, progress button and media viewer are op
 - Only the props the type declares reach the host; anything cast in is dropped.
 - `TFilesSelector.getIsDisabled({ isFirstLoad, isRoot, selectedItemId, … })` is **required**; its boolean disables submit.
 
+**One surface at a time, sequenced by hand.** The round trip below is what a "pick a destination" field in a dialog costs, and it is the same three steps for any pair of portal surfaces. The form's values live in module scope because the dialog is unmounted and remounted, and every exit from the selector — submit *and* close — has to reopen the dialog, or the user is left with nothing on screen:
+
+```ts
+// Module scope: it survives the dialog's unmount, which component state does not.
+const draft: { targetId: number | null; targetTitle: string; name: string } = { targetId: null, targetTitle: "", name: "" };
+
+const exportDialog = (): IModalDialog => ({
+  dialogHeader: t("export.title"),
+  dialogBodyComponent: ExportDialog,     // reads and writes `draft`; renders draft.targetTitle in the field
+  autoMaxHeight: true,
+});
+
+/** Called from the dialog's "Choose…" button. */
+const pickDestination = ({ showModal, showSelector, closeModal, closeSelector }: PluginActions) => {
+  closeModal();                          // first: the dialog's backdrop would cover the selector
+
+  showSelector({
+    type: SelectorType.Files,
+    props: {
+      submitButtonLabel: t("export.choose"),
+      getIsDisabled: ({ isRoot, selectedItemId }) => isRoot || !selectedItemId,
+      onSubmit: ({ selectedItemId, folderTitle }) => {
+        draft.targetId = Number(selectedItemId);
+        draft.targetTitle = folderTitle;
+        closeSelector();
+        showModal(exportDialog());       // back to the dialog, now showing the choice
+      },
+      headerProps: {
+        label: t("export.pickFolder"),
+        isCloseable: true,
+        onCloseClick: () => { closeSelector(); showModal(exportDialog()); },   // cancel must return too
+      },
+    },
+  });
+};
+```
+
+From a class-side callback the same sequence is two messages instead of two calls: return `showSelector` from the click, and return `showModal` from the selector's own `onSubmit`.
+
 ```ts
 showSelector({
   type: SelectorType.People,
@@ -290,12 +333,84 @@ updateFloatingOperationsButton(op(100, true));
 - Operation ids are prefixed by the host with the plugin name; `onCancelOperationFromList(operationId)` hands back your unprefixed id. `cancelOperation` fires for "cancel all". Dismissing the button drops all your operations.
 - `FloatingOperationType`: `Download`, `Convert`, `Copy`, `Upload`, `Backup`, … or `Other`.
 
+## Work that takes a while
+
+Packing an archive, walking a room, converting a batch: anything past a second or two. Two facts decide the whole shape of it.
+
+**A class-side callback returns one message and is then finished.** `onItemClick`, `onClick`, `eventHandler` and `onSave` hand the host a single `IMessage`; there is no second message and no handle to send one, so a callback cannot report progress and cannot update what it opened. Progress therefore belongs to code that is *mounted* — a component, whose effect can call `updateFloatingOperationsButton` as often as it likes. So the click's job is to open the surface (a modal or a page) and hand over the id; the work runs in the component.
+
+**An effect runs the work, and it can run twice.** React remounts effects (development double-invoke, a re-render with changed deps, the user reopening the panel), and a second run of "pack these 400 files" is duplicated writes rather than a slow render. Guard the start, own the cancellation, and never leave the button behind:
+
+```tsx
+const ExportPanel = () => {
+  const { addFloatingOperationsButton, updateFloatingOperationsButton, showToast } = usePluginActions();
+  const api = usePluginAPI();
+  const started = useRef(false);              // module scope if the work must survive a remount
+
+  useEffect(() => {
+    if (started.current) return;              // the second invocation is not a second job
+    started.current = true;
+
+    const controller = new AbortController();
+    const button = (percent: number, completed = false) => ({
+      id: "my-plugin-export",
+      operations: [{ id: "export", label: t("export.running"), operation: FloatingOperationType.Other,
+                     alert: false, completed, percent }],
+    });
+
+    (async () => {
+      addFloatingOperationsButton(button(0));  // add first, or every update is a no-op
+      try {
+        let percent = 0;
+        for (let done = 0; done < files.length; done += 1) {
+          if (controller.signal.aborted) return;
+          await pack(api, files[done], controller.signal);
+
+          const next = Math.round(((done + 1) / files.length) * 100);
+          if (next > percent) updateFloatingOperationsButton(button((percent = next)));   // whole percents only
+        }
+        updateFloatingOperationsButton(button(100, true));
+        showToast({ type: ToastType.success, title: t("export.done") });
+      } catch (e) {
+        updateFloatingOperationsButton(button(100, true));   // never leave it spinning
+        showToast({ type: ToastType.error, title: isPluginApiError(e) ? e.message : t("export.failed") });
+      }
+    })();
+
+    return () => controller.abort();
+  }, []);
+
+  return <Text>{t("export.running")}</Text>;
+};
+```
+
+- **The user closing the surface does not stop the work** — only the `AbortController` in the cleanup does, and only for what takes the signal. Decide deliberately which it should be: a half-written archive is worse than a slow one, so a job that writes usually finishes and reports through the toast, while a read-only walk aborts.
+- **Rate-limit the updates.** One `updateFloatingOperationsButton` per file on 400 files is 400 re-renders of the portal's own button; update on whole percents.
+- **Nothing wraps the effect.** An uncaught throw blanks the component ([below](#errors-loading-language-styling)), so the `catch` is what turns a failure into a message instead of an empty panel.
+
 ## Errors, loading, language, styling
 
 - **Errors are contained and silent.** A throw in render or an effect renders the component as **nothing**, with one console line `[Plugin: <name>] <error>`. A blank tab/page/modal is the symptom of a bug; `catch` and show text instead. Rejections in event handlers are not caught by the boundary.
 - **Loading is yours.** No `onLoad`: render a `RectangleSkeleton`/`Loader` while the effect runs. Never fetch in `onLoadCallback` to pre-load — it delays installation and a throw aborts it.
 - **Language.** Components call `t()` at render time and follow `setLanguage` on their own; only class-side item labels need rebuilding ([sdk-contract.md](sdk-contract.md#localisation)).
-- **Styling.** Inline `style` and the kit's props cover almost everything. A `.css` import becomes `plugin.css`, injected into the portal's **own document, unscoped** — prefix every class with the plugin name. Colors come from the theme variables in [ui-kit.md](ui-kit.md#colors).
+- **Styling.** The kit's props first, then inline `style`, then a stylesheet for what inline `style` cannot express — `:hover`/`:focus`, pseudo-elements, keyframes, media queries, or markup you did not author. A `.css` import becomes `plugin.css`, injected into the portal's **own document, unscoped**, so it has to be scoped by hand — see [Scoped CSS](#scoped-css). Colors come from the theme variables in [ui-kit.md](ui-kit.md#colors).
+
+### Scoped CSS
+
+`plugin.css` lands in the portal's `<head>` *after* the portal's own stylesheets, so at equal specificity your rule wins: an unprefixed `pre {}` or `.card {}` restyles the product itself ([portal.md](portal.md#what-actually-breaks-the-portal)). **Nothing checks the rules** — the validator only reports how the stylesheet is imported and built — so this is read by hand or made impossible by construction:
+
+- **A CSS module** — `styles.module.css`, imported as `import styles from "./styles.module.css"` and used as `className={styles.row}`. The build hashes every class name, so there is nothing to remember and nothing to get wrong. **Prefer this**: it is the only form that cannot go wrong unread. The generated `vite.config.ts` builds `css.modules.generateScopedName` out of the manifest `name` so the hashed classes carry the plugin's prefix too; a hand-written config needs the same line.
+- **A prefix on every class**, taken from the manifest `name` (`archive-manager` → `.archive-manager-row`) — for a plain `.css` file, which the validator can only warn about. Never a bare type selector, `*`, `:root`, `html` or `body` at the top level, and never an unprefixed class: those match the portal's DOM, not yours.
+
+Only the **leftmost** selector has to carry the scope; descendants inside a root you own are free, and that is how generated markup gets styled:
+
+```css
+.archive-manager-tree { display: grid; gap: 4px; }
+.archive-manager-tree pre { white-space: pre; }
+.archive-manager-row:hover { background: var(--button-background-hover); }
+```
+
+Custom properties go on your own root, never `:root`. Keyframe names are global too — prefix them. Reviewing a plugin, read every rule in its `.css` against this section; a `css` warning from the validator only means the stylesheet is in a form nothing can check.
 
 ## Bundling
 
@@ -306,3 +421,42 @@ react   react-dom   react/jsx-runtime   react/jsx-dev-runtime   @onlyoffice/docs
 ```
 
 Everything else **must be bundled** — a bare import of anything else (`lodash-es`, the SDK root, a `@docspace/ui-kit/…` subpath) makes the loader refuse the plugin with a console error naming it. The reverse is quieter and worse: bundling one of the six installs cleanly and breaks at render — a second React or SDK React entry makes every hook throw (every component blank), a second ui-kit renders light and left-to-right. The SDK **root** is deliberately not external: it is enums and types, and the host does not provide it. The generator's `vite.config.ts` encodes the list; copy its `external` exactly if you write your own.
+
+## Dependencies
+
+Anything imported beyond those six is compiled into `plugin.js`, shipped inside the 5 MB archive, and executed in the portal's own window — its DOM, its cookies, the signed-in user's session. Both halves of that matter, and they pull in opposite directions.
+
+**Do not hand-write what a well-known library already does.** Archive formats, PDF or spreadsheet output, HTML sanitising, markdown, date arithmetic, charts, fuzzy search, diffing — a few hundred lines of your own is a few hundred lines of unreviewed edge cases (zip64, CRC, DST, XSS), and they surface on the user's real file rather than on the one you tested. Take the established package and spend the effort on the feature.
+
+**The bar for adding one is high**, and it is cleared before the import is written, not after. Everything below is one command each:
+
+```sh
+npm view <pkg> version license dependencies dist.unpackedSize time.modified
+curl -s https://api.npmjs.org/downloads/point/last-week/<pkg>
+```
+
+| Take it only if | Because |
+|---|---|
+| It is the obvious, widely used choice — millions of weekly downloads, or the de-facto standard for the job | download count is the closest thing npm has to a review process; an obscure package with a plausible name is how typosquats and supply-chain payloads arrive |
+| You verified the name on the registry rather than recalling it | a misremembered name is an unclaimed name, and unclaimed names get claimed |
+| It was published within the last year or two and has a maintainer behind it | |
+| The licence is permissive — MIT, ISC, Apache-2.0, BSD, MPL-2.0 | the plugin redistributes the code |
+| Few or no transitive dependencies, and no install scripts | every transitive dependency runs in the portal too, on the same session |
+| It runs in a browser — no `fs`, `path`, Node `crypto`, no build-time polyfill of a Node built-in | there is no shim in the portal, and a bundled polyfill is bulk for nothing |
+| `plugin.js` still ends well under 5 MB — prefer the leaner of two good options | the limit is enforced server-side, on upload |
+
+If nothing well known fits, write the minimum yourself and say so in the report. An unknown package is worse than 200 lines of your own; a popular one is better than 700.
+
+**And nothing at all for what the platform already provides**: `fetch`, `Intl.DateTimeFormat`/`NumberFormat`/`RelativeTimeFormat`, `URL`/`URLSearchParams`, `structuredClone`, `crypto.randomUUID`/`crypto.subtle`, `TextEncoder`/`TextDecoder`, `Blob`/`File`/`FileReader`, `CompressionStream`, `Intl.Collator` for sorting, the `Array`/`Object` methods (no lodash for `groupBy`) — or anything the kit already renders.
+
+The recurring needs, with the package that is the usual answer. Each is browser-first and has no runtime dependencies of its own — and each has a documented edge it does *not* handle, which is the plugin's job to handle instead, because these are the cases that reach a real user's real file:
+
+| Need | Package | Licence | What it leaves to you |
+|---|---|---|---|
+| Zip read/write, deflate, gzip | `fflate` | MIT | **Encrypted entries** — it ignores the general-purpose bit-0 flag and inflates a password-protected entry as if it were plain, failing with a codec error: read the flag yourself and say the archive is protected. **Non-ASCII names** — without bit 11 they are decoded as latin1, so an older archiver's Cyrillic or CJK name arrives as mojibake |
+| Sanitising HTML before it reaches the DOM | `dompurify` | MPL-2.0 or Apache-2.0 | It sanitises HTML, not URLs or CSS you interpolate yourself; and it needs a DOM, so nothing about it works in a class-side callback |
+| Markdown to HTML | `marked` | MIT | It does **not** sanitise — the output goes through `dompurify` before it reaches `innerHTML` |
+| Date arithmetic beyond `Intl` | `date-fns` | MIT | Time zones are a separate package (`date-fns-tz`); portal timestamps are UTC and the user's zone is theirs |
+| Validating a foreign JSON payload at runtime | `zod` | MIT | Nothing, but it is only worth its bytes for input you do not control |
+
+Confirm version and licence with the commands above rather than trusting this table — it ages, and the check costs one call. And whenever a library is recommended here or chosen by you, **say in the report what it does not cover**: a dependency taken on the user's behalf with an unstated blind spot is how a silent bug gets shipped with a clean validator run.

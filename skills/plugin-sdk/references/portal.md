@@ -116,7 +116,7 @@ A module plugin runs in the portal's own window — its DOM, cookies and `localS
 - **Throwing in `onLoadCallback` or at module scope** aborts the plugin silently. Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
-- **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's stylesheets, so at equal specificity **your rule wins** — an unprefixed `pre {}` restyles the product. What beats you is inheritance: a property set on your wrapper only inherits, and any portal rule aimed at the descendant itself (the kit's `.body { white-space: pre-line }`) outranks it. So prefix everything and, for generated HTML, style the descendants:
+- **Unscoped CSS.** A stylesheet is a legitimate tool; a selector that can match the portal's own DOM is not. `plugin.css` is appended to the portal's head *after* the portal's stylesheets, so at equal specificity **your rule wins** — an unprefixed `pre {}` restyles the product. What beats you is inheritance: a property set on your wrapper only inherits, and any portal rule aimed at the descendant itself (the kit's `.body { white-space: pre-line }`) outranks it. So scope the leftmost selector of every rule — a CSS module, or a prefix taken from the manifest `name` — and, for generated HTML, style the descendants from a root you own ([react.md → Scoped CSS](react.md#scoped-css)):
 
   ```css
   .myplugin-rendered, .myplugin-rendered * { white-space: normal; }

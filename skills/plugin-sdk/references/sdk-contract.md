@@ -70,6 +70,10 @@ setLanguage = (language: PluginLocale) => {
 
 Hence item factories are functions returning a fresh object, never module-level constants. Components call `t()` at render time and follow the language on their own. `nameLocale`/`descriptionLocale` in the manifest are separate — the portal reads those for the plugin list.
 
+**Key the tables by `PluginLocale`, not by a tag you typed.** The value the portal passes is the enum's own — `PluginLocale.JA_JP` is `"ja-JP"`, `ZH_CN` is `"zh-CN"`, English is `EN_US`/`EN_GB` and never `"en"` — so a table filed under `"ja"` type-checks (the key is a string), installs, and is never found: that language quietly reads English and nobody sees an error. Type the map as `Partial<Record<PluginLocale, TStrings>>` and write the keys as members; the scaffolder does both, and the validator reports a near-miss under `locale`. The full list of 33 values is in the SDK's `PluginLocale`.
+
+The generated module also carries `tf(key, values)` for strings with placeholders (`"{count} files"`), which is what keeps a sentence translatable — concatenating fragments in JSX puts the word order beyond the translator's reach.
+
 ## Deprecated — do not use in new code
 
 Still compile and render (SDK 2 forms), recognised by the validator and warned about:

@@ -42,7 +42,18 @@ Forgetting `.response` yields an object that looks plausible and has none of the
 
 ## Permissions
 
-Files and folders carry a `security` map (`Read`, `Edit`, `Download`, `Delete`, `Rename`, `Move`, `Copy`, `CopyLink`, … — the `FilesSecurity`/`Security` enums). Check it before offering or performing an action; a 403 afterwards is the same fact learned late. Item-level filters (`security`, `itemSecurity`, `fileSecurity` in [items.md](items.md)) do the same declaratively.
+Every file, folder and room in a payload carries a `security` map: PascalCase keys, all optional, `true` when the current user may do that thing. Check it before offering or performing an action; a 403 afterwards is the same fact learned late. Item-level filters (`security`, `itemSecurity`, `fileSecurity` in [items.md](items.md)) do the same declaratively.
+
+**The keys are enums, so type them as enums** — `Partial<Record<FilesSecurity, boolean>>` from the SDK, never `Record<string, boolean>`, which is how a misspelled key ends up read as `undefined` and the plugin quietly decides the user has no rights (or offers an action the portal then refuses):
+
+| Enum | Applies to | Keys |
+|---|---|---|
+| `FilesSecurity` (SDK) | a file's own map, and `fileSecurity` on a `File`-scope item | `Read`, `Comment`, `FillForms`, `Review`, `Edit`, `EditForm`, `EditHistory`, `ReadHistory`, `CustomFilter`, `Rename`, `Lock`, `Move`, `Copy`, `Delete`, `Duplicate`, `Download`, `Convert`, `CopyLink`, `Embed`, `CreateRoomFrom`, `SubmitToFormGallery`, `StopFilling`, `ResetFilling` |
+| `Security` (SDK) | a folder's or room's map, and `security`/`itemSecurity` on an item | `Read`, `Create`, `Rename`, `Delete`, `Move`, `MoveTo`, `Copy`, `CopyTo`, `Duplicate`, `Download`, `EditRoom`, `EditAccess`, `Pin`, `Mute`, `CopyLink`, `CopySharedLink`, `Embed`, `CreateRoomFrom` |
+
+**`Create` is the one that answers "may I put something here"** — it lives on the *destination* folder or room, so a plugin that writes checks the target's `security.Create`, not the source file's.
+
+The wire payload is wider than either enum — one shape for files and folders, with keys the SDK's enums do not name (`StartFilling`, `IndexExport`, `ChangeOwner`, `AskAi`, …). The full list is a generated type in the project: `node_modules/@onlyoffice/docspace-api-sdk/dist/models/file-entry-dto-integer-all-of-security.d.ts` (and `folder-dto-integer-security.d.ts`). Read that when a key is not in the enums; keep the item filters to what the SDK declares, since those are what the host compares.
 
 ## Endpoints to start from
 
@@ -61,14 +72,58 @@ Read those instead of deciding a shape by feel. They answer the questions that o
 |---|---|
 | File metadata | `GET /files/file/{id}` |
 | Folder contents / metadata | `GET /files/{folderId}` / `GET /files/folder/{folderId}` |
+| **Create a folder** | `POST /files/folder/{folderId}` `{ title }` — `folderId` is the **parent**; note the shape differs from the create-file path below, which is the usual mix-up |
 | Create a file | `POST /files/{folderId}/file` `{ title }` — plus `enableExternalExt: true` for an extension the portal has no editor for (below) |
-| Rename | `PUT /files/file/{id}` `{ title }` |
-| Replace file contents | `PUT /files/{id}/update`, `FormData` with the bytes under **`file`** (below) |
+| Rename a file / a folder | `PUT /files/file/{id}` `{ title }` / `PUT /files/folder/{folderId}` `{ title }` |
+| Upload a file in one request | `POST /files/{folderId}/upload`, multipart with the bytes under **`File`** — the generated client's own spelling; the chunked alternative is a session (below) |
+| Replace file contents | `PUT /files/{id}/update`, `FormData` with the bytes (below) |
 | Mark as recent | `POST /files/file/{id}/recent` |
 | Current user / people | `GET /people/@self` (a component has `useCurrentUser()`) / `GET /people` |
 | Rooms / members | `GET /files/rooms` / `GET /files/rooms/{id}/share` |
 
+**Confirm the path and the field names in the api-sdk types, not from this table** — `dist/api/files/folders-api.js` and `files-api.js` contain the literal URL and every form field the portal accepts, which is the only place the two `{folderId}` shapes above stop being confusable. Where the api-sdk has no method for something (replacing a file's bytes is one), the API reference is the authority and the request is hand-written.
+
 List endpoints page with `count` + `startIndex` and take filter/sort as query params (`params` of `api.get`); `total` arrives beside the rows, whose field the endpoint names (`folders`, `files`, `items`). Page and search in the request, as the portal's own screens do.
+
+### Walking a folder tree
+
+Recursion plus paging, the shape almost every plugin that reads or writes a subtree needs. One page at a time, `total` decides whether to ask again, and the relative path is carried down rather than reconstructed:
+
+```ts
+type TEntry = { id: number; title: string; security?: Partial<Record<Security, boolean>> };
+type TFolderPage = { folders: TEntry[]; files: TEntry[]; total: number };
+
+const PAGE = 100;
+
+async function* walkFolder(api: PluginAPIClient, folderId: number, prefix = "", signal?: AbortSignal) {
+  for (let startIndex = 0; ; startIndex += PAGE) {
+    const page = await api.get<TFolderPage>(`/files/${folderId}`, { count: PAGE, startIndex }, { signal });
+
+    for (const file of page.files ?? []) yield { ...file, path: `${prefix}${file.title}` };
+
+    for (const folder of page.folders ?? [])
+      yield* walkFolder(api, folder.id, `${prefix}${folder.title}/`, signal);   // depth-first; the path is the zip entry name
+
+    if (startIndex + PAGE >= (page.total ?? 0)) return;
+  }
+}
+```
+
+`total` counts the folder's own rows, folders and files together, so the loop ends on the *page* count and the recursion is what descends. Pass the effect's `AbortSignal` all the way down, or a closed panel keeps walking.
+
+### Writing bytes into a folder the plugin created
+
+The two halves — a folder, then a file with content — in the order the portal wants them:
+
+```ts
+const { id: folderId } = await api.post<TEntry>(`/files/folder/${parentId}`, { title: folderName });
+
+const form = new FormData();
+form.append("File", new File([bytes], fileName, { type: "application/octet-stream" }));
+await api.post(`/files/${folderId}/upload`, form);        // no Content-Type of your own - the boundary is generated
+```
+
+For a large file, or when the portal must know the size up front, create an upload session instead (below). Either way check the destination's `security.Create` first, and remember that a plugin's own extension needs `enableExternalExt` when the file is created through the create-file endpoint rather than uploaded.
 
 ### A file's contents are not part of the API
 
@@ -82,6 +137,8 @@ const form = new FormData();
 form.append("file", new File([newBody], info.title, { type: mimeType }));
 await api.put(`/files/${id}/update`, form);     // class-side: fetch with credentials and NO Content-Type of your own
 ```
+
+The api-sdk has **no generated method for this endpoint** — its `updateFile` is the JSON rename (`title`, `lastVersion`) — so this is the one write whose shape cannot be confirmed against the project's types; the API reference is the authority, and the upload paths above are the typed alternative when a new version is acceptable.
 
 **A record with no content stream answers 404 on its own `viewUrl`, while its metadata answers 200.** The portal creates the record first and the bytes arrive on the first write, so a file the plugin just created through the create dialog reads as missing — and for a format the portal has no editor for, that is every file until someone saves it once. This is the *first* thing a user does with a plugin that owns an extension: create one, open it. A viewer that reports the 404 shows them an error page over an empty file they just made.
 
