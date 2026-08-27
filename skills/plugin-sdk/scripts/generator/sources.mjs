@@ -20,6 +20,7 @@
  * calls them from its own code.
  */
 
+import { localeMember } from "../contract.mjs";
 import { camelCase } from "./scopes.mjs";
 
 const licenseHeader = () => `/*
@@ -160,20 +161,31 @@ export default plugin;
 /** Locale tags are not identifiers: pt-BR has to become pt_BR to name a const. */
 const asIdentifier = (localeTag) => localeTag.replace(/[^a-z0-9]/gi, "_");
 
-/** src/locales.ts - plain typed strings, with the example key commented out so no unwritten string ships. */
+/**
+ * src/locales.ts - plain typed strings, with the example key commented out so no unwritten
+ * string ships. Every table is keyed by a PluginLocale member rather than a hand-written
+ * tag: the portal calls setLanguage with the enum's value, so a table under "ja" instead of
+ * PluginLocale.JA_JP is never reached and the language silently falls back to English.
+ */
 export const renderLocales = ({ scopes, extraLocales, sdkPackage }) => {
   const [firstItemScope] = scopes.itemMapScopes;
   const exampleKey = firstItemScope ? `${camelCase(firstItemScope.name)}.label` : "myItem.label";
 
-  const extraLocaleTables = extraLocales
-    .map(
-      (localeTag) =>
-        `// TODO: the same keys as en, translated.\nconst ${asIdentifier(localeTag)}: TStrings = {};\n\n`,
-    )
+  const tables = extraLocales.map((localeTag) => ({
+    tag: localeTag,
+    member: localeMember(localeTag),
+    name: asIdentifier(localeTag),
+  }));
+
+  const extraLocaleTables = tables
+    .map(({ tag, name }) => `// TODO: the same keys as en, translated into ${tag}.
+const ${name}: TStrings = {};
+
+`)
     .join("");
 
-  const translationEntries = extraLocales
-    .map((localeTag) => `  "${localeTag}": ${asIdentifier(localeTag)},`)
+  const translationEntries = tables
+    .map(({ member, name }) => `  [PluginLocale.${member}]: ${name},`)
     .join("\n");
 
   return `${licenseHeader()}import { PluginLocale } from "${sdkPackage}";
@@ -195,7 +207,11 @@ const en: TStrings = {
   // "${exampleKey}": "Do the thing",
 };
 
-${extraLocaleTables}const translations: Partial<Record<string, TStrings>> = {
+${extraLocaleTables}/**
+ * Keyed by PluginLocale, not by a string: the portal passes the enum's own value to
+ * setLanguage, and a table filed under anything else is never found.
+ */
+const translations: Partial<Record<PluginLocale, TStrings>> = {
   [PluginLocale.EN_US]: en,
 ${translationEntries}
 };
@@ -209,5 +225,12 @@ export const setLocale = (next: PluginLocale): void => {
 export const currentLocale = (): PluginLocale => locale;
 
 export const t = (key: keyof TStrings): string => (translations[locale] ?? en)[key];
+
+/**
+ * t() with placeholders: tf("room.renamed", { title }) fills every {title} in the string.
+ * A missing value is left as the placeholder rather than printing "undefined".
+ */
+export const tf = (key: keyof TStrings, values: Record<string, string | number>): string =>
+  t(key).replace(/\\{(\\w+)\\}/g, (whole, name: string) => (name in values ? String(values[name]) : whole));
 `;
 };

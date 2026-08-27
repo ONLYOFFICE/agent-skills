@@ -28,6 +28,8 @@ const SDK_RANGE = "^3.0.0";
 const BUILD_SCRIPTS = {
   // Vite writes dist/plugin.js; the SDK's own packer assembles config.json and zips.
   build: "vite build && npx build-docspace-plugin",
+  // Vite strips types without checking them, so a build alone proves nothing about them.
+  typecheck: "tsc --noEmit",
   format: "npx prettier --write .",
 };
 

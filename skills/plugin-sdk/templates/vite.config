@@ -1,11 +1,24 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
+const { name } = JSON.parse(readFileSync(`${__dirname}package.json`, "utf8"));
+
 export default defineConfig({
   plugins: [react()],
+  css: {
+    // The emitted plugin.css is injected into DocSpace's own document, after its own
+    // stylesheets - so a class the build did not hash silently restyles the product or
+    // collides with another plugin. Hashing every module class with the manifest name
+    // makes that impossible by construction. A plain .css file is not scoped for you and
+    // nothing checks it: prefix every selector there by hand.
+    modules: {
+      generateScopedName: `${name}__[local]__[hash:hex:6]`,
+    },
+  },
   build: {
     lib: {
       entry: `${__dirname}src/index.ts`,

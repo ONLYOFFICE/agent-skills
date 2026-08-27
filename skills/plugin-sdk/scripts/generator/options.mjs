@@ -23,7 +23,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { SCOPES } from "../contract.mjs";
+import { LOCALE_TAGS, SCOPES, localeMember, localeSuggestions } from "../contract.mjs";
 
 /** A problem the person running the script can fix; printed as `error: <message>`, exit 1. */
 export class CliError extends Error {}
@@ -39,7 +39,9 @@ Options:
   --dir           target directory (default: ./<name>)
   --description   one line description for the manifest
   --author        manifest author
-  --locales       comma separated extra locales, e.g. ru,de     (en is always present)
+  --locales       comma separated PluginLocale tags, e.g. ru,pt-BR,ja-JP
+                  (en-US is always present; a tag the enum does not have is rejected -
+                  "ja" is not "ja-JP" and would never be selected by the portal)
   --ui-kit        a packed @docspace/ui-kit (docspace-ui-kit-*.tgz) or a directory
                   holding it together with the tarballs it depends on - and, while the
                   SDK is unpublished, the packed SDK; defaults to the copies vendored
@@ -120,6 +122,20 @@ export const parseCliOptions = (argv) => {
     if (!SCOPES.includes(scopeName))
       throw new CliError(`unknown scope "${scopeName}" (known: ${SCOPES.join(", ")})`);
 
+  const extraLocales = readList(readFlag(argv, "locales")).filter((tag) => tag !== "en-US");
+
+  // A tag outside PluginLocale is the worst kind of typo: it compiles, installs, and the
+  // portal never asks for that language, so the translation is dead weight nobody notices.
+  for (const tag of extraLocales)
+    if (!localeMember(tag)) {
+      const suggestions = localeSuggestions(tag);
+      throw new CliError(
+        suggestions.length
+          ? `--locales "${tag}" is not a PluginLocale value - did you mean ${suggestions.join(" or ")}?`
+          : `--locales "${tag}" is not a PluginLocale value (known: ${LOCALE_TAGS.join(", ")})`,
+      );
+    }
+
   const targetDir = path.resolve(readFlag(argv, "dir") ?? `./${name}`);
   if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0 && !argv.includes("--force"))
     throw new CliError(`${targetDir} is not empty - pass --force to write into it anyway`);
@@ -131,7 +147,7 @@ export const parseCliOptions = (argv) => {
     targetDir,
     description: readFlag(argv, "description") ?? `DocSpace plugin ${name}`,
     author: readFlag(argv, "author") ?? "",
-    extraLocales: readList(readFlag(argv, "locales")),
+    extraLocales,
     vendoredTarballs: resolveVendoredTarballs(readFlag(argv, "ui-kit")),
   };
 };

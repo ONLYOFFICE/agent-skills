@@ -33,6 +33,7 @@ const TEMPLATES = [
   ["vite.config", "vite.config.ts"],
   ["prettierrc.json", ".prettierrc.json"],
   ["gitignore", ".gitignore"],
+  ["css-modules.d.ts", "src/css-modules.d.ts"],
 ];
 
 /**
