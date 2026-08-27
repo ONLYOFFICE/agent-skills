@@ -25,13 +25,15 @@
 import { Expectations, FixtureWorkspace } from "./validator-tests/harness.mjs";
 
 import * as itemsSuite from "./validator-tests/suites/items.mjs";
+import * as localesSuite from "./validator-tests/suites/locales.mjs";
 import * as manifestSuite from "./validator-tests/suites/manifest.mjs";
+import * as renderSuite from "./validator-tests/suites/render.mjs";
 import * as runtimeSuite from "./validator-tests/suites/runtime.mjs";
 import * as sdkDriftSuite from "./validator-tests/suites/sdk-drift.mjs";
 import * as uiSuite from "./validator-tests/suites/ui.mjs";
 
 // Listed rather than discovered: a suite that is not imported is visibly not run.
-const SUITES = [manifestSuite, itemsSuite, uiSuite, runtimeSuite, sdkDriftSuite];
+const SUITES = [manifestSuite, itemsSuite, uiSuite, runtimeSuite, renderSuite, localesSuite, sdkDriftSuite];
 
 const workspace = new FixtureWorkspace();
 const expectations = new Expectations();

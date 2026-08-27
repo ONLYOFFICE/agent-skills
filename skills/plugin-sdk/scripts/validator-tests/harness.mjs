@@ -39,6 +39,38 @@ const sdkPackageJson = (version) =>
 
 const asEnum = (values) => `{ ${values.map((value, index) => `k${index}: ${JSON.stringify(value)}`).join(", ")} }`;
 
+/** Each SDK hook and what it reads out of the runtime it was handed. */
+const SDK_HOOK_READS = {
+  usePluginRuntime: "r",
+  useCurrentFile: "r.currentFile",
+  useCurrentUser: "r.currentUser",
+  usePluginActions: "r.actions",
+  usePluginAPI: "r.api",
+  usePluginSettings: "r.settings",
+};
+
+const OUTSIDE_RENDER = "must be used inside a plugin component rendered by DocSpace";
+
+/**
+ * The SDK's React entry, in the only two flavours the suites need: `live` answers from the
+ * runtime `withPluginRuntime` was handed, which is what the render pass needs, and otherwise
+ * every hook throws, which is what the other suites assert on. One source for both, so the
+ * two cannot describe different SDKs.
+ */
+const sdkReactModule = ({ live }) =>
+  [
+    ...Object.entries(SDK_HOOK_READS).map(([name, read]) =>
+      live
+        ? `export const ${name} = () => { const r = globalThis.__pluginRuntime; if (!r) throw new Error("${name} ${OUTSIDE_RENDER}"); return ${read}; };`
+        : `export const ${name} = () => { throw new Error("${name} ${OUTSIDE_RENDER}"); };`,
+    ),
+    live
+      ? // What the client does: provide the runtime, then render the component under it.
+        "export const withPluginRuntime = (C) => function WithRuntime(props) { globalThis.__pluginRuntime = props.runtime; return { type: C, props: {} }; };"
+      : "export const withPluginRuntime = (c) => c;",
+    'export const isPluginApiError = (e) => !!e && e.name === "PluginApiError";',
+  ].join("\n");
+
 /** One validator run, with the questions the suites ask of it. */
 export class ValidatorReport {
   constructor(json) {
@@ -170,16 +202,14 @@ export class FixtureWorkspace {
 
     write(`${SDK_DIR}/package.json`, sdkPackageJson("3.0.0"));
     write(`${SDK_DIR}/index.js`, "export const Actions = {};\n");
-    write(
-      `${SDK_DIR}/react.js`,
-      [
-        ...["usePluginRuntime", "useCurrentFile", "useCurrentUser", "usePluginActions", "usePluginAPI", "usePluginSettings"].map(
-          (name) => throwing(name, "must be used inside a plugin component rendered by DocSpace"),
-        ),
-        "export const withPluginRuntime = (c) => c;",
-        "export const isPluginApiError = (e) => !!e && e.name === \"PluginApiError\";",
-      ].join("\n"),
-    );
+    write(`${SDK_DIR}/react.js`, sdkReactModule({ live: false }));
+  }
+
+  /** Adds another file under src/ - for the checks that read the sources file by file. */
+  writeSourceFile(dir, relativePath, contents) {
+    const file = path.join(dir, "src", relativePath);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, contents);
   }
 
   /** Deletes part of a written project - used to make an unbuilt one. */
@@ -201,6 +231,57 @@ export const Section = ${asEnum(SECTIONS)};
 export const Actions = ${asEnum([...KNOWN_ACTIONS, ...(extraAction ? [extraAction] : [])])};
 `,
     );
+  }
+
+  /**
+   * Gives a fixture what the render pass needs: something that walks an element tree, and an
+   * SDK entry whose hooks answer while a tree is being walked. React itself is never
+   * installed in a fixture, so this is a renderer in the small - it calls each function
+   * component and recurses, which is all the pass asks of it. Outside a walk the hooks still
+   * throw, so every other suite keeps asserting on that.
+   */
+  installRenderer(dir) {
+    const write = (relative, contents) => {
+      const file = path.join(dir, "node_modules", relative);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, contents);
+    };
+
+    write(
+      "react-dom/package.json",
+      JSON.stringify({
+        name: "react-dom",
+        version: "19.0.0",
+        type: "module",
+        exports: { ".": "./index.js", "./server": "./server.js" },
+      }),
+    );
+
+    write(
+      "react-dom/server.js",
+      `const walk = (node) => {
+  if (node === null || node === undefined || node === false || node === true) return "";
+  if (Array.isArray(node)) return node.map(walk).join("");
+  if (typeof node !== "object") return String(node);
+  if (typeof node.type === "function") return walk(node.type(node.props ?? {}));
+  // memo/forwardRef: the component is one level in, as it is for react-dom itself.
+  if (typeof node.type?.type === "function") return walk(node.type.type(node.props ?? {}));
+  return walk(node.props?.children);
+};
+
+export const renderToStaticMarkup = (element) => {
+  try {
+    return walk(element);
+  } finally {
+    delete globalThis.__pluginRuntime;
+  }
+};
+
+export default { renderToStaticMarkup };
+`,
+    );
+
+    write(`${SDK_DIR}/react.js`, sdkReactModule({ live: true }));
   }
 
   /** Runs the validator with --json and parses the report. */

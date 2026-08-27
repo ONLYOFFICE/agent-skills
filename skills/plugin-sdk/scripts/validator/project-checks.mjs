@@ -20,12 +20,15 @@
  */
 
 import {
+  LOCALE_TAGS,
   MODULE_RUNTIME,
   PORTAL_LIMITS,
   REQUIRED_EXTERNALS,
   SCOPES,
   SCOPE_CONTRACT,
   SDK_PACKAGE,
+  localeMember,
+  localeSuggestions,
   megabytes,
 } from "../contract.mjs";
 import { Check } from "./findings.mjs";
@@ -48,6 +51,7 @@ export class ProjectChecks extends Check {
 
     this.#checkScopes(manifest);
     this.#checkRuntime(manifest);
+    this.#checkManifestLocales(manifest);
 
     if (manifest.cspDomains && !Array.isArray(manifest.cspDomains))
       this.error("pkg.cspDomains", "cspDomains must be an array of origins");
@@ -180,6 +184,114 @@ export class ProjectChecks extends Check {
     this.#checkIconReferences(sourceText);
     this.#checkDeprecatedUsage(sourceText);
     this.#checkUiKitDefaults(sourceText);
+    this.#checkLocaleKeys();
+    this.#checkStylesheets();
+  }
+
+  /**
+   * Whether the stylesheet can be scoped at all, which is decided by how it is imported and
+   * built - not by reading the CSS, which nothing here does. `plugin.css` is injected into
+   * the portal's own document, so a class the build did not hash is a class shared with
+   * DocSpace: a CSS module makes that impossible by construction, and a plain .css file
+   * leaves it to whoever reads the rules.
+   */
+  #checkStylesheets() {
+    const { project } = this;
+
+    const imports = [
+      ...project.sourceText.matchAll(/(?:from\s+|import\s+)["']([^"']+\.css)["']/g),
+    ].map(([, file]) => file);
+
+    if (imports.length === 0) return;
+
+    if (project.isBuilt && !project.hasStylesheet)
+      this.warn(
+        "css",
+        `${imports[0]} is imported but the build emitted no dist/plugin.css - the packer picks up that name and no other, so none of the styling reaches the portal. Vite writes it beside plugin.js; a renamed build.lib output is the usual cause`,
+      );
+
+    const modules = imports.filter((file) => file.endsWith(".module.css"));
+    const plain = imports.filter((file) => !file.endsWith(".module.css"));
+    const configText = project.buildConfigFile?.startsWith("vite") ? project.buildConfigText : "";
+
+    if (modules.length && configText && !configText.includes("generateScopedName"))
+      this.warn(
+        "css",
+        `${project.buildConfigFile} sets no css.modules.generateScopedName, so the hashed class names carry no plugin identity - build them out of the manifest name (\`${project.manifest.name}__[local]__[hash:hex:6]\`, as the scaffold does), or a class in the portal's DOM cannot be traced back to this plugin`,
+      );
+
+    if (plain.length)
+      this.warn(
+        "css",
+        `${plain.join(", ")} ${plain.length === 1 ? "is" : "are"} imported as a plain stylesheet, which nothing scopes and nothing here checks: plugin.css is appended to the portal's head after its own stylesheets, so any rule whose leftmost selector is not a class of yours restyles DocSpace itself. Import it as *.module.css and the build hashes every class, or read every rule against references/react.md#scoped-css - the leftmost selector must be "${project.manifest.name}-…", never a bare element, "*" or ":root"`,
+      );
+  }
+
+  /** PluginLocale as the project's SDK spells it, or this tool's copy when it could not be read. */
+  get #knownLocales() {
+    return this.project.sdkLocales.length ? this.project.sdkLocales : LOCALE_TAGS;
+  }
+
+  /** The tags a plausible-but-wrong one was meant to be, out of what the SDK has. */
+  #localeSuggestions(tag) {
+    return localeSuggestions(tag).filter((candidate) => this.#knownLocales.includes(candidate));
+  }
+
+  /**
+   * A locale table keyed by a hand-written tag that is not a PluginLocale value: the portal
+   * calls setLanguage with the enum's own value, so the table is never found and that
+   * language silently reads English. Nothing else reports it - it compiles and it installs.
+   *
+   * Only a tag the enum *nearly* has is a finding ("ja" for ja-JP, "en" for en-US), which is
+   * what a hand-written table gets wrong; an unrelated short string key is left alone. The
+   * file has to look like it holds one: a plugin that imports the enum, calls setLanguage or
+   * keeps its strings in a file named for them - a foreign plugin often does only the last.
+   */
+  #checkLocaleKeys() {
+    const holdsLocales = ({ file, text }) =>
+      text.includes("PluginLocale") || text.includes("setLanguage") || /locale|i18n|lang|translat/i.test(file);
+
+    for (const { file, text } of this.project.sourceFileTexts.filter(holdsLocales)) {
+      const keys = text.matchAll(/(?:^|[{,[]\s*)\[?\s*["']([A-Za-z]{2,3}(?:[-_][A-Za-z]{2,4})*)["']\s*\]?\s*:/gm);
+
+      for (const [, tag] of keys) {
+        if (this.#knownLocales.includes(tag)) continue;
+
+        const suggestions = this.#localeSuggestions(tag);
+        if (!suggestions.length) continue;
+
+        this.error(
+          "locale",
+          `${file} keys a locale table with "${tag}", which is not a PluginLocale value - use ${suggestions
+            .map((candidate) => `PluginLocale.${localeMember(candidate) ?? candidate}`)
+            .join(" or ")}. The portal passes the enum's value to setLanguage, so a table under "${tag}" is never read and that language falls back to English`,
+        );
+      }
+    }
+  }
+
+  /**
+   * `nameLocale` and `descriptionLocale` are the same trap one level out: the portal reads
+   * them for the plugin list, keyed by the same tags, and a near-miss is simply not shown.
+   */
+  #checkManifestLocales(manifest) {
+    for (const field of ["nameLocale", "descriptionLocale"]) {
+      const table = manifest[field];
+      if (!table || typeof table !== "object") continue;
+
+      for (const tag of Object.keys(table)) {
+        if (this.#knownLocales.includes(tag)) continue;
+
+        const suggestions = this.#localeSuggestions(tag);
+
+        this.warn(
+          `pkg.${field}`,
+          `${field} has a "${tag}" entry, which is not a PluginLocale value${
+            suggestions.length ? ` - use ${suggestions.map((candidate) => `"${candidate}"`).join(" or ")}` : ""
+          }. The portal looks the plugin list up by the enum's own tags, so this entry is never shown`,
+        );
+      }
+    }
   }
 
   #checkRegistration(sourceText) {

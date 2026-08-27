@@ -52,6 +52,7 @@ const BUILD_CONFIG_FILES = [
 export class PluginProject {
   #assetEntries;
   #sourceText;
+  #sourceFileTexts;
   #assetsDir;
   #srcDir;
 
@@ -84,6 +85,7 @@ export class PluginProject {
     this.#srcDir = path.join(dir, "src");
     this.bundlePath = path.join(dir, "dist", "plugin.js");
     this.zipPath = path.join(dir, "dist", "plugin.zip");
+    this.stylesheetPath = path.join(dir, "dist", "plugin.css");
 
     /** The SDK the project installed, and its version. */
     this.sdk = null;
@@ -103,6 +105,11 @@ export class PluginProject {
     return fs.existsSync(this.bundlePath);
   }
 
+  /** Only some plugins emit one - a project styled entirely with the kit and inline styles does not. */
+  get hasStylesheet() {
+    return fs.existsSync(this.stylesheetPath);
+  }
+
   get hasNodeModules() {
     return fs.existsSync(path.join(this.dir, "node_modules"));
   }
@@ -110,6 +117,11 @@ export class PluginProject {
   /** The SDK's own action list - the authority on which strings exist. */
   get sdkActions() {
     return this.sdk ? Object.values(this.sdk.Actions ?? {}) : [];
+  }
+
+  /** PluginLocale as the installed SDK spells it; empty when the SDK could not be imported. */
+  get sdkLocales() {
+    return this.sdk ? Object.values(this.sdk.PluginLocale ?? {}) : [];
   }
 
   get hasAssetsDir() {
@@ -145,13 +157,21 @@ export class PluginProject {
     return walkFiles(this.#srcDir).filter((file) => /\.(ts|tsx|js|jsx)$/.test(file) && !file.endsWith(".d.ts"));
   }
 
-  /** Every source file, concatenated with comments removed. Read once. */
+  /** One entry per source file, comments removed, path relative to the project. Read once. */
+  get sourceFileTexts() {
+    this.#sourceFileTexts ??= this.sourceFiles.map((file) => ({
+      file: path.relative(this.dir, file).split(path.sep).join("/"),
+      text: stripComments(fs.readFileSync(file, "utf8")),
+    }));
+
+    return this.#sourceFileTexts;
+  }
+
+  /** Every source file, concatenated with comments removed. Read once, with the above. */
   get sourceText() {
     if (!this.hasSrcDir) return "";
 
-    this.#sourceText ??= stripComments(
-      this.sourceFiles.map((file) => fs.readFileSync(file, "utf8")).join("\n"),
-    );
+    this.#sourceText ??= this.sourceFileTexts.map(({ text }) => text).join("\n");
 
     return this.#sourceText;
   }
@@ -190,6 +210,18 @@ export class PluginProject {
   async #import(name, from) {
     const resolved = this.#resolve(name, from);
     return resolved ? import(pathToFileURL(resolved).href) : null;
+  }
+
+  /**
+   * A package as the *project* installed it - the same copy the bundle was built against, so
+   * a React context created in one is the context the other reads. Null when it is not there.
+   */
+  async importFromProject(name) {
+    try {
+      return await this.#import(name);
+    } catch {
+      return null;
+    }
   }
 
   /**

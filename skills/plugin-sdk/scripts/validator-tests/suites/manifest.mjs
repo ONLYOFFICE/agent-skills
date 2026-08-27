@@ -22,6 +22,7 @@
 
 import {
   contextMenuPlugin,
+  contextMenuProject,
   contextMenuSource,
   manifestFor,
   multiScopePlugin,
@@ -151,5 +152,51 @@ export default ({ workspace, check }) => {
   check(
     "the rejection lists the scopes that are supported",
     unknownScope.mentions("ContextMenu") && unknownScope.mentions("ArticleNavigation"),
+  );
+
+  // --- stylesheets ------------------------------------------------------------
+  //
+  // Nothing reads the CSS: what is checkable without doing that is how the stylesheet is
+  // imported and built, which is what decides whether it can collide with the portal at all.
+
+  const styled = (slug, importLine) =>
+    workspace.validateProject(slug, {
+      pkg: manifestFor(slug, "FixtureStyled"),
+      bundle: contextMenuPlugin({}),
+      src: `${importLine}\n${contextMenuSource()}`,
+    });
+
+  const plainCss = styled("css-plain", `import "./styles.css";`);
+
+  check(
+    "a plain .css import is a warning that says nothing scopes it",
+    plainCss.warningCodes.includes("css") && plainCss.hasFindingMentioning("plain stylesheet", "restyles DocSpace"),
+    plainCss.messagesFor("css"),
+  );
+  check(
+    "an imported stylesheet the build did not emit is reported as not loaded",
+    plainCss.hasFindingMentioning("no dist/plugin.css"),
+    plainCss.messagesFor("css"),
+  );
+
+  const moduleCss = styled("css-module", `import styles from "./styles.module.css";`);
+
+  check(
+    "a CSS module built without generateScopedName is a warning naming the config",
+    moduleCss.hasFindingMentioning("generateScopedName", "vite.config.ts"),
+    moduleCss.messagesFor("css"),
+  );
+  check(
+    "a CSS module is not also told to scope itself by hand",
+    !moduleCss.mentions("plain stylesheet"),
+    moduleCss.messagesFor("css"),
+  );
+
+  const noCss = workspace.validateProject("css-none", contextMenuProject("css-none", "FixtureNoCss"));
+
+  check(
+    "a plugin that imports no stylesheet is not asked about one",
+    !noCss.warningCodes.includes("css"),
+    noCss.messagesFor("css"),
   );
 };

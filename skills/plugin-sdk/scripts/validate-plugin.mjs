@@ -22,7 +22,9 @@
  *   node scripts/validate-plugin.mjs <pluginDir> [--invoke] [--json]
  *
  * --invoke also calls every item callback with a dummy id and validates the returned
- * IMessage (may hit the network - opt in). Exit code 1 when there is at least one ERROR.
+ * IMessage (may hit the network - opt in), which is also what turns up the dialogs and
+ * viewers a click opens, so the render pass can render those too. Exit code 1 when there is
+ * at least one ERROR.
  */
 
 import * as path from "node:path";
@@ -31,6 +33,7 @@ import { ArchiveChecks } from "./validator/archive-checks.mjs";
 import { Findings } from "./validator/findings.mjs";
 import { FatalProjectError, PluginProject } from "./validator/plugin-project.mjs";
 import { ProjectChecks } from "./validator/project-checks.mjs";
+import { RenderChecks } from "./validator/render-checks.mjs";
 import { RuntimeChecks } from "./validator/runtime-checks.mjs";
 
 const parseArgs = (argv) => {
@@ -80,10 +83,19 @@ const printTextReport = ({ project, findings, runtime }) => {
     .map(([scope, count]) => `${scope}:${count}`)
     .join(" ");
 
+  // How many surfaces rendered out of how many were tried: a pass that could not run, and
+  // one where every surface threw, are both worth seeing in the last line.
+  const { rendered, attempted, skipped } = runtime.render ?? {};
+  const render = skipped
+    ? ` - render skipped: ${skipped}`
+    : attempted
+      ? ` - rendered: ${rendered}/${attempted} surface(s)`
+      : "";
+
   console.log(
     `\n${findings.errors.length} error(s), ${findings.warnings.length} warning(s)${
       runtime.loaded ? ` - runtime: ${itemCounts || "no item scopes"}` : ""
-    }`,
+    }${render}`,
   );
 };
 
@@ -102,7 +114,15 @@ const main = async () => {
   const runtimeChecks = new RuntimeChecks(context, archive);
   await runtimeChecks.run();
 
-  const report = { project, findings, runtime: runtimeChecks.report };
+  // Rendering needs the components the runtime pass collected, so it comes last.
+  const renderChecks = new RenderChecks(context);
+  await renderChecks.run(runtimeChecks.surfaces);
+
+  const report = {
+    project,
+    findings,
+    runtime: { ...runtimeChecks.report, render: renderChecks.report },
+  };
 
   if (json) printJsonReport(report);
   else printTextReport(report);

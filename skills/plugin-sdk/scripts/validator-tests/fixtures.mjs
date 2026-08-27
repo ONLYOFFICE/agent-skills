@@ -260,6 +260,68 @@ export const multiScopeSource = () =>
 export const scopeSource = ({ adder, getter, members = [] }) =>
   pluginSource({ adders: adder ? [adder] : [], getters: getter ? [getter] : [], members, icon: null });
 
+/**
+ * Two React surfaces from the opposite ends of the current-file table: an info panel tab,
+ * which the portal renders over a selection, and a sidebar page, which never has one. Each
+ * body is source text so a suite can decide what the component does with the hook.
+ * `kit` adds the UI kit import, for the bodies that render through the stubbed kit; `memo`
+ * registers the page as a memo object rather than a function, which the portal renders too.
+ */
+export const renderSurfacesPlugin = ({ tabBody, pageBody, kit = "", memo = false }) => `
+import { jsx } from "react/jsx-runtime";
+import { useCurrentFile } from "@onlyoffice/docspace-plugin-sdk/react";
+${kit ? `import { ${kit} } from "@docspace/ui-kit";` : ""}
+
+const Tab = () => { ${tabBody} };
+const PageBody = () => { ${pageBody} };
+const Page = ${memo ? `{ $$typeof: Symbol.for("react.memo"), type: PageBody }` : "PageBody"};
+
+const plugin = {${pluginMembers}
+  tabs: new Map(),
+  nav: new Map(),
+  async onLoadCallback() {
+    this.tabs.set("fixture-tab", { key: "fixture-tab", subMenu: { name: "Tab" }, component: Tab });
+    this.nav.set("fixture-page", { key: "fixture-page", label: "Page", icon: "logo.svg", component: Page });
+  },
+  addInfoPanelItem(i) { this.tabs.set(i.key, i); },
+  addArticleNavigationItem(i) { this.nav.set(i.key, i); },
+  getInfoPanelItems() { return this.tabs; },
+  getArticleNavigationItems() { return this.nav; },
+};
+export default plugin;
+`;
+
+/** A ContextMenu click that opens a dialog whose body is rendered - the modal-side surface. */
+export const modalSurfacePlugin = ({ dialogBody }) => `
+import { jsx } from "react/jsx-runtime";
+import { useCurrentFile } from "@onlyoffice/docspace-plugin-sdk/react";
+
+const Dialog = () => { ${dialogBody} };
+
+const plugin = {${pluginMembers}
+  items: new Map(),
+  async onLoadCallback() {
+    this.items.set("fixture-modal", {
+      key: "fixture-modal", label: "Open", icon: "logo.svg",
+      async onItemClick() {
+        return { actions: ["show-modal"], modalDialogProps: { dialogHeader: "Hi", dialogBodyComponent: Dialog } };
+      },
+    });
+  },
+  addContextMenuItem(i) { this.items.set(i.key, i); },
+  getContextMenuItems() { return this.items; },
+};
+export default plugin;
+`;
+
+/** The source a render fixture needs: the getters its declared scopes require. */
+export const renderSurfacesSource = () =>
+  pluginSource({
+    adders: ["addInfoPanelItem", "addArticleNavigationItem"],
+    getters: ["getInfoPanelItems", "getArticleNavigationItems"],
+    icon: null,
+  });
+
 /** The common project shape: a ContextMenu plugin under a fresh manifest. */
 export const contextMenuProject = (slug, pluginName, { bundle, click, src } = {}) => ({
   pkg: manifestFor(slug, pluginName),

@@ -35,7 +35,7 @@ const asActionValue = (key) =>
   `${key}`.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 
 /** A function, or a memo/forwardRef object - never a JSX *element* (`component: <Panel />`). */
-const isReactComponent = (value) =>
+export const isReactComponent = (value) =>
   typeof value === "function" ||
   (value !== null && typeof value === "object" && "$$typeof" in value && !("props" in value));
 

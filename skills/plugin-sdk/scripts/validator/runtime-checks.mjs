@@ -84,6 +84,18 @@ export class RuntimeChecks extends Check {
     this.archive = archive;
     this.shapes = new ShapeChecks(context);
     this.report = { loaded: false, items: {} };
+
+    /** Every component the portal would render, with the selection its surface receives. */
+    this.surfaces = [];
+  }
+
+  /** Deduplicated - the same component registered twice is one render. */
+  #collectSurface(where, component, hasCurrentFile) {
+    if (!component) return;
+    if (this.surfaces.some((surface) => surface.component === component && surface.hasCurrentFile === hasCurrentFile))
+      return;
+
+    this.surfaces.push({ where, component, hasCurrentFile });
   }
 
   async run() {
@@ -234,6 +246,9 @@ export class RuntimeChecks extends Check {
     for (const [key, item] of entries) {
       this.shapes.item(scope, contract, key, item);
 
+      // An info panel tab is the one item surface the portal renders over a selection.
+      this.#collectSurface(`${scope} item "${key}" component`, item.component, scope === "InfoPanel");
+
       if (this.options.invoke) await this.#invokeItemCallbacks(scope, key, item);
     }
   }
@@ -257,6 +272,7 @@ export class RuntimeChecks extends Check {
     }
 
     this.shapes.settings(settings);
+    this.#collectSurface("the settings component", settings.component, false);
   }
 
   /** @returns the map, or null when the getter is unusable (already reported). */
@@ -294,6 +310,17 @@ export class RuntimeChecks extends Check {
       );
   }
 
+  /**
+   * The surfaces a class-side click asks the portal to draw. A dialog opened this way has no
+   * selection - the message carries none - while the media viewer is always about a file.
+   */
+  #collectMessageSurfaces(where, message) {
+    if (!message || typeof message !== "object") return;
+
+    this.#collectSurface(`${where} -> dialogBodyComponent`, message.modalDialogProps?.dialogBodyComponent, false);
+    this.#collectSurface(`${where} -> mediaViewerProps.component`, message.mediaViewerProps?.component, true);
+  }
+
   async #invokeItemCallbacks(scope, key, item) {
     for (const [name, run] of invocationsFor(scope, item)) {
       const where = `${scope} item "${key}" ${name}`;
@@ -301,6 +328,7 @@ export class RuntimeChecks extends Check {
       try {
         const result = await withTimeout(run(), CALLBACK_TIMEOUT_MS, where);
         this.shapes.message(`${scope} item "${key}"`, result);
+        this.#collectMessageSurfaces(where, result);
       } catch (e) {
         if (/inside a plugin component/.test(e?.message ?? ""))
           this.error(

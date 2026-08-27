@@ -24,7 +24,7 @@
 export const SDK_PACKAGE = "@onlyoffice/docspace-plugin-sdk";
 export const UI_KIT_PACKAGE = "@docspace/ui-kit";
 
-const SDK_REACT_ENTRY = `${SDK_PACKAGE}/react`;
+export const SDK_REACT_ENTRY = `${SDK_PACKAGE}/react`;
 const SDK_MAJOR = 3;
 
 /** The `runtime` value that makes the portal `import()` the bundle and read its default export. */
@@ -176,6 +176,65 @@ export const PORTAL_LIMITS = {
 
 export const megabytes = (bytes) => (bytes / 1e6).toFixed(1);
 
+/**
+ * PluginLocale: the tag the portal passes to setLanguage, mapped to the enum member that
+ * names it. A locale table keyed by a hand-written tag is a silent failure - "ja" is not
+ * "ja-JP", so the plugin compiles, installs and never shows that language - which is why
+ * both the scaffolder and the validator compare against this list rather than trusting a
+ * string. Ordered as the SDK declares them.
+ */
+export const PLUGIN_LOCALES = {
+  az: "AZ",
+  cs: "CS",
+  de: "DE",
+  "en-GB": "EN_GB",
+  "en-US": "EN_US",
+  es: "ES",
+  fr: "FR",
+  it: "IT",
+  lv: "LV",
+  nl: "NL",
+  pl: "PL",
+  "pt-BR": "PT_BR",
+  pt: "PT",
+  ro: "RO",
+  sk: "SK",
+  sl: "SL",
+  "sq-AL": "SQ_AL",
+  fi: "FI",
+  vi: "VI",
+  tr: "TR",
+  "el-GR": "EL_GR",
+  bg: "BG",
+  ru: "RU",
+  "sr-Cyrl-RS": "SR_CYRL_RS",
+  "sr-Latn-RS": "SR_LATN_RS",
+  "uk-UA": "UK_UA",
+  "hy-AM": "HY_AM",
+  "ar-SA": "AR_SA",
+  si: "SI",
+  "lo-LA": "LO_LA",
+  "zh-CN": "ZH_CN",
+  "ja-JP": "JA_JP",
+  "ko-KR": "KO_KR",
+};
+
+export const LOCALE_TAGS = Object.keys(PLUGIN_LOCALES);
+
+/** The enum member naming a tag, e.g. "pt-BR" -> PT_BR. */
+export const localeMember = (tag) => PLUGIN_LOCALES[tag];
+
+/** The tags a plausible-but-wrong one was probably meant to be: "ja" -> ja-JP, "zh" -> zh-CN. */
+export const localeSuggestions = (tag) => {
+  const wanted = String(tag).toLowerCase().replace(/_/g, "-");
+  const language = wanted.split("-")[0];
+
+  return LOCALE_TAGS.filter((known) => {
+    const lower = known.toLowerCase();
+    return lower === wanted || lower.split("-")[0] === language;
+  });
+};
+
 /** UsersType values - the enum keys are camelCase, the host compares the values. */
 export const USERS_TYPES = ["Owner", "DocSpaceAdmin", "RoomAdmin", "Collaborator", "User"];
 
@@ -261,6 +320,7 @@ export const checkSdkDrift = (sdk, installedVersion) => {
 
   const values = (enumObject) => (enumObject ? Object.values(enumObject) : []);
 
+  compare("PluginLocale values", LOCALE_TAGS, values(sdk.PluginLocale));
   compare("UsersType values", USERS_TYPES, values(sdk.UsersType));
   compare("Devices values", DEVICES, values(sdk.Devices));
   compare("Events values", EVENT_TYPES, values(sdk.Events));
