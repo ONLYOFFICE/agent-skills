@@ -1,3 +1,6 @@
 node_modules/
 *.log
 .DS_Store
+
+# eval workspaces: generated plugin projects, not sources
+skills/*-workspace/

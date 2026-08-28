@@ -3,3 +3,8 @@
 *.mjs text eol=lf
 *.json text eol=lf
 *.txt text eol=lf
+*.svg text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+skills/plugin-sdk/templates/* text eol=lf
+*.tgz binary

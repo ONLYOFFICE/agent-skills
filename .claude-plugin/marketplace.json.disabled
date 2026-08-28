@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Agent skills for ONLYOFFICE developer tools and SDKs",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
       "name": "docspace",
       "source": "./",
-      "description": "Skills for ONLYOFFICE DocSpace SDKs: embed-sdk (embedding DocSpace into web apps), with more SDK skills to come."
+      "description": "Skills for ONLYOFFICE DocSpace SDKs: embed-sdk (embedding DocSpace into web apps) and plugin-sdk (building DocSpace plugins), with more SDK skills to come."
     }
   ]
 }
