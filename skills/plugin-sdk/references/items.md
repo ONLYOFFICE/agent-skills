@@ -21,7 +21,7 @@ Where an item has a visible surface it is a React component passed as `component
 | `usersTypes` | | **plural** |
 | `devices` | | |
 | `security` / `itemSecurity` | | every listed `Security` key must be allowed on the **parent folder/room** / on the **clicked item** |
-| `placement` | | `"top"` → first entry; `"topLast"` → before the first separator; not on nested items |
+| `placement` | | `"top"` → first entry; `"topLast"` → before the first separator; not on nested items, **and dropped for `isGroupAction`** — the bulk-selection menu rebuilds the entry from `key`/`label`/`icon`/`onClick` only, so a group item always lands in the default group |
 
 Without `placement`, plugin items land in the menu's **"More options"** group behind a separator, in registration order. Filters are evaluated when the menu opens. Items never show in Trash; for `image`/`video` they also appear in the media viewer's menu. A click that needs UI returns `showModal` with a `dialogBodyComponent` — which gets **no current file**; pass the id yourself.
 
@@ -37,7 +37,7 @@ Without `placement`, plugin items land in the menu's **"More options"** group be
 | `usersType` | | **singular** |
 | `devices` | | |
 
-Plugin entries are grouped under a single **"More"** sub-entry of the main button and the section "+" menu, after the standard create actions. Inert on views without a folder context. This is the surface for "create a new …"; an action on existing things belongs in `ContextMenu`.
+Plugin entries are grouped under a single **"More"** sub-entry of the main button and the section "+" menu, after the standard create actions. The gate is not "a view without a folder context": the button builds its own menu per section and **returns before reaching plugin items** in the Rooms list, AI agents and portal settings, and skips them on the accounts page — so a plugin entry appears where the portal itself offers file creation, and nowhere else. This is the surface for "create a new …"; an action on existing things belongs in `ContextMenu`.
 
 ## ProfileMenu
 
@@ -59,8 +59,8 @@ Quirk: the host reads an undeclared `position` field as an index into the profil
 | `key` | ✔ | the tab id becomes `info_plugin-<key>`; also what `openInfoPanel(key)` takes to open your own tab |
 | `subMenu` | ✔ | `{ name, onClick?: (id) => IMessage }` — `name` is the tab label; `onClick` fires on **every selection change**. A React tab rarely needs it |
 | `component` | ✔* | the tab body; `useCurrentFile()` is the selection, live — fetch in an effect keyed on `file?.id` |
-| `isHeaderVisible` | | default `true`; `false` removes the title block above the component |
-| `filesType` | | omit → everything; `room` / `folder` / `file` (then `filesExsts` narrows) |
+| `isHeaderVisible` | | **omitted means hidden.** The SDK's own doc comment claims the header is visible by default; the host renders the title block only when the flag is truthy (`if (isPlugin && !isPluginHeaderVisible) return null`), so pass `isHeaderVisible: true` to get the file/room title above your component |
+| `filesType` | | omit → everything. Five values: `room` / `folder` / `file` (then `filesExsts` narrows) / `image` / `video` — the last two are matched off the selection's `viewAccessibility`, not its extension |
 | `filesExsts` | | honoured only when `filesType` includes `file` |
 | `usersTypes` | | **plural** |
 | `devices` | | |
@@ -74,11 +74,13 @@ Quirk: the host reads an undeclared `position` field as an index into the profil
 |---|---|---|
 | `key` | ✔ | |
 | `eventType` | ✔ | `Events`: `CREATE`, `RENAME`, `ROOM_CREATE`, `ROOM_EDIT`, `CHANGE_COLUMN`, `CHANGE_USER_TYPE`, `CREATE_PLUGIN_FILE` |
-| `eventHandler` | ✔ | takes **no arguments** — the handler learns only *that* something happened; fetch the details |
+| `eventHandler` | ✔ | the SDK declares **no parameters**, and the host does hand it the DOM event — but nothing about the payload is contracted, so treat it as "something happened" and fetch the details |
 | `usersTypes` | | **plural** |
 | `devices` | | |
 
-Subscribed as plain `window` listeners. From the returned message only toasts and item updates are honoured — a modal is ignored. No `updateEventListenerItem`: re-add to replace.
+Subscribed as plain `window` listeners. No `updateEventListenerItem`: re-add to replace.
+
+**The returned message is not restricted.** The SDK's own doc says only toasts and item updates are honoured; the host does not check — the message goes through the same dispatcher as any class-side callback, and `showModal` really opens (the panels are mounted globally, not per surface). Keep to toasts and item updates by choice: the event fires on the portal's schedule, so a dialog or a `navigate` from here lands on whatever the user was in the middle of.
 
 ```ts
 eventHandler: async () => ({ actions: [Actions.showToast, Actions.updateArticleNavigationItems], toastProps: [{ type: ToastType.info, title: t("roomCreated") }] })

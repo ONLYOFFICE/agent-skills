@@ -76,18 +76,21 @@ A class-side callback returns an `IMessage` — `{ actions: [Actions.x, …], <p
 | `showCreateDialogModal` / `updateCreateDialogModal` | `createDialogProps` | `showCreateDialog(props)` | see [Create-file dialog](#the-create-file-dialog) |
 | `showMediaViewer` / `updateMediaViewer` / `closeMediaViewer` | `mediaViewerProps` (with `component`) | same names | see [Media viewer](#media-viewer) |
 | `addFloatingOperationsButton` / `updateFloatingOperationsButton` / `removeFloatingOperationsButton` | `floatingOperationsButtonProps` / same / `floatingOperationsButtonPropsId` (a bare string) | same names | see [Progress button](#the-floating-operations-button) |
-| `navigate` | `navigatePath` | `navigate(path)` | an absolute portal path — the ones worth knowing are [below](#paths-navigate-takes); actions listed after it run once navigation finishes |
-| `openInfoPanel` | `infoPanelTab?` | `openInfoPanel(tab?)` | `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, or the `key` of your own info-panel item |
+| `navigate` | `navigatePath` | `navigate(path)` | an absolute portal path — the ones worth knowing are [below](#paths-navigate-takes). The SDK's doc says later actions run once navigation finishes; the host does not sequence anything (the action loop is a synchronous `forEach`), so the next action fires immediately, against the page you are leaving |
+| `openInfoPanel` | `infoPanelTab?` | `openInfoPanel(tab?)` | `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, `"info_ai_chat"`, or the `key` of your own info-panel item. **It closes your modal, aside, settings aside and selector first** — the panel is not a second surface beside them, so anything the user was filling in is gone |
 | `sendPostMessage` | `postMessage` | — | the target iframe must be in the DOM |
 | `saveSettings` | `settings` | — (use `usePluginSettings().save()`) | |
-| `updateProps` / `updateContext` | `newProps` / `contextProps` | — | SDK 2 declarative trees only; ignored or throws elsewhere |
-| `updateStatus`, `update*Items` (`updateContextMenuItems`, `updateInfoPanelItems`, `updateMainButtonItems`, `updateProfileMenuItems`, `updateFileItems`, `updateEventListenerItems`, `updateArticleButtonItems`, `updateArticleNavigationItems`) | none | same names | make the portal re-read the plugin's map for that scope |
+| `updateProps` / `updateContext` | `newProps` / `contextProps` | — | SDK 2 declarative trees only; **silently ignored** elsewhere, never an error |
+| `updateStatus` | none | — | class-side only: it is an `Actions` member with no counterpart in the runtime a component gets |
+| `update*Items` (`updateContextMenuItems`, `updateInfoPanelItems`, `updateMainButtonItems`, `updateProfileMenuItems`, `updateFileItems`, `updateEventListenerItems`, `updateArticleButtonItems`, `updateArticleNavigationItems`) | none | same names | make the portal re-read the plugin's map for that scope |
 
-An event handler (`EventListener`) is further limited: only toasts and item updates are honoured from its message. There is no action for opening or closing the settings aside.
+An event handler (`EventListener`) is not limited by the host — its message goes through the same dispatcher as any other class-side callback, so a modal, a selector, `navigate` and the progress button all work from it. Keep it to toasts and item updates anyway: the event fires whenever the portal says so, and a dialog or a navigation arriving unbidden lands on whatever the user was doing. The three actions no class-side callback can use are `updateProps`, `updateContext` and `updateCreateDialogModal` — their setters are supplied by the caller, and only a mounted element has them, so elsewhere each is a silent no-op rather than an error. There is no action for opening the settings aside (`openInfoPanel` closes it).
 
 #### Paths `navigate` takes
 
-Every portal section is a route ending in `/filter`, and an entity is that route with its id in the middle. Guessing gets you a redirect to the root, and query strings like `?folder=` are not part of it — an id in the path is what selects the folder.
+Every portal section is a route ending in `/filter`, and an entity is that route with its id in the middle. Guessing gets you a redirect to the root.
+
+**The path alone does not open a room — `?folder={id}` is what does.** The Files section decides "the rooms list" from "one room's contents" by reading the **query string**, not the path: with no `folder` parameter it takes the location for the list, fetches rooms with a default filter, and rewrites the address bar from its own state — which for a room route means `/rooms/shared/undefined/filter?searchArea=Active&page=1&…`. That literal `undefined` in the URL, plus a `searchArea` you never set, is the signature of a room link sent without its query. So repeat the id: path **and** `folder`.
 
 | Where | Path |
 |---|---|
@@ -119,7 +122,8 @@ await api.delete(`/files/file/${id}`, { deleteAfter: false });
 const ops = await api.request<TOperation[]>({ method: "PUT", path: "/files/fileops/delete", data: { fileIds: [1] }, params: { returnSingleOperation: true } });
 ```
 
-- **Paths are relative to the API base**, which already includes `/api/2.0`: `"/files/@my"`, never `"/api/2.0/…"` or an absolute URL — those are refused before sending (`PluginApiError`, `code: "INVALID_PATH"`).
+- **Paths are relative to the API base**, which already includes `/api/2.0`: `"/files/@my"`. An absolute URL, a protocol-relative `//host`, a `..` segment or a scheme-like first segment is refused before sending (`PluginApiError`, `code: "INVALID_PATH"`). **`"/api/2.0/…"` is not** — it passes validation and goes out with the prefix twice, so the failure you get is a 404 from the portal rather than a path error, which is the harder one to read.
+- **`patch` exists too**, alongside the four above and `request` for anything else.
 - **The `response` envelope is unwrapped.** `api.get("/files/file/1")` resolves to the file; `.response` is `undefined`. A list with a total resolves to `{ total, <rows field> }`.
 - **Every failure is a `PluginApiError`**: `status` (0 when nothing reached the portal), `code` (`"ABORTED" | "NETWORK" | "INVALID_PATH"`), `request`, `details`, and `message` from the portal's own error text. Branch with `isPluginApiError(e) && e.status === 403`. A 403 does not navigate the user away as the portal's own requests do — you report it.
 - **`signal`** in the options cancels; abort in the effect cleanup and ignore `code === "ABORTED"`.
@@ -237,7 +241,7 @@ The portal's own pickers, create dialog, progress button and media viewer are op
 | `SelectorType` | Props type | `onSubmit` receives |
 |---|---|---|
 | `Files` | `TFilesSelector` | `{ selectedItemId, folderTitle, fileName, selectedFileInfo, breadCrumbs, isChecked }` |
-| `Room` | `TRoomSelector` | `(selectedIds)` — **single selection only**, whatever `isMultiSelect` suggests; for several rooms use a context menu item with `isGroupAction` |
+| `Room` | `TRoomSelector` | `(selectedIds: (string \| number)[])` — an array, and `isMultiSelect` works: the host forwards it to the kit's `RoomSelector`, which keeps a set, and maps everything picked into the array |
 | `People` | `TPeopleSelector` | `{ selectedIds, fileName, isFooterCheckboxChecked }` |
 | `Groups` | `TGroupsSelector` | `{ selectedIds }` |
 | `Base` | `TBaseSelector` — your own `items: { id, label, icon? }[]` | `{ selectedIds, fileName, isFooterCheckboxChecked }` |
@@ -312,7 +316,7 @@ showMediaViewer({
 });
 ```
 
-The component re-renders as the user pages, so `navigation.onFileChange`/`onLoad` are not needed — fetch in an effect keyed on `file?.id`. `playlistFilter` narrows what the viewer pages through (`filesExsts` case-insensitive, dot optional; every `filesSecurity` key must be allowed); without it the folder's full media playlist is used. Bytes come from the file's `viewUrl`, which answers 404 until the file has been written once ([rest-api.md](rest-api.md#a-files-contents-are-not-part-of-the-api)).
+The component re-renders as the user pages, so `navigation.onFileChange`/`onLoad` are not needed — fetch in an effect keyed on `file?.id`. `playlistFilter` narrows what the viewer pages through — `filesExsts` (case-insensitive, dot optional), `filesSecurity` (every key must be allowed), and also `usersTypes` and `devices`. Those last two are not per-file tests: they compare the *current* user role and device, so they either let the whole playlist through or empty it. Without a filter the folder's full media playlist is used. Bytes come from the file's `viewUrl`, which answers 404 until the file has been written once ([rest-api.md](rest-api.md#a-files-contents-are-not-part-of-the-api)).
 
 ### The floating operations button
 
@@ -321,11 +325,11 @@ The portal's progress button (downloads, conversions) accepts plugin entries —
 ```ts
 const op = (percent: number, completed = false) => ({
   id: "my-plugin-export",
+  operationsCompleted: completed,   // ← the field the portal watches; the one below only draws the row
   operations: [{ id: "export", label: t("exporting"), operation: FloatingOperationType.Other, alert: false, completed, percent }],
 });
 addFloatingOperationsButton(op(0));
 for (…) { await …; updateFloatingOperationsButton(op(pct)); }
-  operationsCompleted: completed,   // ← the field the portal watches; the one below only draws the row
 updateFloatingOperationsButton(op(100, true));   // sets operationsCompleted - the portal takes it from here
 ```
 
@@ -364,13 +368,13 @@ const ExportPanel = () => {
       operations: [{ id: "export", label: t("export.running"), operation: FloatingOperationType.Other,
                      alert, completed, percent }],
     });
+    // One exit for every path. The portal shows "…: Done" (or "…: Error"), waits, and clears the entry itself.
+    const finish = (alert = false) =>
+      updateFloatingOperationsButton(button(100, true, alert));
 
     (async () => {
       addFloatingOperationsButton(button(0));  // add first, or every update is a no-op
       try {
-    // One exit for every path. The portal shows "…: Done" (or "…: Error"), waits, and clears the entry itself.
-    const finish = (alert = false) =>
-      updateFloatingOperationsButton(button(100, true, alert));
         let percent = 0;
         for (let i = 0; i < files.length; i += 1) {
           if (controller.signal.aborted) return finish();
@@ -387,12 +391,12 @@ const ExportPanel = () => {
       }
     })();
 
+    // No remove() here: a finished job is already on its way out, and one still writing keeps its
+    // button - that is the only place it reports, so the surface closing must not take it away.
     return () => controller.abort();
   }, []);
 
   return <Text>{t("export.running")}</Text>;
-    // No remove() here: a finished job is already on its way out, and one still writing keeps its
-    // button - that is the only place it reports, so the surface closing must not take it away.
 };
 ```
 

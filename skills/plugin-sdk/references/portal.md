@@ -5,7 +5,7 @@ What the loader actually does with a plugin — not what the types allow — and
 ## Before anything loads: the switches
 
 - **`plugins.enabled`** (server setting, **off by default**). When false the portal never initialises plugins: no bundle fetched, no items, no routes, nothing in the console. Every surface re-checks it. Ask about this before auditing code.
-- **`pluginOptions.upload` / `pluginOptions.delete`** — independent of the above. With `upload` off, Integration → Plugins offers no upload control, however correct the archive.
+- **`pluginOptions.upload` / `pluginOptions.delete`** — a second, narrower switch *behind* the first, not beside it: the Integration → Plugins tab exists only when `plugins.enabled`, and these are read only on that tab. With `upload` off it offers no upload control, however correct the archive.
 - The plugin system is skipped when the portal's **paid period has expired**, and plugin surfaces are suppressed inside the **AI-agent/chat views**.
 
 ## The loading sequence
@@ -15,7 +15,7 @@ Module plugins (`"runtime": "module"` in the packed `config.json` — everything
 1. `GET plugin.js` as text. Every bare-specifier import is rewritten to the portal's copy — for exactly the six specifiers in [react.md → Bundling](react.md#bundling). Any other bare specifier **aborts the load** with a console error naming it.
 2. `import()` as a blob URL; the default export is the plugin. Module-scope code runs here.
 3. The manifest record is `Object.assign`ed **onto** the plugin object — `name`, `version`, `scopes`, `url`, `enabled`, `settings`, `image`, `description`, … — overwriting your same-named fields.
-4. `setLanguage(locale)` from the `LANGUAGE` cookie.
+4. `setLanguage(locale)` — the `LANGUAGE` cookie, falling back to the portal's own `culture` when the cookie is unset.
 5. If declared: `setAPI(origin, proxy, prefix)`.
 6. `await plugin.onLoadCallback()`.
 7. `getStatus()`; `hide` stops the sequence.
@@ -30,7 +30,7 @@ Consequences:
 - **An ES module without `"runtime": "module"`** is injected as a classic script and dies on its first `import`.
 - **Register items in `onLoadCallback`, not at module scope.** Both reach the maps in time (they are read at step 9), but at module scope neither the language nor the API URLs are set yet — a factory that translates a label or calls `getAPI()` there captures empty values.
 - **Anything registered after step 9 is invisible** until the matching `update*Items` action — items added from a timer or an un-awaited promise.
-- **Stored settings arrive at step 10**, after `onLoadCallback`. Components read them with `usePluginSettings().load()`; class-side code in `setAdminPluginSettingsValue`.
+- **Stored settings do not wait for `onLoadCallback` to finish.** For a module plugin the loader calls `installPlugin()` — which is what awaits `onLoadCallback` — **without awaiting it**, then calls `setAdminPluginSettingsValue` immediately. So the value lands after the synchronous prefix of `onLoadCallback` and before anything after its first `await`: step 10 happens *inside* step 6. Do not read a settings value in `onLoadCallback` and do not order the two; components read settings with `usePluginSettings().load()`, class-side code reacts in `setAdminPluginSettingsValue`. (The legacy non-module path does await, and there the order is as numbered.)
 - **Disabled plugins are still fetched and executed**, so module-scope side effects run even when switched off.
 - **Enable/disable is live** (a `change-web-plugin` socket room): items appear or vanish in every open session without a reload; on re-enable the bundle is not re-fetched, so module-scope state survives while `onLoadCallback` runs again.
 
@@ -108,15 +108,17 @@ The maps are flat and shared across every installed plugin: two plugins using ke
 | Callback belongs to | `updateProps` / `updateContext` | `saveSettings` | everything else |
 |---|---|---|---|
 | A React component (`usePluginActions()`) | not offered — a component owns its state | not offered — `usePluginSettings().save()` | all work |
-| A menu item, file click, `subMenu.onClick`, event handler, selector or create-dialog callback | ignored / **throws** | works | all work (an event handler: toasts and item updates only) |
+| A menu item, file click, `subMenu.onClick`, event handler, selector or create-dialog callback | **silently ignored** — the setter they need belongs to a mounted element | works | all work |
 | A button inside an SDK 2 declarative tree | works | works | `showMediaViewer`/`closeMediaViewer` are a silent no-op |
-| Any other element in a declarative tree | works | **throws** | all work |
+| Any other element in a declarative tree | works | works | all work |
+
+**Nothing here throws**, and that is the trap: the dispatcher calls every setter optionally (`setElementProps?.()`, `updatePropsContext?.()`), so an action that has no home is a no-op with no console line — the plugin looks correct and does nothing. The only throws in the whole plugin layer are the React API client on a rejected path and the import shim on a missing external. An event handler is not restricted either — see [items.md → EventListener](items.md#eventlistener).
 
 ## What actually breaks the portal
 
 A module plugin runs in the portal's own window — its DOM, cookies and `localStorage` in reach. The only guard is the error boundary around each plugin component; everything outside a component is unguarded.
 
-- **Throwing in a class-side callback.** No portal code wraps `onItemClick`, `onClick`, `eventHandler` or `onSave`. An unhandled rejection is a dead click — catch and return a toast.
+- **Throwing in a class-side callback.** No portal code wraps `onItemClick`, `onClick`, `onGroupClick`, `subMenu.onClick` or `eventHandler` — the host awaits each one bare, so a rejection is a dead click. Catch and return a toast. The create dialog's `onSave` *is* wrapped, but its `catch` only routes to `onError`: without one it swallows the failure and leaves the dialog open ([sdk-contract.md](sdk-contract.md#two-kinds-of-callback)).
 - **Throwing in `onLoadCallback` or at module scope** aborts the plugin silently. Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.

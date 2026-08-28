@@ -42,7 +42,7 @@ That is the whole registration for a module plugin (`"runtime": "module"` in `pa
 
 Hooks throw outside a rendered component. The two worlds meet at `showModal`: a callback returns `{ actions: [Actions.showModal], modalDialogProps: { dialogBodyComponent: Panel } }` and `Panel` is React — but `useCurrentFile()` is `null` there, so pass the clicked id through a module variable or a factory ([react.md](react.md#what-usecurrentfile-returns-where)).
 
-**A class-side callback carries its own error handling — all of them, not just the ones that await.** Nothing wraps these: the portal calls the callback, and if it throws or rejects, the `IMessage` never arrives. The click produces no modal, no navigation and no toast, so the user is told nothing and the item reads as broken. Return an error toast instead of letting anything escape:
+**A class-side callback carries its own error handling — all of them, not just the ones that await.** The host `await`s your callback bare: `onItemClick`, `onClick`, `onGroupClick`, `subMenu.onClick` and `eventHandler` are called with no `try` around them, so a throw or a rejection becomes an unhandled rejection and the `IMessage` never reaches the dispatcher. The click produces no modal, no navigation and no toast, so the user is told nothing and the item reads as broken. Return an error toast instead of letting anything escape:
 
 ```ts
 onItemClick = async (id: number): Promise<IMessage> => {
@@ -54,6 +54,8 @@ onItemClick = async (id: number): Promise<IMessage> => {
   }
 };
 ```
+
+**The create dialog's `onSave` is the one exception, and it is not a reprieve.** That call *is* wrapped, and the `catch` awaits the `onError` you supplied — but with no `onError` it swallows the failure and returns, leaving the dialog open over an error nobody hears about. Either supply `onError`, or catch inside `onSave` as above; a bare `onSave` fails more quietly than an unwrapped callback, not less.
 
 Carry the portal's own words in that toast — the `message` of a `PluginApiError`, the status text of a `fetch` — rather than one house phrase for everything. A plugin's failed request does not move the user anywhere the way the portal's own do, so the toast is the entire diagnosis, both for the person clicking and for whoever they report it to. The same applies inside components, where a throw renders the surface as nothing ([react.md](react.md#errors-loading-language-styling)); a `catch` that discards the reason turns a fixable 403 into "it does not work".
 
