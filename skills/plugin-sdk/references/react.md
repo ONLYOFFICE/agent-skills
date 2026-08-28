@@ -11,7 +11,7 @@ The portal wraps the component in the runtime provider and an error boundary and
 | Prop | Surface | What the host provides |
 |---|---|---|
 | `IArticleNavigationItem.component` | a full page at `/p/<key>` (under the section's path) | the section body — full width, scrolls; no heading, no padding (20px padding, a `Heading`, ~640px max text width read well) |
-| `IInfoPanelItem.component` | body of an info panel tab | ~337px wide, already scrolls; the file/room title block unless `isHeaderVisible: false` |
+| `IInfoPanelItem.component` | body of an info panel tab | ~337px wide, already scrolls; **no title block unless the item sets `isHeaderVisible: true`** — the SDK's doc comment says visible by default, the host disagrees ([items.md](items.md#infopanel)) |
 | `IArticleButtonItem.component` | a 32×32 slot in the sidebar, `overflow: hidden` | nothing — a single `IconButton size={32}` is what fits |
 | `IModalDialog.dialogBodyComponent` | body of a modal or aside | header from `dialogHeader`, close cross, padding; **no footer slot** |
 | `IMediaViewer.component` | the media viewer's content area | the viewer's chrome, full screen |
@@ -91,13 +91,13 @@ Every portal section is a route ending in `/filter`, and an entity is that route
 
 | Where | Path |
 |---|---|
-| A room, by id | `/rooms/shared/{id}/filter` — archived: `/rooms/archived/{id}/filter` |
-| A folder inside a room | the same shape with the folder's id — `/rooms/shared/{folderId}/filter` |
+| A room, by id | `/rooms/shared/{id}/filter?folder={id}` — archived: `/rooms/archived/{id}/filter?folder={id}` |
+| A folder inside a room | the same shape with the folder's id — `/rooms/shared/{folderId}/filter?folder={folderId}` |
 | The Rooms list / the Archive | `/rooms/shared/filter` / `/rooms/archived/filter` |
 | My documents / Recent / Favourites / Trash | `/rooms/personal/filter` / `/recent/filter` / `/files/favorite/filter` / `/files/trash/filter` |
 | Your own `ArticleNavigation` page | `/p/{key}` — under `Section.Accounts` `/accounts/p/{key}`, under `Section.Settings` `/portal-settings/p/{key}` |
 
-Which of the two room paths a room takes is something you normally already know — you listed it with `searchArea` (`Active` or `Archive`), so carry that through to the link. `rootFolderType` on the room also distinguishes them, but the SDK types it as a bare `number` and names no constants, so do not branch on a remembered value. Sending someone to the wrong one of the two shows them an empty list rather than an error, which is the harder bug to notice.
+Which of the two room paths a room takes is something you normally already know — you listed it with `searchArea` (`Active` or `Archive`), so carry that through to the link. `rootFolderType` on the room decides it too, and it is the portal's own test: the client offers "Move to archive" or "Restore" by comparing it against `FolderType.Archive`, which is **20**. The SDK types the field as a bare `number` and exports no constant for it, so name your own (`const ARCHIVE_ROOT = 20`) rather than leaving a literal in a condition. Sending someone to the wrong one of the two shows them an empty list rather than an error, which is the harder bug to notice.
 
 **Changing an item from a component is two steps:** mutate the map through the plugin instance, then ask for a redraw — `setState` cannot reach the class.
 
@@ -325,11 +325,15 @@ const op = (percent: number, completed = false) => ({
 });
 addFloatingOperationsButton(op(0));
 for (…) { await …; updateFloatingOperationsButton(op(pct)); }
-updateFloatingOperationsButton(op(100, true));
+  operationsCompleted: completed,   // ← the field the portal watches; the one below only draws the row
+updateFloatingOperationsButton(op(100, true));   // sets operationsCompleted - the portal takes it from here
 ```
 
 - **Add before update.** `add` ignores an id already registered, `update` ignores one that is not — an update sent first is a silent no-op. `update` takes the whole props object again.
-- `remove` takes the button `id` as a bare string (`floatingOperationsButtonPropsId` class-side).
+- **Two different `completed` fields, and only the outer one ends the job.** `operations[i].completed` draws that row; **`operationsCompleted` on the button props** is what the portal reads. When it turns true the panel waits 4 seconds, plays its hide animation, and on the animation's end clears every operation the plugin registered — so the button removes *itself*, and the entry stops claiming to be running. Set only the inner `completed` and the button never leaves: the job is over, the label still reads "…ing", and it stays there until the page is reloaded. Nothing catches this — the validator sees a correct add/update sequence and a render pass has no panel — so it is worth re-reading the last `update` you write against this bullet.
+- **The finished wording is the portal's, not yours.** At completion it renders your operation `label` inside its own phrase — `"{{label}}: Done"`, or `"{{label}}: Error"` in the error path — so the label wants to be a plain name of the work ("Archiving rooms"), never rewritten to the past tense on the last update.
+- **The 4-second dismissal waits for the user.** It does not run while the pointer is over the button or while the operations dropdown is open, which is deliberate: the completed state is readable before it goes.
+- `remove` takes the button `id` as a bare string (`floatingOperationsButtonPropsId` class-side). The normal end of a job needs no `remove` — reach for it to drop the button *early*, or from a cleanup when the surface goes away with the work still unfinished.
 - Operation ids are prefixed by the host with the plugin name; `onCancelOperationFromList(operationId)` hands back your unprefixed id. `cancelOperation` fires for "cancel all". Dismissing the button drops all your operations.
 - `FloatingOperationType`: `Download`, `Convert`, `Copy`, `Upload`, `Backup`, … or `Other`.
 
@@ -352,27 +356,33 @@ const ExportPanel = () => {
     started.current = true;
 
     const controller = new AbortController();
-    const button = (percent: number, completed = false) => ({
-      id: "my-plugin-export",
+    const BUTTON = "my-plugin-export";
+    const button = (percent: number, completed = false, alert = false) => ({
+      id: BUTTON,
+      operationsCompleted: completed,          // the portal's own dismissal hangs off this one
+      operationsAlert: alert,
       operations: [{ id: "export", label: t("export.running"), operation: FloatingOperationType.Other,
-                     alert: false, completed, percent }],
+                     alert, completed, percent }],
     });
 
     (async () => {
       addFloatingOperationsButton(button(0));  // add first, or every update is a no-op
       try {
+    // One exit for every path. The portal shows "…: Done" (or "…: Error"), waits, and clears the entry itself.
+    const finish = (alert = false) =>
+      updateFloatingOperationsButton(button(100, true, alert));
         let percent = 0;
-        for (let done = 0; done < files.length; done += 1) {
-          if (controller.signal.aborted) return;
-          await pack(api, files[done], controller.signal);
+        for (let i = 0; i < files.length; i += 1) {
+          if (controller.signal.aborted) return finish();
+          await pack(api, files[i], controller.signal);
 
-          const next = Math.round(((done + 1) / files.length) * 100);
+          const next = Math.round(((i + 1) / files.length) * 100);
           if (next > percent) updateFloatingOperationsButton(button((percent = next)));   // whole percents only
         }
-        updateFloatingOperationsButton(button(100, true));
+        finish();
         showToast({ type: ToastType.success, title: t("export.done") });
       } catch (e) {
-        updateFloatingOperationsButton(button(100, true));   // never leave it spinning
+        finish(true);   // never leave it spinning: an unfinished entry is never dismissed
         showToast({ type: ToastType.error, title: isPluginApiError(e) ? e.message : t("export.failed") });
       }
     })();
@@ -381,6 +391,8 @@ const ExportPanel = () => {
   }, []);
 
   return <Text>{t("export.running")}</Text>;
+    // No remove() here: a finished job is already on its way out, and one still writing keeps its
+    // button - that is the only place it reports, so the surface closing must not take it away.
 };
 ```
 

@@ -91,8 +91,8 @@ eventHandler: async () => ({ actions: [Actions.showToast, Actions.updateArticleN
 | `extension` | ✔ | also the map key; **must equal the file's extension with the dot** (`".md"`). Two plugins claiming it → the last loaded wins |
 | `onClick` | ✔ | `(file: File) => IMessage` — `File` carries `id`, `title`, `fileExst`, `folderId`, `rootFolderId`, `rootFolderType`, `viewUrl`, `webUrl` |
 | `fileTypeName` | | the Type column value, where the portal has no name of its own |
-| `fileRowIcon` | | file name in `assets/`; used **at every size** (rows, table, tiles) — ship an SVG |
-| `fileTileIcon` | | carried onto the file object and **never rendered** |
+| `fileRowIcon` | | file name in `assets/`; the icon for every list view — rows, table, upload panel, version history. Ship an SVG |
+| `fileTileIcon` | | the **tiles** view's icon, and it is the only thing that view draws for your file: `FileTile` takes `item.isPlugin ? item.fileTileIcon : thumbnail`, so a plugin file in tiles has no thumbnail to fall back on. Omit it and the tile is blank |
 | `fileSecurity` / `security` | | every listed key must be allowed on the clicked file / the current folder, checked at click time |
 | `usersType` | | **singular** |
 | `devices` | | checked at click time |
