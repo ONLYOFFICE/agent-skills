@@ -28,7 +28,7 @@ const onFileAction = async (id: number): Promise<IMessage> => {
     const file = (await res.json()).response;                        // the envelope, class-side
     if (!file.security?.Download)
       return { actions: [Actions.showToast], toastProps: [{ type: ToastType.error, title: t("noPermission") }] };
-    const bytes = await fetch(file.viewUrl, { credentials: "include" });
+    const bytes = await fetch(file.viewUrl);                         // no credentials — viewUrl may be off-origin (below)
     const text = bytes.status === 404 ? "" : await bytes.text();     // 404 = no content stream yet (below)
     …
     return { actions: [Actions.showToast], toastProps: [{ type: ToastType.success, title: t("done") }] };
@@ -81,7 +81,7 @@ Read those instead of deciding a shape by feel. They answer the questions that o
 | Current user / people | `GET /people/@self` (a component has `useCurrentUser()`) / `GET /people` |
 | Rooms / members | `GET /files/rooms` / `GET /files/rooms/{id}/share` |
 
-**Confirm the path and the field names in the api-sdk types, not from this table** — `dist/api/files/folders-api.js` and `files-api.js` contain the literal URL and every form field the portal accepts, which is the only place the two `{folderId}` shapes above stop being confusable. Where the api-sdk has no method for something (replacing a file's bytes is one), the API reference is the authority and the request is hand-written.
+**The rows above are correct as written; the api-sdk types are where you look up what is *not* in them** — `dist/api/files/folders-api.js` and `files-api.js` contain the literal URL and every form field the portal accepts, which is the only place the two `{folderId}` shapes above stop being confusable. Where the api-sdk has no method for something (replacing a file's bytes is one), the API reference is the authority and the request is hand-written; a missing method is a missing *method*, never a reason to substitute an endpoint that has types ([below](#which-writes-the-portal-notices)).
 
 List endpoints page with `count` + `startIndex` and take filter/sort as query params (`params` of `api.get`); `total` arrives beside the rows, whose field the endpoint names (`folders`, `files`, `items`). Page and search in the request, as the portal's own screens do.
 
@@ -129,25 +129,29 @@ For a large file, or when the portal must know the size up front, create an uplo
 
 ### A file's contents are not part of the API
 
-Metadata is JSON; the **bytes** are a `fetch` of the `viewUrl` the metadata carries (same origin, cookies), and a write is a multipart `PUT`:
+Metadata is JSON; the **bytes** are a `fetch` of the `viewUrl` the metadata carries, and a write is a multipart `PUT`:
 
 ```ts
 const info = await api.get<TFile>(`/files/file/${id}`);
-const body = await (await fetch(info.viewUrl, { credentials: "include", signal })).text();   // or .blob()
+const body = await (await fetch(info.viewUrl, { signal })).text();   // or .blob() — no credentials, deliberately
 
 const form = new FormData();
 form.append("file", new File([newBody], info.title, { type: mimeType }));
-await api.put(`/files/${id}/update`, form);     // class-side: fetch with credentials and NO Content-Type of your own
+await api.put(`/files/${id}/update`, form);     // class-side: fetch the API URL with credentials and NO Content-Type of your own
 ```
 
-The api-sdk has **no generated method for this endpoint** — its `updateFile` is the JSON rename (`title`, `lastVersion`) — so this is the one write whose shape cannot be confirmed against the project's types; the API reference is the authority, and the upload paths above are the typed alternative when a new version is acceptable.
+**`viewUrl` is not necessarily on the portal's origin — never send `credentials: "include"` to it.** With local storage it is a portal path and the session cookie carries it. Where the portal stores files in S3 it is a pre-signed CDN link answering `Access-Control-Allow-Origin: *`, and a wildcard is exactly what the browser refuses for a *credentialed* request: the response is discarded before your code sees it. The signature in the query string is the authentication there; cookies were never wanted. Leaving `credentials` off gets both deployments right without a branch — the default, `same-origin`, is already that rule.
+
+The symptom names nothing, which is why this reaches a live portal: a rejected credentialed request throws a bare `TypeError: Failed to fetch`, with no status, no headers and no body, and the CORS reason appears only in the console. **A viewer that opens files on your portal and nothing on the customer's is this, not the format.**
+
+The api-sdk has **no generated method for this endpoint** — its `updateFile` is the JSON rename (`title`, `lastVersion`) — so the API reference is the authority for the shape. That absence is not a verdict on the endpoint: `PUT /files/{id}/update` is the write to use and `file` is the field name. **Do not go looking in the api-sdk for a typed replacement.** The one you will find is `saveEditingFileFromForm` (`PUT /files/file/{id}/saveediting`), which has types, a doc link and a plausible signature — and writes a version the open file list never notices ([below](#which-writes-the-portal-notices)).
 
 **A record with no content stream answers 404 on its own `viewUrl`, while its metadata answers 200.** The portal creates the record first and the bytes arrive on the first write, so a file the plugin just created through the create dialog reads as missing — and for a format the portal has no editor for, that is every file until someone saves it once. This is the *first* thing a user does with a plugin that owns an extension: create one, open it. A viewer that reports the 404 shows them an error page over an empty file they just made.
 
 So a 404 here is an empty document, not a failure — but it is the only status that is:
 
 ```ts
-const response = await fetch(info.viewUrl, { credentials: "include", signal });
+const response = await fetch(info.viewUrl, { signal });
 if (response.status === 404) return { text: EMPTY, readable: true };    // no stream yet — normal for a new file
 if (!response.ok) return { text: EMPTY, readable: false };              // 403, 5xx, network — unknown, not empty
 return { text: await response.text(), readable: true };
@@ -156,6 +160,19 @@ return { text: await response.text(), readable: true };
 Carry that `readable` flag into the editor and **refuse to save while it is false**: a write is a whole-file replace, so saving over content that merely could not be read is the one failure here that destroys data.
 
 Do not try to predict the 404 from the metadata instead. `GET /files/file/{id}` reports size as **`contentLength`, a formatted string** (`"0 bytes"`) — there is no number to compare. `pureContentLength` is a real field elsewhere in the Files API, but zero values are omitted from these payloads, so on exactly the empty file you are trying to detect it is `undefined` and `info.pureContentLength === 0` is never true. That is why the branch is on the response status and the safety is in the save gate.
+
+### Which writes the portal notices
+
+**A write can return 200, bump the version, and leave every open file list stale.** An open list redraws from the portal's own socket messages, not from your response, so whether the row moves is a property of the endpoint you picked:
+
+| Write | In the api-sdk | The open list |
+|---|---|---|
+| `PUT /files/{id}/update` — multipart, field `file` | no generated method | **updates** |
+| `PUT /files/file/{id}/saveediting` — multipart `File`, `FileExtension`, `Forcesave`, with `DownloadUri` in the query | `saveEditingFileFromForm` | **stale** until the user reloads or navigates away and back |
+
+Both are a `PUT` carrying the bytes as multipart and both write a new version, so the typed one reads like the better answer. Note also that it lives under `files/file/{id}`, not `files/{id}` — the same path confusion the two create endpoints have. Treat any write not in this table as unverified and watch the list the first time you call it.
+
+**Check the list, not the version.** A write that looks right over a row that does not move is the wrong *endpoint*, not a missing capability: no `Actions` member refreshes the portal's file list (`updateFileItems` redraws the plugin's own `File` item map, nothing more), and the kit's barrel exports no socket API, so a plugin cannot subscribe to the portal's stream either. Neither is the obstacle it appears to be — call `PUT /files/{id}/update` and look.
 
 ### Creating a file whose extension the portal does not own
 
