@@ -1,5 +1,5 @@
 {
-  "name": "onlyoffice",
+  "name": "onlyoffice-skills",
   "owner": {
     "name": "ONLYOFFICE",
     "url": "https://www.onlyoffice.com"
@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "dev-tools",
+      "name": "onlyoffice",
       "source": "./",
       "description": "Skills for ONLYOFFICE developer SDKs and tools. Today: embed-sdk (embedding DocSpace into web apps) and plugin-sdk (building DocSpace plugins); more SDKs to come."
     }
