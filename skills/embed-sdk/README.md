@@ -28,7 +28,7 @@ node skills/embed-sdk/scripts/test-validator.mjs
 
 The **validator** checks one `TFrameConfig` against the SDK's types and enums without a
 portal: the required trio (`frameId`, `mode`, `src`), the mode-specific required fields
-(`id` for editor/viewer, `requestToken` for public-room), enum values (`theme`, `viewAs`,
+(`id` for editor/viewer, `id` + `requestToken` for public-room), enum values (`theme`, `viewAs`,
 `sortBy` with hints for the common wrong spellings), boolean fields, unknown keys the SDK
 silently ignores, the `editorCustomization` and `events` shapes, and a few cross-field
 contradictions. Exit code 0 means no errors (warnings allowed).

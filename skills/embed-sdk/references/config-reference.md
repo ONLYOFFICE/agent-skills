@@ -35,8 +35,8 @@ else falls back to `defaultConfig`.
 
 | Field | Type | Default | Modes | Notes |
 |---|---|---|---|---|
-| `id` | string \| number \| null | `null` | editor, viewer (file id); uploader (target folder); forms (room id); manager (start folder → `filter.folder`) | **required** for editor/viewer |
-| `requestToken` | string \| null | `null` | public-room (required); shared files | token from a room share link |
+| `id` | string \| number \| null | `null` | editor, viewer (file id); public-room (room id → `?folder=`); uploader (target folder); forms (room id); manager (start folder → `filter.folder`) | **required** for editor/viewer/public-room |
+| `requestToken` | string \| null | `null` | public-room (required, together with `id`); shared files | token from a room share link |
 | `getToken` | `() => string \| Promise<string>` | — | all (SDK >= 2.2) | OAuth mode: called whenever the frame needs a Bearer token |
 | `accessToken` | string | — | all (SDK >= 2.2) | static OAuth token; SDK cannot refresh it — prefer `getToken` |
 | `tokenExpiresAt` | number | — | all | optional explicit expiry (epoch ms); else decoded from JWT `exp` |

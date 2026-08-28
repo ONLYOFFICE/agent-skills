@@ -100,6 +100,6 @@ frame.
 
 | Method | Notes |
 |---|---|
-| `executeInEditor(callback, data?)` | run code inside the editor context — the callback is **serialized** (no closures/imports). See [editor-automation.md](editor-automation.md) before using |
+| `executeInEditor(callback, data?)` | run code inside the editor context. The callback is **serialized** (no closures/imports) and invoked as **`callback(editor, asc, data)`** — three arguments: the DocsAPI editor object (call `editor.createConnector()` yourself), `window.Asc` of the frame, then your `data`. The SDK's `(instance, data?)` type is wrong. See [editor-automation.md](editor-automation.md) before using |
 | `navigateSection(section)` | Forms (`my-forms`, `in-progress`, `completed-forms`, `library`, `settings`) and Personal (`my-documents`, `favorites`, `recent`, `trash`, `settings`) |
 | `setCustomActions({ contextMenu: { file?: [...], folder?: [...] } })` | register custom context-menu actions (Forms); each action = `{ key, label, icon?, section? }`; clicks arrive via the `onCustomAction` event |

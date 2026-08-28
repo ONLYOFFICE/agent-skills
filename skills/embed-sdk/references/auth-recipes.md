@@ -87,16 +87,18 @@ Alternative for server-to-server calls (not the frame): a DocSpace **API key** a
 validate it via `GET /api/2.0/keys/@self` and required scopes; on 401/403 mark it invalid
 and surface reconnect UX.
 
-## 3. Public rooms — `requestToken`
+## 3. Public rooms — `id` + `requestToken`
 
 No user account at all: anonymous access to a shared room.
 
 ```js
-sdk.initPublicRoom({ frameId, src: portalUrl, requestToken });
+sdk.initPublicRoom({ frameId, src: portalUrl, id: roomId, requestToken });
 ```
 
-The token comes from the room's external share link — or directly from a room-selector
-payload: `items[0].requestTokens[0].requestToken`. Never commit tokens to source control.
+Both fields are required: `id` becomes `?folder=` and is fetched server-side by the portal
+page (omit it → white "Something went wrong" frame). The token comes from the room's external
+share link — or directly from a room-selector payload: `items[0].id` +
+`items[0].requestTokens[0].requestToken`. Never commit tokens to source control.
 
 ## 4. Portal-provider auto-login (forms / chat / personal)
 

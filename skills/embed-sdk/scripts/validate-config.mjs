@@ -110,7 +110,8 @@ const MODE_REQUIREMENTS = {
   editor: { errors: ["id"] },
   viewer: { errors: ["id"] },
   chat: {},
-  "public-room": { errors: ["requestToken"] },
+  // id → ?folder=; the portal page getFolder()s it during SSR and white-screens without it
+  "public-room": { errors: ["id", "requestToken"] },
   uploader: { warnings: ["id"] },
   forms: { warnings: ["id"] },
 };

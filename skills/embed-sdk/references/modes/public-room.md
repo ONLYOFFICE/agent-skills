@@ -1,12 +1,13 @@
 # Public room mode
 
 Anonymous access to a shared room: view, edit, comment, review — no portal account.
-**`requestToken` is required.**
+**Both `id` (the room id) and `requestToken` are required.**
 
 ```js
 sdk.initPublicRoom({
   frameId: "ds-frame",
   src: portalUrl,
+  id: roomId,                   // the shared room's id — NOT optional
   requestToken,                 // from the room's external share link
   showFilter: true,
   events: { onAppReady: () => {}, onAppError: (m) => {} },
@@ -15,10 +16,16 @@ sdk.initPublicRoom({
 
 Key points:
 
-- Where the token comes from:
-  - the room's external sharing link on the portal, or
-  - programmatically — a room-selector payload: `items[0].requestTokens[0].requestToken`
-    (see [selectors.md](selectors.md)).
+- **`id` is mandatory.** The SDK builds `/sdk/public-room?folder={id}&key={requestToken}`
+  and the portal page calls `getFolder(folder)` during server-side rendering. Without `id`
+  the render throws and the frame shows a white "Something went wrong" screen — no
+  `onAppError`, no console hint pointing at the config. Run `validate-config.mjs`: it
+  rejects a public-room config without `id`.
+- Where `id` and the token come from (always as a pair — the token is bound to the room):
+  - the room's external sharing link on the portal (the room id is in the portal URL of
+    that room), or
+  - programmatically — a room-selector payload: `items[0].id` +
+    `items[0].requestTokens[0].requestToken` (see [selectors.md](selectors.md)).
 - The iframe path is `/sdk/public-room`; embeds that combine a manager view over a public
   room use `mode: "manager"` + `requestToken` + `rootPath: "/rooms/share"` instead.
 - No authentication of any kind is needed — public-room frames on multi-frame pages can

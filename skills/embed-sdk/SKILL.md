@@ -106,7 +106,7 @@ Read the mode's reference file before writing code.
 | Pick a room (dialog) | `room-selector` | `initRoomSelector` | `src` | [selectors](references/modes/selectors.md) |
 | Pick a file (dialog) | `file-selector` | `initFileSelector` | `src` | [selectors](references/modes/selectors.md) |
 | Headless login / API calls | `system` | `initSystem` | `src` | [system](references/modes/system.md) |
-| Anonymous public room | `public-room` | `initPublicRoom` | `src`, `requestToken` | [public-room](references/modes/public-room.md) |
+| Anonymous public room | `public-room` | `initPublicRoom` | `src`, `id` (room), `requestToken` | [public-room](references/modes/public-room.md) |
 | Upload UI | `uploader` | `initUploader` | `src`, `id` (folder) | [uploader](references/modes/uploader.md) |
 | Forms gallery | `forms` | `initForms` | `src`, `id` (room) | [forms](references/modes/forms.md) |
 | AI chat | `chat` | `initChat` | `src` (`agentId` optional) | [chat](references/modes/chat.md) |
@@ -128,7 +128,10 @@ Violating any of these produces integrations that look right but fail.
 
 1. `id` is required for editor/viewer. Without it the frame opens an empty `/doceditor`
    with no explicit error.
-2. `requestToken` is required for public-room. `agentId` is optional for chat (omit → user chat).
+2. public-room needs **both** `id` (room id) and `requestToken`. The frame URL is
+   `/sdk/public-room?folder={id}&key={requestToken}`; without `id` the portal's server render
+   fails and the frame shows a white "Something went wrong" screen with no event.
+   `agentId` is optional for chat (omit → user chat).
 3. Sort API values differ from enum key names: `FilterSortBy.Name = "AZ"`,
    `ModifiedDate = "DateAndTime"`, `CreationDate = "DateAndTimeCreation"`. A handwritten
    `sortBy: "Name"` silently returns an unsorted list — always use the enum constants.
@@ -189,6 +192,16 @@ Violating any of these produces integrations that look right but fail.
     accepts files only through its UI. Upload timeout is 120 s.
 18. `createFile`/`createFolder` operate on the current folder of an open manager/personal
     frame — resolve its id via `getFolderInfo()`.
+18a. `executeInEditor(cb, data)` invokes `cb(editor, asc, data)` — **three** arguments, the
+    SDK's `(instance, data?)` type is wrong. `editor` is the DocsAPI object: call
+    `editor.createConnector()` yourself. Form fields are filled with the Document Builder
+    API inside `connector.callCommand` (`Api.GetDocument().GetAllForms()` → `SetText`,
+    `SetChecked`, …) with data passed through `Asc.scope`. `executeMethod("SetFormValue")`,
+    `"GetFormValue"`, `"GetAllForms"`, `"GetFormsByTag"` **do not exist as plugin methods**
+    even though api.onlyoffice.com documents them and ships a sample using them — no sdkjs
+    release implements them, and the connector does not error on unknown names, the call just
+    silently does nothing. Read `GetFormsData()` back to verify.
+    Details: [editor-automation](references/editor-automation.md).
 
 ### Authentication — security checklist
 
@@ -215,7 +228,7 @@ Violating any of these produces integrations that look right but fail.
 ```
 Who is the frame's user?
 ├─ Already signed in to DocSpace (cookie)  → nothing to do
-├─ Anonymous, public room                  → public-room + requestToken
+├─ Anonymous, public room                  → public-room + id (room) + requestToken
 ├─ Programmatic password login             → hidden system frame:
 │    getHashSettings → createHash → store hash server-side →
 │    on each visit: getUserInfo (session alive?) → login(email, hash) → check status !== 200
