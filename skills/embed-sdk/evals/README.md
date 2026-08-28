@@ -75,7 +75,7 @@ Extract every `TFrameConfig` object the agent produced (manager, selector, edito
 system, forms/uploader) into JSON and run each through the validator:
 
 ```
-node <skill>/scripts/validate-config.mjs '<json>'
+node skills/embed-sdk/scripts/validate-config.mjs '<json>'
 ```
 
 Score: number of configs passing with 0 errors.

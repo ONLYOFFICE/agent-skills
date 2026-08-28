@@ -17,7 +17,7 @@ Two skills today; the repository layout (`skills/<name>/`) is ready for more.
 Both follow the router pattern: `SKILL.md` holds the decision tables and critical rules;
 details live in `references/` and are loaded on demand.
 
-Effectiveness is measured, not assumed. The A/B protocol in [`evals/`](evals/README.md)
+Effectiveness is measured, not assumed. The A/B protocol in [`skills/embed-sdk/evals/`](skills/embed-sdk/evals/README.md)
 compares the same `embed-sdk` integration task with and without the skill against a
 39-checkpoint rubric; `plugin-sdk` carries three graded scenarios in
 [`skills/plugin-sdk/evals/`](skills/plugin-sdk/evals/README.md). Run them after
@@ -58,8 +58,9 @@ skills/embed-sdk/
 │   ├── auth-recipes.md        production authentication recipes
 │   ├── testing.md             e2e-testing embedded frames
 │   └── frameworks/            React / Next.js / Vue / Angular recipes
-└── scripts/
-    └── validate-config.mjs    offline TFrameConfig validator
+├── scripts/
+│   └── validate-config.mjs    offline TFrameConfig validator
+└── evals/               A/B evaluation protocol (task, rubric, operator guide)
 skills/plugin-sdk/
 ├── SKILL.md             router: build / audit / explain, scope tables, critical rules
 ├── references/          SDK target and contract, React runtime, UI kit, item shapes, host behaviour, REST API, reading SDK 2 plugins
@@ -67,7 +68,6 @@ skills/plugin-sdk/
 ├── templates/           Vite/TS config for generated projects
 ├── vendor/              packed @docspace/ui-kit (+ the tarballs it needs), copied into every generated project
 └── evals/               graded scenarios and the fixture plugin one of them starts from
-evals/                   A/B evaluation protocol for embed-sdk (task, rubric, operator guide)
 ```
 
 ## Development
@@ -81,7 +81,7 @@ evals/                   A/B evaluation protocol for embed-sdk (task, rubric, op
   `@docspace/ui-kit` in `skills/plugin-sdk/vendor/` and `references/ui-kit.md` follow the
   client's `libs/ui-kit` and change together.
 - Validate the plugin before publishing: `claude plugin validate . --strict`.
-- Quality gate: run the A/B protocol in [`evals/`](evals/README.md) after substantial
+- Quality gate: run the A/B protocol in [`skills/embed-sdk/evals/`](skills/embed-sdk/evals/README.md) after substantial
   content changes.
 
 ### Publishing checklist (for the release owner)
