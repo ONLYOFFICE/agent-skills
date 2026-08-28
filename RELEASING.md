@@ -45,16 +45,16 @@ release. Semver: new skill or breaking rewrite of one → minor while `0.x`; cor
 
 **Target SDK version** — the SDK release a skill describes. Lives in each skill's
 `SKILL.md` frontmatter as `metadata.sdk-version`, and is repeated in prose in the root
-README ("`embed-sdk` targets **SDK 2.2.0**…"). For `plugin-sdk` the SDK/DocSpace pair
+README (the "Targets" column of the skills table). For `plugin-sdk` the SDK/DocSpace pair
 is also stated in `skills/plugin-sdk/references/scopes.md`. When an SDK is released:
 
 - `embed-sdk`: regenerate `references/config-reference.md` and the dictionary in
   `scripts/validate-config.mjs` from the SDK's `src/types` / `src/enums`, then bump
-  `sdk-version` and the README sentence.
+  `sdk-version` and the README table.
 - `plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
   generator and validator) and the version pair in `references/scopes.md`; if the
   client's `libs/ui-kit` changed, repack the tarball in `vendor/` and update
-  `references/ui-kit.md`. Then bump `sdk-version` and the README sentence. The
+  `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
   validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.
 
 ## Checklist
@@ -69,7 +69,7 @@ Before tagging a release:
    change, not in a loop.
 4. `version` in `plugin.json` and `metadata.version` in `marketplace.json` are bumped
    and equal.
-5. `metadata.sdk-version` in every `SKILL.md` matches the sentence in the README.
+5. `metadata.sdk-version` in every `SKILL.md` matches the "Targets" column in the README.
 6. Commit, tag `v<version>`, push to origin. Push to the GitHub mirror only when the
    release is meant to be public (see above).
 
