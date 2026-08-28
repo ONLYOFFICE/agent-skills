@@ -4,7 +4,7 @@ The portal's own component library: it reads theme, accent and direction from co
 
 **Props are documented in the package itself**, one JSDoc line per prop: `node_modules/@docspace/ui-kit/dist/types/components/<name>/<Name>.types.d.ts` (enums in `<Name>.enums.d.ts`). Read those rather than guessing or casting; this file only records what the types cannot tell you.
 
-**The styles ship too, and they are where layout surprises are answered.** `dist/cjs/components/<name>/<Name>.module.scss.js` carries the component's real CSS, inlined as a string next to its class-name map. When a control collapses, overflows, or draws somewhere you did not put it, read that file before theorising: a `position: absolute` on a label or a `display: inline-block` on a wrapper explains the behaviour that no prop does. The same goes for what the kit does *not* contain — check the package rather than assuming a component exists or does not.
+**The styles ship too, and they are where layout surprises are answered.** `dist/cjs/components/<name>/<Name>.module.scss.js` carries the component's real CSS, inlined as a string next to its class-name map. When a control collapses, overflows, or draws somewhere you did not put it, read that file before theorising: a `position: absolute` on a label or a `display: inline-block` on a wrapper explains the behaviour that no prop does. It is worth one look **before** writing a surface too, not only after it looks wrong — the trap list below is the handful of components where that look has already been taken, not the extent of the problem. The same goes for what the kit does *not* contain — check the package rather than assuming a component exists or does not.
 
 ## Imports and enums
 
@@ -15,6 +15,10 @@ Import from the barrel only — `@docspace/ui-kit/components/button` is refused 
 Toasts and dialogs are not kit components for a plugin: `showToast`/`showModal` from `usePluginActions()`, so the portal draws them and keeps one dialog open at a time.
 
 ## Layout conventions
+
+**Markup handed to a kit component lands in a box you do not own.** Anything passed in as `children`, as a `content` / `body` prop, or as a component the kit renders for you is wrapped in an element of the component's own making, and most of those wrappers are flex boxes centred on the cross axis — the kit lays out its own parts that way, and your markup inherits the box. So hand over **one** element and put the layout on it yourself (`width: 100%`, `min-width: 0`, the direction you actually meant). Several children — a fragment, an array, a bare list of blocks — become flex items side by side, vertically centred, and any `flex-wrap` inside them then breaks each control onto its own line: a page's worth of blocks arranged as a row of columns, which reads as a broken stylesheet and is not one. Nothing catches this; the render pass does not apply the portal's CSS, and the surface looks correct in every check.
+
+The mirror image is props that sound like they size a control: `scale`, `scaled…` and `size` describe it against **its container**, never against its own content, so a label longer than the control is clipped rather than accommodated — a width of your own is the fix.
 
 - Typography inherits Open Sans **13px / 400**; secondary lines 12px; emphasis `fontWeight={600}` (700 is headings). Headings come from `Heading` (`level` = tag, `size` = look; an `h1` at `medium` is the usual page title).
 - 16px outer padding in dialogs and panels, 8–12px between controls, 20px page padding on a section page. Radius 3px on controls, 6px on dialogs. Literal px is normal — there are no spacing tokens.
@@ -50,7 +54,7 @@ Defaults and layout facts the `.d.ts` does not state:
 - **`Textarea`** has a `max-width` but no `width`: as a flex item it shrinks to ~1px yet stays focusable — the panel looks empty and swallows typing. Give it `flex: 1 1 auto; width: 100%; min-width: 0`.
 - **`TextInput`**: `type` and `value` are required; without `scale` the `base` size is 173px wide; `maxLength` defaults to 255. `onChange` receives the event (`e.target.value`) — **except `SearchInput`, whose `onChange` receives the string.**
 - **`Checkbox.onChange` still fires when `isDisabled`** — guard it.
-- **`ComboBox`** matches the selected row by **label**, not key — keep labels unique; `scaledOptions` makes the list match the control (else 200px), `dropDownMaxHeight` past ~6 options.
+- **`ComboBox`** matches the selected row by **label**, not key — keep labels unique; `scaledOptions` makes the list match the control's own width, which clips the options of a narrow control (without it the list is `manualWidth`, 200px by default), `dropDownMaxHeight` past ~6 options.
 - **`Button.isLoading`** swaps the label for a spinner and blocks clicks — set it yourself around an `await`. Labels never wrap.
 - **`IconButton`** is what fits the 32×32 sidebar slot: `size={32}`, `iconNode={<svg …/>}` (inline JSX — simplest) or `iconName` as a **URL**, not an asset name.
 - **`Link`**: ellipsis needs `truncate`, not `isTextOverflow`; `LinkType.action` for handlers, `LinkType.page` for navigation.

@@ -75,6 +75,10 @@ The plugin loaded and rendered, and what the user sees is still wrong. They read
 
 | Symptom | Cause |
 |---|---|
+| The blocks of a surface sit **side by side**, vertically centred, instead of stacked — and controls inside them each break onto their own line | several children were handed to a kit component at once (a fragment as a tab's `content`, a dialog body, `children`); the box it wraps them in is a flex row. One root element, laid out by you ([ui-kit.md → Layout conventions](ui-kit.md#layout-conventions)) |
+| The progress button **stays in the panel** after the job ended, still reading "…ing" | the last update set `operations[i].completed` but not **`operationsCompleted`** on the button props. The outer flag is what the portal watches; on it, the panel dismisses the button and clears the plugin's entries by itself ([react.md → Progress button](react.md#the-floating-operations-button)) |
+| Clicking a room lands on the **rooms list**, and the address bar reads `/rooms/shared/undefined/filter?searchArea=…` | the link had no `?folder={id}`. The section tells one room from the list by the query, not the path, and then rewrote the address from its own state ([react.md → Paths navigate takes](react.md#paths-navigate-takes)) |
+| A row action fires on a row it **cannot apply to** — archiving an archived room, restoring a live one | the action was gated on `security` alone. The portal uses two independent tests, and so must a plugin: `security.Move` answers "may this user" (it hides *both* archive and restore), while `rootFolderType === 20` (`FolderType.Archive`) decides *which of the two* the row gets |
 | A form with **no labels**, though every field has `labelText` | `FieldContainer.labelVisible` defaults to `false` |
 | A panel looks **empty**, but clicking in it and typing works | a `Textarea` as a flex item collapses to ~1px — give it a width |
 | A toggle's label is drawn **over the next row** | `ToggleButton` has no intrinsic size and an absolutely positioned label; the wrapper has to reserve the height the label really occupies, not the switch's 20px |
