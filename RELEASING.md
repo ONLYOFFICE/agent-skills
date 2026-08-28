@@ -1,7 +1,7 @@
 # Releasing
 
 How the plugin is versioned, where it is installable from, and what to check before a
-release. The audience is whoever cuts a release; contributors need only the README.
+release. The audience is whoever cuts a release; contributors need [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## What "publishing" means here
 
@@ -62,7 +62,8 @@ is also stated in `skills/plugin-sdk/references/scopes.md`. When an SDK is relea
 Before tagging a release:
 
 1. `claude plugin validate . --strict` passes.
-2. `node skills/plugin-sdk/scripts/test-validator.mjs` passes.
+2. `node skills/embed-sdk/scripts/test-validator.mjs` and
+   `node skills/plugin-sdk/scripts/test-validator.mjs` pass.
 3. The skill(s) that changed have been through their evals
    ([embed-sdk](skills/embed-sdk/evals/README.md),
    [plugin-sdk](skills/plugin-sdk/evals/README.md)) — once, after the last content

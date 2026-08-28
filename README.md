@@ -63,8 +63,7 @@ skills/embed-sdk/
 │   ├── auth-recipes.md        production authentication recipes
 │   ├── testing.md             e2e-testing embedded frames
 │   └── frameworks/            React / Next.js / Vue / Angular recipes
-├── scripts/
-│   └── validate-config.mjs    offline TFrameConfig validator
+├── scripts/             validate-config.mjs (offline TFrameConfig validator) + its self-test
 └── evals/               A/B evaluation protocol (task, rubric, operator guide)
 skills/plugin-sdk/
 ├── SKILL.md             router: build / audit / explain, scope tables, critical rules
@@ -77,8 +76,9 @@ skills/plugin-sdk/
 
 ## Development
 
-- Content language is English (it is read by models).
-- Validate the plugin before pushing: `claude plugin validate . --strict`.
+- What a skill directory must contain and how changes are judged: [CONTRIBUTING.md](CONTRIBUTING.md).
+- Validate the plugin before pushing: `claude plugin validate . --strict`; run
+  `node skills/<name>/scripts/test-validator.mjs` for every skill that has a validator.
 - Quality gate: run a skill's evals after substantial content changes
   ([embed-sdk](skills/embed-sdk/evals/README.md),
   [plugin-sdk](skills/plugin-sdk/evals/README.md)).
