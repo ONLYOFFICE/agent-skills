@@ -22,6 +22,8 @@ The **validator** runs static checks over the manifest, build config, sources an
 
 Finally it **renders every component once** with the project's own React and the SDK's own runtime provider, each surface getting the runtime it really receives (a page and a click-opened dialog get no current file; an info panel tab and the media viewer get one), because a component that throws on first paint is a blank page on the portal with one line in the console. Effects do not run, and nothing reads the CSS: what a stylesheet does to the portal is decided by how it is imported, which is checked, and by rules only a reader can judge.
 
+The sandbox has no network, so a callback that fetches before it returns anything takes its own failure path and hands over no surface to render. That is a **hole in the coverage and the run says so** — a `runtime` warning naming the callback, and a count beside the render tally — rather than reporting a clean pass over a click it never followed to the end.
+
 The **self-test** runs the validator against deliberately broken projects with hand-written bundles and asserts which findings it must and must not produce. It never invokes npm, so it is blind to the toolchain — see *Verifying the toolchain*.
 
 ## What it targets

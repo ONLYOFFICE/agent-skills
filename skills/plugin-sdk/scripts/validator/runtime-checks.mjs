@@ -28,6 +28,7 @@ import {
   CALLBACK_TIMEOUT_MS,
   importModuleBundle,
   isMissingHostApi,
+  network,
   resolveHostModules,
   withTimeout,
 } from "./sandbox.mjs";
@@ -51,6 +52,9 @@ const FILE_STUB = {
 };
 
 const isFn = (value) => typeof value === "function";
+
+/** What a click that opens a surface says in the source - only those plugins hide one behind a fetch. */
+const OPENS_A_SURFACE = /dialogBodyComponent|mediaViewerProps/;
 
 /**
  * Which callbacks a scope's item exposes and what the host calls each with. A React
@@ -83,7 +87,7 @@ export class RuntimeChecks extends Check {
 
     this.archive = archive;
     this.shapes = new ShapeChecks(context);
-    this.report = { loaded: false, items: {} };
+    this.report = { loaded: false, items: {}, networkTruncated: 0 };
 
     /** Every component the portal would render, with the selection its surface receives. */
     this.surfaces = [];
@@ -324,11 +328,18 @@ export class RuntimeChecks extends Check {
   async #invokeItemCallbacks(scope, key, item) {
     for (const [name, run] of invocationsFor(scope, item)) {
       const where = `${scope} item "${key}" ${name}`;
+      const fetchesBefore = network.attempts;
+      let openedSurface = false;
 
       try {
         const result = await withTimeout(run(), CALLBACK_TIMEOUT_MS, where);
         this.shapes.message(`${scope} item "${key}"`, result);
         this.#collectMessageSurfaces(where, result);
+        // Read from the message, not from this.surfaces - a component collected once already
+        // does not grow the list, and that is not the same as the click opening nothing.
+        openedSurface = Boolean(
+          result?.modalDialogProps?.dialogBodyComponent ?? result?.mediaViewerProps?.component,
+        );
       } catch (e) {
         if (/inside a plugin component/.test(e?.message ?? ""))
           this.error(
@@ -337,6 +348,24 @@ export class RuntimeChecks extends Check {
           );
         else this.warn("message", `${where} threw: ${e.message}`);
       }
+
+      this.#reportNetworkTruncation(where, network.attempts - fetchesBefore, openedSurface);
     }
+  }
+
+  /**
+   * A callback that reaches the network stops there and returns a toast, so a surface the real
+   * click would have opened is never collected. Silence would read as "this click is covered".
+   */
+  #reportNetworkTruncation(where, fetches, openedSurface) {
+    // A plugin whose clicks only ever toast has nothing hidden here, so it is not warned at.
+    if (!fetches || openedSurface || !OPENS_A_SURFACE.test(this.project.sourceText)) return;
+
+    this.report.networkTruncated += 1;
+
+    this.warn(
+      "runtime",
+      `${where} called fetch ${fetches === 1 ? "once" : `${fetches} times`} and returned no surface - the sandbox has no network, so the callback took its failure path. If the real click opens a modal or the media viewer from that request, nothing of it was collected or rendered here: check that surface on a portal, or open it from the click and fetch from the component's effect instead`,
+    );
   }
 }

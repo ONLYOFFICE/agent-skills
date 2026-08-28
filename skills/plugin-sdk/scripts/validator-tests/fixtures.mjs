@@ -46,6 +46,37 @@ export default {
 
 const TOAST_MESSAGE = `return { actions: ["show-toast"], toastProps: [{ type: "success", title: "done" }] };`;
 
+/**
+ * The click that hides a surface: read the file's name for the dialog header, then open the modal.
+ * With no network it only ever reaches its catch, so the modal is never in the message.
+ */
+export const FETCH_THEN_MODAL_CLICK = `
+        try {
+          const meta = await fetch("https://portal.example.com/api/2.0/files/file/1", { credentials: "include" });
+          const file = (await meta.json()).response;
+          return { actions: ["show-modal"], modalDialogProps: { dialogHeader: file.title, dialogBodyComponent: Panel } };
+        } catch {
+          return { actions: ["show-toast"], toastProps: [{ type: "error", title: "could not load" }] };
+        }`;
+
+/** A click that fetches and only ever toasts - nothing is hidden behind the request. */
+export const FETCH_THEN_TOAST_CLICK = `
+        try {
+          await fetch("https://portal.example.com/api/2.0/files/file/1/recent", { method: "POST", credentials: "include" });
+          ${TOAST_MESSAGE}
+        } catch {
+          return { actions: ["show-toast"], toastProps: [{ type: "error", title: "failed" }] };
+        }`;
+
+/** The same request, but the fallback still opens the dialog - so a surface does reach the render pass. */
+export const FETCH_THEN_MODAL_ANYWAY_CLICK = `
+        let title = "Untitled";
+        try {
+          const meta = await fetch("https://portal.example.com/api/2.0/files/file/1", { credentials: "include" });
+          title = (await meta.json()).response.title;
+        } catch {}
+        return { actions: ["show-modal"], modalDialogProps: { dialogHeader: title, dialogBodyComponent: Panel } };`;
+
 /** The IPlugin members every fixture class carries. */
 const pluginMembers = `
   status: "active",
@@ -239,6 +270,14 @@ export const pluginSource = ({
     .join("\n") + "\n";
 
 export const contextMenuSource = () => pluginSource({ adders: ["addContextMenuItem"], getters: ["getContextMenuItems"] });
+
+/** A source whose click opens a dialog - what the "surface hidden behind a fetch" check looks for. */
+export const opensModalSource = () =>
+  pluginSource({
+    adders: ["addContextMenuItem"],
+    getters: ["getContextMenuItems"],
+    extra: `const message = { modalDialogProps: { dialogBodyComponent: Panel } };`,
+  });
 
 /** The SDK 2 registration, with no default export. */
 export const windowPluginsSource = ({ pluginName }) =>

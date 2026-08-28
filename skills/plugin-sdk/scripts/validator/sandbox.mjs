@@ -37,6 +37,12 @@ export const CALLBACK_TIMEOUT_MS = 10_000;
 
 const noop = () => {};
 
+/**
+ * Every reach for the network, counted. There is none here, so a callback that fetches takes its
+ * failure path from there on - the runtime pass reads this to say what it therefore could not see.
+ */
+export const network = { attempts: 0 };
+
 const domElement = () => ({
   style: {},
   dataset: {},
@@ -49,6 +55,7 @@ const domElement = () => ({
 /** The fake browser the bundle runs in - only what Node does not already define. */
 const browserGlobals = () => ({
   fetch: async () => {
+    network.attempts += 1;
     throw new Error("network access is not available in the validator sandbox");
   },
   location: { href: "https://localhost/", origin: "https://localhost", pathname: "/" },

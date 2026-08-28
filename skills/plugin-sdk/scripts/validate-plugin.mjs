@@ -83,19 +83,27 @@ const printTextReport = ({ project, findings, runtime }) => {
     .map(([scope, count]) => `${scope}:${count}`)
     .join(" ");
 
-  // How many surfaces rendered out of how many were tried: a pass that could not run, and
-  // one where every surface threw, are both worth seeing in the last line.
+  // A pass that could not run, one where every surface threw, and one with nothing to render
+  // all belong in the last line - a silent one reads as full coverage.
   const { rendered, attempted, skipped } = runtime.render ?? {};
   const render = skipped
     ? ` - render skipped: ${skipped}`
     : attempted
       ? ` - rendered: ${rendered}/${attempted} surface(s)`
-      : "";
+      : runtime.loaded
+        ? " - no surfaces to render"
+        : "";
+
+  // A click that fetched before returning its message handed over no surface, so the count
+  // above is short by that many. Say so beside it.
+  const truncated = runtime.networkTruncated
+    ? ` (${runtime.networkTruncated} callback(s) stopped at a network call)`
+    : "";
 
   console.log(
     `\n${findings.errors.length} error(s), ${findings.warnings.length} warning(s)${
       runtime.loaded ? ` - runtime: ${itemCounts || "no item scopes"}` : ""
-    }${render}`,
+    }${render}${truncated}`,
   );
 };
 

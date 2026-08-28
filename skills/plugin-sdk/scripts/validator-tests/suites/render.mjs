@@ -24,8 +24,12 @@
 import {
   contextMenuProject,
   contextMenuSource,
+  FETCH_THEN_MODAL_ANYWAY_CLICK,
+  FETCH_THEN_MODAL_CLICK,
+  FETCH_THEN_TOAST_CLICK,
   manifestFor,
   modalSurfacePlugin,
+  opensModalSource,
   renderSurfacesPlugin,
   renderSurfacesSource,
 } from "../fixtures.mjs";
@@ -127,5 +131,58 @@ export default ({ workspace, check }) => {
     "a project the renderer cannot be loaded from is not blamed for it",
     !noRenderer.errorCodes.includes("render"),
     noRenderer.messageSummary,
+  );
+
+  // --- what the sandbox could not reach -------------------------------------------
+  // A click that fetches first ends in its own catch here, so the modal behind the request never
+  // becomes a surface - and reporting nothing would claim the click was covered.
+
+  const fetchFirst = workspace.validateProject(
+    "invoke-fetch-first",
+    contextMenuProject("fetch-first", "FixtureFetchFirst", {
+      click: FETCH_THEN_MODAL_CLICK,
+      src: opensModalSource(),
+    }),
+    "--invoke",
+  );
+
+  check(
+    "a click that fetches before opening its modal is reported as uncovered, not as clean",
+    fetchFirst.warningsMention("called fetch once and returned no surface") &&
+      fetchFirst.runtime.networkTruncated === 1,
+    fetchFirst.messageSummary,
+  );
+  check(
+    "the uncovered click says what to do about it",
+    fetchFirst.hasFindingMentioning("took its failure path", "fetch from the component's effect"),
+    fetchFirst.messageSummary,
+  );
+
+  const fetchThenOpens = workspace.validateProject(
+    "invoke-fetch-then-opens",
+    contextMenuProject("fetch-opens", "FixtureFetchOpens", {
+      click: FETCH_THEN_MODAL_ANYWAY_CLICK,
+      src: opensModalSource(),
+    }),
+    "--invoke",
+  );
+
+  check(
+    "a click that fetches and still returns its surface is not reported",
+    fetchThenOpens.runtime.networkTruncated === 0 && !fetchThenOpens.mentions("returned no surface"),
+    fetchThenOpens.messageSummary,
+  );
+
+  // The common shape - fetch, then toast - hides nothing, and warning at it would be noise.
+  const fetchThenToast = workspace.validateProject(
+    "invoke-fetch-then-toast",
+    contextMenuProject("fetch-toast", "FixtureFetchToast", { click: FETCH_THEN_TOAST_CLICK }),
+    "--invoke",
+  );
+
+  check(
+    "a plugin whose clicks only toast is not warned at for fetching",
+    fetchThenToast.runtime.networkTruncated === 0 && !fetchThenToast.mentions("returned no surface"),
+    fetchThenToast.messageSummary,
   );
 };
