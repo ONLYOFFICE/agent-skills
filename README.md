@@ -82,32 +82,12 @@ skills/plugin-sdk/
 ## Development
 
 - Content language is English (it is read by models).
-- `skills/embed-sdk/references/config-reference.md` and its validator dictionary must be
-  kept in sync with `src/types` / `src/enums` of the Embed SDK repository — regenerate on
-  every SDK release. For `plugin-sdk` the equivalent single source is
-  `skills/plugin-sdk/scripts/contract.mjs`, imported by both its generator and its
-  validator; the version pair it targets lives in `references/scopes.md`. The packed
-  `@docspace/ui-kit` in `skills/plugin-sdk/vendor/` and `references/ui-kit.md` follow the
-  client's `libs/ui-kit` and change together.
-- Validate the plugin before publishing: `claude plugin validate . --strict`.
-- Quality gate: run the A/B protocol in [`skills/embed-sdk/evals/`](skills/embed-sdk/evals/README.md) after substantial
-  content changes.
-
-### Publishing checklist (for the release owner)
-
-1. `claude plugin validate . --strict` must pass.
-2. Push to `ONLYOFFICE/agent-skills` on GitHub — the install commands above and
-   `.claude-plugin/*.json` already assume that path. This push is the publication:
-   nothing is announced or indexed automatically, but `npx skills add` and
-   `/plugin marketplace add ONLYOFFICE/agent-skills` start working the moment the
-   public repository exists. Until then the plugin stays internal — installable only
-   from `git.onlyoffice.com`.
-3. Set up CI: validate on push + a reminder to re-sync `metadata.sdk-version` in each
-   skill's `SKILL.md` frontmatter and `.claude-plugin/plugin.json` `version` on every
-   SDK release.
-4. Not yet built (tracked, optional): `tools/generate-skill-refs.mjs` to generate
-   `config-reference.md` and the validator dictionary from the SDK sources instead of
-   maintaining them by hand.
+- Validate the plugin before pushing: `claude plugin validate . --strict`.
+- Quality gate: run a skill's evals after substantial content changes
+  ([embed-sdk](skills/embed-sdk/evals/README.md),
+  [plugin-sdk](skills/plugin-sdk/evals/README.md)).
+- Versions, names, what counts as publishing and the release checklist:
+  [RELEASING.md](RELEASING.md).
 
 ## License
 
