@@ -34,14 +34,23 @@ npx skills add ONLYOFFICE/agent-skills
 **Manual (any client):** copy `skills/<name>/` into your project's skills directory
 (e.g. `.claude/skills/embed-sdk/`).
 
-**Claude Code (local plugin):**
+**Claude Code (marketplace):**
+
+```
+/plugin marketplace add ONLYOFFICE/agent-skills
+/plugin install docspace@agent-skills
+```
+
+Until the public GitHub mirror exists, point the first command at the internal remote
+instead (`/plugin marketplace add git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git`);
+the marketplace is the repository itself, so it is available exactly to those who can
+clone it.
+
+**Claude Code (local checkout):**
 
 ```
 claude --plugin-dir /path/to/agent-skills
 ```
-
-The Claude Code marketplace channel (`/plugin marketplace add ONLYOFFICE/agent-skills`)
-is prepared but not yet enabled — see the publishing checklist below.
 
 ## Layout
 
@@ -88,11 +97,11 @@ skills/plugin-sdk/
 
 1. `claude plugin validate . --strict` must pass.
 2. Push to `ONLYOFFICE/agent-skills` on GitHub — the install commands above and
-   `.claude-plugin/*.json` already assume that path.
-2a. To open the Claude Code marketplace channel, rename
-   `.claude-plugin/marketplace.json.disabled` back to `marketplace.json`, re-run the
-   validation, and update the Install section above — that single file is what makes
-   the repo installable via `/plugin marketplace add ONLYOFFICE/agent-skills`.
+   `.claude-plugin/*.json` already assume that path. This push is the publication:
+   nothing is announced or indexed automatically, but `npx skills add` and
+   `/plugin marketplace add ONLYOFFICE/agent-skills` start working the moment the
+   public repository exists. Until then the plugin stays internal — installable only
+   from `git.onlyoffice.com`.
 3. Set up CI: validate on push + a reminder to re-sync `metadata.sdk-version` in each
    skill's `SKILL.md` frontmatter and `.claude-plugin/plugin.json` `version` on every
    SDK release.
