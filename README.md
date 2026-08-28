@@ -21,32 +21,67 @@ those, not intuition, decide whether a change to the skill text stays.
 
 ## Install
 
-**Any agent via the skills CLI:**
+Pick your agent. Every path below ends with `skills/<name>/` (the directory holding a
+`SKILL.md`) in a place the agent scans; the agent picks the skill up on its own.
 
-```
-npx skills add ONLYOFFICE/agent-skills
-```
+### Claude Code
 
-**Manual (any client):** copy `skills/<name>/` into your project's skills directory
-(e.g. `.claude/skills/embed-sdk/`).
-
-**Claude Code (marketplace):**
+Install as a plugin — it stays updatable through `/plugin`, and the skills appear as
+`onlyoffice:embed-sdk` and `onlyoffice:plugin-sdk`:
 
 ```
 /plugin marketplace add ONLYOFFICE/agent-skills
 /plugin install onlyoffice@onlyoffice-skills
 ```
 
-Until the public GitHub mirror exists, point the first command at the internal remote
-instead (`/plugin marketplace add git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git`);
-the marketplace is the repository itself, so it is available exactly to those who can
-clone it.
+To try a local checkout without installing: `claude --plugin-dir /path/to/agent-skills`.
 
-**Claude Code (local checkout):**
+### Cursor
+
+Copy the skills into the project (`.cursor/skills/` or `.agents/skills/`) or into your home
+directory (`~/.cursor/skills/`):
+
+```bash
+git clone https://github.com/ONLYOFFICE/agent-skills
+cp -r agent-skills/skills/* .cursor/skills/
+```
+
+Or use the skills CLI: `npx skills add ONLYOFFICE/agent-skills -a cursor`.
+
+### Codex
+
+Codex reads `.agents/skills/` in the repository and `~/.agents/skills/` for the user. From
+inside Codex, ask the built-in installer to fetch them:
 
 ```
-claude --plugin-dir /path/to/agent-skills
+$skill-installer install the skills from https://github.com/ONLYOFFICE/agent-skills
 ```
+
+Or copy them yourself: `cp -r agent-skills/skills/* .agents/skills/`.
+
+### GitHub Copilot
+
+Copilot reads `.github/skills/` (also `.agents/skills/` and `.claude/skills/`) in the
+repository and `~/.copilot/skills/` for the user. With the GitHub CLI:
+
+```bash
+gh skill install ONLYOFFICE/agent-skills embed-sdk
+gh skill install ONLYOFFICE/agent-skills plugin-sdk
+```
+
+Add `--scope user` to install for every project.
+
+### Other agents
+
+Any client that reads [Agent Skills](https://agentskills.io) works. The skills CLI knows
+the directory for 80+ agents and installs into each one it finds on the machine:
+
+```bash
+npx skills add ONLYOFFICE/agent-skills
+```
+
+Otherwise copy `skills/<name>/` into the directory your agent scans, or hand it
+`skills/<name>/SKILL.md` directly.
 
 ## Layout
 
