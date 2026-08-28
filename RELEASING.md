@@ -18,8 +18,9 @@ clone the repository that holds it:
 Pushing to the public mirror **is** the publication. Nothing is announced or indexed
 automatically, but both install commands above start working the moment the public
 repository exists, and `npx skills add` (agentskills.io) requires it to be public on
-GitHub. Until that push the plugin stays internal. `.claude-plugin/plugin.json`
-(`repository`) and the README already assume the GitHub path.
+GitHub. Until that push the plugin stays internal, and every install command in the
+README and `repository` in `.claude-plugin/plugin.json` point at `git.onlyoffice.com`;
+switch them to the GitHub path as part of that release.
 
 ## Names
 

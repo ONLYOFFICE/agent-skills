@@ -15,13 +15,9 @@ configs offline. The body is [`SKILL.md`](SKILL.md).
 
 ## Installing it
 
-```
-npx skills add ONLYOFFICE/agent-skills
-```
-
-Claude Code: `claude --plugin-dir /path/to/agent-skills`, or copy this directory to
-`~/.claude/skills/embed-sdk/`. Any other agent: copy this directory where it scans, or hand
-it `SKILL.md`.
+As part of the `onlyoffice` plugin — see [Install](../../README.md#install) in the root
+README. On its own: copy this directory to where your agent scans for skills (for example
+`~/.claude/skills/embed-sdk/`), or hand it `SKILL.md`.
 
 ## Tools
 

@@ -6,11 +6,7 @@ DocSpace loads plugins with very little error reporting: a bundle with no defaul
 
 ## Installing it
 
-```
-npx skills add ONLYOFFICE/agent-skills
-```
-
-Claude Code: `claude --plugin-dir /path/to/agent-skills`, or copy/symlink this directory to `~/.claude/skills/plugin-sdk/`. Any other agent: copy this directory where it scans, or hand it `SKILL.md`. `$SKILL` in the skill body means this directory, resolved to an absolute path.
+As part of the `onlyoffice` plugin — see [Install](../../README.md#install) in the root README. On its own: copy or symlink this directory to where your agent scans for skills (for example `~/.claude/skills/plugin-sdk/`), or hand it `SKILL.md`. `$SKILL` in the skill body means this directory, resolved to an absolute path.
 
 ## Tools
 

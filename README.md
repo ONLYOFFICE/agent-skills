@@ -30,7 +30,7 @@ Install as a plugin — it stays updatable through `/plugin`, and the skills app
 `onlyoffice:embed-sdk` and `onlyoffice:plugin-sdk`:
 
 ```
-/plugin marketplace add ONLYOFFICE/agent-skills
+/plugin marketplace add git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git
 /plugin install onlyoffice@onlyoffice-skills
 ```
 
@@ -38,50 +38,39 @@ To try a local checkout without installing: `claude --plugin-dir /path/to/agent-
 
 ### Cursor
 
-Copy the skills into the project (`.cursor/skills/` or `.agents/skills/`) or into your home
-directory (`~/.cursor/skills/`):
+Cursor reads `.cursor/skills/` and `.agents/skills/` in the project, `~/.cursor/skills/`
+for the user:
 
 ```bash
-git clone https://github.com/ONLYOFFICE/agent-skills
+git clone git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git
 cp -r agent-skills/skills/* .cursor/skills/
 ```
 
-Or use the skills CLI: `npx skills add ONLYOFFICE/agent-skills -a cursor`.
-
 ### Codex
 
-Codex reads `.agents/skills/` in the repository and `~/.agents/skills/` for the user. From
-inside Codex, ask the built-in installer to fetch them:
+Codex reads `.agents/skills/` in the repository and `~/.agents/skills/` for the user:
 
+```bash
+git clone git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git
+cp -r agent-skills/skills/* .agents/skills/
 ```
-$skill-installer install the skills from https://github.com/ONLYOFFICE/agent-skills
-```
-
-Or copy them yourself: `cp -r agent-skills/skills/* .agents/skills/`.
 
 ### GitHub Copilot
 
 Copilot reads `.github/skills/` (also `.agents/skills/` and `.claude/skills/`) in the
-repository and `~/.copilot/skills/` for the user. With the GitHub CLI:
+repository and `~/.copilot/skills/` for the user:
 
 ```bash
-gh skill install ONLYOFFICE/agent-skills embed-sdk
-gh skill install ONLYOFFICE/agent-skills plugin-sdk
+git clone git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git
+cp -r agent-skills/skills/* .github/skills/
 ```
-
-Add `--scope user` to install for every project.
 
 ### Other agents
 
-Any client that reads [Agent Skills](https://agentskills.io) works. The skills CLI knows
-the directory for 80+ agents and installs into each one it finds on the machine:
-
-```bash
-npx skills add ONLYOFFICE/agent-skills
-```
-
-Otherwise copy `skills/<name>/` into the directory your agent scans, or hand it
-`skills/<name>/SKILL.md` directly.
+Any client that reads [Agent Skills](https://agentskills.io) works: clone the repository
+and copy `skills/<name>/` into the directory your agent scans, or hand it
+`skills/<name>/SKILL.md` directly. `.agents/skills/` is read by Cursor, Codex and Copilot
+alike — the one directory to use when a project mixes agents.
 
 ## Layout
 
