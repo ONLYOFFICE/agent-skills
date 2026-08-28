@@ -38,7 +38,7 @@ npx skills add ONLYOFFICE/agent-skills
 
 ```
 /plugin marketplace add ONLYOFFICE/agent-skills
-/plugin install docspace@agent-skills
+/plugin install docspace@onlyoffice
 ```
 
 Until the public GitHub mirror exists, point the first command at the internal remote
