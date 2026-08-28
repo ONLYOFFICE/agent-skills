@@ -20,12 +20,14 @@ Where an item has a visible surface it is a React component passed as `component
 | `itemId` | | restrict to specific entity ids |
 | `usersTypes` | | **plural** |
 | `devices` | | |
-| `security` / `itemSecurity` | | every listed `Security` key must be allowed on the **parent folder/room** / on the **clicked item** |
+| `security` / `itemSecurity` | | the parent's map and the item's own; see the mixed-selection note below |
 | `placement` | | `"top"` → first entry; `"topLast"` → before the first separator; not on nested items, **and dropped for `isGroupAction`** — the bulk-selection menu rebuilds the entry from `key`/`label`/`icon`/`onClick` only, so a group item always lands in the default group |
 
 Without `placement`, plugin items land in the menu's **"More options"** group behind a separator, in registration order. Filters are evaluated when the menu opens. Items never show in Trash; for `image`/`video` they also appear in the media viewer's menu. A click that needs UI returns `showModal` with a `dialogBodyComponent` — which gets **no current file**; pass the id yourself.
 
 **A bulk action is flat, not a submenu.** `isGroupAction` is dispatched through `onGroupClick` and nothing else, while a parent carrying `items` has no click of its own — so the two do not combine: give the user two group items ("Archive here", "Archive to…") rather than one parent with children. The validator refuses `isGroupAction` without `onGroupClick`, which is what a submenu parent looks like.
+
+**A mixed selection is one `itemSecurity` list against three different maps.** The group menu offers your item only when *every* selected row already passed the filters, and each row was filtered against its own security map — a file's has `Edit`, `Convert`, `Lock`, `FillForms`; a folder's and a room's have `Create`, `EditRoom`, `Pin`, `MoveTo`. A key that only one kind of entity carries is therefore missing on the others, they fail, and the item vanishes from any selection that mixes them — with nothing to see, since the filter's job is to hide. The keys present in all three maps: `Read`, `Rename`, `Move`, `Copy`, `Duplicate`, `Delete`, `Download`, `CopyLink`, `Embed`, `CreateRoomFrom`. Anything outside that set only makes sense for an item already narrowed to one kind with `fileType`.
 
 ## MainButton
 
@@ -93,11 +95,13 @@ eventHandler: async () => ({ actions: [Actions.showToast, Actions.updateArticleN
 | `extension` | ✔ | also the map key; **must equal the file's extension with the dot** (`".md"`). Two plugins claiming it → the last loaded wins |
 | `onClick` | ✔ | `(file: File) => IMessage` — `File` carries `id`, `title`, `fileExst`, `folderId`, `rootFolderId`, `rootFolderType`, `viewUrl`, `webUrl` |
 | `fileTypeName` | | the Type column value, where the portal has no name of its own |
-| `fileRowIcon` | | file name in `assets/`; the icon for every list view — rows, table, upload panel, version history. Ship an SVG |
-| `fileTileIcon` | | the **tiles** view's icon, and it is the only thing that view draws for your file: `FileTile` takes `item.isPlugin ? item.fileTileIcon : thumbnail`, so a plugin file in tiles has no thumbnail to fall back on. Omit it and the tile is blank |
-| `fileSecurity` / `security` | | every listed key must be allowed on the clicked file / the current folder, checked at click time |
+| `fileRowIcon` | | file name in `assets/`; the icon everywhere **except the tiles view** — rows, table, upload panel, version history. The portal's icon lookup takes a size argument and ignores it for a plugin extension, so this one SVG is drawn at every size in those views |
+| `fileTileIcon` | | file name in `assets/`; **the tiles view reads this one and only this one** (96×96). Ship it — recent portals fall back to `fileRowIcon` when it is missing, but older ones request `assets/undefined`, get a 404 and draw an empty tile |
+| `fileSecurity` / `security` | | evaluated at click time, not at registration; see the note below |
 | `usersType` | | **singular** |
 | `devices` | | checked at click time |
+
+**A failed `fileSecurity` / `security` / `devices` check means `onClick` never runs at all.** The portal wraps your handler and returns early when a key is not allowed — and only the *click* is filtered: the row keeps your `fileTypeName` and your icons, so the user clicks a file the plugin visibly owns and nothing happens, with no toast and no console line. So these fields say "this action does not exist here", nothing softer. When a denial has to be *explained*, leave them unset and check the permission inside `onClick` — the portal hands the handler its whole file row, whose `security` map the SDK's `File` does not declare (read it through a cast, or re-fetch the file's metadata). A filtered handler has no message to show because it never ran.
 
 Clicks in the file list, upload panel and version history route to `onClick`; Ctrl/middle-click opens `viewUrl` directly. Opening "in DocSpace" = `showModal` with a `dialogBodyComponent` (an aside for document-like content) or `showMediaViewer` with a `component`, passing the `File` you were given — neither gets a current file from a class-side click. Creating such files needs `enableExternalExt` ([rest-api.md](rest-api.md#creating-a-file-whose-extension-the-portal-does-not-own)).
 

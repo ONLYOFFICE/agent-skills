@@ -149,4 +149,4 @@ Enforced server-side; exceeding one rejects the upload.
 | Context menu nesting | 2 levels |
 | Article buttons | 5 per sidebar across all plugins (the same map renders in the article and the apps sidebar) |
 
-Icons are referenced by **file name only** (`"icon-16.svg"`). Sizes: logo 48×48, context menu / main button / profile menu 16×16, sidebar navigation 20×20, `fileRowIcon` 32×32 (every list view — ship an SVG) and `fileTileIcon` for the tiles view, which draws nothing else for a plugin's file, sidebar button content 32×32.
+Icons are referenced by **file name only** (`"icon-16.svg"`). Sizes: logo 48×48, context menu / main button / profile menu 16×16, sidebar navigation 20×20, `fileRowIcon` 32×32 (every view except tiles, at every size — ship an SVG), `fileTileIcon` 96×96 (the tiles view reads only this one; without it recent portals fall back to the row icon, older ones draw nothing), sidebar button content 32×32.

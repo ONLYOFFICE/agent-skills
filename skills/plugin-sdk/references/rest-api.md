@@ -111,6 +111,8 @@ async function* walkFolder(api: PluginAPIClient, folderId: number, prefix = "", 
 
 `total` counts the folder's own rows, folders and files together, so the loop ends on the *page* count and the recursion is what descends. Pass the effect's `AbortSignal` all the way down, or a closed panel keeps walking.
 
+**A listing row is not a full file DTO** — which is why the walk reads only `id` and `title`. The response types `files` and `folders` as the shared *base* entry: no `viewUrl`, no `security`, no `fileExst`. Those come from `GET /files/file/{id}`, one call per file, so fetch a file's own metadata before reading its bytes or checking a permission — and declare the narrow row shape you use (as `TEntry` does) instead of casting a row to the file type, which compiles and gives `undefined`.
+
 ### Writing bytes into a folder the plugin created
 
 The two halves — a folder, then a file with content — in the order the portal wants them:
