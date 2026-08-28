@@ -151,7 +151,7 @@ The validator checks the **contract with the portal**, not the feature. Read the
 - install: upload the zip in Settings → Integration → Plugins, then **fully reload the page**. No upload control, or nothing after installing → the portal has plugins switched off ([portal.md](references/portal.md#before-anything-loads-the-switches));
 - bump `version` before every re-upload — the portal caches the bundle and the icons by version.
 
-If they asked for something the portal cannot do, say so here rather than burying it.
+If they asked for something the portal cannot do, say so here rather than burying it — but **a limitation needs positive evidence, not an exhausted search.** "No `Actions` member refreshes the file list" is a fact about `Actions`; "the plugin cannot refresh the file list" is a claim about the portal, and it is usually the endpoint that was wrong. Until you have tried the thing that would disprove it, keep it out of the README, the CHANGELOG and the code comments, where a false explanation reads as settled to everyone who comes after.
 
 ---
 
