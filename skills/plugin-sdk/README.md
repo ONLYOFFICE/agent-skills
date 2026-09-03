@@ -13,6 +13,7 @@ As part of the `onlyoffice` plugin — see [Install](../../README.md#install) in
 ```sh
 node skills/plugin-sdk/scripts/generate-plugin.mjs --name my-plugin --plugin-name MyPlugin --scopes ArticleNavigation,Settings --dir ./my-plugin
 node skills/plugin-sdk/scripts/validate-plugin.mjs ./my-plugin --invoke
+node skills/plugin-sdk/scripts/preview-plugin.mjs ./my-plugin
 node skills/plugin-sdk/scripts/test-validator.mjs
 ```
 
@@ -23,6 +24,10 @@ The **validator** runs static checks over the manifest, build config, sources an
 Finally it **renders every component once** with the project's own React and the SDK's own runtime provider, each surface getting the runtime it really receives (a page and a click-opened dialog get no current file; an info panel tab and the media viewer get one), because a component that throws on first paint is a blank page on the portal with one line in the console. Effects do not run, and nothing reads the CSS: what a stylesheet does to the portal is decided by how it is imported, which is checked, and by rules only a reader can judge.
 
 The sandbox has no network, so a callback that fetches before it returns anything takes its own failure path and hands over no surface to render. That is a **hole in the coverage and the run says so** — a `runtime` warning naming the callback, and a count beside the render tally — rather than reporting a clean pass over a click it never followed to the end.
+
+The **browser pass** covers what a string render cannot. `preview-plugin.mjs` writes a throwaway harness into the project, serves it with the project's own Vite — the six host-provided specifiers bundled instead of external, since there is no portal to supply them — and mounts the built bundle in Chromium against the real UI kit and the real theme variables, at the width each surface gets, in both themes. Importing a kit component injects that component's real stylesheet, so the surface is laid out by the CSS that will lay it out on the portal. It then measures: a rule of the plugin's that matches portal-shaped markup planted beside it, a control that collapsed, content wider than its surface, boxes drawn over each other, a surface still blank after its effects ran, text the colour of its background. Screenshots of every surface in both themes go to `<project>/.plugin-preview/shots/`. Playwright is not a dependency of anything here: when it or its browser is missing the pass is skipped with the command to fix it, the way the runtime pass is skipped without `node_modules`.
+
+What it cannot do is the reverse direction: the kit's stylesheets are in the page and the DocSpace client's own are not, so a portal rule beating one of the plugin's is still only settled by an upload.
 
 The **self-test** runs the validator against deliberately broken projects with hand-written bundles and asserts which findings it must and must not produce. It never invokes npm, so it is blind to the toolchain — see *Verifying the toolchain*.
 

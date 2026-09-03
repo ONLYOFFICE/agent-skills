@@ -22,6 +22,7 @@ The difficulty in all three jobs is the same: DocSpace loads plugins with almost
 
 ```
 $SKILL/scripts/generate-plugin.mjs   scaffold a project        $SKILL/scripts/validate-plugin.mjs   check one against the loader
+$SKILL/scripts/preview-plugin.mjs    render it in a browser and measure the surfaces
 $SKILL/references/                   the knowledge base — read these instead of recalling
 ```
 
@@ -139,13 +140,37 @@ node "$SKILL/scripts/validate-plugin.mjs" <target> --invoke
 
 This imports the bundle the way the portal does, runs `onLoadCallback` and checks what the portal would: `runtime: "module"`, a default export, nothing imported that the portal does not provide and no bundled React, every declared scope filled, item fields, filter names and `component` values, each action's payload, and locale tables keyed by something `PluginLocale` does not have; `--invoke` also calls the class-side callbacks with a dummy id. Iterate to zero errors; each message says what to do. A `runtime` error saying the bundle or `onLoadCallback` threw is the "installs and nothing happens" symptom. Warnings are worth reading; a `deprecated` warning on a new plugin always is.
 
-It then **renders every component once** with the project's own React, each with the runtime its own surface gets — `useCurrentFile()` null on a page, in settings and in a dialog opened from a click; the selection in an info panel tab or the media viewer. A `render` error is a component that throws on first paint, which on the portal is a blank page, tab or dialog with one console line. The last line counts the surfaces rendered out of those tried; `render skipped` means `react-dom` was not installed, so run `npm install` and validate again rather than assuming the surfaces are fine. Nothing runs the **effects**, so their guards, `catch`es and cleanups are still yours to read.
+It then **renders every component once** with the project's own React, each with the runtime its own surface gets — `useCurrentFile()` null on a page, in settings and in a dialog opened from a click; the selection in an info panel tab or the media viewer. A `render` error is a component that throws on first paint, which on the portal is a blank page, tab or dialog with one console line. The last line counts the surfaces rendered out of those tried; `render skipped` means `react-dom` was not installed, so run `npm install` and validate again rather than assuming the surfaces are fine. Nothing runs the **effects** and nothing has a size, so what an effect does and what the CSS does to it are measured in the next step, not here.
 
 **Read that line for what it did *not* cover.** The sandbox has no network, so a callback that fetches before returning its message — reading the file's name for the dialog header, say — ends in its own `catch`, and the modal behind the request is never opened, collected or rendered. That shows up as a `runtime` warning plus `callback(s) stopped at a network call` beside the render tally. A clean run over zero surfaces is not coverage: check that surface on a portal, or have the click open it first and fetch from the component's effect.
 
-The validator checks the **contract with the portal**, not the feature. Read the components once against the two silent-failure tables in [portal.md](references/portal.md#silent-failures) — and any `.css` the plugin ships against [Scoped CSS](references/styles.md#scoped-css), since nothing reads the rules for you. The UI-layer table (unlabelled fields, a toggle over the next row, an "empty" panel that accepts typing, a dialog stuck at 400×280) lists the defects that pass every check and still look broken.
+The validator checks the **contract with the portal**, not the feature. Read the components once against the two silent-failure tables in [portal.md](references/portal.md#silent-failures). The UI-layer table (unlabelled fields, a toggle over the next row, an "empty" panel that accepts typing, a dialog stuck at 400×280) lists the defects that pass every check and still look broken — and the step below is what measures most of them.
 
-### 7. Report
+### 7. See it — the step that catches what looks broken
+
+```sh
+node "$SKILL/scripts/preview-plugin.mjs" <target>
+```
+
+Mounts the built bundle in Chromium against the **real** UI kit and the **real** theme variables, at the width each surface actually gets, in both themes, and measures what came out. It is the only pass where a stylesheet has run, a box has a size and an effect has fired, so it reports what the other checks cannot see:
+
+| Code | What the user would have seen |
+|---|---|
+| `preview-leak` | one of the plugin's own CSS rules matched portal-shaped markup planted beside it — that rule restyles DocSpace itself. This is the check the references say nothing performs; now something does |
+| `preview-collapsed` | a control that came out a few px wide — the panel that looks empty and still accepts typing |
+| `preview-overflow` | content wider than its surface — the horizontal scrollbar across the whole portal |
+| `preview-overlap` | two things drawn on top of each other — the toggle's label over the next row |
+| `preview-blank` | a surface that painted nothing **after** its effects ran — the blank tab the render pass cannot reach |
+| `preview-invisible` | text the same colour as what is behind it, in one of the two themes — a literal colour that only works in the other |
+| `preview-unlabelled` | a field with no visible label, no `aria-label` and no placeholder |
+
+Fix what it reports and run it again. Then **look at the screenshots** it writes to `<target>/.plugin-preview/shots/` — they are the two themes of every surface at its real width, and doubled spacing, a broken row of blocks or a dialog that reads as unfinished are judgements no assertion makes for you. The harness directory is deleted on a clean run and kept when there are errors; `--keep` keeps it either way.
+
+`preview skipped` is a setup step, never a pass: it names what is missing (`npm run build` first, `npm install` first, or `npm i -D playwright && npx playwright install chromium`). A skipped run has measured nothing — do not report the surfaces as checked.
+
+**What it is not.** The kit's stylesheets are in the page; the DocSpace client's own are not. So it proves a rule of yours escapes, and it cannot prove the reverse — that a portal rule beats one of yours ([styles.md → What beats your rules](references/styles.md#what-beats-your-rules)). The portal API answers nothing here, so a surface that needs data renders its loading or empty branch — worth seeing, and not the same as seeing it with data. One real upload still settles both.
+
+### 8. Report
 
 - where the archive is (`<target>/dist/plugin.zip`), what it does and where it appears (a page's URL `/p/<key>` is worth stating);
 - anything left as a placeholder — icons especially;
@@ -176,22 +201,29 @@ node "$SKILL/scripts/validate-plugin.mjs" <plugin-dir> --invoke
 
 Each finding's message says what went wrong; the codes group them (`pkg.*` manifest, `build` externals, `dist` bundle imports, `scope`/`item`/`message` registration, `runtime` load or callback failures, `render` a component that throws on first paint, `locale` a table the portal will never read, `css` a stylesheet nothing scopes, `deprecated`, `sdk-drift`). A load failure — an unresolvable import, no default export — masks everything behind it: copy the project to a scratch directory, fix **only** that, rebuild and validate the copy; leave the audited project untouched.
 
-### 3. Read the source for what the script cannot see
+### 3. Run the browser pass
 
-The render pass covers first paint and nothing else: no effects, no CSS, no judgement of how a surface looks. With [portal.md](references/portal.md) open, look for:
+```sh
+node "$SKILL/scripts/preview-plugin.mjs" <plugin-dir>
+```
 
-- **A blank surface the render pass cannot reach** — a throw in an effect: an unguarded fetch or parse, `JSON.parse` on a 404 body, a missing `catch`. A conditional hook and an unguarded `useCurrentFile()` are what the render pass does catch, so a clean run means the defect is in the effects, not in render.
+The layout half of the audit, and the only pass that can perform it: a stylesheet has run, every box has a size and the effects have fired. It settles by measurement what used to be a reading job — whether a rule in the plugin's `.css` escapes into DocSpace's own DOM, whether a control collapsed, whether anything is drawn over anything else, whether a surface is blank once its effects have run. Then read the screenshots in `<plugin-dir>/.plugin-preview/shots/` for the judgements no assertion makes: doubled spacing, a row of blocks that should have been a stack, a surface that reads as unfinished. `preview skipped` means nothing was measured — install what it names and run it again. Its limits are in [step 7 of Build](#7-see-it--the-step-that-catches-what-looks-broken).
+
+### 4. Read the source for what neither script can see
+
+Both passes are blind to intent, to what happens on a real request and to anything behind a click nobody made. With [portal.md](references/portal.md) open, look for:
+
+- **A blank surface neither pass reached** — an effect that throws only against real data: `JSON.parse` on a 404 body, a field the portal omits. The browser pass reports the surfaces that came out empty against *no* API, so what is left is the ones that break on an answer.
 - **Registration timing** — module-scope registration is legitimate on its own; it is a defect when the factory translates a label or calls `getAPI()` there, and items added after `onLoadCallback` resolves are invisible until an update action.
 - **Unhandled errors in class-side callbacks**, **work or fetching in `onLoadCallback`**, **a settings page that never calls `setSaveButton`**, **stored settings read during `onLoadCallback`**, **a class field named like a manifest field** (`settings`, `name`, `version`, …), **blocking loops**, **`scpDomains`**, **timers outside components**.
 - **A hand-rolled implementation of a solved problem** — an archive writer, an HTML sanitiser, a CSV or XLSX serialiser. Name the standard package; it is a correctness finding, not a style one. So is the mirror image: a dependency nobody has heard of, running in the portal's window with the user's session ([dependencies.md](references/dependencies.md)).
-- **Every rule in the plugin's `.css`** — the leftmost selector of each one has to be a class the plugin owns, and no check reads them ([styles.md → Scoped CSS](references/styles.md#scoped-css)).
-- **A surface that renders but looks wrong** — the UI-layer table.
+- **Any `.css` rule the browser pass could not reach** — it plants portal-shaped markup and reports what a rule of yours matches, which covers the common shapes; a selector aimed at something more specific in DocSpace's DOM (`.section-header`, a kit hash) still needs a reader ([styles.md → Scoped CSS](references/styles.md#scoped-css)).
 
-### 4. Check for drift
+### 5. Check for drift
 
 The validator reports `sdk-drift` when the installed SDK is not the major it knows. SDK **2.x** means an SDK 2 plugin — a reading job against [sdk-2-plugins.md](references/sdk-2-plugins.md), and the recommendation is migration. An SDK ahead of the portal compiles scopes and actions that do nothing ([scopes.md](references/scopes.md)). Deprecated members and the dead webpack build script are listed in [sdk-contract.md](references/sdk-contract.md#deprecated--do-not-use-in-new-code); `window.Plugins.X = plugin` in a module plugin is harmless dead code.
 
-### 5. Report
+### 6. Report
 
 Group findings: **silent breakage** (works in principle, does nothing on the portal) first; then **wrong behaviour**; **fragility** (unhandled errors, blocking work, collision-prone keys); **hygiene** (stale SDK, deprecated members, missing version bump). Say what the user would observe — "the tab opens blank" lands better than "unhandled rejection in an effect". If nothing is wrong, say so and list what you checked.
 
