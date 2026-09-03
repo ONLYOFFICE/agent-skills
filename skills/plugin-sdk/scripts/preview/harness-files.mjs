@@ -93,8 +93,11 @@ export const harnessHtml = () => `<!doctype html>
 
 export const harnessEntry = () => `import { createElement, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { ThemeProvider, Base, Dark } from "@docspace/ui-kit";
+import { ThemeProviderComponent, Base, Dark } from "@docspace/ui-kit";
 // The sheet that defines the variables the .light/.dark classes carry - see harness-files.mjs.
+// ThemeProviderComponent, never the barrel's default ThemeProvider: that one ignores the theme
+// object it is handed and leaves the document on light, which would make every dark run a
+// second light run - measured, not assumed.
 import "@docspace/ui-kit/dist/esm/components/theme-provider/ThemeProvider.scss.js";
 import { withPluginRuntime } from "@onlyoffice/docspace-plugin-sdk/react";
 
@@ -202,7 +205,7 @@ const boot = async () => {
 
   createRoot(document.getElementById("surfaces")).render(
     createElement(
-      ThemeProvider,
+      ThemeProviderComponent,
       { theme },
       shown.map(({ where, component, hasCurrentFile, width }) =>
         createElement("div", { key: where, style: { width: width || "100%", maxWidth: "100%" } }, [

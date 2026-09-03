@@ -160,6 +160,14 @@ const reportSurface = (findings, surface, theme) => {
       `${at}: ${what}${label ? ` ("${label}")` : ""} came out ${width}×${height}px - too small to use or read. A kit control with a max-width and no width collapses as a flex item while staying focusable, so the surface looks empty and still accepts typing: give it width: 100%; min-width: 0; flex: 1 1 auto`,
     );
 
+  /* Reported before the pairwise overlaps: this is the same defect seen from the cause
+   * rather than the symptom, and the sentence is more useful. */
+  for (const { what, text } of surface.noHeight.slice(0, 3))
+    findings.error(
+      "preview-overlap",
+      `${at}: ${what} holds "${text}" and is 0px tall, so whatever follows it is drawn in the same place - a control whose label is absolutely positioned adds nothing to its wrapper. Give the wrapper an explicit height and position: relative`,
+    );
+
   for (const { a, b, text, byX, byY } of surface.overlaps.slice(0, 4))
     findings.error(
       "preview-overlap",
