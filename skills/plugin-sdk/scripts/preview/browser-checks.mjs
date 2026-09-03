@@ -123,6 +123,7 @@ export const measure = (css) => {
       overlaps: [],
       spills: [],
       unlabelled: [],
+      noHeight: [],
       invisibleText: [],
     };
 
@@ -150,13 +151,26 @@ export const measure = (css) => {
       // A field nobody can name: no visible label beside it and nothing to read on it.
       const tag = el.tagName.toLowerCase();
       if (tag === "input" || tag === "textarea") {
+        // Trimmed: the kit's TextInput ships `placeholder=" "`, a single space, which names
+        // nothing. Taking it at face value made this check unfireable.
         const described =
-          el.getAttribute("aria-label") ||
-          el.getAttribute("placeholder") ||
-          el.labels?.length ||
-          root.querySelector(`label[for="${el.id}"]`);
+          el.getAttribute("aria-label")?.trim() ||
+          el.getAttribute("placeholder")?.trim() ||
+          [...(el.labels ?? [])].some((l) => l.textContent.trim()) ||
+          root.querySelector(`label[for="${el.id}"]`)?.textContent.trim();
         if (!described) surface.unlabelled.push({ what: describe(el) });
       }
+    }
+
+    /* A box that holds something to read and has no height of its own. This is the
+     * ToggleButton trap measured head-on: its label is absolutely positioned, so it adds
+     * nothing to the wrapper, the wrapper collapses to 0px, and whatever follows is drawn
+     * where the label already is. Pairwise overlap misses it whenever the label is not a
+     * leaf, so the height is what gets measured. */
+    for (const el of root.querySelectorAll("*")) {
+      const r = rect(el);
+      if (r.height === 0 && r.width > 2 && visible(el) && el.textContent.trim() !== "")
+        surface.noHeight.push({ what: describe(el), width: Math.round(r.width), text: el.textContent.trim().slice(0, 40) });
     }
 
     /* Two boxes on top of each other. Only leaves are compared - a parent overlapping its
