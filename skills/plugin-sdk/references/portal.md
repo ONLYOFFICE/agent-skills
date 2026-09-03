@@ -78,19 +78,19 @@ None of these produce an error the user sees; most leave nothing in the console.
 
 ### Silent failures in the UI layer
 
-The plugin loaded and rendered, and what the user sees is still wrong. They read as styling bugs and are not; fixes in [ui-kit.md](ui-kit.md#behavioural-traps) and [react.md → Modals](react.md#modals).
+The plugin loaded and rendered, and what the user sees is still wrong. They read as styling bugs and are not — nearly every one is a component default rather than a rule: fixes in [ui-kit.md](ui-kit.md#behavioural-traps) and [components.md → Modals](components.md#modals). For the ones that really are the stylesheet, [styles.md](styles.md).
 
 | Symptom | Cause |
 |---|---|
 | The blocks of a surface sit **side by side**, vertically centred, instead of stacked — and controls inside them each break onto their own line | several children were handed to a kit component at once (a fragment as a tab's `content`, a dialog body, `children`); the box it wraps them in is a flex row |
-| The progress button **stays in the panel** after the job ended, still reading "…ing" | the last update set `operations[i].completed` but not **`operationsCompleted`** on the button props. The outer flag is what the portal watches; on it, the panel dismisses the button and clears the plugin's entries by itself ([react.md → Progress button](react.md#the-floating-operations-button)) |
+| The progress button **stays in the panel** after the job ended, still reading "…ing" | the last update set `operations[i].completed` but not **`operationsCompleted`** on the button props. The outer flag is what the portal watches; on it, the panel dismisses the button and clears the plugin's entries by itself ([components.md → Progress button](components.md#the-floating-operations-button)) |
 | Clicking a room lands on the **rooms list**, and the address bar reads `/rooms/shared/undefined/filter?searchArea=…` | the link had no `?folder={id}`. The section tells one room from the list by the query, not the path, and then rewrote the address from its own state ([react.md → Paths navigate takes](react.md#paths-navigate-takes)) |
 | A row action fires on a row it **cannot apply to** — archiving an archived room, restoring a live one | the action was gated on `security` alone. The portal uses two independent tests, and so must a plugin: `security.Move` answers "may this user" (it hides *both* archive and restore), while `rootFolderType === 20` (`FolderType.Archive`) decides *which of the two* the row gets |
 | A form with **no labels**, though every field has `labelText` | `FieldContainer.labelVisible` defaults to `false` |
 | A form with an **empty band under every field** — spacing roughly twice what you set | `FieldContainer`'s own margin, plus your `gap` |
 | A panel looks **empty**, but clicking in it and typing works | a `Textarea` as a flex item collapses to ~1px |
 | A toggle's label is drawn **over the next row** | `ToggleButton` has no intrinsic size and an absolutely positioned label |
-| A selector opened from a modal is **visible but dead** | two portal surfaces are open at once and the modal's backdrop covers the selector — close one before opening the other ([react.md → Selectors](react.md#selectors)) |
+| A selector opened from a modal is **visible but dead** | two portal surfaces are open at once and the modal's backdrop covers the selector — close one before opening the other ([components.md → Selectors](components.md#selectors)) |
 | Generated markup is **double-spaced** with nothing extra in the DOM | the modal body inherits `white-space: pre-line` |
 | `file.viewUrl` answers **404 while the metadata answers 200** | no content stream until the first write — that 404 is an empty file, and the metadata cannot tell you so ([rest-api.md](rest-api.md#a-files-contents-are-not-part-of-the-api)) |
 | A dialog will not grow past 400×280 | `autoMaxWidth`/`autoMaxHeight` are what hand sizing to the body; the kit's `isLarge`/`isHuge` are not forwarded |
@@ -130,16 +130,7 @@ A module plugin runs in the portal's own window — its DOM, cookies and `localS
 - **Throwing in `onLoadCallback` or at module scope** aborts the plugin silently. Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
-- **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` restyles the product; how to scope one is [react.md → Scoped CSS](react.md#scoped-css). What that does not settle is what beats *you*: a property set on your wrapper only **inherits**, and any portal rule aimed at the descendant itself — the kit's `.body { white-space: pre-line }` — outranks the inherited value. So generated HTML has to be styled descendant by descendant from a root you own:
-
-  ```css
-  .myplugin-rendered, .myplugin-rendered * { white-space: normal; }
-  .myplugin-rendered pre, .myplugin-rendered pre code { white-space: pre; }
-  .myplugin-rendered p, .myplugin-rendered li { line-height: 20px; margin: 0; }
-  .myplugin-rendered { color: var(--text-color); }
-  ```
-
-  Whatever sanitiser you use on that markup is bundled into `plugin.js` and counts against the archive limit.
+- **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` or `.card {}` restyles the product itself — in every section, for every user, until the plugin is disabled. Nothing checks the rules, and the fix is a form that cannot go wrong: [styles.md → Scoped CSS](styles.md#scoped-css). The reverse direction — portal rules reaching into your markup — is [what beats your rules](styles.md#what-beats-your-rules).
 - **`cspDomains`** origins are added to the **portal's** CSP, not just yours. List only what you call. (`scpDomains` is a real typo in shipped plugins — it silently does nothing.)
 - **Timers and listeners at module scope or in `onLoadCallback`** keep running after the plugin is disabled, until a full reload; inside a component's effect they clean up with it.
 

@@ -34,7 +34,7 @@ SDK `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** and DocSpace **4.0**; generat
 
 ```
 SKILL.md      the skill
-references/   SDK target, class contract, item shapes, React runtime, UI kit, host behaviour, REST API, reading SDK 2 plugins
+references/   SDK target, class contract, item shapes, React runtime, host-drawn components, UI kit, styling, host behaviour, REST API, dependencies, reading SDK 2 plugins
 scripts/      generate, validate, self-test, and contract.mjs (the portal contract as data)
   generator/  validator/  validator-tests/
 templates/    build config for generated projects (inert filenames so editors ignore them)
