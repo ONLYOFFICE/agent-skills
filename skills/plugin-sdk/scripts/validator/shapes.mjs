@@ -37,10 +37,16 @@ const asActionValue = (key) =>
 /** A function, or a memo/forwardRef object - never a JSX *element* (`component: <Panel />`). */
 export const isReactComponent = (value) =>
   typeof value === "function" ||
-  (value !== null && typeof value === "object" && "$$typeof" in value && !("props" in value));
+  (value !== null &&
+    typeof value === "object" &&
+    "$$typeof" in value &&
+    !("props" in value));
 
 const isReactElement = (value) =>
-  value !== null && typeof value === "object" && "type" in value && "props" in value;
+  value !== null &&
+  typeof value === "object" &&
+  "type" in value &&
+  "props" in value;
 
 export class ShapeChecks extends Check {
   /** One registered item, against the contract of the scope that registered it. */
@@ -48,7 +54,8 @@ export class ShapeChecks extends Check {
     const where = `${scope} item "${key}"`;
 
     for (const field of contract.required)
-      if (item[field] === undefined) this.error("item", `${where} has no ${field}`);
+      if (item[field] === undefined)
+        this.error("item", `${where} has no ${field}`);
 
     if (contract.oneOf) this.#checkOneOf(where, contract.oneOf, item);
     if (contract.deprecated) this.#checkDeprecatedFields(where, contract, item);
@@ -60,7 +67,10 @@ export class ShapeChecks extends Check {
     this.#filterValues(where, contract.filter, item[contract.filter]);
     this.#filterValues(where, "devices", item.devices);
 
-    if (typeof item.icon === "string" && !this.project.assetNames.includes(item.icon))
+    if (
+      typeof item.icon === "string" &&
+      !this.project.assetNames.includes(item.icon)
+    )
       this.error("item", `${where} icon "${item.icon}" is not in assets/`);
 
     this.#checkScopeSpecifics(where, scope, item);
@@ -110,7 +120,8 @@ export class ShapeChecks extends Check {
 
   /** The host reads a different field name per scope; the wrong one is skipped in silence. */
   #checkFilterFieldName(where, scope, contract, item) {
-    const wrongFilter = contract.filter === "usersTypes" ? "usersType" : "usersTypes";
+    const wrongFilter =
+      contract.filter === "usersTypes" ? "usersType" : "usersTypes";
 
     if (item[wrongFilter] !== undefined)
       this.error(
@@ -121,7 +132,10 @@ export class ShapeChecks extends Check {
 
   #checkScopeSpecifics(where, scope, item) {
     if (scope === "EventListener" && !EVENT_TYPES.includes(item.eventType))
-      this.error("item", `${where} eventType "${item.eventType}" is not a known Events value`);
+      this.error(
+        "item",
+        `${where} eventType "${item.eventType}" is not a known Events value`,
+      );
 
     if (scope === "ContextMenu") {
       // A group item is shown only for a multi-selection and only onGroupClick is called for it.
@@ -131,7 +145,12 @@ export class ShapeChecks extends Check {
           `${where} is a group action but has no onGroupClick - the host calls nothing else for a multi-selection`,
         );
 
-      if (!item.isGroupAction && !item.onItemClick && !item.onClick && !item.items)
+      if (
+        !item.isGroupAction &&
+        !item.onItemClick &&
+        !item.onClick &&
+        !item.items
+      )
         this.error(
           "item",
           item.onGroupClick
@@ -140,12 +159,18 @@ export class ShapeChecks extends Check {
         );
 
       if (item.items?.some((child) => child.items?.length))
-        this.warn("item", `${where} nests deeper than 2 levels - the host caps nesting at maxDepth 2`);
+        this.warn(
+          "item",
+          `${where} nests deeper than 2 levels - the host caps nesting at maxDepth 2`,
+        );
     }
 
     if (scope === "ArticleNavigation" && item.appears !== undefined) {
       if (!Array.isArray(item.appears))
-        this.error("item", `${where} appears must be an array of Section values`);
+        this.error(
+          "item",
+          `${where} appears must be an array of Section values`,
+        );
       else
         for (const section of item.appears)
           if (!SECTIONS.includes(section))
@@ -160,7 +185,11 @@ export class ShapeChecks extends Check {
   #checkKeyIsNamespaced(where, key) {
     const pluginSlug = this.project.manifest.name;
 
-    if (pluginSlug && typeof key === "string" && !key.toLowerCase().includes(pluginSlug.toLowerCase()))
+    if (
+      pluginSlug &&
+      typeof key === "string" &&
+      !key.toLowerCase().includes(pluginSlug.toLowerCase())
+    )
       this.warn(
         "item",
         `${where} key is not namespaced - prefix it with "${pluginSlug}-", the manifest's name spelled exactly as it appears there (not pluginName, and not a squashed slug of it). Item keys share one host-wide map per scope, so a generic key collides with another plugin's and one evicts the other`,
@@ -197,9 +226,10 @@ export class ShapeChecks extends Check {
       return;
     }
 
-    if (settings.component !== undefined) this.#component(where, settings.component);
+    if (settings.component !== undefined)
+      this.#component(where, settings.component);
 
-    for (const field of ["settings", "saveButton", "onLoad"])
+    for (const field of ["settings", "onLoad"])
       if (settings[field] !== undefined)
         this.warn(
           "deprecated",
@@ -212,12 +242,17 @@ export class ShapeChecks extends Check {
     if (message === undefined || message === null) return;
 
     if (!Array.isArray(message.actions)) {
-      this.warn("message", `${where} returned a message without an actions array`);
+      this.warn(
+        "message",
+        `${where} returned a message without an actions array`,
+      );
       return;
     }
 
     // The installed SDK is the authority on which action strings exist.
-    const validActions = this.project.sdkActions.length ? this.project.sdkActions : KNOWN_ACTIONS;
+    const validActions = this.project.sdkActions.length
+      ? this.project.sdkActions
+      : KNOWN_ACTIONS;
 
     for (const action of message.actions) {
       if (!validActions.includes(action)) {
@@ -226,7 +261,9 @@ export class ShapeChecks extends Check {
         this.error(
           "message",
           `${where} returns action "${action}", which is not an Actions value${
-            validActions.includes(asValue) ? ` - that looks like the enum key; the value is "${asValue}"` : ""
+            validActions.includes(asValue)
+              ? ` - that looks like the enum key; the value is "${asValue}"`
+              : ""
           }. The host matches on the string, so it does nothing`,
         );
         continue;
@@ -240,8 +277,10 @@ export class ShapeChecks extends Check {
         );
     }
 
-    if (message.modalDialogProps !== undefined) this.#modal(where, message.modalDialogProps);
-    if (message.mediaViewerProps !== undefined) this.#mediaViewer(where, message.mediaViewerProps);
+    if (message.modalDialogProps !== undefined)
+      this.#modal(where, message.modalDialogProps);
+    if (message.mediaViewerProps !== undefined)
+      this.#mediaViewer(where, message.mediaViewerProps);
   }
 
   /** IModalDialog: a React body via dialogBodyComponent, or the deprecated dialogBody - never neither. */
@@ -283,7 +322,10 @@ export class ShapeChecks extends Check {
     );
 
     if (typeof modal.onClose !== "function")
-      this.error("message", `${where} opens a declarative modal without onClose - the close button does nothing`);
+      this.error(
+        "message",
+        `${where} opens a declarative modal without onClose - the close button does nothing`,
+      );
   }
 
   /** IMediaViewer: a React `component`, or the deprecated `content` box. */
@@ -298,7 +340,8 @@ export class ShapeChecks extends Check {
       return;
     }
 
-    if (viewer.component !== undefined) this.#component(`${where} media viewer`, viewer.component);
+    if (viewer.component !== undefined)
+      this.#component(`${where} media viewer`, viewer.component);
     else
       this.warn(
         "deprecated",

@@ -69,9 +69,10 @@ class RoomNotes implements IPlugin, IContextMenuPlugin {
     this.onLoadCallback = callback;
   };
 
+  // Called once, before onLoadCallback: the item factory below reads the locale from
+  // here. A language change reloads the plugin, so there is nothing to rebuild.
   setLanguage = (language: PluginLocale): void => {
     setLocale(language);
-    this.updateContextMenuItem(editNoteItem());
   };
 
   getLanguage = (): PluginLocale => currentLocale();

@@ -69,7 +69,7 @@
         "creation goes through showCreateDialogModal with createDialogProps rather than a hand-built modal, and onSave appends the extension itself - the dialog's extension field only drives the checkbox",
         "the archive form is a React component built from @docspace/ui-kit - FieldContainer, TextInput, ComboBox, Button - with no raw <button> or <input> elements",
         "the https check drives hasError/errorMessage on the FieldContainer or TextInput and disables the primary button",
-        "the people to notify come from the portal's People selector - SelectorType.People, opened either from the form with showSelector or from the class-side click with Actions.showSelector - and closeSelector is called from onSubmit and onCancel, since a selector never closes itself",
+        "the people to notify come from the portal's People selector - SelectorType.People, opened either from the form with showSelector or from the class-side click with Actions.showSelector - with withHeader true so the aside has a title and a close cross, and closeSelector called from onSubmit and from the cancel path (headerProps.onCloseClick, which is what this selector type's cross calls; supplying onCancel as well is correct), since a selector never closes itself",
         "the ComboBox options are {key, label} objects and selectedOption is kept in React state and updated from onSelect",
         "the modal's action row is rendered inside dialogBodyComponent - primary first, then cancel - and closeModal() is called from it",
         "the third-party call goes through fetch rather than the API client, which refuses absolute URLs, and the CSP question is answered rather than ignored: the origin sits in cspDomains (spelled cspDomains, not scpDomains) where it is known at build time, or the run says plainly that a URL typed at runtime cannot be declared statically and names what an administrator has to add",
@@ -113,7 +113,7 @@
         "an empty personal view renders one of the kit empty-state components - EmptyScreenContainer or EmptyView - or an explicit line of text, not a blank body",
         "a row click calls navigate() to the room and then openInfoPanel with the plugin tab's own key, which is what the action takes to open your own tab",
         "new item keys are namespaced with room-notes and do not collide with the existing one",
-        "setLanguage rebuilds the new items alongside the existing one"
+        "every new item is built by a factory function rather than a module-level constant, so it picks up the locale the portal set before onLoadCallback - and setLanguage is left recording the locale, with no item rebuilding added to it"
       ]
     }
   ]

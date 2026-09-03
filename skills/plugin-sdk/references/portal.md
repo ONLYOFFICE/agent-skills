@@ -15,7 +15,7 @@ Module plugins (`"runtime": "module"` in the packed `config.json` — everything
 1. `GET plugin.js` as text. Every bare-specifier import is rewritten to the portal's copy — for exactly the six specifiers in [react.md → Bundling](react.md#bundling). Any other bare specifier **aborts the load** with a console error naming it.
 2. `import()` as a blob URL; the default export is the plugin. Module-scope code runs here.
 3. The manifest record is `Object.assign`ed **onto** the plugin object — `name`, `version`, `scopes`, `url`, `enabled`, `settings`, `image`, `description`, … — overwriting your same-named fields.
-4. `setLanguage(locale)` — the `LANGUAGE` cookie, falling back to the portal's own `culture` when the cookie is unset.
+4. `setLanguage(locale)` — the `LANGUAGE` cookie, falling back to the portal's own `culture` when the cookie is unset. **Once per instance, and only here**: it is not called again when the language changes ([below](#a-language-change-reloads-every-plugin)).
 5. If declared: `setAPI(origin, proxy, prefix)`.
 6. `await plugin.onLoadCallback()`.
 7. `getStatus()`; `hide` stops the sequence.
@@ -32,7 +32,14 @@ Consequences:
 - **Anything registered after step 9 is invisible** until the matching `update*Items` action — items added from a timer or an un-awaited promise.
 - **Stored settings do not wait for `onLoadCallback` to finish.** For a module plugin the loader calls `installPlugin()` — which is what awaits `onLoadCallback` — **without awaiting it**, then calls `setAdminPluginSettingsValue` immediately. So the value lands after the synchronous prefix of `onLoadCallback` and before anything after its first `await`: step 10 happens *inside* step 6. Do not read a settings value in `onLoadCallback` and do not order the two; components read settings with `usePluginSettings().load()`, class-side code reacts in `setAdminPluginSettingsValue`. (The legacy non-module path does await, and there the order is as numbered.)
 - **Disabled plugins are still fetched and executed**, so module-scope side effects run even when switched off.
-- **Enable/disable is live** (a `change-web-plugin` socket room): items appear or vanish in every open session without a reload; on re-enable the bundle is not re-fetched, so module-scope state survives while `onLoadCallback` runs again.
+- **Enable/disable is live** (a `change-web-plugin` socket room): items appear or vanish in every open session without a reload; on re-enable the bundle is not re-fetched, so module-scope state survives while `onLoadCallback` and `setAPI` run again — `setLanguage` and `setAdminPluginSettingsValue` are not repeated.
+
+### A language change reloads every plugin
+
+Switching the interface language does not notify the plugin — it **drops and reinstates** it: the plugin list is emptied, every bundle re-fetched and `import()`ed as a *new* module, and the sequence above runs again from step 2 on the new instance. Opening Settings → Integration does the same thing. Two consequences worth designing around:
+
+- **Nothing needs re-translating.** Labels are rebuilt because the factories run again, so `setLanguage` has no rebuilding to do ([sdk-contract.md → Localisation](sdk-contract.md#localisation)).
+- **Module-scope side effects double.** The old instance is discarded without a teardown — the SDK has no `onUnload` and the portal calls none — so a `setInterval` or a `window` listener started at module scope or in `onLoadCallback` keeps running, and the new copy starts another beside it. Every language switch and every visit to the Integration tab adds one more. Module-scope *state* meanwhile resets, and a still-mounted surface may be closing over the previous module's copy of it.
 
 ### Manifest fields the portal reads for itself
 
@@ -75,14 +82,14 @@ The plugin loaded and rendered, and what the user sees is still wrong. They read
 
 | Symptom | Cause |
 |---|---|
-| The blocks of a surface sit **side by side**, vertically centred, instead of stacked — and controls inside them each break onto their own line | several children were handed to a kit component at once (a fragment as a tab's `content`, a dialog body, `children`); the box it wraps them in is a flex row. One root element, laid out by you ([ui-kit.md → Layout conventions](ui-kit.md#layout-conventions)) |
+| The blocks of a surface sit **side by side**, vertically centred, instead of stacked — and controls inside them each break onto their own line | several children were handed to a kit component at once (a fragment as a tab's `content`, a dialog body, `children`); the box it wraps them in is a flex row |
 | The progress button **stays in the panel** after the job ended, still reading "…ing" | the last update set `operations[i].completed` but not **`operationsCompleted`** on the button props. The outer flag is what the portal watches; on it, the panel dismisses the button and clears the plugin's entries by itself ([react.md → Progress button](react.md#the-floating-operations-button)) |
 | Clicking a room lands on the **rooms list**, and the address bar reads `/rooms/shared/undefined/filter?searchArea=…` | the link had no `?folder={id}`. The section tells one room from the list by the query, not the path, and then rewrote the address from its own state ([react.md → Paths navigate takes](react.md#paths-navigate-takes)) |
 | A row action fires on a row it **cannot apply to** — archiving an archived room, restoring a live one | the action was gated on `security` alone. The portal uses two independent tests, and so must a plugin: `security.Move` answers "may this user" (it hides *both* archive and restore), while `rootFolderType === 20` (`FolderType.Archive`) decides *which of the two* the row gets |
 | A form with **no labels**, though every field has `labelText` | `FieldContainer.labelVisible` defaults to `false` |
-| A form with an **empty band under every field** — spacing roughly twice what you set | `FieldContainer` carries its own `margin: 0 0 16px`, and the `gap` on your column adds to it: drop one of the two ([ui-kit.md → Layout conventions](ui-kit.md#layout-conventions)) |
-| A panel looks **empty**, but clicking in it and typing works | a `Textarea` as a flex item collapses to ~1px — give it a width |
-| A toggle's label is drawn **over the next row** | `ToggleButton` has no intrinsic size and an absolutely positioned label; the wrapper has to reserve the height the label really occupies, not the switch's 20px |
+| A form with an **empty band under every field** — spacing roughly twice what you set | `FieldContainer`'s own margin, plus your `gap` |
+| A panel looks **empty**, but clicking in it and typing works | a `Textarea` as a flex item collapses to ~1px |
+| A toggle's label is drawn **over the next row** | `ToggleButton` has no intrinsic size and an absolutely positioned label |
 | A selector opened from a modal is **visible but dead** | two portal surfaces are open at once and the modal's backdrop covers the selector — close one before opening the other ([react.md → Selectors](react.md#selectors)) |
 | Generated markup is **double-spaced** with nothing extra in the DOM | the modal body inherits `white-space: pre-line` |
 | `file.viewUrl` answers **404 while the metadata answers 200** | no content stream until the first write — that 404 is an empty file, and the metadata cannot tell you so ([rest-api.md](rest-api.md#a-files-contents-are-not-part-of-the-api)) |
@@ -113,17 +120,17 @@ The maps are flat and shared across every installed plugin: two plugins using ke
 | A button inside an SDK 2 declarative tree | works | works | `showMediaViewer`/`closeMediaViewer` are a silent no-op |
 | Any other element in a declarative tree | works | works | all work |
 
-**Nothing here throws**, and that is the trap: the dispatcher calls every setter optionally (`setElementProps?.()`, `updatePropsContext?.()`), so an action that has no home is a no-op with no console line — the plugin looks correct and does nothing. The only throws in the whole plugin layer are the React API client on a rejected path and the import shim on a missing external. An event handler is not restricted either — see [items.md → EventListener](items.md#eventlistener).
+**Nothing here throws**, and that is the trap: the dispatcher calls every setter optionally (`setElementProps?.()`, `updatePropsContext?.()`), so an action that has no home is a no-op with no console line — the plugin looks correct and does nothing. Almost nothing in the plugin layer throws at all: the React API client on a rejected path, the runtime hooks outside a component, the import shim on a missing external, and a module bundle with no default export.
 
 ## What actually breaks the portal
 
 A module plugin runs in the portal's own window — its DOM, cookies and `localStorage` in reach. The only guard is the error boundary around each plugin component; everything outside a component is unguarded.
 
-- **Throwing in a class-side callback.** No portal code wraps `onItemClick`, `onClick`, `onGroupClick`, `subMenu.onClick` or `eventHandler` — the host awaits each one bare, so a rejection is a dead click. Catch and return a toast. The create dialog's `onSave` *is* wrapped, but its `catch` only routes to `onError`: without one it swallows the failure and leaves the dialog open ([sdk-contract.md](sdk-contract.md#two-kinds-of-callback)).
+- **Throwing in a class-side callback.** Nothing wraps them, so a rejection is a dead click that tells the user nothing: catch and return a toast ([sdk-contract.md](sdk-contract.md#two-kinds-of-callback)).
 - **Throwing in `onLoadCallback` or at module scope** aborts the plugin silently. Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
-- **Unscoped CSS.** A stylesheet is a legitimate tool; a selector that can match the portal's own DOM is not. `plugin.css` is appended to the portal's head *after* the portal's stylesheets, so at equal specificity **your rule wins** — an unprefixed `pre {}` restyles the product. What beats you is inheritance: a property set on your wrapper only inherits, and any portal rule aimed at the descendant itself (the kit's `.body { white-space: pre-line }`) outranks it. So scope the leftmost selector of every rule — a CSS module, or a prefix taken from the manifest `name` — and, for generated HTML, style the descendants from a root you own ([react.md → Scoped CSS](react.md#scoped-css)):
+- **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` restyles the product; how to scope one is [react.md → Scoped CSS](react.md#scoped-css). What that does not settle is what beats *you*: a property set on your wrapper only **inherits**, and any portal rule aimed at the descendant itself — the kit's `.body { white-space: pre-line }` — outranks the inherited value. So generated HTML has to be styled descendant by descendant from a root you own:
 
   ```css
   .myplugin-rendered, .myplugin-rendered * { white-space: normal; }

@@ -11,7 +11,7 @@ The portal wraps the component in the runtime provider and an error boundary and
 | Prop | Surface | What the host provides |
 |---|---|---|
 | `IArticleNavigationItem.component` | a full page at `/p/<key>` (under the section's path) | the section body — full width, scrolls; no heading, no padding (20px padding, a `Heading`, ~640px max text width read well) |
-| `IInfoPanelItem.component` | body of an info panel tab | ~337px wide, already scrolls; **no title block unless the item sets `isHeaderVisible: true`** — the SDK's doc comment says visible by default, the host disagrees ([items.md](items.md#infopanel)) |
+| `IInfoPanelItem.component` | body of an info panel tab | ~337px wide, already scrolls; the file/room title block above it, which only `isHeaderVisible: false` removes ([items.md](items.md#infopanel)) |
 | `IArticleButtonItem.component` | a 32×32 slot in the sidebar, `overflow: hidden` | nothing — a single `IconButton size={32}` is what fits |
 | `IModalDialog.dialogBodyComponent` | body of a modal or aside | header from `dialogHeader`, close cross, padding; **no footer slot** |
 | `IMediaViewer.component` | the media viewer's content area | the viewer's chrome, full screen |
@@ -84,13 +84,13 @@ A class-side callback returns an `IMessage` — `{ actions: [Actions.x, …], <p
 | `updateStatus` | none | — | class-side only: it is an `Actions` member with no counterpart in the runtime a component gets |
 | `update*Items` (`updateContextMenuItems`, `updateInfoPanelItems`, `updateMainButtonItems`, `updateProfileMenuItems`, `updateFileItems`, `updateEventListenerItems`, `updateArticleButtonItems`, `updateArticleNavigationItems`) | none | same names | make the portal re-read the plugin's map for that scope |
 
-An event handler (`EventListener`) is not limited by the host — its message goes through the same dispatcher as any other class-side callback, so a modal, a selector, `navigate` and the progress button all work from it. Keep it to toasts and item updates anyway: the event fires whenever the portal says so, and a dialog or a navigation arriving unbidden lands on whatever the user was doing. The three actions no class-side callback can use are `updateProps`, `updateContext` and `updateCreateDialogModal` — their setters are supplied by the caller, and only a mounted element has them, so elsewhere each is a silent no-op rather than an error. There is no action for opening the settings aside (`openInfoPanel` closes it).
+An event handler (`EventListener`) is not limited by the host — its message goes through the same dispatcher as any other class-side callback, so a modal, a selector, `navigate` and the progress button all work from it. Keep it to item updates anyway: the event fires when the portal *opens a dialog*, not when anything completed ([items.md](items.md#the-event-fires-when-the-dialog-opens)). The three actions no class-side callback can use are `updateProps`, `updateContext` and `updateCreateDialogModal` (see the table row above). There is no action for opening the settings aside (`openInfoPanel` closes it).
 
 #### Paths `navigate` takes
 
 Every portal section is a route ending in `/filter`, and an entity is that route with its id in the middle. Guessing gets you a redirect to the root.
 
-**The path alone does not open a room — `?folder={id}` is what does.** The Files section decides "the rooms list" from "one room's contents" by reading the **query string**, not the path: with no `folder` parameter it takes the location for the list, fetches rooms with a default filter, and rewrites the address bar from its own state — which for a room route means `/rooms/shared/undefined/filter?searchArea=Active&page=1&…`. That literal `undefined` in the URL, plus a `searchArea` you never set, is the signature of a room link sent without its query. So repeat the id: path **and** `folder`.
+**The path alone does not open a room — `?folder={id}` is what does.** The Files section tells "the rooms list" from "one room's contents" by the **query string**, not the path, so a path-only link is taken for the list and the address bar is rewritten from that state: a literal `/rooms/shared/undefined/filter?searchArea=…` is the signature. Repeat the id in both places.
 
 | Where | Path |
 |---|---|
@@ -100,7 +100,7 @@ Every portal section is a route ending in `/filter`, and an entity is that route
 | My documents / Recent / Favourites / Trash | `/rooms/personal/filter` / `/recent/filter` / `/files/favorite/filter` / `/files/trash/filter` |
 | Your own `ArticleNavigation` page | `/p/{key}` — under `Section.Accounts` `/accounts/p/{key}`, under `Section.Settings` `/portal-settings/p/{key}` |
 
-Which of the two room paths a room takes is something you normally already know — you listed it with `searchArea` (`Active` or `Archive`), so carry that through to the link. `rootFolderType` on the room decides it too, and it is the portal's own test: the client offers "Move to archive" or "Restore" by comparing it against `FolderType.Archive`, which is **20**. The SDK types the field as a bare `number` and exports no constant for it, so name your own (`const ARCHIVE_ROOT = 20`) rather than leaving a literal in a condition. Sending someone to the wrong one of the two shows them an empty list rather than an error, which is the harder bug to notice.
+Which of the two room paths a room takes is normally already known — you listed it with `searchArea` (`Active` or `Archive`), so carry that through to the link; sending someone to the wrong one shows an empty list rather than an error. Otherwise the room's own `rootFolderType` decides it, against `FolderType.Archive` = **20**, which is also the test that separates "archive this" from "restore this" ([portal.md](portal.md#silent-failures-in-the-ui-layer)). The SDK types the field as a bare `number` and exports no constant, so name your own (`const ARCHIVE_ROOT = 20`) rather than leaving a literal in a condition.
 
 **Changing an item from a component is two steps:** mutate the map through the plugin instance, then ask for a redraw — `setState` cannot reach the class.
 
@@ -124,7 +124,8 @@ const ops = await api.request<TOperation[]>({ method: "PUT", path: "/files/fileo
 
 - **Paths are relative to the API base**, which already includes `/api/2.0`: `"/files/@my"`. An absolute URL, a protocol-relative `//host`, a `..` segment or a scheme-like first segment is refused before sending (`PluginApiError`, `code: "INVALID_PATH"`). **`"/api/2.0/…"` is not** — it passes validation and goes out with the prefix twice, so the failure you get is a 404 from the portal rather than a path error, which is the harder one to read.
 - **`patch` exists too**, alongside the four above and `request` for anything else.
-- **The `response` envelope is unwrapped.** `api.get("/files/file/1")` resolves to the file; `.response` is `undefined`. A list with a total resolves to `{ total, <rows field> }`.
+- **The `response` envelope is unwrapped.** `api.get("/files/file/1")` resolves to the file; `.response` is `undefined`.
+- **An endpoint carrying a top-level `total` resolves to `{ total, items }` — the rows are always under `items`, whatever the endpoint calls them.** The client rewraps that shape, so `api.get("/files/rooms/{id}/share").then((r) => r.folders)` is `undefined` with no error and the surface renders empty. It applies to the paged *collection* endpoints — room members, file links, `/people`, groups. Folder **contents** (`/files/{id}`, `/files/@my`, `/files/rooms`) carry their total inside the payload instead and arrive untouched, with `files`, `folders` and `total` as their own fields. Two shapes, so type the call you are making and check which one you got ([rest-api.md](rest-api.md#endpoints-to-start-from)).
 - **Every failure is a `PluginApiError`**: `status` (0 when nothing reached the portal), `code` (`"ABORTED" | "NETWORK" | "INVALID_PATH"`), `request`, `details`, and `message` from the portal's own error text. Branch with `isPluginApiError(e) && e.status === 403`. A 403 does not navigate the user away as the portal's own requests do — you report it.
 - **`signal`** in the options cancels; abort in the effect cleanup and ignore `code === "ABORTED"`.
 
@@ -160,7 +161,11 @@ A page that calls `usePluginAPI()` itself works, but every component that wants 
 | `save(data)` | stores `JSON.stringify(data)`, then calls `setAdminPluginSettingsValue` on the class |
 | `setSaveButton(button)` | supplies the aside's Save button — a `ButtonGroup` `{ component: Components.button, props: { label, size, onClick, isDisabled, withLoadingAfterClick, disableWhileRequestRunning } }` |
 
-The portal owns the footer's Save/Cancel look. **Without `setSaveButton` the Save button has no `onClick` and saves nothing.** Call it in an effect that re-runs when the form changes — that is also how `isDisabled` tracks validity. After `onClick` resolves the portal closes the aside. The button state is per plugin and cleared on close.
+The portal owns the footer's Save/Cancel look, and it also overrides the button's `size`, `primary` and `scale` — what survives from the `ButtonGroup` is `label` (defaulting to "Save"), `isDisabled`, `isLoading`, `onClick`, `withLoadingAfterClick` and `disableWhileRequestRunning`.
+
+**Without `setSaveButton` the Save button has no `onClick` and saves nothing** — for a React settings page, this is the call that makes the footer work. Make it in an effect that re-runs when the form changes; that is also how `isDisabled` tracks validity. After `onClick` resolves the portal closes the aside. The button state is per plugin and cleared on close.
+
+`onClick` may also **return an `IMessage`**, which the host dispatches — a success or failure toast without reaching for a hook. (`ISettings.saveButton`, the static declaration beside `component`, still works and is not deprecated; it is the right choice only when the button never changes state — see [sdk-contract.md](sdk-contract.md#deprecated--do-not-use-in-new-code).)
 
 ```tsx
 function SettingsPage() {
@@ -185,11 +190,13 @@ function SettingsPage() {
 
   if (!loaded) return <RectangleSkeleton height="120px" />;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    // No `gap` on the column: FieldContainer brings its own 16px bottom margin, and the two add up.
+    <div style={{ display: "flex", flexDirection: "column" }}>
       <FieldContainer isVertical labelVisible labelText={t("webhook")} hasError={invalid} errorMessage={t("httpsOnly")}>
         <TextInput type={InputType.text} value={config.webhook} onChange={(e) => setConfig({ ...config, webhook: e.target.value })} scale hasError={invalid} />
       </FieldContainer>
-      <div style={{ position: "relative", height: 20, display: "flex", alignItems: "center" }}>
+      {/* ToggleButton has no intrinsic size, so the wrapper supplies the height and refuses to flex. */}
+      <div style={{ position: "relative", height: 20, display: "flex", alignItems: "center", flex: "0 0 auto" }}>
         <ToggleButton label={t("notify")} isChecked={config.notify} onChange={() => setConfig({ ...config, notify: !config.notify })} />
       </div>
     </div>
@@ -252,7 +259,8 @@ The portal's own pickers, create dialog, progress button and media viewer are op
 | `Groups` | `TGroupsSelector` | `{ selectedIds }` |
 | `Base` | `TBaseSelector` — your own `items: { id, label, icon? }[]` | `{ selectedIds, fileName, isFooterCheckboxChecked }` |
 
-- **It never closes itself** — call `closeSelector()` from `onSubmit` *and* from `headerProps.onCloseClick`.
+- **A header needs `withHeader: true`, not just `headerProps`.** The label and the close cross are drawn only under that flag, so `headerProps` alone gives an aside with no title and no visible way out — Esc and the backdrop are all the user has left.
+- **It never closes itself, and which handler the cross calls depends on the type.** `closeSelector()` has to be called from `onSubmit` *and* from the cancel path — which is `onCancel` for `SelectorType.Files` and `headerProps.onCloseClick` for `Room`, `People`, `Groups` and `Base`. Supply **both** and the selector closes whichever type it turns out to be; supply only one and half the selectors leak a dead aside.
 - **A selector opened while your modal is open is unreachable.** The portal renders each of its surfaces from its own visibility flag, side by side and uncoordinated, so nothing stops two from being open at once — and the modal's backdrop then covers the selector aside: the user sees it, dimmed, and cannot touch it. The portal's own dialogs avoid this by swapping the selector *into* the dialog, which a plugin cannot do because it does not own those props. So `closeModal()` first, open the selector, and reopen the modal from `onSubmit` and from the close handler, holding the form's values in module scope so nothing is lost across the round trip. The same applies to any pair: **one portal-drawn surface at a time**, and it is your job to sequence them.
 - Only the props the type declares reach the host; anything cast in is dropped.
 - `TFilesSelector.getIsDisabled({ isFirstLoad, isRoot, selectedItemId, … })` is **required**; its boolean disables submit.
@@ -274,6 +282,8 @@ const exportDialog = (): IModalDialog => ({
 const pickDestination = ({ showModal, showSelector, closeModal, closeSelector }: PluginActions) => {
   closeModal();                          // first: the dialog's backdrop would cover the selector
 
+  const cancel = () => { closeSelector(); showModal(exportDialog()); };   // cancel must return too
+
   showSelector({
     type: SelectorType.Files,
     props: {
@@ -285,11 +295,9 @@ const pickDestination = ({ showModal, showSelector, closeModal, closeSelector }:
         closeSelector();
         showModal(exportDialog());       // back to the dialog, now showing the choice
       },
-      headerProps: {
-        label: t("export.pickFolder"),
-        isCloseable: true,
-        onCloseClick: () => { closeSelector(); showModal(exportDialog()); },   // cancel must return too
-      },
+      withHeader: true,                  // without it there is no title and no close cross
+      onCancel: cancel,                  // the Files selector's cross calls this one
+      headerProps: { label: t("export.pickFolder"), isCloseable: true, onCloseClick: cancel },
     },
   });
 };
@@ -303,6 +311,8 @@ showSelector({
   props: {
     submitButtonLabel: t("notify"),
     onSubmit: ({ selectedIds }) => { setRecipients(selectedIds); closeSelector(); },
+    withHeader: true,
+    onCancel: () => closeSelector(),
     headerProps: { label: t("pickPeople"), isCloseable: true, onCloseClick: () => closeSelector() },
   },
 });
@@ -327,7 +337,7 @@ The component re-renders as the user pages, so `navigation.onFileChange`/`onLoad
 
 ### The floating operations button
 
-The portal's progress button (downloads, conversions) accepts plugin entries — the only way to show progress without holding a modal open.
+The portal's progress button (downloads, conversions) accepts plugin entries — the way to show progress without holding a surface open, and it works from a component and from a class-side callback alike ([below](#work-that-takes-a-while)).
 
 ```ts
 const op = (percent: number, completed = false) => ({
@@ -344,21 +354,49 @@ updateFloatingOperationsButton(op(100, true));   // sets operationsCompleted - t
 - **Two different `completed` fields, and only the outer one ends the job.** `operations[i].completed` draws that row; **`operationsCompleted` on the button props** is what the portal reads. When it turns true the panel waits 4 seconds, plays its hide animation, and on the animation's end clears every operation the plugin registered — so the button removes *itself*, and the entry stops claiming to be running. Set only the inner `completed` and the button never leaves: the job is over, the label still reads "…ing", and it stays there until the page is reloaded. Nothing catches this — the validator sees a correct add/update sequence and a render pass has no panel — so it is worth re-reading the last `update` you write against this bullet.
 - **The finished wording is the portal's, not yours.** At completion it renders your operation `label` inside its own phrase — `"{{label}}: Done"`, or `"{{label}}: Error"` in the error path — so the label wants to be a plain name of the work ("Archiving rooms"), never rewritten to the past tense on the last update.
 - **The 4-second dismissal waits for the user.** It does not run while the pointer is over the button or while the operations dropdown is open, which is deliberate: the completed state is readable before it goes.
+- **`onLoad` is the class's handle on the button.** `IFloatingOperationsButton.onLoad?: (dispatchMessage) => …` is called by the host once the entry appears, and it is handed the same dispatcher a callback's returned `IMessage` goes through. Keep that function and a class-side job can send `updateFloatingOperationsButton` as often as it likes, from its own loop, with nothing mounted — see [below](#work-that-takes-a-while). It fires once per `id` while the Files page is mounted, and again after the entry has been cleared, so treat it as "the button now exists" rather than "start the work here".
+- **Give the button an id nobody else will use** — prefix it with the manifest `name`, as with item keys. The host tracks entries by the bare `id`, so two plugins that both call theirs `export` write over each other's progress.
 - `remove` takes the button `id` as a bare string (`floatingOperationsButtonPropsId` class-side). The normal end of a job needs no `remove` — reach for it to drop the button *early*, or from a cleanup when the surface goes away with the work still unfinished.
 - Operation ids are prefixed by the host with the plugin name; `onCancelOperationFromList(operationId)` hands back your unprefixed id. `cancelOperation` fires for "cancel all". Dismissing the button drops all your operations.
 - `FloatingOperationType`: `Download`, `Convert`, `Copy`, `Upload`, `Backup`, … or `Other`.
 
 ## Work that takes a while
 
-Packing an archive, walking a room, converting a batch: anything past a second or two. Two facts decide the whole shape of it.
+Packing an archive, walking a room, converting a batch: anything past a second or two. Two shapes fit it, and the question that picks between them is whether the user needs a **surface** — something to look at or interact with while it runs — not where the click came from.
 
-**A class-side callback returns one message and is then finished.** `onItemClick`, `onClick`, `eventHandler` and `onSave` hand the host a single `IMessage`; there is no second message and no handle to send one, so a callback cannot report progress and cannot update what it opened. Progress therefore belongs to code that is *mounted* — a component, whose effect can call `updateFloatingOperationsButton` as often as it likes. So the click's job is to open the surface (a modal or a page) and hand over the id; the work runs in the component.
+**No surface: run it from the class, and report through the progress button's `onLoad`.** A callback returns one `IMessage` and cannot send a second, but `addFloatingOperationsButton` carries an `onLoad` the host calls with its dispatcher, and holding that function is holding a channel back to the portal for as long as the plugin wants one. So a menu item that exports a folder needs no modal at all:
 
-**An effect runs the work, and it can run twice.** React remounts effects (development double-invoke, a re-render with changed deps, the user reopening the panel), and a second run of "pack these 400 files" is duplicated writes rather than a slow render. Guard the start, own the cancellation, and never leave the button behind:
+```ts
+let dispatch: ((message: IMessage) => void) | null = null;
+const BUTTON = "my-plugin-export";                       // manifest-prefixed: the host keys buttons by bare id
+
+const button = (percent: number, completed = false, alert = false): IFloatingOperationsButton => ({
+  id: BUTTON, operationsCompleted: completed, operationsAlert: alert,
+  operations: [{ id: "export", label: t("export.running"), operation: FloatingOperationType.Other, alert, completed, percent }],
+  onLoad: (dispatchMessage) => { dispatch = dispatchMessage; },
+});
+
+const progress = (percent: number, completed = false, alert = false) =>
+  dispatch?.({ actions: [Actions.updateFloatingOperationsButton], floatingOperationsButtonProps: button(percent, completed, alert) });
+
+onItemClick = async (id: number): Promise<IMessage> => {
+  void (async () => {                                     // the work outlives the message
+    try {
+      for (const [i, file] of (await listFiles(id)).entries()) { await pack(file); progress(pct(i)); }
+      progress(100, true);
+    } catch { progress(100, true, true); }                 // finish, flagged: the portal renders "…: Error"
+  })();
+  return { actions: [Actions.addFloatingOperationsButton], floatingOperationsButtonProps: button(0) };
+};
+```
+
+The loop is unguarded by anything — the callback has already returned, so a throw escaping that `catch` is an unhandled rejection and the button stays at whatever percent it reached. And the plugin owns the whole lifetime: nothing unmounts, so nothing cancels for you.
+
+**A surface: the work goes in its effect, and the effect can run twice.** When there *is* something to show — a preview, a per-row log, a form the job reads — the click opens the modal or page and hands over the id, and the component runs the work. React remounts effects (development double-invoke, a re-render with changed deps, the user reopening the panel), and a second run of "pack these 400 files" is duplicated writes rather than a slow render. Guard the start, own the cancellation, and never leave the button behind:
 
 ```tsx
 const ExportPanel = () => {
-  const { addFloatingOperationsButton, updateFloatingOperationsButton, showToast } = usePluginActions();
+  const { addFloatingOperationsButton, updateFloatingOperationsButton, removeFloatingOperationsButton, showToast } = usePluginActions();
   const api = usePluginAPI();
   const started = useRef(false);              // module scope if the work must survive a remount
 
@@ -367,7 +405,7 @@ const ExportPanel = () => {
     started.current = true;
 
     const controller = new AbortController();
-    const BUTTON = "my-plugin-export";
+    const BUTTON = "my-plugin-export";         // manifest-prefixed: the host keys buttons by bare id
     const button = (percent: number, completed = false, alert = false) => ({
       id: BUTTON,
       operationsCompleted: completed,          // the portal's own dismissal hangs off this one
@@ -375,7 +413,7 @@ const ExportPanel = () => {
       operations: [{ id: "export", label: t("export.running"), operation: FloatingOperationType.Other,
                      alert, completed, percent }],
     });
-    // One exit for every path. The portal shows "…: Done" (or "…: Error"), waits, and clears the entry itself.
+    // Ended: the portal shows "…: Done" (or "…: Error"), waits, and clears the entry itself.
     const finish = (alert = false) =>
       updateFloatingOperationsButton(button(100, true, alert));
 
@@ -384,7 +422,8 @@ const ExportPanel = () => {
       try {
         let percent = 0;
         for (let i = 0; i < files.length; i += 1) {
-          if (controller.signal.aborted) return finish();
+          // Abandoned, not finished - finish() here would announce "Done" over a partial job.
+          if (controller.signal.aborted) return removeFloatingOperationsButton(BUTTON);
           await pack(api, files[i], controller.signal);
 
           const next = Math.round(((i + 1) / files.length) * 100);
@@ -414,8 +453,8 @@ const ExportPanel = () => {
 ## Errors, loading, language, styling
 
 - **Errors are contained and silent.** A throw in render or an effect renders the component as **nothing**, with one console line `[Plugin: <name>] <error>`. A blank tab/page/modal is the symptom of a bug; `catch` and show text instead. Rejections in event handlers are not caught by the boundary.
-- **Loading is yours.** No `onLoad`: render a `RectangleSkeleton`/`Loader` while the effect runs. Never fetch in `onLoadCallback` to pre-load — it delays installation and a throw aborts it.
-- **Language.** Components call `t()` at render time and follow `setLanguage` on their own; only class-side item labels need rebuilding ([sdk-contract.md](sdk-contract.md#localisation)).
+- **Loading is yours.** No `onLoad`: render a `RectangleSkeleton`/`Loader` while the effect runs, and do not try to pre-load in `onLoadCallback` ([portal.md](portal.md#what-actually-breaks-the-portal)).
+- **Language.** Components call `t()` at render time. A language change reloads the whole plugin as a fresh module, so no labels need rebuilding — but module-scope timers and listeners survive the reload and pile up ([sdk-contract.md](sdk-contract.md#localisation)).
 - **Styling.** The kit's props first, then inline `style`, then a stylesheet for what inline `style` cannot express — `:hover`/`:focus`, pseudo-elements, keyframes, media queries, or markup you did not author. A `.css` import becomes `plugin.css`, injected into the portal's **own document, unscoped**, so it has to be scoped by hand — see [Scoped CSS](#scoped-css). Colors come from the theme variables in [ui-kit.md](ui-kit.md#colors).
 
 ### Scoped CSS

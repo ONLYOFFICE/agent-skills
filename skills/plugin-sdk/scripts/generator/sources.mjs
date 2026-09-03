@@ -76,15 +76,6 @@ const registrationTodos = (scopes) => {
   );
 };
 
-const rebuildTodos = (scopes) =>
-  scopes.itemMapScopes
-    .map(
-      // EventListener has no updater - re-adding overwrites by key just the same.
-      ({ name, contract }) =>
-        `    // TODO: this.${contract.updater ?? contract.adder}(...) for every ${name} item registered above.`,
-    )
-    .join("\n") || "    // Nothing to rebuild while no items are registered.";
-
 const itemMapMethods = ({ spec, contract }) => {
   const { field, item, key, adder, getter, updater } = contract;
 
@@ -140,12 +131,12 @@ ${registrationTodos(scopes)}
 
 ${STATUS_MEMBERS}
 
-  // The portal calls this when the interface language changes. Labels are captured
-  // when an item is built, so the items have to be rebuilt here - otherwise they
-  // keep the language they were registered in.
+  // Called once, immediately before onLoadCallback - not again when the language
+  // changes (that reloads the whole plugin as a fresh module, so the factories run
+  // again on their own). Recording the locale is the whole job: the item factories
+  // below it are what translate the labels.
   setLanguage = (language: PluginLocale): void => {
     setLocale(language);
-${rebuildTodos(scopes)}
   };
 
   getLanguage = (): PluginLocale => currentLocale();

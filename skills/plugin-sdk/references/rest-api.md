@@ -1,9 +1,6 @@
 # Talking to the DocSpace REST API
 
-| Code runs in | Use | Needs `API` scope | Unwraps `response` | Auth |
-|---|---|---|---|---|
-| A **React component** | `usePluginAPI()` — [react.md → API client](react.md#the-api-client) | no | yes — you get the payload | automatic |
-| A **class-side callback** (menu click, file click, event, create-dialog `onSave`) | `fetch` against `getAPI()` | yes | no — read `.response` yourself | session cookies: `credentials: "include"` |
+Two callers, two clients ([sdk-contract.md → Two kinds of callback](sdk-contract.md#two-kinds-of-callback) has the wider comparison). A **React component** uses `usePluginAPI()`, which needs no scope, unwraps the `response` envelope and authenticates itself ([react.md → API client](react.md#the-api-client)). A **class-side callback** — menu click, file click, event, create-dialog `onSave` — has `fetch` against `getAPI()`, needs the `API` scope, reads `.response` itself and rides the session cookies.
 
 Where a feature has both halves — a click that opens a panel — fetch in the component; the click hands over the id.
 
@@ -81,9 +78,16 @@ Read those instead of deciding a shape by feel. They answer the questions that o
 | Current user / people | `GET /people/@self` (a component has `useCurrentUser()`) / `GET /people` |
 | Rooms / members | `GET /files/rooms` / `GET /files/rooms/{id}/share` |
 
-**The rows above are correct as written; the api-sdk types are where you look up what is *not* in them** — `dist/api/files/folders-api.js` and `files-api.js` contain the literal URL and every form field the portal accepts, which is the only place the two `{folderId}` shapes above stop being confusable. Where the api-sdk has no method for something (replacing a file's bytes is one), the API reference is the authority and the request is hand-written; a missing method is a missing *method*, never a reason to substitute an endpoint that has types ([below](#which-writes-the-portal-notices)).
+**The rows above are correct as written**; anything not in them is looked up in the api-sdk types described above — `dist/api/files/folders-api.js` and `files-api.js` carry the literal URL and every form field the portal accepts, which is where the two `{folderId}` shapes stop being confusable. Where the api-sdk has no method for something (replacing a file's bytes is one), the API reference is the authority and the request is hand-written; a missing method is a missing *method*, never a reason to substitute an endpoint that has types ([below](#which-writes-the-portal-notices)).
 
-List endpoints page with `count` + `startIndex` and take filter/sort as query params (`params` of `api.get`); `total` arrives beside the rows, whose field the endpoint names (`folders`, `files`, `items`). Page and search in the request, as the portal's own screens do.
+List endpoints page with `count` + `startIndex` and take filter/sort as query params (`params` of `api.get`); page and search in the request, as the portal's own screens do. **Where the rows arrive is one of two shapes, and it is decided by the endpoint:**
+
+| Kind | Example | `usePluginAPI()` resolves to |
+|---|---|---|
+| Folder **contents** — the total is inside the payload | `/files/{id}`, `/files/@my`, `/files/rooms` | the payload itself: `{ files, folders, total, … }` |
+| A paged **collection** — the total is a top-level envelope field | `/files/rooms/{id}/share`, `/files/file/{id}/links`, `/people`, groups | `{ total, items }` — the rows are under **`items`**, whatever the endpoint's own field was called |
+
+Reading `.folders` or `.files` off the second kind gives `undefined` with no error and an empty surface, which is the failure this costs. Class-side the envelope is not unwrapped at all, so `total` and the rows sit where the server put them, under `.response`.
 
 ### Walking a folder tree
 
@@ -111,7 +115,9 @@ async function* walkFolder(api: PluginAPIClient, folderId: number, prefix = "", 
 
 `total` counts the folder's own rows, folders and files together, so the loop ends on the *page* count and the recursion is what descends. Pass the effect's `AbortSignal` all the way down, or a closed panel keeps walking.
 
-**A listing row is not a full file DTO** — which is why the walk reads only `id` and `title`. The response types `files` and `folders` as the shared *base* entry: no `viewUrl`, no `security`, no `fileExst`. Those come from `GET /files/file/{id}`, one call per file, so fetch a file's own metadata before reading its bytes or checking a permission — and declare the narrow row shape you use (as `TEntry` does) instead of casting a row to the file type, which compiles and gives `undefined`.
+**A listing row is a full DTO — the narrow type is an artifact of the generated client, not of the payload.** `files` and `folders` are typed as the shared *base* entry, so `viewUrl`, `security` and `fileExst` are missing from the type; the wire response carries the concrete `FileDto`/`FolderDto` with all of them, which is why the portal's own screens read `security` straight off the rows they listed. So **do not walk a subtree issuing `GET /files/file/{id}` per row** to obtain fields the listing already gave you — that is one request per file for nothing, and on a large room it is the whole cost of the feature.
+
+What the type does mean is that a row cannot be cast to the file type and trusted: the cast compiles and any field the server happened to omit reads `undefined`. Declare the narrow shape you actually use, as `TEntry` above does, and re-fetch a single file only when you need something a listing genuinely does not return.
 
 ### Writing bytes into a folder the plugin created
 
