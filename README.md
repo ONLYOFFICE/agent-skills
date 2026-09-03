@@ -36,6 +36,9 @@ Install as a plugin — it stays updatable through `/plugin`, and the skills app
 
 To try a local checkout without installing: `claude --plugin-dir /path/to/agent-skills`.
 
+In the VS Code extension, type `/plugins` in the chat: add this repository on the
+*Marketplaces* tab, then install `onlyoffice` on the *Plugins* tab.
+
 ### Cursor
 
 Cursor reads `.cursor/skills/` and `.agents/skills/` in the project, `~/.cursor/skills/`
