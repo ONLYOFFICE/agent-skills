@@ -223,7 +223,7 @@ export class ProjectChecks extends Check {
     if (plain.length)
       this.warn(
         "css",
-        `${plain.join(", ")} ${plain.length === 1 ? "is" : "are"} imported as a plain stylesheet, which nothing scopes and nothing here checks: plugin.css is appended to the portal's head after its own stylesheets, so any rule whose leftmost selector is not a class of yours restyles DocSpace itself. Import it as *.module.css and the build hashes every class, or read every rule against references/react.md#scoped-css - the leftmost selector must be "${project.manifest.name}-…", never a bare element, "*" or ":root"`,
+        `${plain.join(", ")} ${plain.length === 1 ? "is" : "are"} imported as a plain stylesheet, which nothing scopes and nothing here checks: plugin.css is appended to the portal's head after its own stylesheets, so any rule whose leftmost selector is not a class of yours restyles DocSpace itself. Import it as *.module.css and the build hashes every class, or read every rule against references/styles.md#scoped-css - the leftmost selector must be "${project.manifest.name}-…", never a bare element, "*" or ":root"`,
       );
   }
 

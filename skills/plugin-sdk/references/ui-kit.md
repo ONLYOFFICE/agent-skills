@@ -1,6 +1,6 @@
 # Building UI with `@docspace/ui-kit`
 
-The portal's own component library: it reads theme, accent and direction from contexts the portal fills, so a kit `Button` is the portal's button in either theme. Reach for the kit first, plain `div`s with inline styles for layout, a stylesheet where inline styles cannot reach — `:hover`, keyframes, media queries, generated markup — as long as every selector is scoped ([react.md → Scoped CSS](react.md#scoped-css)). Raw HTML controls never: an unstyled `<button>` or `<input>` is the one thing that immediately looks foreign.
+The portal's own component library: it reads theme, accent and direction from contexts the portal fills, so a kit `Button` is the portal's button in either theme. Reach for the kit first — it is the first of the three sources of style a plugin has, and the only one that follows a re-theme on its own ([styles.md](styles.md#where-a-style-can-come-from)). Colors, the portal's measurements and how a stylesheet gets scoped are there too; this file is the kit's own API and the behaviour its types do not state.
 
 **Props are documented in the package itself**, one JSDoc line per prop: `node_modules/@docspace/ui-kit/dist/types/components/<name>/<Name>.types.d.ts` (enums in `<Name>.enums.d.ts`). Read those rather than guessing or casting; this file only records what the types cannot tell you.
 
@@ -22,30 +22,10 @@ Toasts and dialogs are not kit components for a plugin: `showToast`/`showModal` 
 
 The mirror image is props that sound like they size a control: `scale`, `scaled…` and `size` describe it against **its container**, never against its own content, so a label longer than the control is clipped rather than accommodated — a width of your own is the fix.
 
-- Typography inherits Open Sans **13px / 400**; secondary lines 12px; emphasis `fontWeight={600}` (700 is headings). Headings come from `Heading` (`level` = tag, `size` = look; an `h1` at `medium` is the usual page title).
-- 16px outer padding in dialogs and panels, 8–12px between controls, 20px page padding on a section page. Radius 3px on controls, 6px on dialogs. Literal px is normal — there are no spacing tokens.
-- Widths to lay out against: info panel body ≈ 337px; modal 400px; aside 480px; section page — full width, cap text at ~640px. What a modal will and will not grow to is in [react.md → Modals](react.md#modals).
+The portal's type scale, spacing and surface widths are in [styles.md](styles.md#conventions). What the kit adds on top of them:
+
 - Buttons in a row: primary first, then secondary, 8px apart, both `scale` to split the width. `ButtonSize.normal` (40px) in dialogs and pages, `small` (32px) in dense rows. One `primary` per view.
 - Give the root and controls an `id` — plugin markup carries no test ids.
-
-## Colors
-
-For anything you color yourself, use the portal's CSS variables — they flip with the theme and follow a re-branded accent. A hardcoded hex breaks in the other theme.
-
-| Variable | Use for |
-|---|---|
-| `--text-color` / `--text-disable-color` | primary / muted text |
-| `--accent-main` | accent (never hardcode `#4781d1` — admins re-brand it) |
-| `--background-color` / `--background-service-color` | main surface / secondary panel |
-| `--border-service-color` | **the** divider and border color |
-| `--input-error-color` | error text and borders |
-| `--status-icon-color-positive` / `--status-warning` | success / warning |
-
-Traps: `--error-color`, `--success-color` and `--border-color` **do not exist** (an invalid `var()` silently inherits); `--warning-color` exists but resolves to the error red.
-
-**A kit `color` prop is a CSS value, not a token** — with one exception. `Text` puts `color` straight into the element's inline `style`, so `color="accent"` is invalid CSS and the text silently inherits whatever colour surrounds it: pass `color="var(--accent-main)"`. `Link` is the exception — it maps the literal `"accent"` to `var(--accent-main)` itself, so both spellings work there. When a kit prop takes a colour and its `.d.ts` says `string`, assume the value reaches `style` unchanged and give it a real CSS value; the component's `.module.scss.js` settles it in one look.
-
-When the theme is needed as a **fact** — a whole palette for generated markup, an asset in two versions, a canvas — `useTheme()` from the kit returns `{ theme, isBase, currentColorScheme }`; `isBase` (`true` = light) is already resolved, there is no `prefers-color-scheme` to consult.
 
 ## Behavioural traps
 
