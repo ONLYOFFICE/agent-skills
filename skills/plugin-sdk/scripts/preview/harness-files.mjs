@@ -46,11 +46,15 @@ const COMPONENT_SCOPES = {
   ProfileMenu: { width: 400, hasCurrentFile: false },
   File: { width: 400, hasCurrentFile: false },
   ArticleButton: { width: 32, hasCurrentFile: false },
-  ArticleNavigation: { width: 0, hasCurrentFile: false },
+  // A page is the section body, which is the viewport *minus the sidebar* - measuring it at
+  // the full viewport width is what lets a table the portal cannot fit pass unreported. The
+  // section's own guard (max-width: 100vw) does not subtract the sidebar either, which is
+  // exactly why content sized against the window drags a scrollbar across the whole page.
+  ArticleNavigation: { width: 1030, hasCurrentFile: false },
   EventListener: { width: 400, hasCurrentFile: false },
 };
 
-/** `0` means "as wide as the section body" - the page surface has no width of its own. */
+/** Widths the portal actually gives each surface, in px. */
 const surfaceTable = () =>
   Object.entries(COMPONENT_SCOPES)
     .filter(([scope]) => SCOPE_CONTRACT[scope])

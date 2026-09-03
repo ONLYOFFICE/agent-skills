@@ -203,8 +203,18 @@ const reportSurface = (findings, surface, theme) => {
     );
 };
 
+/*
+ * The kit talks to the console about things only the portal can supply - a translation
+ * namespace, a store, a socket. Those lines are this harness's gap, not the plugin's defect,
+ * and reporting them buries the ones that are: a plugin whose effect throws is the whole
+ * point of watching the console at all.
+ */
+const HARNESS_NOISE = [/\[i18n\]/, /TranslationProvider/, /Missing translation/, /favicon/i];
+
 const reportConsole = (findings, messages) => {
-  for (const message of messages.slice(0, 6))
+  const real = messages.filter((message) => !HARNESS_NOISE.some((pattern) => pattern.test(message)));
+
+  for (const message of real.slice(0, 6))
     findings.error(
       "preview-console",
       `the browser logged an error while the surfaces mounted: ${message}. The portal's boundary swallows this and leaves the surface blank`,

@@ -39,9 +39,17 @@ export const measure = (css) => {
   const MIN_HEIGHT = 8;
 
   const rect = (el) => el.getBoundingClientRect();
+  /* Near-zero rather than exactly zero: the standard way to keep a control operable but
+   * unseen - which is how the kit builds a switch, a checkbox and a file picker - is an
+   * input at opacity 0.0001 behind the graphic, and calling that a 13x13px collapsed
+   * control was noise on every surface that had one. */
   const visible = (el) => {
     const style = getComputedStyle(el);
-    return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
+    return (
+      style.display !== "none" &&
+      style.visibility !== "hidden" &&
+      Number.parseFloat(style.opacity || "1") > 0.05
+    );
   };
   const describe = (el) => {
     const id = el.id ? `#${el.id}` : "";
