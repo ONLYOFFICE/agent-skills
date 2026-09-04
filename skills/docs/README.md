@@ -29,13 +29,13 @@ ONLYOFFICE Docs API **v8.2+**. Built from the official docs at
 * **signature/**: JWT signature schemes and token structure across browser, body, and header vectors.
 * **callback/**: The `callbackUrl` handling contract.
 
-## Core API References
+### Core API References
 * **api.md**: Client bootstrap entry point. Covers script loading, iframe sandboxing, and `DocsAPI.DocEditor(id, config)`.
 * **methods.md**: Programmatic API actions executed against a live `docEditor` instance.
 * **automation.md**: Automation API features (connectors, `executeMethod`, `callCommand`, UI extensions, modal windows).
 * **additional/**: Command Service specifications and the 4-file Conversion API framework.
 
-## Implementation & Testing
+### Implementation & Testing
 * **example.md**: The server integration architecture (based on the official Node.js sample).
 * **example-checklist.md**: Language-agnostic functional checklist for sample apps.
 * **api-testing.md**: Backend contract-first testing methodology.
