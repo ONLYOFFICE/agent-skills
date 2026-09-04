@@ -1,0 +1,100 @@
+# ONLYOFFICE Docs API Testing Guide
+
+## Context & Purpose
+
+**Verification and validation strategy** for ONLYOFFICE Docs integrations, weighted the way [`infrastructure/backend.md`](infrastructure/backend.md) weights generation itself: the **backend — the server-to-server contracts (`callbackUrl`, Command Service, Conversion API, JWT) and the five-endpoint surface a third-party integrator actually calls — is the primary, always-in-scope deliverable.** The `DocsAPI.DocEditor` client lifecycle, iframe sandboxing, and host-page communication are tested too, but only to the extent a client/sample UI exists in the generated output — a backend-only deliverable skips nothing backend-relevant by not having a browser to test. This guide doubles as the **testing methodology for auto-generated integration code**: most of what this skill produces (per [`example-checklist.md`](./example-checklist.md)) is scaffolded rather than hand-written, and generated code fails in a different shape than hand-written code — it needs a different testing posture, not just more of the same tests.
+
+## Documentation Query Rules
+
+* **Baseline:** Per [`api.md`](./api.md) — this guide is self-sufficient.
+* **Scope by deliverable:** Follow [`infrastructure/backend.md`](infrastructure/backend.md)'s decision table for what was actually generated. Backend-only -> run every backend-tagged phase/bullet below and skip the frontend-tagged ones entirely, don't stub them out. Backend + sample UI -> run both.
+* **Minimal Build:** Test exclusively the foundational integration parameters (`documentType`, `document.key`, `document.url`, `editorConfig.callbackUrl`) before validating optional customization structures.
+* **Fallback:** Check live docs only for edge cases a specific contract file already calls out (e.g. multi-tenant callback routing in [`signature/signature.md`](./signature/signature.md)).
+
+## Why Generated Integration Code Needs a Different Test Posture
+
+Industry data on AI/scaffold-generated code (Veracode 2025; Skyramp/ContextQA 2026 checklists — see Sources) is consistent on a few points that shape every phase below:
+* **Shared blind spots:** code and tests generated (or reviewed) by the same pass, from the same understanding of the contract, fail together — an incomplete grasp of the `callbackUrl` status table produces both the missing branch *and* a test suite that never exercises it. Tests must come from the **contract docs**, independent of the generated implementation — see Phase 0.
+* **Defect clustering:** AI-generated code's defects concentrate in error-handling paths, edge cases, and concurrent-access races far more than hand-written code's do — prioritize these over straight-line happy-path coverage (Phase 3a).
+* **Hallucinated surface:** a generated integration confidently calling a plausible-but-nonexistent method or field is a distinct failure mode from a logic bug — it needs a dedicated check against the real method/field catalogs, not just a green test run (Phase 1).
+* **Coverage discipline:** raise unit-coverage bars for generated code (roughly 85%+, vs. the usual 70-80%) precisely because it systematically underweights edge cases — a high line-coverage number on generated code is weaker evidence than the same number on hand-written code, since the *shape* of what's covered skews toward the happy path.
+
+## Coverage Mandate: One Test Per Generated Feature/Step, Not a Sample
+
+Every feature or step a generation session adds gets its **own** explicit test — not a representative subset, not "the important ones." Concretely: every endpoint (all five, not just the ones touched this session), every `callbackUrl` status branch actually implemented, every config field the generated code reads or writes, every connector/toolbar/window method wired up via [`automation.md`](./automation.md), every conversion pair the sample claims to support — each needs a test that fails if that specific piece regresses. A step with no test is not "covered by adjacent tests" by default; if two steps genuinely share one assertion, that's a decision to state, not an omission to leave implicit. This is what makes Phase 0's contract-derived test list actually enforceable: the list *is* the coverage target, one-to-one, not a sampling frame.
+
+**Run after every change, not batched at the end:** execute the relevant phase's tests immediately after each feature/step is generated or edited — not once at the end of a session across every change made. Batching defers the signal past the point where the failing change is still fresh context, and across enough steps it stops being obvious which change broke what. A step isn't done until its own test has been run and passed, not merely written.
+
+## Phase 0: Independent Test Authoring (Pre-Generation)
+
+Do this **before** generating or reading the implementation under test, not after:
+* **Derive tests from the contract, not the code:** write test cases from [`configuration/config.md`](./configuration/config.md), [`configuration/document.md`](./configuration/document.md), [`configuration/editor.md`](./configuration/editor.md), the `callbackUrl` status table in [`callback/handler.md`](./callback/handler.md), and the three JWT vectors in [`signature/signature.md`](./signature/signature.md) — never by reading what the generated code happens to do and asserting that. A test written from the implementation only proves the code is internally consistent, not correct.
+* **Capture a golden reference first:** before a generated sample exists to diff against, record the official Node.js sample's ([`example.md`](./example.md)) actual request/response traffic for each of the five endpoints (page, callback, download, upload, convert) as a golden trace. The Golden-Master Diff step (below Phase 4) diffs future generations against this, not against each other.
+* **Enumerate edge cases explicitly up front:** empty/null fields, a missing `key`, an expired or corrupted `token`, an unsupported conversion pair, a callback for a `key` with no matching session — write these into the test plan now, since generated code has a measurably higher chance of skipping exactly these branches.
+
+## Phase 1: Static Analysis — Backend (always) + Frontend (if a client exists)
+
+Run syntax, dependency, and security verification before executing scripts.
+
+* **Type Safety:** Validate the configuration object to ensure property types match API expectations.
+* **Secret Scanning:** Scan codebase to prevent hardcoded JWT secrets used for generating config tokens.
+* **Hallucinated Backend Surface:** Cross-check every Command Service `c` value and Conversion API `filetype`/`outputtype` the generated backend sends against [`additional/command.md`](./additional/command.md), [`additional/conversion/request.md`](./additional/conversion/request.md), and the pair table in [`additional/conversion/table.md`](./additional/conversion/table.md) — a plausible-but-invented value here fails only at request time, and only against a real Document Server, so static verification against the doc'd value sets catches it far earlier.
+* **Dependency Auditing:** Verify every imported package/SDK in the generated backend actually exists on its registry and is the one intended — a hallucinated or typosquatted package name is a well-documented LLM code-gen failure mode, and it ships silently if nothing checks for it.
+* **Frontend — Linter Rules:** *(skip if backend-only)* Flag direct CSS assignments targeting the editor placeholder element (see [`api.md`](./api.md) — "Iframe Rules").
+* **Frontend — Hallucinated Client API Surface:** *(skip if backend-only)* Cross-check every `docEditor`/connector method and event name the generated code calls against the real catalogs in [`methods.md`](./methods.md) and [`automation.md`](./automation.md) — same failure mode as the backend check above, applied to the client.
+
+## Phase 2: Unit Testing — Backend (always) + Frontend (if a client exists)
+
+Validate individual structural configuration builders, contract builders, and runtime data shapes in isolation before hitting real infrastructure (or, for a client, mounting the DOM).
+
+* **JWT Token Signing (all three vectors):** Unit test the server-side signing/verification utility for each placement in [`signature/signature.md`](./signature/signature.md) independently — the root `token` for `DocsAPI.DocEditor` ([`signature/browser.md`](./signature/browser.md)), a body `token` for Command Service/Conversion API/callback outbox ([`signature/body.md`](./signature/body.md)), and the `Authorization: Bearer` header ([`signature/header.md`](./signature/header.md)). Confirm each rejects a tampered payload and an expired/mis-signed token, not just that it accepts a valid one.
+* **Callback Handler Payloads:** Mock raw JSON payloads for **every** status in the [`callback/handler.md`](./callback/handler.md) table (`1`, `2`, `3`, `4`, `6`, `7`), not just save/force-save — assert the internal status-branch logic hits the right handler for each, and that the response is exactly `{"error": 0}` on success.
+* **Command Service / Conversion API Request Builders:** Unit test request construction against [`additional/command.md`](./additional/command.md) and [`additional/conversion/request.md`](./additional/conversion/request.md) — lowercase `filetype`/`outputtype`, the required `Accept: application/json` header (its absence is a documented silent-XML-response trap), and rejection of an unsupported conversion pair before it ever reaches the network.
+* **Config Object Assembly:** Test the function that builds the `config` payload (per [`configuration/config.md`](./configuration/config.md)) against valid and invalid inputs — `document.key`/`url` present and well-formed, `documentType` matching `document.fileType`'s family. This lives in the backend even for a backend-only deliverable, since the backend is what renders this payload for whatever consumes it.
+* **Frontend — Config Consumption:** *(skip if backend-only)* Test that the client-side code correctly reads the assembled config into `new DocsAPI.DocEditor(id, config)`.
+
+## Phase 3: Integration Testing
+
+### 3a. Backend Integration Testing (always — this is the primary deliverable)
+Drive the generated backend's actual five-endpoint surface — page, `callback`/`track`, `download`, `upload`, `convert` — through an in-process HTTP test client (supertest, Python `httpx.AsyncClient`/`TestClient`, Go `httptest`, Rust's `axum`/`tower` test client, whatever the target language's idiomatic equivalent is), no browser required:
+* **Every endpoint, every status:** exercise all five endpoints, and within `callback`/`track` every status branch from [`callback/handler.md`](./callback/handler.md) — not a subset.
+* **AI-Specific Defect Focus:** weight coverage toward error-handling paths, edge cases, and concurrency — the categories generated code defects cluster in — over straight-line happy-path duplication. Concretely: a `status: 2` and `status: 6` callback racing for the same `key`; a callback arriving before its handler finishes registering; two overlapping force-saves; a download from `url` that 404s or times out mid-save.
+* **Real persistence, not a mock:** run these against the backend's actual configured storage (a temp directory, a test bucket) so a handler that returns `{"error": 0}` without actually writing the file is caught here, not left for Phase 4.
+
+### 3b. Frontend Integration Testing *(skip entirely if backend-only)*
+Verify component interfaces and script loading behaviors within a simulated browser environment (e.g., JSDOM or a component-testing runner).
+* **Global Namespace Exposure:** Assert `window.DocsAPI` is undefined initially, and transitions to an object exposing the `DocEditor` constructor after injecting the script tag.
+* **Component Life-cycle Hooks:** For frontend framework wrappers (React, Vue, Angular), assert that mounting triggers the constructor and unmounting invokes `docEditor.destroyEditor()`.
+* **Mocked Event Handshakes:** Intercept outgoing postMessage payloads from the parent window, checking that method calls like `docEditor.downloadAs("pdf")` format structural window frames accurately.
+
+## Phase 4: End-to-End (E2E) Testing
+
+* **Backend-only deliverable:** there is no browser E2E phase — Phase 3a's full round trip through a real HTTP client *is* the backend's E2E coverage. Don't add a Playwright suite with nothing for it to click.
+* **Backend + sample UI** *(Playwright, headless browser, against the built backend — real or containerized Document Server)*:
+  * **Iframe Embedding:** Confirm the placeholder element is replaced by a sandboxed `<iframe>` on init, that a wrapper element (not the placeholder) controls layout, and that the `allow="autoplay; camera; microphone; display-capture; clipboard-write;"` permission set cascades correctly if the host page itself sits inside an outer iframe (see [`api.md`](./api.md) — "Iframe Rules").
+  * **Full Round Trip (browser-driven):** Drive a real open -> edit -> save -> reopen cycle through the UI and confirm the persisted file's bytes changed as expected.
+  * **Reinit Cycle:** Call `destroyEditor()`, reinitialize with `new DocsAPI.DocEditor()`, and confirm a stale connector/instance from before teardown is never reused (see [`automation.md`](./automation.md) if the sample uses the Automation API).
+
+## Golden-Master Diff (both deliverable shapes)
+
+Replay the golden trace captured in Phase 0 against the generated sample's five endpoints — via the Phase 3a HTTP client for a backend-only deliverable, or the browser for one with a UI — and diff the actual request/response shapes (status, headers, body fields), not just "does it return 200." This catches behavioral drift across regenerations (a regenerated sample silently dropping the `Accept: application/json` header, say) without hand-authoring a fresh assertion for every field on every run.
+
+## Phase 5: Dynamic Execution & Mutation Testing — Backend (always) + Frontend (if a client exists)
+
+* **Token Corruption:** Inject altered JWT signatures into the config payload/body-token/header vector under test. Confirm the signing verifier rejects it (backend) and, where a client exists, that the editor throws a validation error rather than opening with a forged config.
+* **Frontend — Missing DOM Anchor:** *(skip if backend-only)* Attempt initialization using a non-existent placeholder string ID. Verify that the constructor handles the error cleanly without breaking unrelated application scripts.
+* **Mutation Testing:** Periodically run a mutation-testing tool for the backend's target language (Stryker for JS/TS, `mutmut` for Python, `cargo-mutants` for Rust, PIT for Java, `go-mutesting` for Go, …) over the callback/command/conversion handlers — this is the backend's core deliverable, so it's the highest-value target for mutation testing in the whole guide. A green Phase 1-3 suite with a low mutation-kill rate is the clearest sign the tests assert shape (status code, response type) rather than behavior — the single most common way a generated integration's test suite gives false confidence.
+
+## Phase 6: LLM-as-a-Judge Rubrics (Adversarial Review) — Backend (always) + Frontend (if a client exists)
+
+* **Configuration Scoring:** Evaluate whether the generated config-assembly and request-builder code provides safe, non-null values for mandatory structural fields (`key`, `url`, `callbackUrl`, Command Service `c`, Conversion API `filetype`/`outputtype`).
+* **Frontend — Sandbox Compliance:** *(skip if backend-only)* Grade code samples to ensure zero direct cross-frame script overrides are attempted, validating complete reliance on post-message communication avenues.
+* **Independent Review Pass:** Run the judge pass in a context/session separate from whatever generated the code under review — the same generation pass grading its own output shares its blind spots by construction (see "Why Generated Integration Code Needs a Different Test Posture" above). Point it explicitly at [`additional/command.md`](./additional/command.md)/[`additional/conversion/request.md`](./additional/conversion/request.md) and, if a client exists, the method catalogs in [`methods.md`](./methods.md)/[`automation.md`](./automation.md) and the status table in [`callback/handler.md`](./callback/handler.md) to flag hallucinated calls, unhandled statuses, and unverified tokens — this is the practical analogue of `/code-review` for ONLYOFFICE-specific contract drift.
+
+## Companion Guides
+
+* **Deliverable scope** -> [`infrastructure/backend.md`](infrastructure/backend.md) — decides which phases/bullets above are in play.
+* **Backend under test** -> [`callback/handler.md`](./callback/handler.md), [`signature/signature.md`](./signature/signature.md), [`additional/command.md`](./additional/command.md), [`additional/conversion/conversion.md`](./additional/conversion/conversion.md)
+* **Frontend under test** *(when a client exists)* -> [`api.md`](./api.md), [`methods.md`](./methods.md), [`automation.md`](./automation.md)
+* **Contracts to derive Phase 0 tests from** -> [`configuration/config.md`](./configuration/config.md), [`configuration/document.md`](./configuration/document.md), [`configuration/editor.md`](./configuration/editor.md), plus the backend/frontend links above
+* **Generation process this guide validates the output of** -> [`example-checklist.md`](./example-checklist.md) — that file's checklist runs *during* generation; this guide's phases run *after*, and on every regeneration.
