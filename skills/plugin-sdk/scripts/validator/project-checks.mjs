@@ -190,10 +190,10 @@ export class ProjectChecks extends Check {
 
   /**
    * Whether the stylesheet can be scoped at all, which is decided by how it is imported and
-   * built - not by reading the CSS, which nothing here does. `plugin.css` is injected into
-   * the portal's own document, so a class the build did not hash is a class shared with
+   * built - not by reading the CSS, which nothing in this pass does. `plugin.css` is injected
+   * into the portal's own document, so a class the build did not hash is a class shared with
    * DocSpace: a CSS module makes that impossible by construction, and a plain .css file
-   * leaves it to whoever reads the rules.
+   * leaves it to the browser pass, which does read the rules, plus whoever reads the rest.
    */
   #checkStylesheets() {
     const { project } = this;
@@ -223,7 +223,7 @@ export class ProjectChecks extends Check {
     if (plain.length)
       this.warn(
         "css",
-        `${plain.join(", ")} ${plain.length === 1 ? "is" : "are"} imported as a plain stylesheet, which nothing scopes and nothing here checks: plugin.css is appended to the portal's head after its own stylesheets, so any rule whose leftmost selector is not a class of yours restyles DocSpace itself. Import it as *.module.css and the build hashes every class, or read every rule against references/styles.md#scoped-css - the leftmost selector must be "${project.manifest.name}-…", never a bare element, "*" or ":root"`,
+        `${plain.join(", ")} ${plain.length === 1 ? "is" : "are"} imported as a plain stylesheet, which nothing scopes and this pass cannot read: plugin.css is appended to the portal's head after its own stylesheets, so any rule whose leftmost selector is not a class of yours restyles DocSpace itself. Import it as *.module.css and the build hashes every class, or run preview-plugin.mjs, which reports the rules that escape, and read the rest against references/styles.md#scoped-css - the leftmost selector must be "${project.manifest.name}-…", never a bare element, "*" or ":root"`,
       );
   }
 
