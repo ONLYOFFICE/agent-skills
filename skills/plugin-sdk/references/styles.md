@@ -45,7 +45,7 @@ When the theme is needed as a **fact** — a whole palette for generated markup,
 
 ## Scoped CSS
 
-`plugin.css` lands in the portal's `<head>` *after* the portal's own stylesheets, so at equal specificity your rule wins: an unprefixed `pre {}` or `.card {}` restyles the product itself ([portal.md](portal.md#what-actually-breaks-the-portal)). **Nothing checks the rules** — the validator only reports how the stylesheet is imported and built — so this is read by hand or made impossible by construction:
+`plugin.css` lands in the portal's `<head>` *after* the portal's own stylesheets, so at equal specificity your rule wins: an unprefixed `pre {}` or `.card {}` restyles the product itself ([portal.md](portal.md#what-actually-breaks-the-portal)). The validator only reports how the stylesheet is imported and built; the rules themselves are read by the browser pass, which plants portal-shaped markup beside the plugin and reports every rule of yours that matches it (`preview-leak`). That covers the shapes DocSpace's DOM is mostly made of, not every selector — so a stylesheet is still either read by hand or made impossible by construction:
 
 - **A CSS module** — `styles.module.css`, imported as `import styles from "./styles.module.css"` and used as `className={styles.row}`. The build hashes every class name, so there is nothing to remember and nothing to get wrong. **Prefer this**: it is the only form that cannot go wrong unread. The generated `vite.config.ts` builds `css.modules.generateScopedName` out of the manifest `name` so the hashed classes carry the plugin's prefix too; a hand-written config needs the same line.
 - **A prefix on every class**, taken from the manifest `name` (`archive-manager` → `.archive-manager-row`) — for a plain `.css` file, which the validator can only warn about. Never a bare type selector, `*`, `:root`, `html` or `body` at the top level, and never an unprefixed class: those match the portal's DOM, not yours.
@@ -58,7 +58,7 @@ Only the **leftmost** selector has to carry the scope; descendants inside a root
 .archive-manager-row:hover { background: var(--button-background-hover); }
 ```
 
-Custom properties go on your own root, never `:root`. Keyframe names are global too — prefix them. Reviewing a plugin, read every rule in its `.css` against this section; a `css` warning from the validator only means the stylesheet is in a form nothing can check.
+Custom properties go on your own root, never `:root`. Keyframe names are global too — prefix them. Reviewing a plugin, run the browser pass and then read whatever it could not reach against this section; a `css` warning from the validator only means the stylesheet is in a form static checks cannot judge.
 
 ## What beats your rules
 

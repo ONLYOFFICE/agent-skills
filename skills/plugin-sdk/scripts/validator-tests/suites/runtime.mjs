@@ -22,6 +22,9 @@
  * anything else, and a bundled React breaks every hook.
  */
 
+import * as fs from "node:fs";
+import * as path from "node:path";
+
 import {
   articleButtonPlugin,
   contextMenuPlugin,
@@ -235,5 +238,33 @@ export default ({ workspace, check }) => {
     "unbuilt project warns instead of failing",
     unbuilt.ok && unbuilt.warningCodes.includes("dist"),
     unbuilt.errorSummary,
+  );
+
+  // --- an archive packed before the last edit ----------------------------------
+  //
+  // Same symptom as a plugin that never loaded: it installs, and the change is not there.
+
+  const stalePacked = workspace.write("stale-zip", {
+    pkg: manifestFor("good", "FixtureGood"),
+    bundle: contextMenuPlugin({}),
+    src: contextMenuSource(),
+  });
+
+  const staleZip = path.join(stalePacked, "dist", "plugin.zip");
+  fs.writeFileSync(staleZip, "stands in for an archive - only its mtime is read here");
+  const longAgo = new Date(Date.now() - 60_000);
+  fs.utimesSync(staleZip, longAgo, longAgo);
+
+  const stale = workspace.validate(stalePacked);
+
+  check(
+    "an archive older than the sources is reported",
+    stale.warningCodes.includes("zip"),
+    stale.messagesFor("zip"),
+  );
+  check(
+    "the message says the upload would ship the previous build",
+    stale.messagesFor("zip").includes("ships the previous build"),
+    stale.messagesFor("zip"),
   );
 };

@@ -21,6 +21,7 @@
  */
 
 import * as fs from "node:fs";
+import * as path from "node:path";
 
 import {
   HOST_PROVIDED_SPECIFIERS,
@@ -126,6 +127,8 @@ export class ArchiveChecks extends Check {
       return;
     }
 
+    this.#checkArchiveIsCurrent();
+
     const bytes = fs.statSync(project.zipPath).size;
     if (bytes > PORTAL_LIMITS.maxFileBytes)
       this.error("zip", `dist/plugin.zip is ${megabytes(bytes)} MB, limit is ${PORTAL_LIMITS.maxFileLabel}`);
@@ -155,6 +158,44 @@ export class ArchiveChecks extends Check {
   }
 
   /** The packer renames fields on the way in, which is why these pairs look odd. */
+  /*
+   * The archive against the mtimes of what went into it. An upload only replaces what is
+   * installed if the archive is newer than the last edit - a zip packed before it carries the
+   * previous build, and the portal has no way to say so: it installs cleanly and the change
+   * is simply not there. Cheap to check and unrelated to whether the version moved.
+   */
+  #checkArchiveIsCurrent() {
+    const { project } = this;
+    const packedAt = fs.statSync(project.zipPath).mtimeMs;
+
+    const inputs = [
+      ...project.sourceFiles,
+      ...(project.buildConfigFile ? [path.join(project.dir, project.buildConfigFile)] : []),
+      project.packageJsonPath,
+    ];
+
+    const newer = inputs
+      .filter((file) => {
+        try {
+          // A second of slack: the packer runs right after the build touches these.
+          return fs.statSync(file).mtimeMs > packedAt + 1000;
+        } catch {
+          return false;
+        }
+      })
+      .map((file) => path.relative(project.dir, file).split(path.sep).join("/"));
+
+    if (!newer.length) return;
+
+    const shown = newer.slice(0, 3).join(", ");
+    const more = newer.length > 3 ? ` and ${newer.length - 3} more` : "";
+
+    this.warn(
+      "zip",
+      `dist/plugin.zip is older than ${shown}${more} - the archive does not contain the latest edit, so uploading it ships the previous build. Run the build again`,
+    );
+  }
+
   #checkPackedConfig(config) {
     const { manifest, scopes } = this.project;
 
