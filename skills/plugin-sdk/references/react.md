@@ -101,8 +101,20 @@ Every portal section is a route ending in `/filter`, and an entity is that route
 | The Rooms list / the Archive | `/rooms/shared/filter` / `/rooms/archived/filter` |
 | My documents / Recent / Favourites / Trash | `/rooms/personal/filter` / `/recent/filter` / `/files/favorite/filter` / `/files/trash/filter` |
 | Your own `ArticleNavigation` page | `/p/{key}` — under `Section.Accounts` `/accounts/p/{key}`, under `Section.Settings` `/portal-settings/p/{key}` |
+| A document, in the editor | **not a `navigate` path** — `/doceditor?fileId={id}` opened as a page load, [below](#opening-a-document-is-a-page-load) |
 
 Which of the two room paths a room takes is normally already known — you listed it with `searchArea` (`Active` or `Archive`), so carry that through to the link; sending someone to the wrong one shows an empty list rather than an error. Otherwise the room's own `rootFolderType` decides it, against `FolderType.Archive` = **20**, which is also the test that separates "archive this" from "restore this" ([portal.md](portal.md#silent-failures-in-the-ui-layer)). The SDK types the field as a bare `number` and exports no constant, so name your own (`const ARCHIVE_ROOT = 20`) rather than leaving a literal in a condition.
+
+##### Opening a document is a page load
+
+The editor is a separate application at `/doceditor`, outside the SPA router's routes — `navigate()` there lands on the portal's 404 element. Open it as the portal does: a page load of a URL built from the id.
+
+```ts
+const openInEditor = (id: string | number, sameTab = false) =>
+  window.open(`/doceditor?fileId=${encodeURIComponent(String(id))}`, sameTab ? "_self" : "_blank");
+```
+
+`fileId` with a capital I is what the client's own links carry; `&action=view` opens read-only; the portal uses `_blank` unless the user's *Open documents in the same tab* setting (`openEditorInSameTab` in `GET /files/settings`) is on; a portal under a path prefix needs it in front (`getAPI().proxy`). **`webUrl` and `viewUrl` are not links to reuse**: `webUrl` changes shape with the file type — the editor with the legacy lower-case `fileid=` for editable formats, `action=view` for convert-only ones, the media viewer for images, a download for the rest — and `viewUrl` is always the download. Keep the id, build the path.
 
 **Changing an item from a component is two steps:** mutate the map through the plugin instance, then ask for a redraw — `setState` cannot reach the class.
 

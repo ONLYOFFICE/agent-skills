@@ -91,6 +91,10 @@ The plugin loaded and rendered, and what the user sees is still wrong. They read
 | A panel looks **empty**, but clicking in it and typing works | a `Textarea` as a flex item collapses to ~1px |
 | A toggle's label is drawn **over the next row** | `ToggleButton` has no intrinsic size and an absolutely positioned label |
 | A selector opened from a modal is **visible but dead** | two portal surfaces are open at once and the modal's backdrop covers the selector — close one before opening the other ([components.md → Selectors](components.md#selectors)) |
+| The Files selector's **Select** button never enables when a file is clicked | `getIsDisabled` waits for `selectedFileInfo`, which reaches it late or, on older portals, never — gate on the folder ([components.md → The Files selector](components.md#the-files-selector-folder-vs-file)) |
+| A copy, move or create into a folder the user **can** write to fails with *"You don't have enough permission"* | a portal id went into the JSON body as a string, so the server resolved it as a third-party id ([rest-api.md → Identifiers](rest-api.md#identifiers)) |
+| "Open" on a document the plugin created shows the 404 page or downloads the file | the link was `webUrl`/`viewUrl`, or went through `navigate()` — the editor is a page load ([react.md → Opening a document](react.md#opening-a-document-is-a-page-load)) |
+| A "running" row shows a line of text where a spinner should be | `Loader` defaults to `LoaderTypes.base`, which renders its label as text ([ui-kit.md](ui-kit.md#behavioural-traps)) |
 | Generated markup is **double-spaced** with nothing extra in the DOM | the modal body inherits `white-space: pre-line` |
 | `file.viewUrl` answers **404 while the metadata answers 200** | no content stream until the first write — that 404 is an empty file, and the metadata cannot tell you so ([rest-api.md](rest-api.md#a-files-contents-are-not-part-of-the-api)) |
 | A dialog will not grow past 400×280 | `autoMaxWidth`/`autoMaxHeight` are what hand sizing to the body; the kit's `isLarge`/`isHuge` are not forwarded |

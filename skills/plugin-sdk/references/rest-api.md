@@ -52,6 +52,18 @@ Every file, folder and room in a payload carries a `security` map: PascalCase ke
 
 The wire payload is wider than either enum — one shape for files and folders, with keys the SDK's enums do not name (`StartFilling`, `IndexExport`, `ChangeOwner`, `AskAi`, …). The full list is a generated type in the project: `node_modules/@onlyoffice/docspace-api-sdk/dist/models/file-entry-dto-integer-all-of-security.d.ts` (and `folder-dto-integer-security.d.ts`). Read that when a key is not in the enums; keep the item filters to what the SDK declares, since those are what the host compares.
 
+**A permission error can be a resolution error:** the check runs against the entity the server *resolved*, and an id that resolves to nothing fails it with the same message ([Identifiers](#identifiers)).
+
+## Identifiers
+
+An entry the portal stores has an **integer** id; an entry inside a connected third-party storage (a Google Drive folder mounted into a room) has an opaque **string** id. Every id field on the wire — `id`, `folderId`, `parentId`, `rootFolderId`, `destFolderId`, `fileIds[]`, `folderIds[]` — is one or the other by where the entry lives, which is why the SDK types callback and hook ids `number | string` (only the `File`-scope `File` is plain numbers). Users and groups are GUID strings. **A room is a folder**: `GET /files/rooms/{id}` and `GET /files/folder/{id}` describe the same entity, `roomType` marks it, and `roomId` anywhere means that folder id. A file's `folderId` is its immediate parent — the room only at the room's top level; `rootFolderId` is the section root, not the room.
+
+**The JSON type of an id routes the request.** In a URL path an id is text either way, and `/files/folder/6358129` works whatever the variable's type. In a JSON body — `copyas`, `fileops/move|copy|delete`, room quotas — `destFolderId`, `fileIds[]`, `folderIds[]` and `roomIds[]` are dispatched on their JSON type: a number to the portal's storage, a string to the third-party layer. `{ destFolderId: "6358129" }` therefore resolves to no folder and fails with the **security** error (*You don't have enough permission…*) over a folder the user can write to. Check the type before the rights.
+
+- Carry ids as they arrived, `string | number`; never `String(id)` into state.
+- An id that went through text (a URL, a form, `localStorage`) is restored at the request boundary only: `typeof id === "string" && /^\d+$/.test(id) ? Number(id) : id`. Never `Number()` unconditionally — a provider id becomes `NaN`, serialised as `null`.
+- Compare with `String(a) === String(b)`.
+
 ## Endpoints to start from
 
 The handful the official plugins reach for. **Everything else is in the [ONLYOFFICE DocSpace API reference](https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts/)** (sections: Files, Rooms, People, Group, Portal, Settings, Security, ThirdParty, …) — look endpoints and their query parameters up there rather than recalling them; a path remembered from another product answers 404.
@@ -74,6 +86,8 @@ Read those instead of deciding a shape by feel. They answer the questions that o
 | Rename a file / a folder | `PUT /files/file/{id}` `{ title }` / `PUT /files/folder/{folderId}` `{ title }` |
 | Upload a file in one request | `POST /files/{folderId}/upload`, multipart with the bytes under **`File`** — the generated client's own spelling; the chunked alternative is a session (below) |
 | Replace file contents | `PUT /files/{id}/update`, `FormData` with the bytes (below) |
+| Copy a file into a folder, renaming or converting it on the way | `POST /files/file/{id}/copyas` `{ destFolderId, destTitle }` — the id as a JSON number for a portal folder ([Identifiers](#identifiers)); another extension in `destTitle` converts. Returns the new file |
+| Move / copy in bulk | `PUT /files/fileops/move` / `PUT /files/fileops/copy` `{ folderIds, fileIds, destFolderId, conflictResolveType }` — ids as above; returns operations to poll |
 | Mark as recent | `POST /files/file/{id}/recent` |
 | Current user / people | `GET /people/@self` (a component has `useCurrentUser()`) / `GET /people` |
 | Rooms / members | `GET /files/rooms` / `GET /files/rooms/{id}/share` |
