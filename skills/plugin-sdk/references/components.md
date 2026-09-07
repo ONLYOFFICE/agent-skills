@@ -47,28 +47,82 @@ const workDialog = (): IModalDialog => ({
 
 ## Selectors
 
-`showSelector({ type: SelectorType.x, props })` opens the portal's picker as an aside. The shapes are the same from a component and from a class-side `IMessage`.
+`showSelector({ type: SelectorType.x, props })` opens the portal's picker as an aside; the shape is the same from a component and from a class-side `IMessage`. Five types — what each hands back, and who enables Submit, is where the mistakes are:
 
-| `SelectorType` | Props type | `onSubmit` receives |
-|---|---|---|
-| `Files` | `TFilesSelector` | `{ selectedItemId, folderTitle, fileName, selectedFileInfo, breadCrumbs, isChecked }` |
-| `Room` | `TRoomSelector` | `(selectedIds: (string \| number)[])` — an array, and `isMultiSelect` works: the host forwards it to the kit's `RoomSelector`, which keeps a set, and maps everything picked into the array |
-| `People` | `TPeopleSelector` | `{ selectedIds, fileName, isFooterCheckboxChecked }` |
-| `Groups` | `TGroupsSelector` | `{ selectedIds }` |
-| `Base` | `TBaseSelector` — your own `items: { id, label, icon? }[]` | `{ selectedIds, fileName, isFooterCheckboxChecked }` |
+| `SelectorType` | Props | `onSubmit` receives | Submit enabled by |
+|---|---|---|---|
+| `Files` | `TFilesSelector` | `{ selectedItemId, folderTitle, fileName, selectedFileInfo, breadCrumbs, isChecked }` — **`selectedItemId` is the folder being browsed, `selectedFileInfo` the clicked file** ([below](#the-files-selector-folder-vs-file)) | your **required** `getIsDisabled` |
+| `Room` | `TRoomSelector` | `(selectedIds: (string \| number)[])` — an array even for one room; `isMultiSelect` works. A room id is its folder id | the kit, once a room is selected (multi-select: once the selection changed) |
+| `People` | `TPeopleSelector` | `{ selectedIds, fileName, isFooterCheckboxChecked }` — user GUIDs, group GUIDs too under `withGroups`; the other two fields stay empty | the kit once someone is selected, and your `disabledSubmitButton` |
+| `Groups` | `TGroupsSelector` | `{ selectedIds }` — one group GUID; single-select only | the kit, once a group is selected |
+| `Base` | `TBaseSelector` — your own `items: { id, label, icon? }[]` | `{ selectedIds, fileName, isFooterCheckboxChecked }` — your ids | **only** your `disabledSubmitButton`; the kit never disables it, so refuse an empty `selectedIds` in `onSubmit` |
 
-- **A header needs `withHeader: true`, not just `headerProps`.** The label and the close cross are drawn only under that flag, so `headerProps` alone gives an aside with no title and no visible way out — Esc and the backdrop are all the user has left.
-- **It never closes itself, and which handler the cross calls depends on the type.** `closeSelector()` has to be called from `onSubmit` *and* from the cancel path — which is `onCancel` for `SelectorType.Files` and `headerProps.onCloseClick` for `Room`, `People`, `Groups` and `Base`. Supply **both** and the selector closes whichever type it turns out to be; supply only one and half the selectors leak a dead aside.
-- **A selector opened while your modal is open is unreachable.** The portal renders each of its surfaces from its own visibility flag, side by side and uncoordinated, so nothing stops two from being open at once — and the modal's backdrop then covers the selector aside: the user sees it, dimmed, and cannot touch it. The portal's own dialogs avoid this by swapping the selector *into* the dialog, which a plugin cannot do because it does not own those props. So `closeModal()` first, open the selector, and reopen the modal from `onSubmit` and from the close handler, holding the form's values in module scope so nothing is lost across the round trip. The same applies to any pair: **one portal-drawn surface at a time**, and it is your job to sequence them.
-- Only the props the type declares reach the host; anything cast in is dropped.
-- `TFilesSelector.getIsDisabled({ isFirstLoad, isRoot, selectedItemId, … })` is **required**; its boolean disables submit.
+- **A header needs `withHeader: true`**, not just `headerProps`; without it there is no title and no close cross.
+- **Nothing closes itself.** Call `closeSelector()` from `onSubmit` and from the cancel path — `onCancel` for `Files`, `headerProps.onCloseClick` for the other four; supply both and every type closes. An `onSubmit` that refuses its input returns nothing (plus a toast) and the selector stays open.
+- **One portal surface at a time.** A selector opened over your modal sits behind its backdrop, visible and dead: `closeModal()`, open the selector, reopen the modal from `onSubmit` *and* from the cancel path, with the form's values in module scope ([below](#from-a-dialog-one-surface-at-a-time)). From a page nothing needs sequencing, so a picker can simply be awaited.
+- **Only the props the type declares reach the host.** `Room`: `roomType`, `searchArea`, `excludeItems`, `withSearch`, `withCreate` with `createDefineRoomLabel`/`createDefineRoomType`. `People`: `roomId` + `onlyRoomMembers`, `withGroups`/`isGroupsOnly`, `withGuests`/`isGuestsOnly`, `excludeItems`, `currentUserId`, `disableDisabledUsers`, `disableInvitedUsers`, `alwaysShowFooter`. `Groups`: the header and nothing else — no cancel button, no search. `Base`: paging (`totalItems`, `hasNextPage`, `onLoadNextPage`), `isMultiSelect`, `maxSelectedItems`, `selectedItems`, breadcrumbs, `onSelect({ selectedId, isDoubleClick })`, an inline input row (`isInputItem`) and a "create new" row (`isCreateNewItem`), `icon` as an asset file name resolved like item icons — and no search.
+- **Ids come back `string | number`; keep them so** ([rest-api.md → Identifiers](rest-api.md#identifiers)).
 - **A helper that builds one needs its return type written out.** `TSelector` discriminates on `type`, and `SelectorType.Files` in an unannotated literal widens to plain `SelectorType`, which matches no branch: `const pick = () => ({ type: SelectorType.Files, props })` will not assign. Inline it compiles; behind a helper write `(): IMessage =>`, or `(): TSelector =>` for the props alone.
 
-**One surface at a time, sequenced by hand.** The round trip below is what a "pick a destination" field in a dialog costs, and it is the same three steps for any pair of portal surfaces. The form's values live in module scope because the dialog is unmounted and remounted, and every exit from the selector — submit *and* close — has to reopen the dialog, or the user is left with nothing on screen:
+### The Files selector: folder vs file
+
+Entering a folder sets `selectedItemId` to it (and `selectedItemType` to `"rooms"` on the rooms list, `"files"` inside); clicking a file leaves `selectedItemId` on the folder and fills `selectedFileInfo` (`{ id, title, fileExst }`). Both are current in `onSubmit`.
+
+- **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, and on portals before January 2026 never — a Select gated on it is dead there. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
+- `filterParam` filters what is *listed*, not what can be submitted. `FilterType` (`None 0`, `FilesOnly 1`, `FoldersOnly 2`, `DocumentsOnly 3`, `PresentationsOnly 4`, `SpreadsheetsOnly 5`, `ImagesOnly 7`) is **not exported from the SDK root** and a deep import is refused: `const DOCUMENTS_ONLY: TFilesSelector["filterParam"] = 3`.
+- `selectedFileInfo` is `{ id, title, fileExst }` and `@inline` in the SDK — declare your own type where you store it; anything more is `GET /files/file/{id}`.
+
+**Pick a document, pick a destination, copy, open**, from a page — awaited, one selector at a time, every exit resolving once:
+
+```ts
+type Picked = { id: string | number; title: string };
+const DOCUMENTS_ONLY: TFilesSelector["filterParam"] = 3;
+
+export const pickDocument = ({ showSelector, closeSelector, showToast }: PluginActions, label: string) =>
+  new Promise<Picked | null>((resolve) => {
+    let done = false;
+    const finish = (value: Picked | null) => { if (!done) { done = true; resolve(value); } };
+    const cancel = () => { finish(null); closeSelector(); };
+
+    showSelector({
+      type: SelectorType.Files,
+      props: {
+        withHeader: true, headerProps: { label, isCloseable: true, onCloseClick: cancel },
+        withBreadCrumbs: true, withSearch: true, withCancelButton: true, submitButtonLabel: t("select"),
+        filterParam: DOCUMENTS_ONLY,
+        getIsDisabled: ({ isFirstLoad, selectedItemId, selectedItemType }) =>          // the folder: always known
+          isFirstLoad || !selectedItemId || selectedItemType === "rooms",
+        onSubmit: ({ selectedFileInfo }) => {                                          // the file: checked here
+          if (!selectedFileInfo) { showToast({ type: ToastType.warning, title: t("pickAFile") }); return; }
+          finish({ id: selectedFileInfo.id, title: selectedFileInfo.title });
+          closeSelector();
+        },
+        onCancel: cancel,
+        onClose: () => finish(null),
+      },
+    });
+  });
+```
+
+A destination picker differs in three places: no `filterParam`, `isDisabledFolder` in the gate, and an `onSubmit` that reads `GET /files/folder/{selectedItemId}` and refuses `security.Create !== true` with a toast — there, while another folder can still be picked. Then:
+
+```ts
+const template = await pickDocument(actions, t("pickTemplate"));       if (!template) return;
+const folder = await pickFolder(actions, api, t("pickDestination"));    if (!folder) return;
+const copy = await api.post<{ id: string | number }>(`/files/file/${template.id}/copyas`,
+  { destFolderId: folder.id, destTitle: name });   // the id as the DTO gave it - rest-api.md → Identifiers
+openInEditor(copy.id);                             // a page load, not navigate() - react.md → Opening a document
+```
+
+Progress and failure of the copy: the third shape in [Work that takes a while](#work-that-takes-a-while).
+
+### From a dialog: one surface at a time
+
+The round trip below is what a "pick a destination" field in a dialog costs, and it is the same three steps for any pair of portal surfaces. The form's values live in module scope because the dialog is unmounted and remounted, and every exit from the selector — submit *and* close — has to reopen the dialog, or the user is left with nothing on screen:
 
 ```ts
 // Module scope: it survives the dialog's unmount, which component state does not.
-const draft: { targetId: number | null; targetTitle: string; name: string } = { targetId: null, targetTitle: "", name: "" };
+const draft: { targetId: string | number | null; targetTitle: string; name: string } = { targetId: null, targetTitle: "", name: "" };
 
 const exportDialog = (): IModalDialog => ({
   dialogHeader: t("export.title"),
@@ -88,7 +142,7 @@ const pickDestination = ({ showModal, showSelector, closeModal, closeSelector }:
       submitButtonLabel: t("export.choose"),
       getIsDisabled: ({ isRoot, selectedItemId }) => isRoot || !selectedItemId,
       onSubmit: ({ selectedItemId, folderTitle }) => {
-        draft.targetId = Number(selectedItemId);
+        draft.targetId = selectedItemId ?? null;   // as it arrived - a number for a portal folder
         draft.targetTitle = folderTitle;
         closeSelector();
         showModal(exportDialog());       // back to the dialog, now showing the choice
@@ -247,4 +301,56 @@ const ExportPanel = () => {
 - **The user closing the surface does not stop the work** — only the `AbortController` in the cleanup does, and only for what takes the signal. Decide deliberately which it should be: a half-written archive is worse than a slow one, so a job that writes usually finishes and reports through the toast, while a read-only walk aborts.
 - **Rate-limit the updates.** One `updateFloatingOperationsButton` per file on 400 files is 400 re-renders of the portal's own button; update on whole percents.
 - **Nothing wraps the effect.** An uncaught throw blanks the component ([react.md](react.md#errors-loading-language-styling)), so the `catch` is what turns a failure into a message instead of an empty panel.
+
+**A few named steps on a page: show the step, not a percentage, and make "again" cheap.** Three to ten steps started by hand — pick, copy, fill, upload, open — are too short for the progress button and too long for a merely disabled button. So: a list with one running row and a visible spinner on it, the failed row carrying its error text, and the start button turning into "Run again", which begins from a clean slate so a stale "failed" cannot be read as the new one. State lives on the surface — the user is looking at it, and nothing outlives the page.
+
+```tsx
+type Step = { id: string; label: string };
+type Status = "idle" | "running" | "done" | "failed";
+type Report = (id: string, status: Status, error?: string) => void;
+
+const StepRun = ({ steps, run }: { steps: Step[]; run: (report: Report, signal: AbortSignal) => Promise<void> }) => {
+  const [state, setState] = useState<Record<string, { status: Status; error?: string }>>({});
+  const [busy, setBusy] = useState(false);
+  const controller = useRef<AbortController | null>(null);
+  const failed = Object.values(state).some((s) => s.status === "failed");
+
+  const start = async () => {
+    setState({});                                           // a rerun starts clean
+    setBusy(true);
+    controller.current = new AbortController();
+    const report: Report = (id, status, error) => setState((s) => ({ ...s, [id]: { status, error } }));
+    try {
+      await run(report, controller.current.signal);         // each step: report(id, "running"); …; report(id, "done")
+    } catch (e) {                                           // the step that threw reports itself as failed with the message
+      if (!(isPluginApiError(e) && e.code === "ABORTED")) report("run", "failed", isPluginApiError(e) ? e.message : t("run.failed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+  useEffect(() => () => controller.current?.abort(), []);   // leaving the page abandons the run
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {steps.map((step) => {
+        const s = state[step.id];
+        return (
+          <div key={step.id} style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 24 }}>
+            {s?.status === "running"
+              ? <Loader type={LoaderTypes.oval} size="16px" color="var(--accent-main)" label={step.label} />   // the default type draws text, not a spinner
+              : <Text color={s?.status === "failed" ? "var(--input-error-color)" : "var(--text-disable-color)"}>{s?.status === "done" ? "✓" : s?.status === "failed" ? "!" : "·"}</Text>}
+            <Text>{step.label}</Text>
+            {s?.error && <Text color="var(--input-error-color)">{s.error}</Text>}
+          </div>
+        );
+      })}
+      <Button primary scale size={ButtonSize.normal} isLoading={busy} isDisabled={busy}
+              label={failed ? t("run.again") : t("run.start")} onClick={() => void start()} />
+    </div>
+  );
+};
+```
+
+- **The failure stays on screen with its cause, and the inputs stay editable.** A "no permission" from a copy is fixed by picking another folder, so the pickers above the list are not disabled by a failed run — only by a running one.
+- **A step that writes is not a step to retry blindly.** "Run again" after a copy that *did* succeed and an upload that failed would copy twice; either make the earlier steps idempotent (reuse the id the copy returned) or start the rerun at the failed step.
 
