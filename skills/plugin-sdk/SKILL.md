@@ -128,9 +128,13 @@ cd <target> && npm install && npm run build && npm run typecheck
 
 No `dist/plugin.zip` means the build failed, whatever the output said. Common causes: the kit's enum where the SDK's was meant (`ButtonSize` exists in both — alias one), a prop the kit does not have (check its `.d.ts` rather than casting), a component file without `.tsx`.
 
+**A `dist/` with JavaScript beside `plugin.js` is a split bundle.** The archive carries `plugin.js` alone and the portal cannot load a chunk, so a library that lazy-loads its parts dies on the portal at first use and works in the preview. The scaffold's config inlines dynamic imports; an older project adds `inlineDynamicImports: true` to `rollupOptions.output`; the validator refuses the build until `dist/` holds one script ([react.md → Bundling](references/react.md#bundling)).
+
 **`npm run build` does not check types** — Vite strips them — so `npm run typecheck` (`tsc --noEmit`, in every scaffolded project) is a separate step and worth running once the feature compiles. A generated project ships `src/css-modules.d.ts`, so `import styles from "./x.module.css"` type-checks; an older project without it needs that declaration before `tsc` agrees.
 
 **Where the plugin writes the user's files, test the part that decides what gets written** — archive entry paths, a parser, a diff. Keep that logic in plain functions with no SDK or kit imports so it is testable at all, then `npm i -D vitest` and one `*.test.ts` beside the module (the project's own Vite config resolves the imports; `node --experimental-strip-types` does not). Say in the report what is covered and what only ran on the portal.
+
+**Where the plugin *shows* the user's files — a `File`-scope viewer, a media-viewer component — smoke-test the render path in a real browser, one fixture per kind of content it claims.** No offline pass has the bytes: the validator and the preview prove the component mounts, not that a diagram, a model or an image comes out of it, and green checks over a dead parse→draw→export pipeline is the usual shape of a viewer's first bugs. Keep that pipeline in plain functions (`render(text, container)`, `toPng(svg)`) and run them under Vitest's browser mode — `npm i -D @vitest/browser-playwright` beside the Playwright the preview pass installed, `test: { browser: { provider: playwright(), instances: [{ browser: "chromium" }] } }` in `vitest.config.ts`, `npx vitest --browser` — asserting what a user would see: the output has pixel dimensions rather than `100%`, it contains the fixture's text or nodes, an export yields a non-empty blob of the right type. Every kind the plugin lists — each diagram type, each format variant — gets its own fixture, because the failure that reaches users is in the one nobody rendered.
 
 ### 6. Validate — the step that matters
 
@@ -175,7 +179,7 @@ Fix what it reports and run it again. Then **look at the screenshots** it writes
 - where the archive is (`<target>/dist/plugin.zip`), what it does and where it appears (a page's URL `/p/<key>` is worth stating);
 - anything left as a placeholder — icons especially;
 - every third-party package the plugin now bundles, one line each: what it does, why it was the one to take, **and what it does not handle** — a library's known blind spot ([dependencies.md](references/dependencies.md)) becomes the plugin's silent bug, so it is part of the decision, not a footnote;
-- what could not be checked offline: a request whose shape only the portal answers, anything behind a real upload, an untested edge in someone else's format;
+- what could not be checked offline: a request whose shape only the portal answers, anything behind a real upload, an untested edge in someone else's format, a render path no fixture was pushed through;
 - install: upload the zip in Settings → Integration → Plugins, then **fully reload the page**. No upload control, or nothing after installing → the portal has plugins switched off ([portal.md](references/portal.md#before-anything-loads-the-switches));
 - bump `version` before every re-upload — the portal caches the bundle and the icons by version.
 
@@ -218,6 +222,7 @@ Both passes are blind to intent, to what happens on a real request and to anythi
 - **Unhandled errors in class-side callbacks**, **work or fetching in `onLoadCallback`**, **a settings page that never calls `setSaveButton`**, **stored settings read during `onLoadCallback`**, **a class field named like a manifest field** (`settings`, `name`, `version`, …), **blocking loops**, **`scpDomains`**, **timers outside components**.
 - **A hand-rolled implementation of a solved problem** — an archive writer, an HTML sanitiser, a CSV or XLSX serialiser. Name the standard package; it is a correctness finding, not a style one. So is the mirror image: a dependency nobody has heard of, running in the portal's window with the user's session ([dependencies.md](references/dependencies.md)).
 - **Any `.css` rule the browser pass could not reach** — it plants portal-shaped markup and reports what a rule of yours matches, which covers the common shapes; a selector aimed at something more specific in DocSpace's DOM (`.section-header`, a kit hash) still needs a reader ([styles.md → Scoped CSS](references/styles.md#scoped-css)).
+- **A viewer whose render path never met a real file** — the browser pass shows only its loading branch. Find the parse→draw→export functions and run them once against a fixture in a browser, one per kind the plugin claims ([Build step 5](#5-build)).
 
 ### 5. Check for drift
 

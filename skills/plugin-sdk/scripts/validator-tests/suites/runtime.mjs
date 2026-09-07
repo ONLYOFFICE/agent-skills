@@ -267,4 +267,40 @@ export default ({ workspace, check }) => {
     stale.messagesFor("zip").includes("ships the previous build"),
     stale.messagesFor("zip"),
   );
+
+  // --- a code-split build --------------------------------------------------------
+  //
+  // Vite writes every dynamic import() as a chunk beside plugin.js; the packer ships plugin.js
+  // alone and the portal imports it from a blob URL, so the chunk is unreachable either way.
+
+  const splitDir = workspace.write("split-bundle", {
+    pkg: manifestFor("good", "FixtureGood"),
+    bundle: contextMenuPlugin({}) + `\nexport const lazy = () => import("./chunk-abc.js");\n`,
+    src: contextMenuSource(),
+  });
+  fs.writeFileSync(path.join(splitDir, "dist", "chunk-abc.js"), "export const part = 1;\n");
+
+  const split = workspace.validate(splitDir);
+
+  check(
+    "chunks beside plugin.js are an error naming the fix",
+    split.errorCodes.includes("dist") && split.messagesFor("dist").includes("inlineDynamicImports"),
+    split.messageSummary,
+  );
+  check(
+    "the message says the chunk is unreachable from a blob URL",
+    split.messagesFor("dist").includes("blob URL"),
+    split.messagesFor("dist"),
+  );
+
+  const importOnlyDir = workspace.write("split-import-only", {
+    pkg: manifestFor("good", "FixtureGood"),
+    bundle: contextMenuPlugin({}) + `\nexport const lazy = () => import("./chunk-def.js");\n`,
+    src: contextMenuSource(),
+  });
+
+  check(
+    "a relative import() in plugin.js is reported even when the chunk is not in dist/",
+    workspace.validate(importOnlyDir).errorCodes.includes("dist"),
+  );
 };

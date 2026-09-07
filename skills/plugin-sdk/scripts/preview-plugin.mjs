@@ -309,6 +309,8 @@ const main = async () => {
    * each says what to do instead of failing the run. */
   let skipped = null;
   if (!project.isBuilt) skipped = "no dist/plugin.js - run the build first (npm run build)";
+  else if (project.distChunks.length)
+    skipped = `dist/ holds ${project.distChunks.length} chunk file(s) beside plugin.js - the archive cannot carry them, and this pass would resolve them and show the plugin working; set build.rollupOptions.output.inlineDynamicImports: true and build again (validate-plugin.mjs has the detail)`;
   else if (!project.hasNodeModules) skipped = "no node_modules - run npm install first";
 
   const playwright = skipped ? null : await loadPlaywright(project);

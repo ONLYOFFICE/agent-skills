@@ -63,7 +63,34 @@ export class ArchiveChecks extends Check {
     if (bytes > PORTAL_LIMITS.maxFileBytes)
       this.error("dist", `dist/plugin.js is ${megabytes(bytes)} MB, limit is ${PORTAL_LIMITS.maxFileLabel}`);
 
-    return this.#checkBundleImports(fs.readFileSync(project.bundlePath, "utf8"));
+    const code = fs.readFileSync(project.bundlePath, "utf8");
+    this.#checkSplitBundle(code);
+    return this.#checkBundleImports(code);
+  }
+
+  /**
+   * A code-split build. The packer zips plugin.js alone and the portal imports it from a
+   * blob URL, where a relative import() has nothing to resolve against - so a chunk is
+   * unreachable whether or not it sits in dist/, and the surface that first needs it renders
+   * blank. Libraries that lazy-load their own parts (diagram renderers, per-format parsers)
+   * produce dozens of chunks without the plugin author writing a single import().
+   */
+  #checkSplitBundle(code) {
+    const chunks = this.project.distChunks;
+    const dynamicImports = code.match(/\bimport\(\s*["']\.{1,2}\//g)?.length ?? 0;
+
+    if (!chunks.length && !dynamicImports) return;
+
+    const shown = chunks.slice(0, 3).join(", ");
+    const more = chunks.length > 3 ? ` and ${chunks.length - 3} more` : "";
+    const where = chunks.length
+      ? `dist/ holds ${chunks.length} JavaScript file(s) beside plugin.js (${shown}${more})`
+      : `dist/plugin.js has ${dynamicImports} relative import() call(s)`;
+
+    this.error(
+      "dist",
+      `${where} - the build split the bundle into chunks. The packer zips plugin.js alone and the portal imports it from a blob URL, where a relative import() cannot resolve, so the first surface that needs a chunk renders blank (the preview, which serves dist/ whole, would show it working). Set build.rollupOptions.output.inlineDynamicImports: true - the generator's vite.config does - and build again`,
+    );
   }
 
   /** The same judgement the portal makes, so the finding matches what its console would say. */
