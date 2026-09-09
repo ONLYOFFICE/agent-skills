@@ -92,7 +92,7 @@ export const SCOPE_SPECS = {
   getAdminPluginSettings = (): ISettings | null => this.adminPluginSettings;
 `,
 
-    note: "call this.setAdminPluginSettings({ component: SettingsPage }) here, where SettingsPage loads with settings.load() in a useEffect and saves through settings.setSaveButton(...)",
+    note: "call this.setAdminPluginSettings({ component: SettingsPage }) here, where SettingsPage loads with settings.load() in a useEffect and saves through settings.setSaveButton(...) - whose isDisabled, like any field's hasError, is gated on what the user changed and not on validity alone, or the aside opens with Save lit over a form nobody edited",
   },
 
   ContextMenu: {
