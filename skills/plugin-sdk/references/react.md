@@ -179,35 +179,57 @@ The portal owns the footer's Save/Cancel look, and it also overrides the button'
 
 **Without `setSaveButton` the Save button has no `onClick` and saves nothing** — for a React settings page, this is the call that makes the footer work. Make it in an effect that re-runs when the form changes; that is also how `isDisabled` tracks validity. After `onClick` resolves the portal closes the aside. The button state is per plugin and cleared on close.
 
+**`isDisabled` covers *unchanged* as well as invalid.** The portal draws Save enabled and has no idea whether the form was touched, so a page that only guards validity opens with Save already lit over a form nobody has edited — and pressing it is a real save: a request, `setAdminPluginSettingsValue` on every open session, a version of the settings written for no reason, and an aside that closes as though something happened. Nothing reports it, and it is the state a settings aside spends most of its life in. So keep what was loaded beside what is being edited and disable Save until they differ:
+
+```ts
+const [saved, setSaved] = useState<TConfig>(DEFAULTS);   // what is stored
+const [config, setConfig] = useState<TConfig>(DEFAULTS); // what the form shows
+// Both are built from the same literal, so key order matches and this is a safe compare.
+const dirty = JSON.stringify(config) !== JSON.stringify(saved);
+// …props: { isDisabled: invalid || !dirty, onClick: async () => { await settings.save(config); setSaved(config); } }
+```
+
+The `setSaved` after a successful save is what stops a second press re-sending the same values; the portal closing the aside usually gets there first, but a save that fails leaves the aside open, and then it is the only thing keeping Save honest.
+
+**A field's error waits for the same signal.** `hasError` taken from validity alone is red the moment the aside opens — over an empty field on a fresh install, or over a stored value someone else saved — so the page greets the admin by marking a mistake they have not made. The snapshot already answers who typed: a field the user has touched is one that differs from what was loaded, so `hasError={invalid && config.webhook !== saved.webhook}` stays quiet until they edit it and turns red as they type. `isDisabled` keeps plain `invalid` — an invalid stored value is unsaveable regardless, because an untouched form is not dirty.
+
 `onClick` may also **return an `IMessage`**, which the host dispatches — a success or failure toast without reaching for a hook. (`ISettings.saveButton`, the static declaration beside `component`, still works and is not deprecated; it is the right choice only when the button never changes state — see [sdk-contract.md](sdk-contract.md#deprecated--do-not-use-in-new-code).)
 
 ```tsx
 function SettingsPage() {
   const settings = usePluginSettings();
-  const [config, setConfig] = useState<TConfig>(DEFAULTS);
+  const [config, setConfig] = useState<TConfig>(DEFAULTS);   // what the form shows
+  const [saved, setSaved] = useState<TConfig>(DEFAULTS);     // what is stored, to compare against
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    settings.load<TConfig>().then((saved) => { if (saved) setConfig({ ...DEFAULTS, ...saved }); setLoaded(true); });
+    settings.load<TConfig>().then((stored) => {
+      const next = { ...DEFAULTS, ...(stored ?? {}) };
+      setConfig(next); setSaved(next); setLoaded(true);
+    });
   }, [settings]);
 
   const invalid = config.webhook.length > 0 && !/^https:\/\//.test(config.webhook);
+  const dirty = JSON.stringify(config) !== JSON.stringify(saved);
+  const showError = invalid && config.webhook !== saved.webhook;
 
   useEffect(() => {
     if (!loaded) return;
     settings.setSaveButton({
       component: Components.button,                       // the SDK's Components and ButtonSize, not the kit's
-      props: { label: t("save"), size: SdkButtonSize.normal, isDisabled: invalid, withLoadingAfterClick: true,
-               onClick: async () => { await settings.save(config); } },
+      // Not `isDisabled: invalid` alone - that leaves Save lit on a form nobody edited.
+      props: { label: t("save"), size: SdkButtonSize.normal, isDisabled: invalid || !dirty, withLoadingAfterClick: true,
+               onClick: async () => { await settings.save(config); setSaved(config); } },
     });
-  }, [settings, config, loaded, invalid]);
+  }, [settings, config, loaded, invalid, dirty]);
 
   if (!loaded) return <RectangleSkeleton height="120px" />;
   return (
     // No `gap` on the column: FieldContainer brings its own 16px bottom margin, and the two add up.
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <FieldContainer isVertical labelVisible labelText={t("webhook")} hasError={invalid} errorMessage={t("httpsOnly")}>
-        <TextInput type={InputType.text} value={config.webhook} onChange={(e) => setConfig({ ...config, webhook: e.target.value })} scale hasError={invalid} />
+      {/* Red only once this field differs from what was loaded - an untouched form accuses nobody. */}
+      <FieldContainer isVertical labelVisible labelText={t("webhook")} hasError={showError} errorMessage={t("httpsOnly")}>
+        <TextInput type={InputType.text} value={config.webhook} onChange={(e) => setConfig({ ...config, webhook: e.target.value })} scale hasError={showError} />
       </FieldContainer>
       {/* ToggleButton has no intrinsic size, so the wrapper supplies the height and refuses to flex. */}
       <div style={{ position: "relative", height: 20, display: "flex", alignItems: "center", flex: "0 0 auto" }}>
