@@ -84,7 +84,7 @@ Pick the fewest that deliver the feature; every declared scope must register at 
 
 Then map the surface by what it has to hold, not by where the person pictured it: anything that is a **screen** (a list, a table, more than a handful of fields) is an `ArticleNavigation` page, not a modal (400×280) or an info panel tab (337px); `MainButton` is for creating, so an action on existing things is `ContextMenu` — one item for a single entity, a second with `isGroupAction` for a selection. Build the right surface and say why in a sentence.
 
-That table is the whole list. If the feature has no scope in it, say so and offer the closest entry point — never invent a scope, hook or field.
+That table is the whole list. If the feature has no scope in it, say so and offer the closest entry point — never invent a scope, hook or field. A feature *inside* an open document is not in it at all: that is an ONLYOFFICE Docs plugin, a different product ([scopes.md → Anything not in that table](references/scopes.md#anything-not-in-that-table)).
 
 ### 3. Scaffold — or extend what is already there
 
