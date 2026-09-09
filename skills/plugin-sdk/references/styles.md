@@ -21,7 +21,7 @@ Colors at every one of the three come from the portal's variables, never a liter
 The portal's own measurements. Literal px is normal — there are no spacing tokens.
 
 - Typography inherits Open Sans **13px / 400**; secondary lines 12px; emphasis `fontWeight={600}` (700 is headings). Headings come from `Heading` (`level` = tag, `size` = look; an `h1` at `medium` is the usual page title).
-- 16px outer padding in dialogs and panels, 8–12px between controls, 20px page padding on a section page. Radius 3px on controls, 6px on dialogs.
+- 16px outer padding in dialogs and panels; a section page needs none of its own, since the section pads it on every side — 20px inline-start, 19px above, 16px below, the inline-end left bare for the scrollbar ([react.md](react.md#where-components-render)). 8–12px between controls. Radius 3px on controls, 6px on dialogs.
 - Widths to lay out against: info panel body ≈ 337px; modal 400px; aside 480px; section page — full width, cap text at ~640px. What a modal will and will not grow to is in [components.md → Modals](components.md#modals).
 
 ## Colors
