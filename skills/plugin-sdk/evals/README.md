@@ -23,7 +23,7 @@ Prompts are written the way someone would ask — lowercase, mid-thought, wrong 
 After a change to `SKILL.md` or a reference, before shipping — once, not in a loop. Ask `skill-creator`, which owns the protocol:
 
 ```
-run the evals for skills/plugin-sdk, iteration-4
+run the evals for skills/plugin-sdk, iteration-0
 ```
 
 It spawns two runs per scenario under `<workspace>/iteration-N/eval-<id>/{with_skill,without_skill}/`, grades each against the scenario's `assertions` and opens a viewer. Run the prompts **verbatim** — checks that read chosen words are English-only. Use `without_skill` as the baseline, not `old_skill`.

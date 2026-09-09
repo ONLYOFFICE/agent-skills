@@ -50,7 +50,17 @@ const COMPONENT_SCOPES = {
   // the full viewport width is what lets a table the portal cannot fit pass unreported. The
   // section's own guard (max-width: 100vw) does not subtract the sidebar either, which is
   // exactly why content sized against the window drags a scrollbar across the whole page.
-  ArticleNavigation: { width: 1030, hasCurrentFile: false },
+  //
+  // hostPadding is the padding the section body already puts around a page, reproduced so a
+  // page starts here where it starts on the portal. Without it a plugin that sets an outer
+  // padding of its own looks right in the preview and ships a doubled gutter; with it, the
+  // doubling is in the screenshot. The inline-end is nearly bare because the scrollbar is
+  // there, which is why a symmetric padding of your own also reads as lopsided.
+  ArticleNavigation: {
+    width: 1030,
+    hasCurrentFile: false,
+    hostPadding: { paddingBlock: "19px 16px", paddingInline: "20px 3px" },
+  },
   EventListener: { width: 400, hasCurrentFile: false },
 };
 
@@ -58,11 +68,12 @@ const COMPONENT_SCOPES = {
 const surfaceTable = () =>
   Object.entries(COMPONENT_SCOPES)
     .filter(([scope]) => SCOPE_CONTRACT[scope])
-    .map(([scope, { width, hasCurrentFile }]) => ({
+    .map(([scope, { width, hasCurrentFile, hostPadding }]) => ({
       scope,
       getter: SCOPE_CONTRACT[scope].getter,
       width,
       hasCurrentFile,
+      hostPadding: hostPadding ?? null,
     }));
 
 export const harnessHtml = () => `<!doctype html>
@@ -80,6 +91,9 @@ export const harnessHtml = () => `<!doctype html>
   }
   /* Each surface is measured inside its own box at the width the portal gives it. */
   [data-surface] { box-sizing: border-box; overflow: visible; }
+  /* Where the host pads the surface itself, the dashed line is the plugin's own box: what
+     lies between it and the label belongs to the portal, not to the plugin. */
+  [data-host-padded] > [data-surface] { outline: 1px dashed var(--border-service-color); }
   #surfaces { display: flex; flex-direction: column; gap: 24px; padding: 20px; align-items: flex-start; }
   .preview-label { font: 11px/16px monospace; color: var(--text-color); opacity: .6; }
   /* Portal-shaped markup planted beside the plugin, to catch a stylesheet that leaks. */
@@ -155,12 +169,12 @@ const runtime = (hasCurrentFile) => ({
 const surfaces = [];
 const seen = new Set();
 
-const add = (where, component, hasCurrentFile, width) => {
+const add = (where, component, hasCurrentFile, width, hostPadding = null) => {
   if (!component || typeof component !== "function") return;
   const key = where;
   if (seen.has(key)) return;
   seen.add(key);
-  surfaces.push({ where, component, hasCurrentFile, width });
+  surfaces.push({ where, component, hasCurrentFile, width, hostPadding });
 };
 
 const readMap = (value) => {
@@ -178,9 +192,9 @@ const boot = async () => {
     window.__previewBootError = String(e?.message ?? e);
   }
 
-  for (const { scope, getter, width, hasCurrentFile } of SURFACE_TABLE) {
+  for (const { scope, getter, width, hasCurrentFile, hostPadding } of SURFACE_TABLE) {
     for (const [key, item] of readMap(plugin[getter]?.())) {
-      add(scope + "/" + key, item?.component, hasCurrentFile, width);
+      add(scope + "/" + key, item?.component, hasCurrentFile, width, hostPadding);
 
       // What a class-side click asks the portal to draw. The message is the only way to
       // reach a dialog or a viewer that no item carries directly.
@@ -211,21 +225,40 @@ const boot = async () => {
     createElement(
       ThemeProviderComponent,
       { theme },
-      shown.map(({ where, component, hasCurrentFile, width }) =>
-        createElement("div", { key: where, style: { width: width || "100%", maxWidth: "100%" } }, [
-          createElement("div", { key: "l", className: "preview-label" }, where),
+      shown.map(({ where, component, hasCurrentFile, width, hostPadding }) => {
+        const surface = createElement(
+          "div",
+          {
+            key: "s",
+            "data-surface": where,
+            "data-surface-width": String(width),
+            style: { width: "100%", maxWidth: "100%" },
+          },
+          createElement(withPluginRuntime(component), { runtime: runtime(hasCurrentFile) }),
+        );
+
+        return createElement("div", { key: where, style: { width: width || "100%", maxWidth: "100%" } }, [
           createElement(
             "div",
-            {
-              key: "s",
-              "data-surface": where,
-              "data-surface-width": String(width),
-              style: { width: "100%", maxWidth: "100%" },
-            },
-            createElement(withPluginRuntime(component), { runtime: runtime(hasCurrentFile) }),
+            { key: "l", className: "preview-label" },
+            hostPadding ? where + "  -  dashed: your box; outside it, the section's own padding" : where,
           ),
-        ]),
-      ),
+          // The host pads some surfaces itself. Reproducing that padding is what makes the
+          // surface start where it starts on the portal, so an outer padding of the plugin's
+          // own is measured and photographed as the doubled gutter it is.
+          hostPadding
+            ? createElement(
+                "div",
+                {
+                  key: "h",
+                  "data-host-padded": "",
+                  style: { width: "100%", boxSizing: "border-box", ...hostPadding },
+                },
+                surface,
+              )
+            : surface,
+        ]);
+      }),
     ),
   );
 

@@ -12,7 +12,7 @@ The portal wraps the component in the runtime provider and an error boundary and
 
 | Prop | Surface | What the host provides |
 |---|---|---|
-| `IArticleNavigationItem.component` | a full page at `/p/<key>` (under the section's path) | the section body — full width, scrolls; no heading, no padding (20px padding, a `Heading`, ~640px max text width read well) |
+| `IArticleNavigationItem.component` | a full page at `/p/<key>` (under the section's path) | the section body — full width, scrolls, and **already padded on every side** ([styles.md](styles.md#conventions)), with its inline-end left bare for the scrollbar, so an outer padding of your own doubles the gutter against a bare right edge; no heading, so a `Heading` and a ~640px cap on text read well |
 | `IInfoPanelItem.component` | body of an info panel tab | ~337px wide, already scrolls; the file/room title block above it, which only `isHeaderVisible: false` removes ([items.md](items.md#infopanel)) |
 | `IArticleButtonItem.component` | a 32×32 slot in the sidebar, `overflow: hidden` | nothing — a single `IconButton size={32}` is what fits |
 | `IModalDialog.dialogBodyComponent` | body of a modal or aside | header from `dialogHeader`, close cross, padding; **no footer slot** |
