@@ -291,6 +291,12 @@ export default defineConfig({
   server: {
     fs: { allow: [${JSON.stringify(projectDir)}] },
     watch: { ignored: ["**/shots/**"] },
+    // Vite turns console forwarding on by itself when it detects an agent, and the kit talks
+    // to the console about every translation the portal would have supplied - dozens of lines
+    // that bury this pass's own findings. The harness already collects the browser console
+    // through page.on("console") and filters that noise, so forwarding only duplicates it
+    // unfiltered.
+    forwardConsole: false,
   },
   optimizeDeps: { include: ["@docspace/ui-kit", "react", "react-dom/client"] },
 });
