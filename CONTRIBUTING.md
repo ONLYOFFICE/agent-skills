@@ -47,6 +47,12 @@ evals of the skill you changed after the last content change, once — the proto
 each skill's `evals/README.md`. The best new scenario is a real failure turned into a
 check: watch it fail, fix the skill, watch it pass.
 
+Feedback from testing (the internal testing log, issues, a reflection somebody wrote after a
+session) is an input to this loop, not a note to file: every remark becomes either a new
+scenario or assertion in `evals/`, a new rule or reference passage in the skill, or is closed
+with a comment saying why not. A remark that only changes prose without a check behind it
+tends to be lost on the next rewrite.
+
 ## Before opening a pull request
 
 ```
