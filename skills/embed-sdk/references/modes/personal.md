@@ -32,8 +32,9 @@ into the host app (CRM attachment, WP media, etc.).
 
 - Manager-family options apply (`viewAs`, `showFilter`, `disableActionButton`,
   `infoPanelVisible`, `filter`).
-- `createFile`/`createFolder` act on the currently open folder — resolve it via
-  `getFolderInfo()`.
+- Instance methods: only `setConfig` and `navigateSection` are handled by this page
+  (client 4.0.0). `getFiles`, `getFolderInfo`, `createFile`, `createFolder`, `login`, … resolve
+  with `"Wrong method for this mode"` — run data calls through a Manager or System frame.
 - `headerOffset`/`headerHeight` supported (as in Forms/Chat).
 - Auto sign-in via `providerName`/`inviteKey`/`emplType`/`uid` — see
   [auth-recipes.md](../auth-recipes.md).
