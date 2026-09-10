@@ -190,8 +190,9 @@ Violating any of these produces integrations that look right but fail.
     logging in again is redundant and slow.
 17. `upload()` works **only in Forms mode** (`MODE_MISMATCH` otherwise); Uploader mode
     accepts files only through its UI. Upload timeout is 120 s.
-18. `createFile`/`createFolder` operate on the current folder of an open manager/personal
-    frame — resolve its id via `getFolderInfo()`.
+18. `createFile`/`createFolder` operate on the current folder of an open Manager frame —
+    resolve its id via `getFolderInfo()`. The Personal page implements only `setConfig` and
+    `navigateSection`; every data method resolves with `"Wrong method for this mode"` there.
 18a. `executeInEditor(cb, data)` invokes `cb(editor, asc, data)` — **three** arguments.
     SDK 2.2.0 types the callback that way; SDKs <= 2.1 declared `(instance, data?)`, which
     was wrong. `editor` is the DocsAPI object: call
