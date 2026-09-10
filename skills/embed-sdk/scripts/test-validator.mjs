@@ -72,5 +72,14 @@ for (const c of CASES) {
   }
 }
 
-console.log(`\n${CASES.length - failed}/${CASES.length} expectations passed`);
+const SOURCES = path.resolve(path.dirname(VALIDATOR), "..", "..", "..", "tools", "sync-sources.mjs");
+const sources = spawnSync(process.execPath, [SOURCES, "--skill", "embed-sdk", "--check"], { encoding: "utf8" });
+if (sources.status !== 0) {
+  failed++;
+  console.log(`FAIL  links and pinned versions trace to sources.json\n      ${`${sources.stdout}${sources.stderr}`.trim().split("\n").join("\n      ")}`);
+} else {
+  console.log("ok    links and pinned versions trace to sources.json");
+}
+
+console.log(`\n${CASES.length + 1 - failed}/${CASES.length + 1} expectations passed`);
 process.exit(failed ? 1 : 0);
