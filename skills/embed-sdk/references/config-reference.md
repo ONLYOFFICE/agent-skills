@@ -10,7 +10,7 @@ else falls back to `defaultConfig`.
 |---|---|---|---|
 | `frameId` | string | `"ds-frame"` | DOM id of the target container **and** the postMessage routing key |
 | `mode` | string | `"manager"` | one of the 11 `SDKMode` values |
-| `src` | string | `""` | DocSpace portal origin; iframe URL = `src` + mode path |
+| `src` | string | `""` | ONLYOFFICE Apps portal origin; iframe URL = `src` + mode path |
 
 ## General / appearance (all modes)
 
@@ -107,7 +107,7 @@ filter silently keeps its defaults.
 
 | Field | Default | Notes |
 |---|---|---|
-| `anonymous` | `{ request: true, label: "Guest" }` | prompt anonymous users for a name |
+| `anonymous` | `{ request: true, label: "Guest" }` | `TEditorAnonymous`; prompt anonymous users for a name |
 | `autosave` | `true` | `false` leaves only Strict co-editing |
 | `comments` | `true` | `false` = view-only comments |
 | `compactHeader` | `false` | move action buttons to toolbar |

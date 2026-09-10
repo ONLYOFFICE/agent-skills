@@ -1,6 +1,6 @@
-# DocSpace Embed SDK skill
+# ONLYOFFICE Apps Embed SDK skill
 
-A skill that teaches an AI coding agent to embed ONLYOFFICE DocSpace into a web application
+A skill that teaches an AI coding agent to embed ONLYOFFICE Apps into a web application
 with the Embed SDK (`@onlyoffice/docspace-sdk-js`, historically "JavaScript SDK"): a file
 manager, an editor or viewer, a room or file selector, an uploader, the forms gallery, AI
 chat or a personal files section, each an iframe configured by a `TFrameConfig` and driven

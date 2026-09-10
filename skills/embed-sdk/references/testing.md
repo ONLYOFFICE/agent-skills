@@ -1,4 +1,4 @@
-# Testing embedded DocSpace frames
+# Testing embedded ONLYOFFICE Apps frames
 
 What can and cannot be asserted, based on a working Playwright suite for the SDK.
 
@@ -28,7 +28,7 @@ Caveats observed in practice:
 
 ## What NOT to assert
 
-The DOM inside the DocSpace iframe (headers, menus, filters) is cross-origin in real
+The DOM inside the ONLYOFFICE Apps iframe (headers, menus, filters) is cross-origin in real
 deployments and version-dependent — treat any reach-in as best-effort, wrapped in
 try/catch, never as a hard assertion.
 
