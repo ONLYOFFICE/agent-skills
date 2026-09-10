@@ -68,7 +68,7 @@ Forms, Chat and Personal modes may have no docs page; the types, the SDK README 
 
 | Thing | Lives | Grants | SDK entry | Cannot |
 |---|---|---|---|---|
-| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()` | finish when 2FA is on; survive third-party-cookie blocking |
+| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult` | finish when 2FA is on unless the portal reads `login`'s `code` argument (client 4.0.0 does not); survive third-party-cookie blocking |
 | Session cookie `asc_auth_key` | browser, portal origin | every request the iframe makes | nothing to pass | be sent from a cross-origin iframe when the browser blocks third-party cookies → `401` despite a live session |
 | `requestToken` (share key) | room share link, or `items[0].requestTokens[0].requestToken` from a room-selector | anonymous access to one room | `public-room` (`id` + `requestToken`); manager with `rootPath: "/rooms/share"` | anything outside that room; must never be committed |
 | OAuth access token | your backend (refresh token stays there) | API calls as the user, sent as `Bearer` — no cookie involved | `getToken` (preferred) or `accessToken`, SDK >= 2.2 | outlive expiry unless `getToken` re-fetches |
@@ -76,8 +76,9 @@ Forms, Chat and Personal modes may have no docs page; the types, the SDK README 
 
 Two consequences ([auth-recipes §6–7](references/auth-recipes.md)): a signed-in portal tab does **not** make a
 cross-origin frame work in Safari or cookie-blocking Chrome — use OAuth `getToken` or same-site hosting; and an
-account with **2FA** never gets a session through `login()` — the portal reads only `email` and `passwordHash`
-(client 4.0.0) and there is no code argument. Do not build a code field around `login()`.
+account with **2FA** gets no session from `login()` on client 4.0.0 — its dispatcher reads only `email` and
+`passwordHash`. SDK 2.2.0 adds a fifth `code` argument (first call answers `tfa: true`, second call carries the
+code), which works only once the portal's dispatcher reads it; probe the portal version before promising it.
 
 ## Step 0 — discover the portal, then choose the connection
 
@@ -153,7 +154,8 @@ Each one exists because the failure is silent: the integration looks right and d
    the mode's page lacks resolves with the string `"Wrong method for this mode"` ([methods](references/methods.md)).
 10. **Sign in the cheap way first.** `getUserInfo()` and compare the email before `login(email, hash)`; passwords
     travel only as hashes (`getHashSettings` → `createHash` → `login`); the plaintext `password` and `session`
-    arguments are ignored by the portal; 2FA accounts cannot use this path at all (token table).
+    arguments are deprecated and ignored by the portal; a `tfa: true` answer needs a second `login` with the
+    `code` argument, which client 4.0.0 does not read yet (token table).
 11. **Uploads and files.** `upload(file)` works only in Forms mode (`MODE_MISMATCH` elsewhere, 120 s timeout); Uploader
     accepts files only through its UI. `createFile(folderId, title, templateId?, formId?)` is `POST /files/{folderId}/file`:
     the **format comes from the extension in `title`** (a PDF form copied under a `.docx` title stops being a form),
