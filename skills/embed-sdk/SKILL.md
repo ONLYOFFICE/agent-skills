@@ -77,8 +77,9 @@ Forms, Chat and Personal modes may have no docs page; the types, the SDK README 
 Two consequences ([auth-recipes §6–7](references/auth-recipes.md)): a signed-in portal tab does **not** make a
 cross-origin frame work in Safari or cookie-blocking Chrome — use OAuth `getToken` or same-site hosting; and an
 account with **2FA** gets no session from `login()` on client 4.0.0 — its dispatcher reads only `email` and
-`passwordHash`. SDK 2.2.0 adds a fifth `code` argument (first call answers `tfa: true`, second call carries the
-code), which works only once the portal's dispatcher reads it; probe the portal version before promising it.
+`passwordHash`. `login()` resolves `{ url: "/" }` on success, `{ url: "/confirm/…" }` when a second factor is
+pending, and an error with `status` on failure. SDK 2.2.0 adds a fifth `code` argument for the second call,
+which works only once the portal's dispatcher reads it; probe the portal version before promising it.
 
 ## Step 0 — discover the portal, then choose the connection
 
@@ -154,8 +155,9 @@ Each one exists because the failure is silent: the integration looks right and d
    the mode's page lacks resolves with the string `"Wrong method for this mode"` ([methods](references/methods.md)).
 10. **Sign in the cheap way first.** `getUserInfo()` and compare the email before `login(email, hash)`; passwords
     travel only as hashes (`getHashSettings` → `createHash` → `login`); the plaintext `password` and `session`
-    arguments are deprecated and ignored by the portal; a `tfa: true` answer needs a second `login` with the
-    `code` argument, which client 4.0.0 does not read yet (token table).
+    arguments never reach the portal from the frame; a `url` under `/confirm/` in the result means a second
+    factor is pending and needs a second `login` with the `code` argument, which client 4.0.0 does not read
+    yet (token table).
 11. **Uploads and files.** `upload(file)` works only in Forms mode (`MODE_MISMATCH` elsewhere, 120 s timeout); Uploader
     accepts files only through its UI. `createFile(folderId, title, templateId?, formId?)` is `POST /files/{folderId}/file`:
     the **format comes from the extension in `title`** (a PDF form copied under a `.docx` title stops being a form),

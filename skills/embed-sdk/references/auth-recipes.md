@@ -165,16 +165,19 @@ The credential-replay flow (recipe 1) creates the same cookie and hits the same 
 
 How the portal does it: `POST /api/2.0/authentication` with the credentials answers
 `{ tfa: true, confirmUrl }` (or `{ sms: true, phoneNoise }`) and creates no session; the code
-then goes to `POST /api/2.0/authentication/{code}` with the same credentials. Inside the frame
-this is what `login()` resolves with — `TLoginResult.tfa` tells you a second factor is pending.
+then goes to `POST /api/2.0/authentication/{code}` with the same credentials. The frame does not
+expose that DTO: the SDK dispatcher calls the client's sign-in store, which turns the answer into
+`{ url: "/confirm/TfaAuth…", user, hash }` — a `url` under `/confirm/` in `TLoginResult` is how
+you learn that a second factor is pending (client 4.0.0).
 
 Whether the second step is reachable depends on the portal:
 
 - **Client 4.0.0**: the SDK dispatcher runs `login(email, passwordHash)` and ignores everything
-  else, so the code never reaches the portal and the account stays signed out. Adding a "code"
-  field to your form does not help there.
+  else, so the code never reaches the portal and the account stays signed out — even though the
+  store already has a `loginWithCode(userName, passwordHash, code)` the dispatcher never calls.
+  Adding a "code" field to your form does not help there.
 - **A portal whose dispatcher reads `code`**: call `login(email, hash, undefined, undefined,
-  code)` (SDK 2.2.0) after the `tfa`/`sms` answer, then check `status`. Probe the portal version
+  code)` (SDK 2.2.0) after the `/confirm/…` answer, then check `status`. Probe the portal version
   first and do not promise the flow on 4.0.0.
 
 Options for hosts whose users have 2FA on a portal that ignores `code`:
