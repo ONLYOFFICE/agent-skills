@@ -1,4 +1,4 @@
-# Docs Example Checklist
+# ONLYOFFICE Docs Integration Example Checklist
 
 ## Context & Purpose
 
