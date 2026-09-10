@@ -87,7 +87,8 @@ Before tagging a release:
 - CI that runs steps 1, 2, 4 and 5 on every push.
 - `skills/plugin-sdk/vendor/` holds ~7 MB of tarballs in git; move them to LFS, a
   registry or release assets once a home is chosen.
-- A JSON schema of `TFrameConfig` published by the SDK package itself, so
-  `skills/embed-sdk/scripts/sync-sdk.mjs` can stop parsing `.d.ts` files.
+- Switch `skills/embed-sdk/scripts/sync-sdk.mjs` to the JSON Schema the SDK package ships
+  from 2.2.0 (`@onlyoffice/docspace-sdk-js/schema/frame-config.schema.json`) instead of
+  parsing `.d.ts` files; keep the `.d.ts` path for older packages.
 - `sources.json` knows one version per skill; `plugin-sdk` also pins a DocSpace version
   (`docspace-version` in its frontmatter) that the tooling does not track yet.

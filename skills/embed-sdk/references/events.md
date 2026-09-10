@@ -52,6 +52,11 @@ mode needs.
 Both manager events fire only when the handler is present in `config.events`; leaving one
 `null` restores the portal's default behaviour for that action.
 
+SDK 2.2.0 types these payloads: `onSelectCallback` receives `TSelectedRoom[] | TSelectedFile`
+(with `TRequestTokenInfo[]` under `requestTokens`), `onEditorOpen` a `TEditorOpenPayload`
+(`TFileInfo` plus `share` and `action: TEditorAction`), `onFileManagerClick` a `TFileInfo`.
+Import them from `@onlyoffice/docspace-sdk-js` instead of declaring your own shapes.
+
 ## Uploads (Uploader + Forms modes)
 
 | Event | Payload |

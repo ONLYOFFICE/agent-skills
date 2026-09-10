@@ -79,7 +79,7 @@ portal-version-specific — older portals handle fewer methods.
 |---|---|
 | `getHashSettings()` | `{ size, iterations, salt }` — PBKDF2 parameters of the portal |
 | `createHash(password, hashSettings)` | portal-compatible password hash; run in a hidden System frame |
-| `login(email, passwordHash, password?, session?)` | the portal reads only `email` and `passwordHash` (client 4.0.0) — `password` and `session` are sent but ignored, and the session is always persistent; **check `status !== 200`**. No 2FA: there is no code argument and the portal's `POST /authentication/{code}` step is unreachable from the SDK, so an account with 2FA enabled never gets a session this way — see [auth-recipes §7](auth-recipes.md#7-two-factor-authentication) |
+| `login(email, passwordHash, password?, session?, code?)` | resolves with `TLoginResult` (SDK 2.2.0): `token`/`expires` on success, `status`/`message` on failure, `tfa`/`sms` + `confirmUrl` when a second factor is required — **check `status !== 200`**. The portal reads only `email` and `passwordHash` (client 4.0.0); `password` and `session` are deprecated, sent but ignored, and the session is always persistent. The fifth argument `code` finishes a two-factor sign-in **only on a portal whose SDK dispatcher reads it** — client 4.0.0 does not, so there an account with 2FA never gets a session through the SDK. See [auth-recipes §7](auth-recipes.md#7-two-factor-authentication) |
 | `logout()` | end the portal session |
 
 ## Content
