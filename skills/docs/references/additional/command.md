@@ -76,12 +76,20 @@ async function triggerForceSave(documentKey, jwtSecret) {
 
     const result = await response.json();
 
+    const COMMAND_ERROR_MESSAGES = {
+      1: "Command key missing or not found in memory.",
+      2: "callbackUrl assigned at document load is unreachable or invalid.",
+      3: "Internal server error.",
+      4: "No changes since last save (forcesave rejected).",
+      6: "Invalid token signature or mismatched secret.",
+    };
+
     if (result.error === 0) {
       console.log(`Force-save executed.`);
-    } else if (result.error === 4) {
-      console.log(`No changes to save.`);
     } else {
-      console.error(`Command rejected. Error Code: ${result.error}`);
+      // Map every non-zero code individually — collapsing 1/2/3/6 into one
+      // "rejected" bucket loses exactly the distinction the table exists for.
+      console.error(COMMAND_ERROR_MESSAGES[result.error] ?? `Unrecognized command error ${result.error}`);
     }
 
     return result;

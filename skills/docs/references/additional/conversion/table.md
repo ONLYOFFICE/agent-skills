@@ -33,4 +33,4 @@ Orientation only — **do not hardcode into the integration**; read the vendored
 
 * **Submodule required:** `git submodule add` [`ONLYOFFICE/document-formats`](https://github.com/ONLYOFFICE/document-formats) (pinned commit); load `onlyoffice-docs-formats.json` before `POST /convert`. Same preference as templates: submodule over a live fetch; never request-time network to GitHub.
 * **Case:** `filetype`/`outputtype` must be lowercase — `"DOCX"` is rejected.
-* **Illegal pairs:** cross-category conversions the server disallows (e.g. `xlsx` -> `epub`) return error `-7` — see [`errors.md`](./errors.md).
+* **Illegal pairs:** cross-category conversions the server disallows (e.g. `xlsx` -> `epub`) come back as `-7` (input error) — there's no pair-specific code, so treat `-7` as "check the pair first" rather than a guaranteed diagnosis. See [`errors.md`](./errors.md).

@@ -22,7 +22,7 @@ Token validation for JSON HTTP calls between your storage backend and ONLYOFFICE
 ## Payload Formats
 
 ### 1. Command Service (Inbox)
-Wrap the payload under a `token` key. See [`additional/command.md`](../additional/command.md) for the full command matrix (`c` values, claims, error codes). The Conversion API request in [`additional/conversion/request.md`](../additional/conversion/request.md) uses this same inbox wrapping; its `-5` error code in [`errors.md`](../additional/conversion/errors.md) signals rejection at this verification step.
+Wrap the payload under a `token` key. See [`additional/command.md`](../additional/command.md) for the full command matrix (`c` values, claims, error codes). The Conversion API request in [`additional/conversion/request.md`](../additional/conversion/request.md) uses this same inbox wrapping; its `-8` error code in [`errors.md`](../additional/conversion/errors.md) signals rejection at this verification step.
 ```json
 {
   "c": "forcesave",

@@ -1,0 +1,112 @@
+{
+  "skill_name": "onlyoffice-docs",
+  "evals": [
+    {
+      "id": 0,
+      "name": "sample-app-from-scratch",
+      "mode": "build",
+      "prompt": "we're putting onlyoffice in front of our go service and before i wire it into the real product i want something i can click through and show the team on friday. a page that lists whatever files we have, opens any of them properly and also read-only, lets me drop one in from my laptop, make a fresh empty spreadsheet or text doc, rename, delete. people keep mailing us .doc files from 2009 so those need to open too. document server is in docker on localhost:8080 with the jwt thing switched on, secret's in DOCS_JWT_SECRET, files on disk is fine as long as it survives a restart. write the tests as you go please, i've been burned by a pile of untested generated code before.",
+      "expected_output": "A Go integration with the five endpoints - the embedding page, the callback receiver, download, upload and convert - plus the list/rename/delete routes the demo page needs, with the page and its routes behind their own package or build tag so the backend still builds and serves without them. document.key is derived from the stored file's current revision (counter, mtime or content hash) and changes on every save, persisted alongside the file so a restart doesn't resurrect an old key. documentType is mapped from the extension family, callbackUrl and user live under editorConfig, handlers under events, and the whole config object is signed server-side into a root token; user.id is an anonymized session id. The callback verifies the body token before fetching url, branches the full status table, downloads on 2 and 6, and answers exactly {\"error\": 0}. The convert route sends Accept: application/json with lowercase filetype/outputtype, a body token, async polling that re-sends the identical request under the same key until endConvert, and maps the negative error codes individually. Supported pairs come from a vendored ONLYOFFICE/document-formats copy, whose auto-convert action is what drives the legacy .doc path; the create-new blanks are real binaries vendored from ONLYOFFICE/document-templates. Tests cover each endpoint and each implemented callback status branch and are written against the contract rather than against the implementation.",
+      "files": [],
+      "assertions": [
+        "all five endpoints exist - the embedding page, the callback receiver, download, upload and convert - since the backend is what a third-party integrates against and it is a five-endpoint surface whether or not the demo page calls all of them",
+        "the demo page and its list/rename/delete routes are separable from the backend - own package, module, build tag or flag - and the backend still compiles and serves its endpoints with the page fully absent, not merely unrouted",
+        "document.key changes whenever the stored file changes, and the value is persisted with the file rather than derived from the filename or minted fresh per page load, since the service serves its cached revision for a key it has seen before and reusing one across a save is what corrupts history",
+        "the key survives a restart as the same value the last save produced - an in-memory counter that resets to zero hands the document server a key it already has under different content",
+        "documentType is derived from the file's extension family - docx to word, xlsx to cell, pptx to slide, pdf to pdf - rather than hardcoded or passed the extension itself, which is not one of the four accepted values",
+        "callbackUrl and user sit inside editorConfig and the handlers inside events, not at the config root, where the editor ignores them without raising anything",
+        "editorConfig.user.id is an anonymized session identifier rather than an email address or a real name",
+        "every token is signed on the server with HS256 and the secret appears in no file the browser downloads and in no response the page fetches",
+        "the root token signs the same config object that is handed to DocsAPI.DocEditor, not a hand-picked subset of its fields",
+        "the callback verifies the body token before anything is fetched from url, since verifying afterwards leaves the window in which an unsigned caller makes the server download whatever it names",
+        "the callback handles status 2 and 6 by downloading from url and persisting, and treats 6 as a snapshot with the session still open rather than as a close",
+        "the callback's success response is exactly {\"error\": 0} - any other body reads to the editing service as a failed delivery and it retries the same callback indefinitely",
+        "the convert request sends Accept: application/json, without which the service answers in XML and the failure surfaces as a decode error pointing nowhere near the cause",
+        "filetype and outputtype are lowercased and filetype, key, outputtype and url are all sent",
+        "the conversion request carries its token inside the JSON body, which is the vector that service reads",
+        "an async conversion is polled by re-sending the identical request under the same key until endConvert is true, rather than sleeping a fixed interval or minting a new key per attempt, which starts the job over",
+        "the response's error key is checked before fileUrl is read, and the negative codes are distinguished from one another - -7 (input error, the closest documented code for an illegal pair) reported distinctly from -8 (invalid token) rather than folded into a generic failure",
+        "which conversions are possible is read from a vendored ONLYOFFICE/document-formats copy (onlyoffice-docs-formats.json) rather than a list of extensions written into the source",
+        "the legacy .doc/.xls/.ppt path is driven by that table's auto-convert action - converted to the family's OOXML target before edit is offered - rather than by an extension allowlist someone typed out",
+        "the blank files behind create-new are real binaries vendored from ONLYOFFICE/document-templates, not zip bytes or empty files the generator produced, and any missing format is raised as a scope question rather than synthesized",
+        "the file list offers at least edit and view per file plus rename and delete, since a single hardcoded document is the bare snippet this sample was asked to be more than",
+        "nothing styles or reads the placeholder element after init - the sizing is on a wrapper around it - because init replaces that element with an iframe and everything set on it is dropped",
+        "there is a test for each of the five endpoints and one for every callback status branch the handler implements, not a representative subset",
+        "the tests assert the contract - the exact {\"error\": 0} body, the Accept header, the lowercase types, the key changing across a save - rather than restating what the implementation was just written to do",
+        "no test reaches into the editor's iframe DOM, which is origin-isolated from the host page and cannot be inspected from it"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "callback-retry-loop",
+      "mode": "build",
+      "prompt": "something's off with our /track endpoint. a doc saves fine the first time but then the document server just keeps POSTing us the same thing every few seconds, same key, forever - the log is 40k lines of it overnight and it only stops when we bounce the container. separately our security guy went through it and says as it stands anyone who can reach that url can make our box download a file from anywhere they like. it's express, files go in ./storage, jwt is enabled on the docs side and the secret is in ONLYOFFICE_JWT_SECRET. can you just rewrite the handler properly and tell me what was going on.",
+      "expected_output": "An Express handler that verifies the body token against the secret and compares the decoded claims to the sibling root fields before touching url, rejects an absent or invalid token without acknowledging it, branches every status in the table (1, 2, 3, 4, 6, 7) explicitly, downloads and persists on 2 and 6 with 6 leaving the session open, guards the storage path against a key that tries to escape it, and answers exactly {\"error\": 0} on every path it handled - including the statuses it only logs. A genuine internal failure answers non-zero so the retry it triggers is the correct behaviour rather than a silently lost save. The explanation states that the retry loop is the editing service reading any response other than {\"error\": 0} as a failed delivery, which is why the first save appeared to work and the callbacks never stopped.",
+      "files": [],
+      "assertions": [
+        "the successful path responds with exactly {\"error\": 0} - a JSON object with that one key - and not a bare ok, an empty 200 or a 204, because anything else reads to the editing service as a delivery that failed and it retries until it succeeds, which is the whole reported symptom",
+        "that acknowledgement is also sent for the statuses the handler only logs (1 and 4), since an unacknowledged callback is retried exactly like a rejected one",
+        "status 2 and status 6 both download from url and write to storage, and 6 does not release the lock or tear down the session, because the tab is still open when a force-save snapshot arrives",
+        "statuses 1, 3, 4 and 7 are each handled on purpose rather than swept into a default branch, since each one is the editing service telling the backend something different about the session",
+        "the token is verified before anything is fetched from url - verifying after the download is what leaves the hole the security reviewer described, because by then the request has already been made",
+        "a request arriving with no token at all is rejected rather than processed, since the whole point of enabling jwt is that an unsigned caller is not the editing service",
+        "the decoded claims are compared against the sibling root fields (status, url, key) rather than the signature being trusted on its own, which is what stops a valid token from being spliced onto a substituted url",
+        "a rejected request is not answered with {\"error\": 0}, since acknowledging a forgery tells the sender it worked",
+        "the write path is derived from the key or the stored file identity in a way that cannot be steered outside the storage directory by the value that arrives in the body",
+        "url is not assumed present - it is absent for statuses 1 and 4, and reading it unguarded there throws inside the handler and turns a routine callback into a retry",
+        "a real internal failure (download failed, disk write failed) answers non-zero rather than being swallowed into {\"error\": 0}, because there the retry is the correct behaviour and a false acknowledgement loses the user's save silently",
+        "the answer states the rule behind the symptom - the editing service retries anything that is not {\"error\": 0} - rather than only handing over corrected code, since the user asked what was going on"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "conversion-progress",
+      "mode": "build",
+      "prompt": "need something in our node backend that takes the xlsx files customers upload and gives us a pdf, using the onlyoffice server we already run at http://docs.internal:8080 (jwt's on, secret in the env). some of these are 50mb monsters so it can't sit there holding the request thread - the frontend wants to put a progress bar on it. and when it's a file we just can't do anything with, it should say so in a way support can act on instead of 'conversion failed'.",
+      "expected_output": "A converter that posts filetype/key/outputtype/url with the types lowercased and a token signed into the request body, sends Accept: application/json, and sets async so the call returns immediately. Progress comes from re-sending the identical request under the same key and reading the response's own percent, with endConvert deciding completion and fileUrl read only once it is true. The error key is checked before fileUrl, and the negative codes are mapped individually - -7 as an input error (the closest documented code for an illegal pair), -8 as a token-signature problem that must not be retried, -2 and -4 as distinct operational faults - so support gets a cause rather than a category. Whether the pair is convertible at all is answered from the format table before the request goes out, and the polling loop is bounded.",
+      "files": [],
+      "assertions": [
+        "the request sends Accept: application/json - the service answers this endpoint in XML by default, so without the header the client's json parse fails with an error that says nothing about the actual request",
+        "filetype, key, outputtype and url are all sent, and the two type values are lowercase",
+        "url is an absolute address the document server itself can reach, not a local filesystem path and not a localhost url that only resolves inside the calling process",
+        "the token is signed into the JSON body rather than sent only as an Authorization header, since the body is the vector this service reads",
+        "async is set and the initial call returns without blocking on the conversion, which is what the 50mb requirement is actually about",
+        "polling re-sends the identical request under the same key rather than generating a new key per attempt, because the key is what the service keys the in-flight job by and a fresh one starts the conversion over from zero",
+        "completion is decided by endConvert, and fileUrl is read only once endConvert is true rather than on the first response that happens to carry it",
+        "the progress handed to the frontend is the response's own percent field, not a synthetic timer or an interpolation, since the real number is already there",
+        "the response is checked for an error key before fileUrl is read, since an error response has no file to fetch",
+        "the negative codes are mapped to distinct causes rather than one message, with -7 (input error) reported for a rejected request - a permanent answer for that request shape, not a transient failure",
+        "-8 is surfaced as a token signature/invalid-token problem and is not retried, because a mis-signed request will fail identically every time",
+        "whether xlsx to pdf is convertible is settled against the format table rather than assumed or hardcoded, so an unsupported pair is caught before the request is sent instead of coming back as -7",
+        "the polling loop is bounded by a timeout or an attempt cap, so a job the server has given up on does not hold a worker forever"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "audit-broken-embed",
+      "mode": "audit",
+      "prompt": "this is the little portal our intern wired up a few months back, attached. it works, sort of. people open a doc, edit it, close it, and when they come back half the time they get what it looked like the day before - and one guy ended up with a version where the formatting was scrambled and we had to restore from backup. also every so often the editor comes up as a thin strip at the top instead of filling the page, usually when someone's picked a different file from the dropdown. can you go through it and tell me what's actually wrong and why. don't rewrite the app on me, i want a list i can hand to the team.",
+      "expected_output": "A review, not a rewrite. The stale-content and scrambled-formatting reports are traced to one cause: document.key is the filename, so it never changes across a save and the service keeps serving its cached revision of that key - the fix is a key that changes whenever the stored file does, which also means /track recording a new revision when it writes. The thin strip is traced to init replacing the placeholder element, which drops both the #placeholder CSS and the style.height assignment made after the constructor returns, and to the dropdown constructing a second editor on the same id without destroyEditor(); sizing belongs on a wrapper. The config is flat - callbackUrl, lang, user and the two handlers sit at the root instead of under editorConfig and events, where they are read - and documentType is \"text\", which is not one of word/cell/slide/pdf. The token is signed in the page with a secret /api/session hands to the browser, so the secret is in reach of every visitor; signing moves to the server. user.id is a plaintext email. /download serves any named file with no token check. The callback handler itself is sound and is not reported as a fault.",
+      "files": [
+        "fixtures/broken-embed/"
+      ],
+      "assertions": [
+        "the reopened-yesterday symptom is traced to document.key being the filename and therefore never changing across a save, so the service serves the cached revision it already holds for that key rather than the file that was just written",
+        "the scrambled formatting is attributed to that same reused key rather than being written up as a separate unexplained fault",
+        "the fix given is a key that changes whenever the stored content changes - a revision counter, mtime or content hash - and it names the server side too, since /track overwrites the file without recording a new revision for the next config to pick up",
+        "documentType: \"text\" is flagged as not one of the four accepted values, with word given as what a docx needs",
+        "callbackUrl at the config root is flagged as being outside editorConfig, where the editor actually reads it",
+        "lang at the root is flagged the same way",
+        "onDocumentReady and onDocumentStateChange at the root are flagged as belonging under events, and the report says they are simply never called there rather than raising anything - which is why nobody noticed",
+        "the token being signed in editor.js is flagged, and the finding is that /api/session hands the signing secret to the browser, so every visitor already has it - not merely that the signing is in the wrong layer",
+        "the remedy given is that the server assembles and signs the config and the page receives it already signed, rather than the page being handed a secret it is trusted not to misuse",
+        "the plaintext email used as user.id is flagged and an anonymized session identifier is asked for",
+        "the thin strip is explained as init replacing the placeholder element - which drops the #placeholder CSS rule and makes the style.height assignment after the constructor land on a detached node - with the sizing moving to a wrapper around it",
+        "the dropdown path is flagged for constructing a second DocsAPI.DocEditor on the same id without destroyEditor() first, which is why the symptom follows switching files",
+        "/download is flagged for serving any file named in the query string with no token verification, which is a separate hole from the ones the user reported",
+        "the callback handler is not written up as defective - it already verifies the token before fetching, handles 2 and 6, and answers {\"error\": 0} - since a review padded with a finding that is not there costs the reader the attention the real ones need",
+        "the deliverable is a list of findings with causes and the change each needs, not a rewritten application, which is what was asked for"
+      ]
+    }
+  ]
+}
