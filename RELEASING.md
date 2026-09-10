@@ -49,9 +49,13 @@ release. Semver: new skill or breaking rewrite of one → minor while `0.x`; cor
 README (the "Targets" column of the skills table). For `plugin-sdk` the SDK/DocSpace pair
 is also stated in `skills/plugin-sdk/references/scopes.md`. When an SDK is released:
 
-- `embed-sdk`: regenerate `references/config-reference.md` and the dictionary in
-  `scripts/validate-config.mjs` from the SDK's `src/types` / `src/enums`, then bump
-  `sdk-version` and the README table.
+- `embed-sdk`: `node tools/sync-sources.mjs --skill embed-sdk --set-version <x.y.z>` (moves
+  `sdk-version`, the pinned-facts line, the validator header and the raw GitHub links
+  together), then `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK checkout or
+  node_modules/@onlyoffice/docspace-sdk-js> --write` (regenerates the validator's
+  dictionaries from the types), then read the SDK changelog and revise the references that
+  describe behaviour (`config-reference.md` traps, `methods.md`, `events.md`, mode files).
+  Finish with `--verify` on the links and the README table.
 - `plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
   generator and validator) and the version pair in `references/scopes.md`; if the
   client's `libs/ui-kit` changed, repack the tarball in `vendor/` and update
@@ -65,6 +69,9 @@ Before tagging a release:
 1. `claude plugin validate . --strict` passes.
 2. `node skills/embed-sdk/scripts/test-validator.mjs` and
    `node skills/plugin-sdk/scripts/test-validator.mjs` pass.
+2a. `node tools/sync-sources.mjs --verify` passes: every link traces to a `sources.json`,
+   every pinned version matches, every source URL answers. For `embed-sdk` also
+   `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`.
 3. The skill(s) that changed have been through their evals
    ([embed-sdk](skills/embed-sdk/evals/README.md),
    [plugin-sdk](skills/plugin-sdk/evals/README.md)) — once, after the last content
@@ -80,5 +87,7 @@ Before tagging a release:
 - CI that runs steps 1, 2, 4 and 5 on every push.
 - `skills/plugin-sdk/vendor/` holds ~7 MB of tarballs in git; move them to LFS, a
   registry or release assets once a home is chosen.
-- `tools/generate-skill-refs.mjs` to produce `config-reference.md` and the embed-sdk
-  validator dictionary from the SDK sources instead of maintaining them by hand.
+- A JSON schema of `TFrameConfig` published by the SDK package itself, so
+  `skills/embed-sdk/scripts/sync-sdk.mjs` can stop parsing `.d.ts` files.
+- `sources.json` knows one version per skill; `plugin-sdk` also pins a DocSpace version
+  (`docspace-version` in its frontmatter) that the tooling does not track yet.
