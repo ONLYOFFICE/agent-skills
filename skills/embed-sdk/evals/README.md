@@ -8,9 +8,24 @@ results are graded against the same rubric.
 
 | File | Purpose |
 |---|---|
-| [prompt.txt](prompt.txt) | The exact text to paste as the first message (replace `{…}` placeholders first) |
-| [task.md](task.md) | Operator guide: the same prompt annotated + operator answers + the trap map (never show to the agent) |
-| [rubric.md](rubric.md) | 39 graded checkpoints mapped to SKILL.md rules, with grep hints |
+| [evals.json](evals.json) | The scenario set: E1–E3 from the internal testing plan, four scenarios rebuilt from real failures (2FA question, cross-origin todo app, workspace with chat under OAuth, Next.js form intake), and the original admin-panel task. Each has a prompt, operator answers and weighted assertions with grep hints |
+| [trigger-tests.md](trigger-tests.md) | 10 messages that must trigger the skill and 10 that must not; results table |
+| [prompt.txt](prompt.txt) | The original admin-panel task, copy-paste-ready (replace `{…}` placeholders first) |
+| [task.md](task.md) | Operator guide for that task: annotated prompt + operator answers + the trap map (never show to the agent) |
+| [rubric.md](rubric.md) | Its 39 graded checkpoints mapped to SKILL.md rules, with grep hints |
+
+## Running the scenario set
+
+One scenario is one prompt run twice in fresh, isolated directories — **baseline**: no plugin,
+the prompt plus the `docs_hint` line from `evals.json` (the honest comparison is against an
+agent that has the documentation, not against one that has nothing); **skill**: plugin
+installed, prompt alone. Answer questions only when asked, with the `operator_answers`. Grade
+the assertions (C = 2, Q = 1), record tokens and wall time, and compare by errors — the
+internal testing showed no wall-time difference between the arms on strong models, and none is
+expected. Run on every model in `models`; a scenario that both arms pass on every model is a
+passage doing no work. `F1-2fa-question` is a question, not a build: grade the transcript.
+Turn every new failure from the testing log into a scenario here before fixing the skill:
+watch it fail, fix, watch it pass.
 
 ## Setup
 
