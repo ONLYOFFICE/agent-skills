@@ -22,9 +22,17 @@ README. On its own: copy this directory to where your agent scans for skills (fo
 ## Tools
 
 ```sh
+node skills/embed-sdk/scripts/probe-portal.mjs https://portal.example.com --origin https://app.example.com
 node skills/embed-sdk/scripts/validate-config.mjs '<TFrameConfig JSON>'   # or a file path, or stdin
 node skills/embed-sdk/scripts/test-validator.mjs
+node skills/embed-sdk/scripts/sync-sdk.mjs --from node_modules/@onlyoffice/docspace-sdk-js --check
 ```
+
+The **portal probe** is Step 0 of the skill as a script: it reports which SDK bundles the
+portal serves and whether the newest carries OAuth, the `X-Frame-Options` and
+`frame-ancestors` headers on the frame pages, OAuth discovery, the CSP allow-list, and ends
+with a recommendation (npm or portal script, modes available, what the admin must change).
+It is the one script here that touches the network — only the portal you name, reads only.
 
 The **validator** checks one `TFrameConfig` against the SDK's types and enums without a
 portal: the required trio (`frameId`, `mode`, `src`), the mode-specific required fields
@@ -60,10 +68,13 @@ evals/        the A/B protocol: task prompt, operator guide, rubric — a mainte
 
 ## Maintaining it
 
-`references/config-reference.md` and the dictionary at the top of
-`scripts/validate-config.mjs` (`MODES`, `ENUMS`, `FILTER_ENUMS`, `KNOWN_KEYS`,
-`KNOWN_EVENTS`, `KNOWN_CUSTOMIZATION_KEYS`, `MODE_REQUIREMENTS`) are hand-synced with
-`src/types` and `src/enums` of the [SDK repository](https://github.com/ONLYOFFICE/docspace-sdk-js).
-On every SDK release: diff those sources, update both, bump `metadata.sdk-version` in
-`SKILL.md` and the version in its "Pinned facts" section, run the self-test, then the
-[evals](evals/README.md).
+The validator's dictionaries (`MODES`, `ENUMS`, `FILTER_ENUMS`, `BOOLEAN_FIELDS`,
+`KNOWN_KEYS`, `KNOWN_FILTER_KEYS`, `KNOWN_CUSTOMIZATION_KEYS`, `KNOWN_EVENTS`) are generated
+from the SDK's type declarations by `scripts/sync-sdk.mjs`; `MODE_REQUIREMENTS` and
+`SORTBY_HINTS` are hand-written. External links and the pinned version are declared in
+`sources.json` and checked by `node tools/sync-sources.mjs --skill embed-sdk --check`.
+On every SDK release: `node tools/sync-sources.mjs --skill embed-sdk --set-version <x.y.z>`,
+`node scripts/sync-sdk.mjs --from <sdk checkout or node_modules package> --write`, read the
+release changelog and update the references that describe behaviour, run the self-test,
+then the [evals](evals/README.md). `references/config-reference.md` keeps only what the types
+do not say (defaults, which mode reads a field, traps) and is revised by hand.

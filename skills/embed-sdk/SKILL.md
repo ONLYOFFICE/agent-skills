@@ -59,13 +59,14 @@ forth between them:
    - `https://api.onlyoffice.com/docspace/javascript-sdk/get-started/` (+ `quickstart/`,
      `playground/`, `authentication-security/`)
    - `https://api.onlyoffice.com/docspace/javascript-sdk/embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|frame}-mode/`
-   - `https://api.onlyoffice.com/docspace/javascript-sdk/customization/` (`theming/`, `locale/`, `ui-elements/`)
-   - `https://api.onlyoffice.com/docspace/javascript-sdk/events-and-callbacks/`
+   - `https://api.onlyoffice.com/docspace/javascript-sdk/customization/{theming|locale|ui-elements}/`
+   - `https://api.onlyoffice.com/docspace/javascript-sdk/events-and-callbacks/` (published with SDK 2.2)
    - `https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/` — generated API
      reference (`classes/SDK/`, `classes/SDKInstance/`, `classes/SDKError/`, `type-aliases/…`,
      `enumerations/…`, `variables/…`)
-   - `https://api.onlyoffice.com/docspace/javascript-sdk/samples/…`; live demo
-     `https://demo-embed.onlyoffice.com/`
+   - samples: `https://api.onlyoffice.com/docspace/javascript-sdk/samples/basic-samples/init-manager/`
+     and its siblings (`basic-samples/`, `advanced-samples/`, `integration-samples/`); live
+     demo `https://demo-embed.onlyoffice.com/`
    Section URLs without a final page segment 404. Pages are HTML; the site offers
    "View as Markdown" per page, there is no `llms.txt`.
 3. **The SDK sources** on GitHub, at the tag matching the installed version:
@@ -84,7 +85,8 @@ skill's references cover them.
 - **The portal REST API** (`/api/2.0/...`): room and folder semantics (`folderId` is the
   destination folder, `rootFolderId` is the root of a section — using it as a destination
   returns 403), file templates, sharing, users. Sources: the REST reference at
-  `https://api.onlyoffice.com/docspace/api-backend/` and the `@onlyoffice/docspace-api-sdk`
+  `https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts/` (its
+  `usage-api/` section has one page per operation) and the `@onlyoffice/docspace-api-sdk`
   packages. The SDK exposes only the methods in [methods](references/methods.md).
 - **The editor's own APIs** (Docs API, Document Builder, plugins) beyond what
   [editor-automation](references/editor-automation.md) needs.
@@ -136,20 +138,30 @@ publicly accessible** (no auth), so a plain GET from anywhere (curl, browser, CI
 probe the known versions above (200 → available, 404 → not); optionally sniff the bundle
 text for capability markers (`getToken` → >= 2.2).
 
-Probe the frame paths too — two headers decide whether an iframe can load at all:
+The whole discovery is one command — run it and paste the recommendations into your notes:
 
 ```
-curl -sI {portal}/old-sdk/system | grep -i -E "x-frame-options|content-security-policy"
-curl -sI {portal}/sdk/room-selector | grep -i -E "x-frame-options|content-security-policy"
+node scripts/probe-portal.mjs https://portal.example.com --origin https://your-host.example
 ```
 
-The portal's nginx sends `X-Frame-Options: SAMEORIGIN` on every page and adds
-`Content-Security-Policy: frame-ancestors …` from the portal's CSP settings (client 4.0.0).
-Browsers let `frame-ancestors` override `X-Frame-Options`, so embedding works **only while the
-CSP header is present and lists your origin**. `X-Frame-Options` without a CSP header in the
-probe means the CSP settings are not reaching that response (empty allow-list, Redis/API
-failure, a proxy stripping headers) — the frame will be refused by the browser with no SDK
-event. Report that to the portal admin verbatim.
+It probes the bundle versions, sniffs the OAuth marker, reads the frame headers of
+`/old-sdk/system`, `/sdk/room-selector` and `/sdk/chat`, checks OAuth discovery
+(`/.well-known/openid-configuration`) and reads the CSP allow-list (`GET /api/2.0/security/csp`
+answers anonymously on client 4.0.0). Without Node at hand, the header part by hand:
+
+```
+curl -sI -H "Accept: text/html" {portal}/old-sdk/system | grep -i -E "x-frame-options|content-security-policy"
+curl -sI -H "Accept: text/html" {portal}/sdk/room-selector | grep -i -E "x-frame-options|content-security-policy"
+```
+
+What the headers mean (client 4.0.0, verified on a live portal): `/old-sdk/system` — the page
+behind `initSystem` and the hash-login flow — carries `X-Frame-Options: SAMEORIGIN`; the
+`/sdk/*` pages do not. Every page also gets `Content-Security-Policy: frame-ancestors …`
+built from the portal's CSP allow-list. Browsers let `frame-ancestors` override
+`X-Frame-Options`, so the system frame embeds **only while the CSP header is present and lists
+your origin**; `X-Frame-Options` without a `frame-ancestors` header means the allow-list is
+not reaching that response (empty list, CSP cache, a proxy stripping headers) and the browser
+refuses the frame with no SDK event. Report that line to the portal admin verbatim.
 
 Then choose:
 
@@ -240,7 +252,9 @@ Violating any of these produces integrations that look right but fail.
 12. The host domain must be allow-listed on the portal
     (`{portal}/developer-tools/javascript-sdk`), or the SDK renders a CSP error page inside
     the iframe. Same-origin embedding skips the check. Production pattern: whitelist
-    programmatically via `GET/PUT /api/2.0/security/csp` when the integration is connected.
+    programmatically via `PUT /api/2.0/security/csp` (admin session or API key) when the
+    integration is connected; `GET /api/2.0/security/csp` answers anonymously (client 4.0.0),
+    so reading the current list needs no credentials — `probe-portal.mjs` does it.
     `checkCSP: false` is not a fix — it only disables early diagnostics.
 13. In SDK < 2.2 the CSP failure is distinguishable only by the exact message string
     ("The current domain is not set in the Content Security Policy (CSP) settings.");
