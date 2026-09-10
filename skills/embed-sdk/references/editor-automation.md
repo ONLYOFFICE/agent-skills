@@ -1,5 +1,9 @@
 # Editor automation: executeInEditor and the connector
 
+Contents: What executeInEditor actually does · Creating the connector · `callCommand` vs
+`executeMethod` · Passing data with `Asc.scope` · Forms via the Document Builder API ·
+Host ↔ editor messaging · Editor config for automation · Verification checklist
+
 Programmatic work inside an embedded editor (filling forms, reading form values, inserting
 signatures) goes through `instance.executeInEditor(callback, data?)`. Everything below is
 verified against the portal handler (`packages/doceditor/src/hooks/useSDK.tsx`) and the
