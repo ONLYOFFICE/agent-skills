@@ -1,8 +1,13 @@
 # TFrameConfig reference (SDK 2.2.0)
 
-Hand-maintained against `src/types/index.ts` and `src/constants/index.ts` of the SDK.
-Regenerate on every SDK release. Only `frameId`, `mode`, `src` are required; everything
-else falls back to `defaultConfig`.
+The authoritative field list is the installed package's
+`dist/types/main.d.ts` (`TFrameConfig`, `TFrameFilter`, `TEditorCustomization`); the
+validator's dictionaries are generated from it by `scripts/sync-sdk.mjs`. This file adds
+what the types do not say — defaults, which mode reads a field, and the traps. Only
+`frameId`, `mode`, `src` are required; everything else falls back to `defaultConfig`.
+
+Contents: Required · General / appearance · Entity / auth · Manager (+ `filter`) · Selectors ·
+Editor / viewer (+ `editorCustomization`) · Uploader · Forms · Chat · Personal · Iframe paths per mode
 
 ## Required
 
