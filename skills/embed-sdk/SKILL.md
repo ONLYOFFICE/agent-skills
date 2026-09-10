@@ -1,24 +1,24 @@
 ---
 name: embed-sdk
 description: >
-  Embed ONLYOFFICE DocSpace into web apps with the DocSpace Embed SDK
+  Embed ONLYOFFICE Apps (formerly DocSpace) into web apps with the Embed SDK
   (@onlyoffice/docspace-sdk-js).
-  Use when the user wants to embed a DocSpace file manager, document editor or
+  Use when the user wants to embed an ONLYOFFICE Apps file manager, document editor or
   viewer, room/file selector dialog, file uploader, forms gallery, AI chat, or
   personal files section; when configuring TFrameConfig, authentication (login
   hash flow, OAuth getToken, public room tokens), frame events, SDKInstance
   methods, or programmatic form filling via executeInEditor; or when debugging
-  a blank/failing DocSpace iframe or CSP errors.
+  a blank/failing ONLYOFFICE Apps iframe or CSP errors.
 license: Apache-2.0
 metadata:
   author: ONLYOFFICE
   sdk-version: "2.2.0"
 ---
 
-# ONLYOFFICE DocSpace Embed SDK
+# ONLYOFFICE Apps Embed SDK
 
 The Embed SDK (`@onlyoffice/docspace-sdk-js`, historically "JavaScript SDK") embeds
-DocSpace UI into a host page as an iframe and talks to it over postMessage.
+ONLYOFFICE Apps UI into a host page as an iframe and talks to it over postMessage.
 You create an instance per frame, configure it with a `TFrameConfig`, and call promise-based
 methods on it. This file is the router: read the matching reference file before writing code.
 
@@ -74,9 +74,9 @@ for those, rely on this skill's references and the SDK source.
 
 Before generating integration code, ask the user:
 
-1. **Which DocSpace portal** they are connecting to (the `src` URL). Without it you cannot
+1. **Which ONLYOFFICE Apps portal** they are connecting to (the `src` URL). Without it you cannot
    check CSP or the portal's SDK version.
-2. The portal's DocSpace/SDK version, if they know it.
+2. The portal's ONLYOFFICE Apps/SDK version, if they know it.
 
 If the version is unknown, detect it. `{portal}/static/scripts/sdk/{v}/api.js` is **always
 publicly accessible** (no auth), so a plain GET from anywhere (curl, browser, CI) works:
@@ -178,7 +178,7 @@ Violating any of these produces integrations that look right but fail.
     `SDKError(DISCONNECTED, "Message bus is not connected with frame")`; after that each
     call is bounded by `methodTimeout` (30 s) → `TIMEOUT`. Call methods after `onAppReady`.
 15. **The portal never rejects a method call — API-level failures resolve** (verified in
-    the DocSpace client dispatcher: every method is wrapped in `try/catch` and the caught
+    the ONLYOFFICE Apps client dispatcher: every method is wrapped in `try/catch` and the caught
     error is returned as the payload). Inspect the payload of any API-backed method:
     `status !== 200` means failure. Notorious cases: `login()` (invalid credentials) and
     `createRoom()` (`status: 402` = pricing plan limit — link the user to
@@ -192,8 +192,9 @@ Violating any of these produces integrations that look right but fail.
     accepts files only through its UI. Upload timeout is 120 s.
 18. `createFile`/`createFolder` operate on the current folder of an open manager/personal
     frame — resolve its id via `getFolderInfo()`.
-18a. `executeInEditor(cb, data)` invokes `cb(editor, asc, data)` — **three** arguments, the
-    SDK's `(instance, data?)` type is wrong. `editor` is the DocsAPI object: call
+18a. `executeInEditor(cb, data)` invokes `cb(editor, asc, data)` — **three** arguments.
+    SDK 2.2.0 types the callback that way; SDKs <= 2.1 declared `(instance, data?)`, which
+    was wrong. `editor` is the DocsAPI object: call
     `editor.createConnector()` yourself. Form fields are filled with the Document Builder
     API inside `connector.callCommand` (`Api.GetDocument().GetAllForms()` → `SetText`,
     `SetChecked`, …) with data passed through `Asc.scope`. `executeMethod("SetFormValue")`,
@@ -227,12 +228,12 @@ Violating any of these produces integrations that look right but fail.
 
 ```
 Who is the frame's user?
-├─ Already signed in to DocSpace (cookie)  → nothing to do
+├─ Already signed in to ONLYOFFICE Apps    → nothing to do
 ├─ Anonymous, public room                  → public-room + id (room) + requestToken
 ├─ Programmatic password login             → hidden system frame:
 │    getHashSettings → createHash → store hash server-side →
 │    on each visit: getUserInfo (session alive?) → login(email, hash) → check status !== 200
-├─ DocSpace OAuth app (SDK >= 2.2)         → getToken: () => fetch("/api/token")
+├─ ONLYOFFICE Apps OAuth app (SDK >= 2.2)  → getToken: () => fetch("/api/token")
 │    backend: authorization-code (+PKCE), refresh 30–60 s before expiry, rotate refresh token
 └─ Host portal with an OAuth provider      → providerName + inviteKey/emplType/uid
                                              (forms/chat/personal modes)
@@ -262,7 +263,7 @@ re-init them afterwards. Full recipes: [auth-recipes](references/auth-recipes.md
 | Symptom | Cause | Check / action |
 |---|---|---|
 | Blank iframe | missing `id` (editor/viewer); empty/invalid `src` | console: `SDK Warning: src is empty…` |
-| CSP error page inside frame | host domain not allow-listed | add it in DevTools → JavaScript SDK, or via the CSP API |
+| CSP error page inside frame | host domain not allow-listed | add it in Developer Tools → Embed SDK, or via the CSP API |
 | `Message bus is not connected…` | method called before `onAppReady` | move the call into the handler |
 | `SDKError TIMEOUT` | frame not responding for 30 s; method unsupported by mode/portal version | verify mode and portal version |
 | Events never fire | `frameId` ≠ container DOM id | compare markup and config |

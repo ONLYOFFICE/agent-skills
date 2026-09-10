@@ -83,7 +83,7 @@ Max score: 60 weighted — 39 checkpoints: 21 critical (×2) + 18 quality (×1).
 
 | # | W | Checkpoint | How to check | Rule |
 |---|---|---|---|---|
-| I1 | C | SETUP.md instructs allow-listing BOTH `http://localhost:5173` and `https://admin.internal.example.com` on the portal (Developer Tools → JavaScript SDK, or the CSP API) | read SETUP.md | 12 |
+| I1 | C | SETUP.md instructs allow-listing BOTH `http://localhost:5173` and `https://admin.internal.example.com` on the portal (Developer Tools → Embed SDK, or the CSP API) | read SETUP.md | 12 |
 | I2 | C | `checkCSP: false` is NOT used as a "fix" (absent, or true/default) | `grep -rn "checkCSP" src/` | 12 |
 | I3 | Q | CSP failure symptom described (error page inside the frame / `onAppError` message) so the admin can recognize it | SETUP.md | 13 |
 

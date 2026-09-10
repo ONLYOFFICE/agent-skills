@@ -22,10 +22,10 @@ c(instance, asc, data);          // three arguments
 | `asc` | `window.Asc` of the editor frame (`Asc.scope` lives here). |
 | `data` | the second argument you passed to `executeInEditor` (JSON-serialized). |
 
-> The SDK's TypeScript type says `(instance, data?) => void`. That type is wrong — the real
-> call has `asc` in the middle and `data` **third**. Writing `(editor, data) => …` gives you
-> `window.Asc` as `data`. Type the callback as `(editor: any, asc: any, data: any) => void`
-> (or ignore the second parameter with `_asc`).
+> SDK 2.2.0 types the callback as `(editor: any, asc: any, data?: any) => void`. SDKs <= 2.1
+> declared `(instance, data?) => void`, which was wrong — the real call has `asc` in the middle
+> and `data` **third**. Writing `(editor, data) => …` against those types gives you
+> `window.Asc` as `data`; ignore the second parameter with `_asc`.
 
 The callback is serialized with `Function.prototype.toString` and re-created with
 `new Function` inside the doceditor frame, so:
@@ -51,7 +51,7 @@ instance.executeInEditor(function (editor, asc, data) {
 ```
 
 `createConnector()` requires the editor to be started with the connector feature available
-(DocSpace editors have it; a plain Community Server without the connector license does not —
+(ONLYOFFICE Apps editors have it; a plain Community Server without the connector license does not —
 `createConnector` is then `undefined`, check for it).
 
 The connector exposes two calls:
@@ -133,7 +133,7 @@ Pitfalls actually observed:
 - If `GetAllForms()` returns an empty array, the file is not an ONLYOFFICE form (a plain
   `.docx` with content controls, or a third-party PDF whose AcroForm fields live in the
   separate PDF builder API — `ApiTextField`, `ApiCheckBoxField`, … in `pdf/src/apiPDF.js`).
-  DocSpace form-room PDFs are ONLYOFFICE forms: the official PDF-editor macro samples
+  ONLYOFFICE Apps form-room PDFs are ONLYOFFICE forms: the official PDF-editor macro samples
   (`autofill-fields`, `count-form-fields`) use exactly `Api.GetDocument().GetAllForms()`.
   Check the mode with `executeMethod("IsFillingFormMode")` / `IsFillingOFormMode`. `GetAllContentControls` is not a
   substitute — it enumerates content controls (structure), not form fields with keys and

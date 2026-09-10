@@ -4,9 +4,9 @@ Four production-proven flows. Pick via the decision tree in SKILL.md.
 
 ## 1. Credential-replay (password hash) — the classic plugin flow
 
-Used when the host app manages its own users and links each to a DocSpace account.
+Used when the host app manages its own users and links each to an ONLYOFFICE Apps account.
 
-**One-time linking** (user enters DocSpace email + password in *your* form):
+**One-time linking** (user enters ONLYOFFICE Apps email + password in *your* form):
 
 ```js
 // hidden system frame does the crypto — password never leaves the page unhashed
@@ -83,7 +83,7 @@ sdk.initManager({ frameId, src: portalUrl, getToken,
 
 There is **no automatic re-auth**: on `onAuthError` show your own re-login UX.
 
-Alternative for server-to-server calls (not the frame): a DocSpace **API key** as Bearer —
+Alternative for server-to-server calls (not the frame): an ONLYOFFICE Apps **API key** as Bearer —
 validate it via `GET /api/2.0/keys/@self` and required scopes; on 401/403 mark it invalid
 and surface reconnect UX.
 

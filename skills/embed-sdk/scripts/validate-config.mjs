@@ -153,7 +153,7 @@ if (!config.mode) {
   err(`mode: "${config.mode}" is not a known mode (${MODES.join(", ")})`);
 }
 if (!config.src) {
-  err("src: missing — the DocSpace portal origin is required");
+  err("src: missing — the ONLYOFFICE Apps portal origin is required");
 } else {
   try {
     const u = new URL(config.src);
