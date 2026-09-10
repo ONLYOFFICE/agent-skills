@@ -234,6 +234,40 @@ ENVIRONMENT
 ├── Use variable substitution: ${VAR:-default}
 └── Document all required env vars
 
+WHEN A SERVICE'S ADDRESS IS USED BOTH SERVER-SIDE AND FROM THE BROWSER
+├── A compose service name (e.g. http://documentserver) only resolves
+│   inside the compose network — never hand it to the browser
+├── The browser needs the published host port or public domain instead
+│   (e.g. http://localhost:8080) - a *different* value from what your
+│   own backend uses to reach that service
+└── Carry both as separate env vars even when local dev makes them look
+    interchangeable; conflating them surfaces as ERR_NAME_NOT_RESOLVED
+    in the browser console, not as a container-side error
+
+RUNNING AN ONLYOFFICE DOCUMENT SERVER + BACKEND LOCALLY IN COMPOSE
+├── Fixing the browser's address (above) surfaces a second-order problem:
+│   Document Server builds self-referential URLs (a save/force-save
+│   callback's `url`, a conversion response's `fileUrl`) from whatever
+│   origin the BROWSER used to reach it that session — not from any address
+│   your backend is configured with. Your backend then has to download
+│   from that same address to finish the save, even though it's the
+│   "browser-facing" one.
+├── `localhost` can never be that shared address: inside your backend's
+│   own container it means that container, not your host machine, so the
+│   download fails with connection-refused, not an auth error.
+└── Fix this in the code that downloads, not the network: your backend
+    already knows both its internal Document Server address and the public
+    one it handed the browser — when a Document-Server-issued URL's origin
+    matches the public one, rewrite it to the internal origin before
+    fetching (path/query untouched). No /etc/hosts, no compose networking
+    config, works unmodified on a fresh clone. It's a no-op when a
+    deployment only has one public Document Server address (both
+    configured values equal), and does real, identical work whenever a
+    production deployment splits an internal address (private VPC,
+    internal load balancer) from a public one the browser uses — not just
+    a dev-only shim. See [`callback/handler.md`](../callback/handler.md)
+    for the full rationale and the `WithPublicOrigin` pattern.
+
 DEVELOPMENT vs PRODUCTION
 ├── Use compose profiles or override files
 ├── Dev: bind mounts for hot reload, debug ports exposed

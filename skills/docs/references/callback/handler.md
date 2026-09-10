@@ -49,6 +49,61 @@ Every callback carries an integer `status`; branch on it:
 | **users** | string[] | No | Users active in this session. |
 | **forcesavetype**| integer | No | Present when `status` is 6 or 7; what triggered the snapshot. |
 
+### `url`'s host is not something your backend controls
+
+Document Server builds `url` from the origin *the browser* used to load and
+talk to it during that editing session — not from any address your backend
+is configured with. If the browser reached Document Server at a "public"
+address (see [`api.md`](../api.md)'s Bootstrap section on why that's often
+different from what your backend uses server-to-server), `url` on this
+callback will use that same public address, and your backend must be able
+to resolve and reach it too — from wherever this handler runs, which may be
+a different network namespace than the browser (a container vs. the host,
+for instance).
+
+This bites hardest in a local Docker Compose setup: if the browser-facing
+address is `http://localhost:8080`, `url` will say `http://localhost:8080/
+cache/files/...` — and `localhost` inside your backend's own container
+means *that container*, not your host machine, so the download fails with a
+connection-refused error, not an auth error. `localhost` specifically can
+never work for this, because it's namespace-relative by definition.
+
+**Fix it in the code that downloads, not the network**: your backend already
+knows both addresses (its own internal one, and the public one it handed to
+the browser) — when a URL Document Server gave you matches the public
+origin, swap in the internal origin before fetching, keeping the path and
+query untouched (the cache key, md5, expiry, and shardkey Document Server
+generated aren't tied to which origin reached it, only to the file). This
+needs no host-file entry, no compose networking trick, and no manual setup
+on a fresh clone.
+
+This is not a dev-only workaround with a production no-op bolted on — the
+same two-address split is a legitimate production topology in its own
+right, and the identical rewrite does real work there too. Two cases, one
+rule:
+
+* **One public domain for Document Server** (small/simple deployments): the
+  internal and public addresses are the same real domain, so the rewrite is
+  a no-op — it costs nothing to leave in, and removing it would just be
+  removing dead code for no benefit.
+* **Split internal/public addresses in production** (Document Server sits
+  behind an internal load balancer or private-VPC DNS record your backend
+  uses for lower latency and no public egress, while the browser reaches it
+  through a separate public domain/CDN/ingress): the rewrite is doing
+  exactly the same job it does in local Docker Compose — translating a
+  browser-origin URL back to the address this backend can actually route
+  to. This is a common, intentional production architecture, not an edge
+  case to special-case away.
+
+Either way, configure both addresses (they default to equal, so a simple
+deployment needs zero extra configuration) and let the rewrite handle
+whichever relationship between them turns out to be true at runtime. See
+`internal/documents/adapters/output/onlyoffice`'s `Client.WithPublicOrigin`
+in the reference Go sample app for the pattern (rewrite at the HTTP-client
+boundary, not scattered through call sites) — and
+[`infrastructure/docker.md`](../infrastructure/docker.md) for the Compose
+env-var wiring this depends on.
+
 ## Example (Express.js)
 
 ```javascript

@@ -22,6 +22,31 @@ Load the API script from the Document Server origin:
 <script type="text/javascript" src="https://documentserver/web-apps/apps/api/documents/api.js"></script>
 ```
 
+**This origin must be reachable by the end user's browser specifically** — not
+by your backend. The two are frequently *different addresses* and mixing
+them up is one of the most common integration bugs:
+
+* Server-to-server calls your backend makes to Document Server (conversion
+  requests — [`conversion.md`](./additional/conversion/conversion.md); the
+  `command` API — [`command.md`](./additional/command.md)) can use whatever
+  address your backend resolves — a Docker Compose service name
+  (`http://documentserver`), an internal DNS record, a service-mesh host.
+* This script tag, and everything else the browser does with Document
+  Server directly (the iframe's own network calls once it's running), needs
+  the address a browser *outside* your infrastructure can resolve and
+  reach — a published host port (`http://localhost:8080` in local dev) or a
+  public/VPN domain.
+
+**Symptom when these get conflated** (e.g. one `DOCS_SERVER_URL` env var
+templated into both the backend's HTTP client and this script tag): the
+browser console shows `net::ERR_NAME_NOT_RESOLVED` on the `api.js` request,
+immediately followed by `Uncaught ReferenceError: DocsAPI is not defined` at
+the line that calls `new DocsAPI.DocEditor(...)` — the constructor call
+itself is correct, but the script that defines `DocsAPI` never loaded. Fix
+by carrying two separate config values (e.g. `DOCS_SERVER_INTERNAL_URL` for
+your backend's HTTP client, `DOCS_SERVER_PUBLIC_URL` for this template) even
+when they happen to be the same value in a given deployment.
+
 ### Constructor
 `DocsAPI.DocEditor(id, config)` takes two arguments:
 1. **`id`** (string) — the `id` of an existing container element (e.g. `<div id="placeholder"></div>`).
