@@ -89,6 +89,47 @@ USER nonroot:nonroot
 ENTRYPOINT ["/server"]
 ```
 
+### Compiled language with a persistent writable directory
+
+The moment the app needs somewhere to write at runtime (uploaded files, a
+cache, a database file), the pattern above isn't enough — `distroless` has no
+shell, so there's no later stage where you could `mkdir`/`chown` as root. Do
+it in the builder stage, which has coreutils, and `COPY --chown` the
+already-owned directory across:
+
+```dockerfile
+FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /app/server ./cmd/server
+
+# distroless:nonroot's user is UID/GID 65532. Create the writable dir here,
+# owned by that UID, so it can be copied into the final stage already
+# correct — the final stage can't chown it itself (no shell, no root RUN).
+RUN mkdir -p /app/data && chown -R 65532:65532 /app/data
+
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=builder /app/server /server
+COPY --from=builder --chown=nonroot:nonroot /app/data /data
+VOLUME ["/data"]
+USER nonroot:nonroot
+ENTRYPOINT ["/server"]
+```
+
+Why this matters even with `--chown`, a bind mount, or a named volume in
+compose: when a **named volume** is empty and gets attached for the first
+time, Docker seeds it by copying the image's content *and ownership* from
+that mount path. If the image never gave that path an owner (a bare
+`VOLUME` line, or a directory that only ever got created implicitly),
+Docker creates it as `root:root` — and a `USER nonroot` process can never
+write into it, no matter how the compose file mounts it. This is invisible
+at `docker build` time; it only surfaces at runtime, as `mkdir: permission
+denied` on first write, and it repeats on every restart until the volume
+itself is recreated (`docker compose down -v`, or removing the named
+volume) — rebuilding the image alone does not fix an already-seeded volume.
+
 ### Node.js / TypeScript
 ```dockerfile
 FROM node:20-alpine AS deps
@@ -205,7 +246,7 @@ DEVELOPMENT vs PRODUCTION
 | :--- | :--- | :--- |
 | Container exits immediately | CMD/ENTRYPOINT crashes, missing env vars | `docker compose logs <service>` |
 | Port already in use | Another service/process on the same port | Change the host port: `"3001:3000"` |
-| Volume permissions denied | Container user doesn't own the mounted path | Match UID/GID, or use a named volume |
+| Volume permissions denied (`mkdir`/`open`: permission denied) on a `USER nonroot`/distroless image | Named volume was first seeded from a mount-point directory the image never chowned to that UID, so it came up `root:root` | Pre-create and `chown` the directory in an earlier build stage, `COPY --chown` it into the final stage (see the persistent-directory pattern above) — then `docker compose down -v` (or remove that one named volume) so it gets re-seeded from the fixed image; rebuilding alone won't fix a volume that already exists |
 | Build cache not working | `COPY . .` invalidates cache too early | Copy deps first, then source |
 | `depends_on` doesn't wait | No healthcheck condition | Add `condition: service_healthy` |
 | Container OOM killed | No memory limit, or limit too low | Set an appropriate `mem_limit` |
@@ -221,3 +262,4 @@ Flag these without being asked:
 - **Image over 1GB** -> needs a multi-stage build; no production image should be this large.
 - **No healthcheck** -> add one.
 - **`apt-get` without cleanup in the same layer** -> `rm -rf /var/lib/apt/lists/*` in the same `RUN`.
+- **`VOLUME`/persistent data dir combined with `USER nonroot`, and the final stage has no shell** (distroless, `scratch`) -> the directory must be created and `chown`'d in a stage that has a shell, then `COPY --chown`'d into the final stage before the `VOLUME` line. A bare `VOLUME ["/app/data"]` with no prior ownership leaves that path `root:root` the first time a named volume seeds from it, and the app can never write to it.
