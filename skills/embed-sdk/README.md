@@ -38,9 +38,14 @@ verdicts and the messages that matter.
 
 ## What it targets
 
-Embed SDK **2.2.0**. It also documents connecting through the portal's own script
-(`/static/scripts/sdk/{version}/api.js`), because the portal, not the npm package, decides
-which methods exist. Node >= 18.
+Embed SDK **2.2.0** from npm as the default connection. It also documents connecting through
+the portal's own script (`/static/scripts/sdk/{version}/api.js`) for pages without a build
+step and for portals older than the package, because the portal, not the npm package,
+decides which methods exist. Beyond the SDK contract it records the portal behaviours that
+break real integrations and that no type expresses: which of the five "tokens" does what,
+why a cross-origin frame answers 401 with a live session, why `login()` cannot pass 2FA,
+what the chat page needs before it renders, and what the manager events actually carry.
+Node >= 18.
 
 ## Layout
 

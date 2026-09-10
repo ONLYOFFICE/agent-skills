@@ -51,7 +51,7 @@ portal-version-specific — older portals handle fewer methods.
 | Method | Notes |
 |---|---|
 | `initFrame(config)` | (re)build the iframe; warns to console on empty `frameId`/`src` |
-| `destroyFrame()` | replaces container with a div (keeps `frameId`, shows `destroyText`), removes listeners, clears pending calls, deregisters from `DocSpace.SDK.frames` |
+| `destroyFrame()` | synchronous; replaces the iframe with a placeholder `<div id="{frameId}">` showing `destroyText`, removes the `message` listener, rejects pending calls, deletes the entry from `DocSpace.SDK.frames`. The container id survives, so `init*` on the same `frameId` may follow immediately — nothing to await |
 | `setConfig(config, reload = false)` | merge + send config to the frame; `reload: true` re-runs `initFrame` |
 | `getConfig()` | returns the current merged `TFrameConfig` (synchronous) |
 | `setIsLoaded()` | public: removes the loader, reveals the iframe and fires `onContentReady` (every call) — needed for System mode, which never completes on its own |
@@ -79,14 +79,14 @@ portal-version-specific — older portals handle fewer methods.
 |---|---|
 | `getHashSettings()` | `{ size, iterations, salt }` — PBKDF2 parameters of the portal |
 | `createHash(password, hashSettings)` | portal-compatible password hash; run in a hidden System frame |
-| `login(email, passwordHash, password?, session?)` | the portal reads only `email` and `passwordHash` (client 4.0.0) — `password` and `session` are sent but ignored, and the session is always persistent; **check `status !== 200`** |
+| `login(email, passwordHash, password?, session?)` | the portal reads only `email` and `passwordHash` (client 4.0.0) — `password` and `session` are sent but ignored, and the session is always persistent; **check `status !== 200`**. No 2FA: there is no code argument and the portal's `POST /authentication/{code}` step is unreachable from the SDK, so an account with 2FA enabled never gets a session this way — see [auth-recipes §7](auth-recipes.md#7-two-factor-authentication) |
 | `logout()` | end the portal session |
 
 ## Content
 
 | Method | Notes |
 |---|---|
-| `createFile(folderId, title, templateId?, formId?)` | folder id usually from `getFolderInfo()` |
+| `createFile(folderId, title, templateId?, formId?)` | the portal runs `POST /files/{folderId}/file` with `{ title, templateId, formId }` (client 4.0.0). **The format comes from the extension in `title`**: `"Contract.pdf"` creates a PDF (form), `"Contract.docx"` a text document — copying a PDF form template under a `.docx` title yields a plain document that is no longer a form. `templateId`/`formId` only supply the content. `folderId` is a destination folder: `getFolderInfo().id` of an open Manager frame, a file-selector's `folderId`, or your stored mapping — never a section's `rootFolderId` (REST answers 403). Check `status` in the resolved payload |
 | `createFolder(parentFolderId, title)` | returns `TFolderInfo` |
 | `createRoom(title, roomType, options?)` | SDK 2.2 signature; `options: TCreateRoomOptions = { quota?, tags?, color?, cover?, indexing?, denyDownload? }`. **Older SDKs (<= 2.1) had positional params** `(title, type, quota?, tags?)` — real integrations hit type mismatches here; match the portal's SDK version. Room types (numeric): `1` form-filling, `2` collaboration, `5` custom, `6` public, `8` virtual data room |
 | `setListView(viewType)` | `"row"` / `"table"` / `"tile"` |
