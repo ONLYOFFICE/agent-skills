@@ -27,7 +27,9 @@ Key points:
   - programmatically — a room-selector payload: `items[0].id` +
     `items[0].requestTokens[0].requestToken` (see [selectors.md](selectors.md)).
 - The iframe path is `/sdk/public-room`; embeds that combine a manager view over a public
-  room use `mode: "manager"` + `requestToken` + `rootPath: "/rooms/share"` instead.
+  room use `mode: "manager"` + `requestToken` + `rootPath: "/rooms/share"` instead. The
+  validator knows this pair: it stays silent on `requestToken` when `rootPath` is
+  `/rooms/share`, and reports an error if that `rootPath` comes without the token.
 - No authentication of any kind is needed — public-room frames on multi-frame pages can
   be initialized immediately, before any login completes (unlike other frames, which may
   need parking with `waiting: true` — see [auth-recipes.md](../auth-recipes.md)).

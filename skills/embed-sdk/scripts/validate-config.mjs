@@ -268,8 +268,12 @@ if (config.events !== undefined) {
 if (config.accessToken !== undefined && config.getToken !== undefined) {
   warn("accessToken and getToken both set — getToken wins; drop accessToken");
 }
-if (config.mode !== "public-room" && config.requestToken) {
-  warn(`requestToken set in "${config.mode}" mode — only meaningful for public-room and shared-file access`);
+const sharedRoomManager = config.mode === "manager" && /\/rooms\/share\b/.test(String(config.rootPath ?? ""));
+if (config.mode !== "public-room" && config.requestToken && !sharedRoomManager) {
+  warn(`requestToken set in "${config.mode}" mode — only meaningful for public-room, or for manager with rootPath "/rooms/share"`);
+}
+if (sharedRoomManager && !config.requestToken) {
+  err(`requestToken: required when manager mode uses rootPath "/rooms/share"`);
 }
 
 // --- report -----------------------------------------------------------------------
