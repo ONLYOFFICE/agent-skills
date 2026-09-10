@@ -2,20 +2,23 @@
 
 ## Context & Purpose
 
-This guide defines which input and output format pairs are valid for pre-flight validation checks before sending a request to the ONLYOFFICE Conversion API. 
+Defines which input/output format pairs are valid for Conversion API pre-flight checks. **Authority is the [`ONLYOFFICE/document-formats`](https://github.com/ONLYOFFICE/document-formats) repo** (`onlyoffice-docs-formats.json`), vendored the same way [`templates.md`](../../templates.md) vendors `document-templates` - not this file's summary table, and not a hand-authored list in generated code.
 
 ## Reference Documentation Map
 
-* **Format Conversion Matrix Project:** https://github.com/ONLYOFFICE/document-formats
-* **Format Conversion Matrix:** https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/conversion-tables
+* **Format Conversion Matrix Repo (source of truth):** https://github.com/ONLYOFFICE/document-formats - file `onlyoffice-docs-formats.json`
+* **Format Conversion Matrix Documentation:** https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/conversion-tables
 * **Parent Skill:** [`conversion.md`](./conversion.md) family index.
+* **Vendoring pattern to mirror:** [`templates.md`](../../templates.md) (git submodule, pinned commit, read from disk).
 
 ## Documentation Query Rules
 
-* **Baseline:** Per [`api.md`](../../api.md) — this guide is self-sufficient. Use document-formats project as a submodule for conversion matrix
-* **Fallback:** Check live docs only for format pairs not listed below.
+* **Baseline:** Per [`api.md`](../../api.md) — this guide is self-sufficient. Generated integrations **must** add `document-formats` as a **git submodule** (prefer under `vendor/document-formats/`), pin a commit, and load `onlyoffice-docs-formats.json` for pair checks. Do not copy the table below into source.
+* **Fallback:** Check live docs / the submodule tip only for pairs not covered by the pinned JSON.
 
 ## Common Format Pairs
+
+Orientation only — **do not hardcode into the integration**; read the vendored JSON instead.
 
 | Source (`filetype`) | Allowed Targets (`outputtype`) | Notes |
 | :--- | :--- | :--- |
@@ -28,6 +31,6 @@ This guide defines which input and output format pairs are valid for pre-flight 
 
 ## Constraints
 
-* **Submodule** mandatory to use document-formats project as a submodule for conversion matrix.
+* **Submodule required:** `git submodule add` [`ONLYOFFICE/document-formats`](https://github.com/ONLYOFFICE/document-formats) (pinned commit); load `onlyoffice-docs-formats.json` before `POST /convert`. Same preference as templates: submodule over a live fetch; never request-time network to GitHub.
 * **Case:** `filetype`/`outputtype` must be lowercase — `"DOCX"` is rejected.
 * **Illegal pairs:** cross-category conversions the server disallows (e.g. `xlsx` -> `epub`) return error `-7` — see [`errors.md`](./errors.md).

@@ -11,8 +11,7 @@ The **Conversion API**: synchronous HTTP POST requests to the Document Server's 
 * **Request Payload Structure:** https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/request
 * **Response Payload Structure:** https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/response
 * **System Error Codes Reference:** https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/error-codes
-* **Format Conversion Matrix:** https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/conversion-tables
-a
+* **Format Conversion Matrix:** [`table.md`](./table.md) — vendored [`document-formats`](https://github.com/ONLYOFFICE/document-formats) submodule; live tables at https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/conversion-tables
 
 ## Documentation Query Rules
 
