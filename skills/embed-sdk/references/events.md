@@ -44,10 +44,13 @@ mode needs.
 
 | Event | Fires when | Payload |
 |---|---|---|
-| `onFileManagerClick` | file row clicked in the manager list | item object (`id`, …) — e.g. open your own editor tab |
-| `onEditorOpen` | editor opened from the manager (context menu, hotkey, modal) | object — e.g. intercept and host the editor in your own modal |
+| `onFileManagerClick` | a **file** row is activated in the manager list; folders never fire it (a folder click navigates into the folder) | the portal's file object, as returned by the files API (client 4.0.0): `id`, `title`, `fileExst` (`".docx"`), `fileType` (numeric), `folderId`, `rootFolderId`, `viewUrl`, `webUrl`, `security` (`{ Read, Edit, Download, … }`), `created`, `updated`, `createdBy`, `updatedBy`, `version`, `shared`, … Read `id`, `title`, `fileExst`; do not write "is it a file" heuristics — it always is. Registering the handler suppresses the portal's own open action, so open the file yourself (own viewer/editor frame) |
+| `onEditorOpen` | the manager is about to open the editor (row activation without `onFileManagerClick`, context menu, hotkey, "Create" dialog) | the same file object plus `share` (share key when the room is opened by link, else empty) and `action`: `"view"` \| `"fill"` \| `"edit"`. When the user creates a new document, the payload is the created file (`id`, `title`, `fileExst`, `folderId`, …) with no `action`. Registering the handler suppresses the portal editor — host it in your own frame with `id: payload.id` |
 | `onEditorCloseCallback` | editor closed (also when `editorGoBack: "event"`) | — |
 | `onDownload` | download requested and `downloadToEvent: true` | `url: string` — bridge the file into the host system |
+
+Both manager events fire only when the handler is present in `config.events`; leaving one
+`null` restores the portal's default behaviour for that action.
 
 ## Uploads (Uploader + Forms modes)
 
