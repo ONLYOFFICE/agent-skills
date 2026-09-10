@@ -79,8 +79,11 @@ alike — the one directory to use when a project mixes agents.
 
 ```
 .claude-plugin/          plugin + marketplace manifests
+.claude/skills/          repository-internal skills (sync-sources) — not shipped in the plugin
+tools/                   sync-sources.mjs: every link and pinned version traces to a skill's sources.json
 skills/embed-sdk/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
+├── sources.json         SDK version, docs/repo/demo sites, placeholder hosts
 ├── references/
 │   ├── config-reference.md    TFrameConfig fields by mode (kept in sync with SDK types)
 │   ├── modes/                 one file per SDK mode
@@ -90,7 +93,8 @@ skills/embed-sdk/
 │   ├── auth-recipes.md        production authentication recipes
 │   ├── testing.md             e2e-testing embedded frames
 │   └── frameworks/            React / Next.js / Vue / Angular recipes
-├── scripts/             validate-config.mjs (offline TFrameConfig validator) + its self-test
+├── scripts/             probe-portal.mjs (Step 0 as a script), validate-config.mjs + its self-test,
+│                        sync-sdk.mjs (validator dictionaries from the SDK types)
 └── evals/               A/B evaluation protocol (task, rubric, operator guide)
 skills/plugin-sdk/
 ├── SKILL.md             router: build / audit / explain, scope tables, critical rules
