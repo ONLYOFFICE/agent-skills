@@ -28,7 +28,7 @@ No event is strictly mandatory to boot the editor, but a production integration 
 | **onDocumentReady** | function | *None* | File loaded and safe for programmatic interaction. Required. |
 | **onDocumentStateChange**| function | *None* | Tracks unsaved-edit state. Required. |
 | **onError** | function | *None* | Passes `event.data.errorCode` and description. |
-| **onRequestClose** | function | *None* | Custom close-button handling. Typically calls `destroyEditor()` — see [`methods.md`](../methods.md). |
+| **onRequestClose** | function | *None* | Fires from the `customization.goback` button when `requestClose: true` (see [`editor.md`](./editor.md)). Call `destroyEditor()` — see [`methods.md`](../methods.md) — **and then navigate back** to `goback.url` (or the SPA route it represents); a handler that only destroys the editor and stops there leaves the visitor on a blank page, which is the exact dead end `goback` exists to prevent. |
 | **onRequestRefreshFile** | function | *None* | Replaces `onOutdatedVersion`. Typically calls `refreshFile(config)` — see [`methods.md`](../methods.md). |
 | **onRequestEditRights** | function | *None* | Fires when switching from viewing to editing. |
 | **onRequestHistory** | function | *None* | User requested the version history panel. |
@@ -86,6 +86,7 @@ const config = {
         return;
       }
       docEditor.destroyEditor();
+      window.location.href = "/"; // back to the file list/dashboard - what the goback button is for
     },
     onRequestRefreshFile: function() {
       docEditor.refreshFile({

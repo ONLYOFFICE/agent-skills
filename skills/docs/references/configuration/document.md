@@ -54,16 +54,24 @@ The `document` section of the root `config`: file identity, download source, met
 
 ### `permissions`
 Governs what the current user can do with the open document. *Note: defaults depend on the editor's `mode` — `"view"` implicitly blocks editing actions unless a permission overrides it.*
+
+This object has more keys than the six most commonly wired up — a generated integration that only sets `comment`/`copy`/`download`/`edit`/`print`/`review` and stops there is reproducing a partial list, not the actual schema. In particular `fillForms` and `modifyFilter` are frequently asked for (form-based workflows, spreadsheet filter locking) and just as frequently missed because they're easy to forget when copying a shorter example:
+
 ```json
 "permissions": {
   "comment": true, // View/create/edit comments.
   "copy": true, // Copy content to the clipboard.
   "download": true, // Show the download/export button.
   "edit": true, // Allow edits to sync back.
+  "fillForms": true, // Allow filling in form fields (relevant to fillable/oform documents).
+  "modifyFilter": true, // Allow changing spreadsheet AutoFilter/sort state for everyone, not just the current user's view.
   "print": true, // Allow printing.
+  "protect": true, // Allow changing document protection/restricted-editing settings.
   "review": true // Allow track-changes actions.
 }
 ```
+
+Less commonly needed, but part of the same object when the scenario calls for them: `chat` (in-editor chat panel), `commentGroups`/`reviewGroups`/`userInfoGroups` (restrict comment/review visibility and actions to named groups), `deleteCommentAuthorOnly`/`editCommentAuthorOnly` (lock comment edit/delete to their author), `modifyContentControl` (editing content-control-wrapped regions), `printArea` (spreadsheet print-area changes), and `changeHistory` (allow editing the change-history log itself). Check the live docs page above before assuming this list is exhaustive — treat "which permissions exist" the same as the conversion format table: something to look up per task, not recite from memory.
 
 ## Example
 
