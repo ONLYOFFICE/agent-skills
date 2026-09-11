@@ -29,9 +29,12 @@ When generating an integration or example, the reusable backend and any frontend
 * **Generate the backend by default.** The reusable API surface — the endpoints a third-party system would actually call — is the deliverable unless told otherwise.
 * **Keep the UI removable, not entangled.** Put it behind its own module/feature flag/build target so the backend still compiles, ships, and is consumable standalone with the UI fully absent — not just unrouted. A third-party integrator should never need to pull in demo-page code to use the backend.
 * **Scope the UI before building it.** A minimal page proving the integration works and a full admin-style sample UI (file listing, per-item actions, user/language pickers, …) are different amounts of work with different backend requirements — the latter usually needs list/delete/rename endpoints the bare integration doesn't. Confirm which one before building the larger one rather than assuming it.
+* **Style it deliberately.** Whatever UI gets built is held to [`ui.md`](../ui.md)'s bar: one design system settled before the first component, a style direction the user named (looked up, not recalled) or ONLYOFFICE's own identity as the fallback, and no part of it left as bare unstyled markup because it wasn't in the reference you started from.
+* **Mount the whole contract surface.** The backend's audience is a caller you'll never meet, so the callback, download, upload and convert routes all get mounted even when this deliverable's UI only exercises some of them — see [`example.md`](../example.md)'s Endpoints on why conversion in particular tends to go missing.
 
 ## Anti-Patterns
 
 * Shipping a `GET /` demo page as part of "the backend" with no way to omit it.
 * Building a full admin-style sample UI when a one-line "it works" check would have answered the actual question.
+* A sample UI where some components carry real styling and others are left at browser defaults — an unstyled control reads as broken to whoever's clicking through it.
 * Letting UI-only concerns (a page's asset URLs, its own presentation state) leak into the domain/use-case layer meant to be reused.
