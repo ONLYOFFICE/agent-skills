@@ -47,4 +47,4 @@ The editing engine's request to your `callbackUrl` carries a root-level `token`.
 
 1. Extract the `token` value.
 2. Verify it against `secret.outbox.string`.
-3. Compare the decoded claims (e.g. `payload.status`, `payload.url`) against the outer root fields to catch payload-splicing attacks.
+3. Compare the decoded claims (e.g. `payload.status`, `payload.url`) against the outer root fields to catch payload-splicing attacks — but only the payload-specific claims that actually mirror a body field. The JWT library that signs the token also stamps standard registered claims (RFC 7519 §4.1) that describe the token itself, not the payload: `iat` in particular is added to every token Document Server issues, and `exp`, `nbf`, `iss`, `aud`, `sub`, `jti` are also reserved names. None of these appear as sibling root fields on the callback body, so diffing every decoded claim against the body — rather than skipping this reserved set — rejects every genuine callback, not just spliced ones.
