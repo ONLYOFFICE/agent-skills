@@ -18,12 +18,18 @@ The server-to-server callback (`callbackUrl`) your storage backend must implemen
 
 ## Required Response Payload
 
-The backend must return this exact response, or the editor's saving flow raises an error:
+The backend must return this exact response, or the editing service treats the delivery as failed and re-POSTs the identical callback until it succeeds:
 ```json
 {
   "error": 0
 }
 ```
+
+Three cases sit behind that one rule, and conflating them is what produces either an endless retry loop or a silently lost save:
+
+* **Handled — including statuses you only logged.** `1` and `4` carry no work, but an unacknowledged callback is retried exactly like a rejected one. Acknowledge every status the handler dealt with.
+* **Rejected — no acknowledgement.** A request whose token is missing or fails verification must not be answered with `{"error": 0}`; acknowledging a forgery tells the sender it worked.
+* **Genuinely failed — answer non-zero.** If the download or the disk write failed, the retry is the *correct* behaviour and the only thing that will save the user's work. Swallowing a real failure into `{"error": 0}` loses the save with no trace.
 
 ## Status Codes (`status`)
 
@@ -152,6 +158,10 @@ app.post("/api/onlyoffice/callback", async (req, res) => {
 
 ## Constraints & Anti-Patterns
 
-* **Missing `{"error": 0}`:** ONLYOFFICE retries the callback indefinitely, assuming a network timeout.
+* **Missing `{"error": 0}`:** ONLYOFFICE retries the callback indefinitely, assuming a network timeout. See **Required Response Payload** above for the three cases that rule splits into.
 * **Skipping token verification:** When JWT is enabled, the body carries a `token`. Verify it *before* downloading, or you're open to data-injection attacks. See [`signature/body.md`](../signature/body.md).
+* **Comparing *every* decoded claim against the body:** the anti-splicing check compares the payload claims — `status`, `url`, `key` — with their sibling root fields. It must skip the registered JWT claims the signer stamps on every token (`iat` above all, plus `exp`/`nbf`/`iss`/`aud`/`sub`/`jti`), which describe the token rather than the payload and never appear as body fields. Diffing the whole claim set instead rejects every genuine callback as a forgery — the symptom is a token error naming `iat` on requests that are entirely legitimate.
+* **Reading `url` unguarded:** it's absent on statuses `1` and `4` (see the field table above). Touching it there throws inside the handler and turns a routine callback into a retry.
+* **Letting the request body steer the write path:** `key` and any filename in the payload arrive from the network. Derive the storage path so it cannot escape the storage directory, no matter what value shows up.
+* **Treating `6` as a close:** force-save is a snapshot with the session still open — don't release locks or tear down state there.
 * **Blocking downloads:** Large files can take time — process them asynchronously so you don't block the connection.
