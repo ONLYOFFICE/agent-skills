@@ -44,7 +44,10 @@ How to parse the JSON response from the conversion gateway.
 
 ## Processing Rules
 
-1. Check for an `error` key first — if present, hand off to [`errors.md`](./errors.md).
-2. Otherwise check `endConvert`.
-3. If `false`, wait briefly and re-poll with the identical request.
-4. If `true`, download the file from `fileUrl`.
+1. Check for an `error` key first — if present, hand off to [`errors.md`](./errors.md). An error response carries no file, so reading `fileUrl` before this check reads a field that isn't there.
+2. Otherwise check `endConvert`. It is what decides completion — not the presence of `fileUrl` on some earlier response.
+3. If `false`, wait briefly and re-poll with the **identical** request, same `key`. The key is what the service keys the in-flight job by: a fresh one per attempt starts the conversion over from zero, and a fixed sleep with no re-send never learns that it finished.
+4. **Bound the loop** with a timeout or an attempt cap. A job the server has given up on otherwise holds a worker forever, and there is no response that ever says "abandoned".
+5. If `true`, download the file from `fileUrl`.
+
+`percent` is the service's own progress figure, already computed per poll — hand it straight to whatever renders progress rather than animating a synthetic bar beside it (see [`ui.md`](../../ui.md)'s bar on real progress).

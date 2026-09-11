@@ -39,5 +39,7 @@ For complex conversions (spreadsheet parsing, PDF restrictions):
 ## Assembly Checklist
 
 1. `filetype` and `outputtype` must be lowercase.
-2. Keep `key` stable across identical source variants to benefit from caching.
-3. If token auth is on, sign all properties into a JWT under `token` — see [`signature/body.md`](../../signature/body.md) and the [`signature.md`](../../signature/signature.md) family index.
+2. Keep `key` stable across identical source variants to benefit from caching — and keep it identical across every poll of one async job ([`response.md`](./response.md)).
+3. If token auth is on, sign all properties into a JWT under `token` — see [`signature/body.md`](../../signature/body.md) and the [`signature.md`](../../signature/signature.md) family index. The body is the vector this service reads; a header alone doesn't authenticate the request.
+4. `url` has to be an address **Document Server itself** can resolve and reach — your backend's public/container-reachable base URL, not a local filesystem path and not a `localhost` URL that only means anything inside the calling process. This is the mirror image of the callback's own host problem; [`callback/handler.md`](../../callback/handler.md)'s "`url`'s host is not something your backend controls" covers the two-address split and how to carry both.
+5. Send `Accept: application/json`. Without it the service answers in XML and the failure arrives as a decode error that points nowhere near the cause.
