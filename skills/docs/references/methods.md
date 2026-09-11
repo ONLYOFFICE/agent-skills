@@ -19,7 +19,7 @@ Client-side **Methods** API for the ONLYOFFICE Docs JavaScript library (v8.2+) �
 * **`destroyEditor()`** — tears down the editor frame before re-init. See [`api.md`](./api.md) ("Iframe Rules") and the `onRequestClose` handler in [`configuration/events.md`](./configuration/events.md), which typically calls this.
 * **`requestClose()`** — shows a confirm dialog if there are uncommitted edits.
 * **`refreshFile(config)`** — swaps in a new file config at runtime. `config` follows the [`configuration/document.md`](./configuration/document.md) `document` shape; called from `onRequestRefreshFile` in [`configuration/events.md`](./configuration/events.md).
-* **`refreshHistory(opts)`** / **`setHistoryData(opts)`** — populate version history and snapshots.
+* **`refreshHistory(opts)`** / **`setHistoryData(opts)`** — populate version history and snapshots. The backend record behind each entry needs more than a version number and a timestamp to be trustworthy: store the actor (`user`), the actual `changesurl`/snapshot location, and a content hash (checksum) of the saved bytes alongside it. The version number alone doesn't let you detect a version whose stored bytes got corrupted or silently truncated after the fact; the hash does. `onRequestHistory`/`onRequestRestore` in [`configuration/events.md`](./configuration/events.md) are the client-side hooks that call these.
 * **`insertImage(opts)`** — inserts images into the document.
 * **`setRequestedDocument(opts)`** / **`setRequestedSpreadsheet(opts)`** — supply external documents for comparison or mail-merge.
 * **`setFavorite(boolean)`** / **`showMessage(text)`** — toggle the favorite flag / show a toast.
