@@ -187,6 +187,36 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 ```
 
+**Dockerfile `HEALTHCHECK` vs. compose `healthcheck.test` are not the same syntax.** In a
+Dockerfile, `CMD` is part of the `HEALTHCHECK` instruction itself, so the array that follows
+is just the exec-form command — no extra `"CMD"` element:
+
+```dockerfile
+HEALTHCHECK CMD ["/server", "-healthcheck"]
+```
+
+In `docker-compose.yml`, `healthcheck.test` has no separate instruction keyword to carry that
+meaning, so compose requires the mode as the array's first element — `"CMD"`, `"CMD-SHELL"`, or
+`"NONE"` — and rejects the array otherwise (`healthcheck.test must start either by "CMD",
+"CMD-SHELL" or "NONE"`). Copying the Dockerfile's array straight into compose drops that
+element and fails:
+
+```yaml
+# Wrong - compose has no HEALTHCHECK keyword to imply "CMD"
+healthcheck:
+  test: ["/server", "-healthcheck"]
+
+# Right
+healthcheck:
+  test: ["CMD", "/server", "-healthcheck"]
+```
+
+This bites hardest on the distroless/scratch images this guide recommends for compiled
+binaries (see the Base Image Decision Tree): there's no shell, so `CMD-SHELL` (and a curl-based
+check) is off the table, and the exec-form `"CMD"` array with a self-check flag the binary
+implements (`-healthcheck` above) is the only option — which is exactly the array most likely
+to get copied from the Dockerfile without the prefix.
+
 ## Security Audit
 
 ### Dockerfile
@@ -212,6 +242,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 | Sensitive mounts (`/etc`, `docker.sock`) | Critical | Never mount these in production |
 | No log driver configured | Low | Set `logging:` with size limits |
 
+**Reverse proxy (nginx) in front of this stack:** CORS reflection, CSP, TLS/cookie interaction, and client body-size limits are their own set of traps distinct from the container checks above — see [`nginx.md`](nginx.md), not this file, for those.
+
 ## docker-compose Checklist
 
 ```
@@ -220,7 +252,15 @@ SERVICES
 ├── Add healthchecks for every service
 ├── Set resource limits (mem_limit, cpus)
 ├── Use named volumes for persistent data
-└── Pin image versions
+├── Pin image versions
+└── When a UI exists, give it its own service/image — don't bake the built
+    SPA into the reverse-proxy's image just because that proxy will serve it.
+    Baking them together means a frontend-only change forces a proxy rebuild
+    (and vice versa), and the two can't be scaled, rebuilt, or replaced
+    independently. A multi-stage build inside the *frontend's own* Dockerfile
+    (build stage -> nginx/static-serving stage) is fine; the reverse proxy
+    in front of it is still a separate compose service — see [`nginx.md`](nginx.md)
+    for what that proxy itself needs to get right.
 
 NETWORKING
 ├── Create explicit networks (don't rely on default)
