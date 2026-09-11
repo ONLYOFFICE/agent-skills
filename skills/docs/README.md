@@ -21,7 +21,7 @@ ONLYOFFICE Docs API **v8.2+**. Built from the official docs at
 ### Architecture & Infrastructure
 * **architecture.md**: Hexagonal architecture (Ports & Adapters) blueprint for backend generation.
 * **infrastructure/**: Implementation assets.
-    * `Dockerfile` / `Makefile` / `.gitignore`
+    * `Dockerfile` / `Makefile` / `.gitignore` / `nginx.conf` (reverse proxy: CORS, CSP, TLS/cookies, Document Server proxying)
     * Backend-first generation architecture.
 
 ### Configuration & Security
@@ -37,8 +37,10 @@ ONLYOFFICE Docs API **v8.2+**. Built from the official docs at
 
 ### Implementation & Testing
 * **example.md**: The server integration architecture (based on the official Node.js sample).
+* **ui.md**: The design bar for a generated UI — port vs. designed app, where the tokens come from, and the state/responsive/accessibility requirements.
 * **example-checklist.md**: Language-agnostic functional checklist for sample apps.
 * **api-testing.md**: Backend contract-first testing methodology.
+* **audit.md**: Reviewing or debugging an integration someone else wrote — symptom-to-cause catalogue and review discipline.
 
 ## Maintaining it
 
