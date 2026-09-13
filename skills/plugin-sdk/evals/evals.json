@@ -115,6 +115,24 @@
         "new item keys are namespaced with room-notes and do not collide with the existing one",
         "every new item is built by a factory function rather than a module-level constant, so it picks up the locale the portal set before onLoadCallback - and setLanguage is left recording the locale, with no item rebuilding added to it"
       ]
+    },
+    {
+      "id": 3,
+      "name": "explain-filter-and-current-file",
+      "mode": "explain",
+      "prompt": "quick one about our docspace plugin (sdk 3, portal 4.0). the context menu item on rooms is meant for room admins only so i set usersType: [UsersType.roomAdmin] on it, but everyone sees it, guests included. and when you click it the modal opens fine but useCurrentFile() inside gives null so i can't even load the room. is there a different hook for 'the thing i right-clicked', or is this a docspace bug? don't build anything, just tell me what's going on",
+      "expected_output": "A direct answer from the references, graded on the transcript - no project is built. The ContextMenu scope reads usersTypes (plural) and silently skips the singular, so the filter never applied; the spelling differs per scope and is labelled a portal quirk. UsersType names do not match the roles the portal shows (user = Guest, collaborator = User, roomAdmin also catches everyone the other four do not), so the intended filter is [owner, docSpaceAdmin, roomAdmin]. useCurrentFile() is null in a modal opened from a class-side click by design - the message carries no selection and no other hook returns the clicked entity; the fix is to hand the id over from onItemClick through a module variable or a factory closure. Nothing invented, no 'DocSpace bug' claim.",
+      "files": [],
+      "assertions": [
+        "names usersTypes (plural) as the field the ContextMenu scope reads and says the singular usersType is skipped silently, which is why the item shows for everyone",
+        "says the spelling differs per scope - usersTypes for ContextMenu, InfoPanel, EventListener, ArticleButton and ArticleNavigation; usersType for MainButton, ProfileMenu and File - and labels it a portal quirk rather than a principle",
+        "when it lists which UsersType members to use, warns that the enum names do not match the roles the portal shows - UsersType.user is Guest, UsersType.collaborator is User - so guests are excluded by listing owner, docSpaceAdmin and roomAdmin rather than by any single member",
+        "says useCurrentFile() is null in a modal opened from a class-side click because the message carries no selection, and that no other hook returns the clicked entity - it is the design, not a bug",
+        "gives the fix as a code sketch: onItemClick stores the id in a module variable or a factory closure and the dialogBodyComponent reads it, then fetches in an effect",
+        "invents no hook, scope, field or action the SDK does not export (no useSelectedItem, useClickedFile, onSelect or similar)",
+        "does not scaffold, edit or build a project - the answer is prose plus snippets, as asked",
+        "gives the direct answer first and the reason after it"
+      ]
     }
   ]
 }
