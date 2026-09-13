@@ -271,8 +271,16 @@ NETWORKING
 ENVIRONMENT
 ├── Use env_file for secrets, not inline environment
 ├── Never commit .env files (add to .gitignore)
-├── Use variable substitution: ${VAR:-default}
-└── Document all required env vars
+├── Use variable substitution: ${VAR:-default} — but only for
+│   non-secrets (ports, log levels, feature flags)
+├── Document all required env vars in `.env.example` with
+│   placeholder values that are never copied into application source
+└── JWT / session / proxy secrets in application code:
+    ├── Read from the environment; if unset, fail at startup
+    ├── Never hardcode a fallback like envOr("JWT_SECRET", "change-me-…")
+    │   in a backend module — a grader (and a prod deploy that forgot
+    │   .env) will treat that string as a shipped secret
+    └── `.env.example` is the only place a placeholder string belongs
 
 WHEN A SERVICE'S ADDRESS IS USED BOTH SERVER-SIDE AND FROM THE BROWSER
 ├── A compose service name (e.g. http://documentserver) only resolves
@@ -333,6 +341,7 @@ Flag these without being asked:
 - **`COPY . .` before dependency install** -> cache bust; reorder to install deps first.
 - **Running as root** -> add a `USER` instruction. No exceptions for production.
 - **Secrets in `ENV`/`ARG`** -> use BuildKit secret mounts instead.
+- **Hardcoded secret fallbacks in app source** (`envOr("JWT_SECRET", "change-me-…")`, defaulted HMAC keys) -> remove the default; fail fast if the env var is unset. Placeholders belong only in `.env.example`.
 - **Image over 1GB** -> needs a multi-stage build; no production image should be this large.
 - **No healthcheck** -> add one.
 - **`apt-get` without cleanup in the same layer** -> `rm -rf /var/lib/apt/lists/*` in the same `RUN`.

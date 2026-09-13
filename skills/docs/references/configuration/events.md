@@ -31,7 +31,8 @@ No event is strictly mandatory to boot the editor, but a production integration 
 | **onRequestClose** | function | *None* | Fires from the `customization.goback` button when `requestClose: true` (see [`editor.md`](./editor.md)). Call `destroyEditor()` — see [`methods.md`](../methods.md) — **and then navigate back** to `goback.url` (or the SPA route it represents); a handler that only destroys the editor and stops there leaves the visitor on a blank page, which is the exact dead end `goback` exists to prevent. |
 | **onRequestRefreshFile** | function | *None* | Replaces `onOutdatedVersion`. Typically calls `refreshFile(config)` — see [`methods.md`](../methods.md). |
 | **onRequestEditRights** | function | *None* | Fires when switching from viewing to editing. |
-| **onRequestHistory** | function | *None* | User requested the version history panel. |
+| **onRequestHistory** | function | *None* | User opened the version history panel. **Done path:** fetch the file's version list from your backend, then call `docEditor.refreshHistory(opts)` — see [`methods.md`](../methods.md). A handler that only `console.log`s leaves the panel empty; there is no static config `history` field that fills it. |
+| **onRequestRestore** | function | *None* | User picked a historical version to restore. Fetch that version's snapshot/`setHistoryData` payload and apply it (typically via `setHistoryData` / reload with that revision's key). Pair with `onRequestHistory` whenever version history is in scope. |
 | **onRequestSaveAs** | function | *None* | Fires on "Save Copy as...". |
 | **onMetaChange** | function | *None* | Fires on metadata change (e.g. favorite toggle). |
 
@@ -47,6 +48,7 @@ No event is strictly mandatory to boot the editor, but a production integration 
   "onRequestRefreshFile": "function() {}",
   "onRequestEditRights": "function() {}",
   "onRequestHistory": "function() {}",
+  "onRequestRestore": "function(event) {}",
   "onRequestSaveAs": "function(event) {}",
   "onMetaChange": "function(event) {}"
 }
@@ -102,7 +104,12 @@ const config = {
       window.location.reload();
     },
     onRequestHistory: function() {
-      console.log("Displaying historical versions layout timeline.");
+      // Fetch /historyObj (or equivalent) for the open file, then:
+      // docEditor.refreshHistory({ currentVersion, history: [ /* versions with key, version, user, created, … */ ] });
+      // A log-only stub leaves the history panel empty — see methods.md.
+    },
+    onRequestRestore: function(event) {
+      // event.data.version / event.data.url — load that revision, then setHistoryData / re-open with its key.
     },
     onRequestSaveAs: function(event) {
       console.log(`Export path ready for file type: ${event.data.fileType} at ${event.data.url}`);

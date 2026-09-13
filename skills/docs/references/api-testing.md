@@ -40,7 +40,7 @@ Do this **before** generating or reading the implementation under test, not afte
 Run syntax, dependency, and security verification before executing scripts.
 
 * **Type Safety:** Validate the configuration object to ensure property types match API expectations.
-* **Secret Scanning:** Scan codebase to prevent hardcoded JWT secrets used for generating config tokens.
+* **Secret Scanning:** Scan codebase to prevent hardcoded JWT secrets used for generating config tokens — including `envOr`/`getenv`-with-default fallbacks like `"change-me-…"` in backend modules. A missing env var must fail startup; placeholders belong only in `.env.example` (see [`infrastructure/docker.md`](./infrastructure/docker.md)).
 * **Hallucinated Backend Surface:** Cross-check every Command Service `c` value and Conversion API `filetype`/`outputtype` the generated backend sends against [`additional/command.md`](./additional/command.md), [`additional/conversion/request.md`](./additional/conversion/request.md), and the pair table in [`additional/conversion/table.md`](./additional/conversion/table.md) — a plausible-but-invented value here fails only at request time, and only against a real Document Server, so static verification against the doc'd value sets catches it far earlier.
 * **Dependency Auditing:** Verify every imported package/SDK in the generated backend actually exists on its registry and is the one intended — a hallucinated or typosquatted package name is a well-documented LLM code-gen failure mode, and it ships silently if nothing checks for it.
 * **Frontend — Linter Rules:** *(skip if backend-only)* Flag direct CSS assignments targeting the editor placeholder element (see [`api.md`](./api.md) — "Iframe Rules").
