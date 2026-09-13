@@ -6,15 +6,18 @@ A measuring instrument for the skill, not part of it: nothing in `SKILL.md` refe
 
 ## The scenarios
 
-[`evals.json`](evals.json) holds three, all `build`, each a multi-scope feature (a run costs ~150k tokens either way, and the interesting failures survive only in a real project):
+[`evals.json`](evals.json) holds four: three `build` scenarios, each a multi-scope feature (a run costs ~150k tokens either way, and the interesting failures survive only in a real project), and one `explain` question that costs a few thousand and is graded on the transcript:
 
-| # | Name | Scopes | What it puts under strain |
-|---|---|---|---|
-| 0 | `sidebar-workspace` | ArticleNavigation, Settings, EventListener, ArticleButton | the React half end to end: a `Tabs` page, paged reads through `usePluginAPI` with an `AbortController`, `SearchInput`'s odd `onChange`, a bulk job on the floating operations button (add before update), a settings page that wires its Save through `setSaveButton`, no-argument event handlers, the 32×32 slot, externals and the dark theme |
-| 1 | `file-format-and-actions` | File, MainButton, ContextMenu | the class-side half meeting React: owning an extension (the dot in the key), a viewer opened from a class-side click that gets **no current file**, writing bytes back through `/files/{id}/update` under `security`, the two context menu items a bulk action needs, the create dialog (which does not append the extension), a people `showSelector` that does not close itself, a modal form with the action row in the body, `cspDomains` |
-| 2 | `extend-room-notes` | InfoPanel, ProfileMenu (on a live ContextMenu plugin) | a live contract — name, keys, version, the project's own conventions — plus the two filter spellings side by side, a tab following `useCurrentFile`, a searchable list that belongs in an aside |
+| # | Name | Mode | Scopes | What it puts under strain |
+|---|---|---|---|---|
+| 0 | `sidebar-workspace` | build | ArticleNavigation, Settings, EventListener, ArticleButton | the React half end to end: a `Tabs` page, paged reads through `usePluginAPI` with an `AbortController`, `SearchInput`'s odd `onChange`, a bulk job on the floating operations button (add before update), a settings page that wires its Save through `setSaveButton`, no-argument event handlers, the 32×32 slot, externals and the dark theme |
+| 1 | `file-format-and-actions` | build | File, MainButton, ContextMenu | the class-side half meeting React: owning an extension (the dot in the key), a viewer opened from a class-side click that gets **no current file**, writing bytes back through `/files/{id}/update` under `security`, the two context menu items a bulk action needs, the create dialog (which does not append the extension), a people `showSelector` that does not close itself, a modal form with the action row in the body, `cspDomains` |
+| 2 | `extend-room-notes` | build | InfoPanel, ProfileMenu (on a live ContextMenu plugin) | a live contract — name, keys, version, the project's own conventions — plus the two filter spellings side by side, a tab following `useCurrentFile`, a searchable list that belongs in an aside |
+| 3 | `explain-filter-and-current-file` | explain | ContextMenu (a question, no project) | the Explain job: the two things nothing but the portal's code can tell you — the per-scope filter spelling and `useCurrentFile()` being `null` in a click-opened modal — asked as a "bug or wrong hook?" question, where the baseline tends to invent a hook or blame the portal |
 
-Three separate projects rather than one: a build failure darkens every check in a scenario at once, and three keep three independent signals. `API` and `PostMessage` are left out on purpose.
+Three separate build projects rather than one: a build failure darkens every check in a scenario at once, and three keep three independent signals. `API` and `PostMessage` are left out on purpose. The explain scenario is the cheap one to rerun after a change to `SKILL.md`'s Explain section, [portal.md](../references/portal.md) or [items.md](../references/items.md); an `audit` scenario (a fixture with planted defects, graded on the findings) is still to be written.
+
+Trigger accuracy of the `description` is a separate instrument: [trigger-tests.md](trigger-tests.md).
 
 Prompts are written the way someone would ask — lowercase, mid-thought, wrong vocabulary — and **never say React, component, hook or UI kit**; recognising the mechanism is the job. They also must not dictate a surface the skill would reject. Scenario 2 starts from [`fixtures/working-plugin/`](fixtures/working-plugin/), a small module plugin that builds and validates clean — keep it that way. A fixture teaches its own conventions (the baseline reads the namespaced key and the `setLanguage` rebuild straight out of it), so when adding to that scenario prefer a claim the fixture cannot answer: requests, cancellation, error and empty states, filters on a new scope.
 
@@ -26,7 +29,7 @@ After a change to `SKILL.md` or a reference, before shipping — once, not in a 
 run the evals for skills/plugin-sdk, iteration-0
 ```
 
-It spawns two runs per scenario under `<workspace>/iteration-N/eval-<id>/{with_skill,without_skill}/`, grades each against the scenario's `assertions` and opens a viewer. Run the prompts **verbatim** — checks that read chosen words are English-only. Use `without_skill` as the baseline, not `old_skill`.
+It spawns two runs per scenario under `<workspace>/iteration-N/eval-<id>/{with_skill,without_skill}/`, grades each against the scenario's `assertions` and opens a viewer. Run the prompts **verbatim** — checks that read chosen words are English-only. Use `without_skill` as the baseline, not `old_skill`. The `explain` scenario produces no files: save the final answer as `answer.md` in the run's outputs and grade that.
 
 ### Names and versions, so runs can sit on one portal together
 
