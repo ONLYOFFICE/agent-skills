@@ -1,6 +1,6 @@
 ---
 name: plugin-sdk
-description: Build, audit and explain ONLYOFFICE DocSpace plugins. Use this whenever someone wants to build, create, scaffold or bootstrap a DocSpace plugin, or to add a feature, scope, item, page or settings screen to one they already have — a page or entry in the DocSpace sidebar, an item in the context menu, main button or profile menu, a tab in the info panel, a handler for a custom file type, a reaction to a DocSpace event, an admin settings form — including when they only describe the feature ("I want a button in DocSpace that converts a file", "a screen inside DocSpace listing our rooms", "add a panel showing room activity") without naming the SDK, React or the UI kit. Use it too when a plugin installs but does nothing, a page or panel renders blank, an item does not appear, a plugin button is dead, changes do not show up after re-uploading, a plugin shows for the wrong users, or someone asks to review, audit, debug, fix, migrate or modernise an existing plugin — and when they simply ask how the SDK or the portal behaves: which scopes exist, what a component can reach, what fields an item needs, which action needs which payload, why a plugin silently does nothing.
+description: Build, audit and explain ONLYOFFICE DocSpace (ONLYOFFICE Apps) plugins made with the Plugins SDK. Use whenever someone wants to create, scaffold, extend or change a DocSpace plugin, or describes a feature inside the portal without naming the SDK, React or the UI kit — an item in the context menu, main button or profile menu, a page in the sidebar, a tab in the info panel, a handler for a custom file type, a reaction to a portal event, an admin settings form ("a button in DocSpace that converts a file", "a screen inside DocSpace listing our rooms"). Use it too when a plugin installs but does nothing, renders blank, shows for the wrong users or does not change after a re-upload; when someone asks to review, debug, fix or migrate an existing plugin; and for questions about scopes, hooks, items, actions or how the portal loads plugins. Not for plugins inside the document editor (ONLYOFFICE Docs plugins and macros), for embedding DocSpace into another site (embed-sdk), or for standalone REST API scripts.
 license: Apache-2.0
 metadata:
   author: ONLYOFFICE
@@ -28,6 +28,8 @@ $SKILL/references/                   the knowledge base — read these instead o
 
 | Question | Read |
 |---|---|
+| The build workflow — scaffold, write, build, validate, preview, report | [build.md](references/build.md) |
+| The audit workflow — the switches, both passes, what to read for, how to report | [audit.md](references/audit.md) |
 | Which scopes exist, what version to target, what is not supported | [scopes.md](references/scopes.md) |
 | What the class implements, how the portal gets it, localisation, deprecated members | [sdk-contract.md](references/sdk-contract.md) |
 | Fields of each item type, which filter field the host reads, where each item renders | [items.md](references/items.md) |
@@ -44,25 +46,15 @@ Kit component props are in the installed package's `.d.ts` files (`node_modules/
 
 ## Which job is this
 
-| The person wants | Go to |
+| The person wants | Do |
 |---|---|
-| A plugin that does not exist yet, or a feature added to one that does | [Build](#build) |
-| To know why an existing plugin misbehaves, or to have it fixed | [Audit](#audit) |
-| An explanation rather than a project | [Explain](#explain) |
+| A plugin that does not exist yet, or a feature added to one that does | Follow [build.md](references/build.md), all eight steps, ending in a validated `dist/plugin.zip` |
+| To know why an existing plugin misbehaves, or to have it fixed | Follow [audit.md](references/audit.md): ask about the switches, run both passes, then read |
+| An explanation rather than a project | [Explain](#explain), below |
 
 A question that turns out to need a whole feature is better answered by building it than by pasting a sketch that has never compiled.
 
----
-
-## Build
-
-From a feature description to a built, validated `dist/plugin.zip` in one pass.
-
-### 1. Understand what they want, briefly
-
-Establish **where in the interface** the feature appears and **what happens when it is used**. Usually the request implies both. Ask only at a genuine fork (one file or a whole room?). Do not interrogate the user about scopes, manifests, React or SDK versions — those follow from the feature.
-
-### 2. Pick scopes
+## Pick scopes
 
 | They want | Scope | Visible surface |
 |---|---|---|
@@ -78,163 +70,7 @@ Establish **where in the interface** the feature appears and **what happens when
 | Class-side code that calls the REST API | `API` | — (a component needs no scope for this) |
 | To embed a third-party page and talk to it | `PostMessage` | — |
 
-Pick the fewest that deliver the feature; every declared scope must register at least one item or the validator fails it.
-
-**Where a feature is reached from and where it renders are two questions.** `ContextMenu`, `MainButton` and `ProfileMenu` contribute an item and nothing else — they have no canvas of their own, and what the click returns decides the surface: a modal, an aside, the media viewer, or `navigate` to a page of your own. So nothing is "a profile menu feature" or "a context menu feature" by nature; those scopes only say how the user gets in. Two scopes together is the normal answer when the way in and the surface differ — a `ProfileMenu` entry whose click navigates to an `ArticleNavigation` page is one feature, not two.
-
-Then map the surface by what it has to hold, not by where the person pictured it: anything that is a **screen** (a list, a table, more than a handful of fields) is an `ArticleNavigation` page, not a modal (400×280) or an info panel tab (337px); `MainButton` is for creating, so an action on existing things is `ContextMenu` — one item for a single entity, a second with `isGroupAction` for a selection. Build the right surface and say why in a sentence.
-
-That table is the whole list. If the feature has no scope in it, say so and offer the closest entry point — never invent a scope, hook or field. A feature *inside* an open document is not in it at all: that is an ONLYOFFICE Docs plugin, a different product ([scopes.md → Anything not in that table](references/scopes.md#anything-not-in-that-table)).
-
-### 3. Scaffold — or extend what is already there
-
-If the target directory already holds a plugin project (`package.json` with `pluginName` and `scopes`), skip the scaffolder — see *Extending* below.
-
-Never run `npx create-docspace-plugin`: it waits on an interactive prompt and hangs the tool call. Use the scaffolder:
-
-```sh
-node "$SKILL/scripts/generate-plugin.mjs" --name my-plugin --plugin-name MyPlugin \
-  --scopes ArticleNavigation,Settings --dir <target> --description "..." --author "..."
-```
-
-It writes the class with every member the loader calls, the Vite build with the externals the portal requires, `src/locales.ts`, `src/css-modules.d.ts`, a `typecheck` script, and copies the packed UI kit and SDK from `$SKILL/vendor/` (neither is on npm) as `file:` dependencies. **It registers no items, deliberately** — `onLoadCallback` carries one TODO per scope naming the required fields and the filter field. `--name` is lower case with `-`/`_`; `--plugin-name` must be a JS identifier. `--ui-kit <tgz>` swaps in another kit revision if the user has one. Default the target to a new folder in the current directory named after the plugin — never inside a DocSpace checkout.
-
-**English only, unless the user named other languages.** `--locales ru,de,ja-JP` writes an empty typed table per language, keyed by the `PluginLocale` member, plus `t()` and `tf()`. **The language the request is written in is not one of them** — a plugin asked for in Russian still scaffolds English alone. Do not ask; scaffold English and note in the report that another language is `--locales` plus one table. Tags are validated against the enum: `ja` is refused with `ja-JP` named.
-
-#### Extending an existing plugin
-
-Read `package.json` (`pluginName`, `scopes`, `runtime`, `version`) and every file that registers an item or renders a component. A new scope needs **two edits together**: `package.json:scopes` *and* a getter with at least one item — either alone is a silent failure. Then:
-
-- **Never change `name` or `pluginName`** — the portal keys the install by `name`; renaming installs a second plugin.
-- Check new item keys against the ones already registered — the maps are portal-wide, and an `ArticleNavigation` key is a URL.
-- **Bump `version`**, or the portal serves the cached bundle and the user sees no change.
-- Match the project's layout and style; do not reorganise it around the feature.
-
-A plugin built against SDK 2 (webpack, `window.Plugins.X = plugin`, `body: IBox` trees, no `runtime`) still runs, but nothing here can check or extend it. Migrate it first and whole — `runtime: "module"`, the Vite config from a fresh scaffold, `export default plugin`, a component per surface — say what changed, then add the feature ([sdk-2-plugins.md](references/sdk-2-plugins.md)). Fix loader-contract breakage that would surface as your feature not working, but do not turn the request into an audit.
-
-### 4. Write the feature
-
-Replace every TODO in `onLoadCallback` with real items, built by **factory functions** rather than module constants — a constant is built before the portal has set the language. Components go in their own `.tsx` files under `src/`, handed to items as `component: Page` — the component, never `<Page />` — built from `@docspace/ui-kit` and inline styles, plus a `.module.css` where inline styles cannot reach (`:hover`, keyframes, media queries, generated markup) — a module, because `plugin.css` lands in the portal's own document and only hashed class names cannot restyle DocSpace ([styles.md → Scoped CSS](references/styles.md#scoped-css)). Read [items.md](references/items.md) for the item, [react.md](references/react.md) whenever there is a visible surface, [components.md](references/components.md) as soon as the feature opens a modal, a picker or the progress button, [ui-kit.md](references/ui-kit.md) before writing a form, [styles.md](references/styles.md) before writing a stylesheet, [rest-api.md](references/rest-api.md) for API calls — and apply [the rules](#the-rules-that-decide-whether-it-works). Keep the placeholder icons only if the user has nothing better, and say they are placeholders.
-
-**Take the proven library; do not write your own** for anything with a format or a security dimension behind it — archives, PDF, spreadsheets, markdown, sanitising HTML, date arithmetic. Take the obvious widely used package, **check it on the registry before writing the import**, and say in the report what it does *not* handle. Nothing at all for what the browser already does (`fetch`, `Intl`, `crypto.subtle`, `structuredClone`) or the kit already renders. Criteria, commands, the usual answers and why this matters more inside a plugin: [dependencies.md](references/dependencies.md).
-
-**Write and patch source files with the file-writing tools, not a shell heredoc or a one-liner** — a heredoc halves backslashes and expands escapes, so a regex or a template literal reaches disk altered and the bug then looks like a bug in the code.
-
-### 5. Build
-
-```sh
-cd <target> && npm install && npm run build && npm run typecheck
-```
-
-No `dist/plugin.zip` means the build failed, whatever the output said. Common causes: the kit's enum where the SDK's was meant (`ButtonSize` exists in both — alias one), a prop the kit does not have (check its `.d.ts` rather than casting), a component file without `.tsx`.
-
-**A `dist/` with JavaScript beside `plugin.js` is a split bundle.** The archive carries `plugin.js` alone and the portal cannot load a chunk, so a library that lazy-loads its parts dies on the portal at first use and works in the preview. The scaffold's config inlines dynamic imports; an older project adds `inlineDynamicImports: true` to `rollupOptions.output`; the validator refuses the build until `dist/` holds one script ([react.md → Bundling](references/react.md#bundling)).
-
-**`npm run build` does not check types** — Vite strips them — so `npm run typecheck` (`tsc --noEmit`, in every scaffolded project) is a separate step and worth running once the feature compiles. A generated project ships `src/css-modules.d.ts`, so `import styles from "./x.module.css"` type-checks; an older project without it needs that declaration before `tsc` agrees.
-
-**Where the plugin writes the user's files, test the part that decides what gets written** — archive entry paths, a parser, a diff. Keep that logic in plain functions with no SDK or kit imports so it is testable at all, then `npm i -D vitest` and one `*.test.ts` beside the module (the project's own Vite config resolves the imports; `node --experimental-strip-types` does not). Say in the report what is covered and what only ran on the portal.
-
-**Where the plugin *shows* the user's files — a `File`-scope viewer, a media-viewer component — smoke-test the render path in a real browser, one fixture per kind of content it claims.** No offline pass has the bytes: the validator and the preview prove the component mounts, not that a diagram, a model or an image comes out of it, and green checks over a dead parse→draw→export pipeline is the usual shape of a viewer's first bugs. Keep that pipeline in plain functions (`render(text, container)`, `toPng(svg)`) and run them under Vitest's browser mode — `npm i -D @vitest/browser-playwright` beside the Playwright the preview pass installed, `test: { browser: { provider: playwright(), instances: [{ browser: "chromium" }] } }` in `vitest.config.ts`, `npx vitest --browser` — asserting what a user would see: the output has pixel dimensions rather than `100%`, it contains the fixture's text or nodes, an export yields a non-empty blob of the right type. Every kind the plugin lists — each diagram type, each format variant — gets its own fixture, because the failure that reaches users is in the one nobody rendered.
-
-### 6. Validate — the step that matters
-
-```sh
-node "$SKILL/scripts/validate-plugin.mjs" <target> --invoke
-```
-
-This imports the bundle the way the portal does, runs `onLoadCallback` and checks what the portal would: `runtime: "module"`, a default export, nothing imported that the portal does not provide and no bundled React, every declared scope filled, item fields, filter names and `component` values, each action's payload, and locale tables keyed by something `PluginLocale` does not have; `--invoke` also calls the class-side callbacks with a dummy id. Iterate to zero errors; each message says what to do. A `runtime` error saying the bundle or `onLoadCallback` threw is the "installs and nothing happens" symptom. A `zip` warning that the archive is older than the sources means the packed zip predates the edit, so uploading it would ship the previous build. Warnings are worth reading; a `deprecated` warning on a new plugin always is.
-
-It then **renders every component once** with the project's own React, each with the runtime its own surface gets — `useCurrentFile()` null on a page, in settings and in a dialog opened from a click; the selection in an info panel tab or the media viewer. A `render` error is a component that throws on first paint, which on the portal is a blank page, tab or dialog with one console line. The last line counts the surfaces rendered out of those tried; `render skipped` means `react-dom` was not installed, so run `npm install` and validate again rather than assuming the surfaces are fine. Nothing runs the **effects** and nothing has a size, so what an effect does and what the CSS does to it are measured in the next step, not here.
-
-**Read that line for what it did *not* cover.** The sandbox has no network, so a callback that fetches before returning its message — reading the file's name for the dialog header, say — ends in its own `catch`, and the modal behind the request is never opened, collected or rendered. That shows up as a `runtime` warning plus `callback(s) stopped at a network call` beside the render tally. A clean run over zero surfaces is not coverage: check that surface on a portal, or have the click open it first and fetch from the component's effect.
-
-The validator checks the **contract with the portal**, not the feature. Read the components once against the two silent-failure tables in [portal.md](references/portal.md#silent-failures). The UI-layer table (unlabelled fields, a toggle over the next row, an "empty" panel that accepts typing, a dialog stuck at 400×280) lists the defects that pass every check and still look broken — and the step below is what measures most of them.
-
-### 7. See it — the step that catches what looks broken
-
-```sh
-node "$SKILL/scripts/preview-plugin.mjs" <target>
-```
-
-Mounts the built bundle in Chromium against the **real** UI kit and the **real** theme variables, at the width each surface actually gets, in both themes, and measures what came out. It is the only pass where a stylesheet has run, a box has a size and an effect has fired, so it reports what the other checks cannot see:
-
-| Code | What the user would have seen |
-|---|---|
-| `preview-leak` | one of the plugin's own CSS rules matched portal-shaped markup planted beside it — that rule restyles DocSpace itself. This is the check the references say nothing performs; now something does |
-| `preview-collapsed` | a control that came out a few px wide — the panel that looks empty and still accepts typing |
-| `preview-overflow` | content wider than its surface — the horizontal scrollbar across the whole portal |
-| `preview-overlap` | two things drawn on top of each other — the toggle's label over the next row |
-| `preview-blank` | a surface that painted nothing **after** its effects ran — the blank tab the render pass cannot reach |
-| `preview-invisible` | text the same colour as what is behind it, in one of the two themes — a literal colour that only works in the other |
-| `preview-unlabelled` | a field with no visible label, no `aria-label` and no placeholder |
-
-Fix what it reports and run it again. Then **look at the screenshots** it writes to `<target>/.plugin-preview/shots/` — they are the two themes of every surface at its real width, and doubled spacing, a broken row of blocks or a dialog that reads as unfinished are judgements no assertion makes for you. The harness directory is deleted on a clean run and kept when there are errors; `--keep` keeps it either way.
-
-`preview skipped` is a setup step, never a pass: it names what is missing (`npm run build` first, `npm install` first, or `npm i -D playwright && npx playwright install chromium`). A skipped run has measured nothing — do not report the surfaces as checked.
-
-**What it is not.** The kit's stylesheets are in the page; the DocSpace client's own are not. So it proves a rule of yours escapes, and it cannot prove the reverse — that a portal rule beats one of yours ([styles.md → What beats your rules](references/styles.md#what-beats-your-rules)). The portal API answers nothing here, so a surface that needs data renders its loading or empty branch — worth seeing, and not the same as seeing it with data. One real upload still settles both.
-
-### 8. Report
-
-- where the archive is (`<target>/dist/plugin.zip`), what it does and where it appears (a page's URL `/p/<key>` is worth stating);
-- anything left as a placeholder — icons especially;
-- every third-party package the plugin now bundles, one line each: what it does, why it was the one to take, **and what it does not handle** — a library's known blind spot ([dependencies.md](references/dependencies.md)) becomes the plugin's silent bug, so it is part of the decision, not a footnote;
-- what could not be checked offline: a request whose shape only the portal answers, anything behind a real upload, an untested edge in someone else's format, a render path no fixture was pushed through;
-- install: upload the zip in Settings → Integration → Plugins, then **fully reload the page**. No upload control, or nothing after installing → the portal has plugins switched off ([portal.md](references/portal.md#before-anything-loads-the-switches));
-- bump `version` before every re-upload — the portal caches the bundle and the icons by version.
-
-If they asked for something the portal cannot do, say so here rather than burying it — but **a limitation needs positive evidence, not an exhausted search.** "No `Actions` member refreshes the file list" is a fact about `Actions`; "the plugin cannot refresh the file list" is a claim about the portal, and it is usually the endpoint that was wrong. Until you have tried the thing that would disprove it, keep it out of the README, the CHANGELOG and the code comments, where a false explanation reads as settled to everyone who comes after.
-
----
-
-## Audit
-
-Most broken plugins look right: TypeScript is happy, the build succeeds, the portal silently ignores it. Run the mechanical checks first, then read for what a script cannot judge.
-
-One cause outranks everything and costs one question: **is the plugin system switched on for that portal?** It is off by default; when off, nothing loads and nothing logs. Installation can be disabled separately, which looks like a broken archive. Ask before auditing code.
-
-### 1. Locate and build
-
-Find the project — a `package.json` containing `pluginName`; never inside the DocSpace client repository. If `dist/plugin.zip` is missing or older than `src/`: `cd <plugin-dir> && npm install && npm run build`. A failed build is the finding — report the compiler error and stop.
-
-### 2. Run the validator
-
-```sh
-node "$SKILL/scripts/validate-plugin.mjs" <plugin-dir> --invoke
-```
-
-Each finding's message says what went wrong; the codes group them (`pkg.*` manifest, `build` externals, `dist` bundle imports, `scope`/`item`/`message` registration, `runtime` load or callback failures, `render` a component that throws on first paint, `locale` a table the portal will never read, `css` a stylesheet nothing scopes, `deprecated`, `sdk-drift`). A load failure — an unresolvable import, no default export — masks everything behind it: copy the project to a scratch directory, fix **only** that, rebuild and validate the copy; leave the audited project untouched.
-
-### 3. Run the browser pass
-
-```sh
-node "$SKILL/scripts/preview-plugin.mjs" <plugin-dir>
-```
-
-The layout half of the audit, and the only pass that can perform it: a stylesheet has run, every box has a size and the effects have fired. It settles by measurement what used to be a reading job — whether a rule in the plugin's `.css` escapes into DocSpace's own DOM, whether a control collapsed, whether anything is drawn over anything else, whether a surface is blank once its effects have run. Then read the screenshots in `<plugin-dir>/.plugin-preview/shots/` for the judgements no assertion makes: doubled spacing, a row of blocks that should have been a stack, a surface that reads as unfinished. `preview skipped` means nothing was measured — install what it names and run it again. Its limits are in [step 7 of Build](#7-see-it--the-step-that-catches-what-looks-broken).
-
-### 4. Read the source for what neither script can see
-
-Both passes are blind to intent, to what happens on a real request and to anything behind a click nobody made. With [portal.md](references/portal.md) open, look for:
-
-- **A blank surface neither pass reached** — an effect that throws only against real data: `JSON.parse` on a 404 body, a field the portal omits. The browser pass reports the surfaces that came out empty against *no* API, so what is left is the ones that break on an answer.
-- **Registration timing** — module-scope registration is legitimate on its own; it is a defect when the factory translates a label or calls `getAPI()` there, and items added after `onLoadCallback` resolves are invisible until an update action.
-- **Unhandled errors in class-side callbacks**, **work or fetching in `onLoadCallback`**, **a settings page that never calls `setSaveButton`, or whose Save and error states are gated on validity alone**, **stored settings read during `onLoadCallback`**, **a class field named like a manifest field** (`settings`, `name`, `version`, …), **blocking loops**, **`scpDomains`**, **timers outside components**.
-- **A hand-rolled implementation of a solved problem** — an archive writer, an HTML sanitiser, a CSV or XLSX serialiser. Name the standard package; it is a correctness finding, not a style one. So is the mirror image: a dependency nobody has heard of, running in the portal's window with the user's session ([dependencies.md](references/dependencies.md)).
-- **Any `.css` rule the browser pass could not reach** — it plants portal-shaped markup and reports what a rule of yours matches, which covers the common shapes; a selector aimed at something more specific in DocSpace's DOM (`.section-header`, a kit hash) still needs a reader ([styles.md → Scoped CSS](references/styles.md#scoped-css)).
-- **A viewer whose render path never met a real file** — the browser pass shows only its loading branch. Find the parse→draw→export functions and run them once against a fixture in a browser, one per kind the plugin claims ([Build step 5](#5-build)).
-
-### 5. Check for drift
-
-The validator reports `sdk-drift` when the installed SDK is not the major it knows. SDK **2.x** means an SDK 2 plugin — a reading job against [sdk-2-plugins.md](references/sdk-2-plugins.md), and the recommendation is migration. An SDK ahead of the portal compiles scopes and actions that do nothing ([scopes.md](references/scopes.md)). Deprecated members and the dead webpack build script are listed in [sdk-contract.md](references/sdk-contract.md#deprecated--do-not-use-in-new-code); `window.Plugins.X = plugin` in a module plugin is harmless dead code.
-
-### 6. Report
-
-Group findings: **silent breakage** (works in principle, does nothing on the portal) first; then **wrong behaviour**; **fragility** (unhandled errors, blocking work, collision-prone keys); **hygiene** (stale SDK, deprecated members, missing version bump). Say what the user would observe — "the tab opens blank" lands better than "unhandled rejection in an effect". If nothing is wrong, say so and list what you checked.
-
-**When asked to fix:** fix from silent breakage down, bump `version`, rebuild and re-validate until clean, report what changed and what you deliberately left alone.
-
----
+That table is the whole list — never invent a scope, hook or field; a feature *inside* an open document is an ONLYOFFICE Docs plugin, a different product. Where a feature is reached from (`ContextMenu`, `MainButton`, `ProfileMenu` contribute an item and nothing else) and where it renders are two separate questions, and a screen's worth of content is an `ArticleNavigation` page, not a modal or a tab — the reasoning is in [build.md → 2. Pick scopes](references/build.md#2-pick-scopes).
 
 ## Explain
 
@@ -242,27 +78,27 @@ Answer from the references, not from memory — the SDK's own documentation is t
 
 "Why doesn't my item appear?" and "why is my page blank?" are the most frequent questions; the answers are nearly always in the silent-failures tables in [portal.md](references/portal.md#silent-failures). Start there. Give the direct answer, then the reason — and label portal quirks as quirks (the filter field is `usersTypes` for some scopes and `usersType` for others; a modal opened from a menu has no current file), so people can tell principle from accident.
 
----
-
 ## The rules that decide whether it works
 
-They apply whether writing or judging, and **no tool catches most of them** — the validator already reports an unfilled scope, a missing default export, a foreign import, a bundled React, a JSX element where a component was expected, a hook in a class-side callback, an action without its payload, a locale table under a tag the portal never sends, and a component that throws while rendering. Everything below that survives a render — an effect without a `catch`, work in `onLoadCallback`, a settings page that never calls `setSaveButton` — is still yours to get right.
+They apply whether writing or judging. The validator already reports an unfilled scope, a missing default export, a foreign import, a bundled React, a JSX element where a component was expected, a hook in a class-side callback, an action without its payload, a locale table under a tag the portal never sends, and a component that throws while rendering. Everything below that survives a render is yours to get right; each line links to the passage that explains it.
 
-- **Components get no props; give them what the click knew.** `useCurrentFile()` is the selection in an info panel tab or the media viewer, and `null` on a page, in settings and in a modal opened from a menu, main button or file click — store the id in a module variable or a factory closure.
-- **Register items inside `onLoadCallback`.** Language and API URLs are set only after the bundle executes; a factory at module scope captures empty values.
-- **Fetch in effects, with a cleanup and a catch.** An uncaught throw in a component blanks it silently. Never fetch in `onLoadCallback`.
-- **Catch your own errors in class-side callbacks** and return an error toast — nothing wraps `onItemClick`, `onClick`, `eventHandler` or `onSave`.
-- **A React settings page wires its Save with `setSaveButton`**, called in an effect that re-runs when the form changes; without it the footer's button has no `onClick` at all. Both its `isDisabled` and a field's `hasError` are gated on **what the user changed**, not on validity alone, or the aside opens with Save lit and fields already red over a form nobody has edited ([react.md](references/react.md#the-settings-client)).
-- **Changing an item from a component is two steps:** mutate the map through the plugin instance, then call the matching `update*Items()`.
-- **A React modal has no footer and a 280px cap.** Action row inside `dialogBodyComponent`; `autoMaxHeight`/`autoMaxWidth` or an aside for anything beyond a few rows; a screen is an `ArticleNavigation` page.
-- **Whatever you hand a kit component is wrapped in the kit's own box**, and most of them are flex rows: pass one element carrying your own layout, never a fragment of several blocks — as flex items they line up side by side and the surface reads as a broken stylesheet ([ui-kit.md](references/ui-kit.md#layout-conventions)).
-- **One portal-drawn surface at a time.** A selector opened over your dialog is behind its backdrop; close, open, reopen, and keep the form's values in module scope ([components.md → Selectors](references/components.md#selectors)).
-- **Long work reports through the floating operations button, and the surface decides where it runs.** Nothing to show the user: run it from the class and hold the dispatcher the button's `onLoad` hands over. Something to show: the click opens the modal or page and an effect does the work behind a start guard ([components.md → Work that takes a while](references/components.md#work-that-takes-a-while)).
-- **A progress entry ends on `operationsCompleted`, not on the operation's own `completed`.** The outer flag on the button props is the one the portal watches — it then dismisses the button and clears the entry itself; set only the inner one and the job's button stays over an idle portal, still reading "…ing", until the page is reloaded ([components.md → Progress button](references/components.md#the-floating-operations-button)).
-- **A link into a room carries the id twice, and a document is not a route at all.** `/rooms/shared/{id}/filter?folder={id}` — the Files section reads the *query* to tell one room from the rooms list, so a path-only link lands on the list and the portal rewrites the address to `/rooms/shared/undefined/filter?searchArea=…` ([react.md → Paths navigate takes](references/react.md#paths-navigate-takes)). A document is ``window.open(`/doceditor?fileId=${id}`)``, never `navigate(file.webUrl)`: the editor is outside the SPA router and `webUrl` changes shape with the file type ([react.md → Opening a document](references/react.md#opening-a-document-is-a-page-load)).
-- **Ids travel as they arrived, `string | number`, and a JSON body routes on the JSON type.** `{ destFolderId: folder.id }`, never `String(folder.id)` or a template literal — a stringified portal id is looked up as a third-party one and fails as *"no permission"* ([rest-api.md → Identifiers](references/rest-api.md#identifiers)).
-- **In the Files selector the folder is `selectedItemId`, the file is `selectedFileInfo`.** Gate Select on the folder — `getIsDisabled: ({ isFirstLoad, selectedItemId }) => isFirstLoad || !selectedItemId` — and check `selectedFileInfo` in `onSubmit`; a gate on `selectedFileInfo` is a dead button on older portals ([components.md → The Files selector](references/components.md#the-files-selector-folder-vs-file)).
-- **Every enum-valued string comes from the enum.** Locale tags, user types, security keys, actions, sections: `PluginLocale.JA_JP`, not `"ja"`. A near-miss compiles, installs, and is never matched by the host.
-- **A stylesheet is a `.module.css`.** `plugin.css` is appended to the portal's own head, so a class the build did not hash restyles DocSpace itself. The browser pass catches the common shapes by planting portal-like markup beside the plugin and reporting what a rule of yours matches; a selector aimed at something more specific in DocSpace's DOM still needs a reader ([styles.md → Scoped CSS](references/styles.md#scoped-css)).
-- **Colors come from the portal's theme variables**, never hardcoded hex — and a kit `color` prop takes a CSS value, so `var(--accent-main)`, not `"accent"` ([styles.md → Colors](references/styles.md#colors)).
-- **Every re-upload needs a new `version`.** The portal caches the bundle *and* the icons by it (`?hash=<version>`), so uploading over a version already installed serves the cached copy: the plugin installs cleanly, the change is simply not there, and nothing is logged anywhere. Bump `package.json` the moment you start editing an installed plugin — not as a release step, because by then the archive has usually already been handed over.
+- **Components get no props.** `useCurrentFile()` is `null` on a page, in settings and in a modal opened from a class-side click — hand the id over through a module variable or a factory closure ([react.md](references/react.md#what-usecurrentfile-returns-where)).
+- **Register items inside `onLoadCallback`, built by factory functions** — at module scope the language and API URLs are not set yet ([portal.md](references/portal.md#the-loading-sequence)).
+- **Fetch in effects, with a cleanup and a `catch`; never in `onLoadCallback`** — an uncaught throw renders the component as nothing ([react.md](references/react.md#errors-loading-language-styling)).
+- **Class-side callbacks catch their own errors and return a toast** — nothing wraps `onItemClick`, `onClick`, `eventHandler` or `onSave` ([sdk-contract.md](references/sdk-contract.md#two-kinds-of-callback)).
+- **A React settings page wires Save through `setSaveButton`** in an effect that re-runs when the form changes; `isDisabled` and `hasError` gate on what the user changed, not on validity alone ([react.md](references/react.md#the-settings-client)).
+- **Changing an item from a component is two steps:** mutate the map through the plugin instance, then call the matching `update*Items()` ([react.md](references/react.md#actions)).
+- **A React modal has no footer and a 400×280 cap** — action row in the body; `autoMaxHeight`/`autoMaxWidth` or an aside for more; a screen is an `ArticleNavigation` page ([components.md](references/components.md#modals)).
+- **Hand a kit component one element carrying your own layout, never a fragment** — its wrapper is a flex row and several blocks line up side by side ([ui-kit.md](references/ui-kit.md#layout-conventions)).
+- **One portal-drawn surface at a time** — close the dialog, open the selector, reopen from submit *and* cancel, form values in module scope ([components.md](references/components.md#selectors)).
+- **Long work reports through the floating operations button** — from the class via the dispatcher its `onLoad` hands over when there is nothing to show, from an effect behind a start guard when there is ([components.md](references/components.md#work-that-takes-a-while)).
+- **A progress entry ends on `operationsCompleted`**, not on the operation's own `completed` ([components.md](references/components.md#the-floating-operations-button)).
+- **A room link carries the id twice** — `/rooms/shared/{id}/filter?folder={id}`; a document is `window.open("/doceditor?fileId=…")`, never `navigate(webUrl)` ([react.md](references/react.md#paths-navigate-takes)).
+- **Ids travel as they arrived, `string | number`** — a stringified portal id in a JSON body fails as "no permission" ([rest-api.md](references/rest-api.md#identifiers)).
+- **Files selector: gate Select on `selectedItemId` (the folder), check `selectedFileInfo` in `onSubmit`** ([components.md](references/components.md#the-files-selector-folder-vs-file)).
+- **Every enum-valued string comes from the enum** — `PluginLocale.JA_JP`, not `"ja"`; a near-miss compiles and is never matched ([sdk-contract.md](references/sdk-contract.md#localisation)).
+- **The role filter is `usersTypes` for ContextMenu, InfoPanel, EventListener, ArticleButton, ArticleNavigation and `usersType` for MainButton, ProfileMenu, File** — the wrong one is skipped in silence ([portal.md](references/portal.md#the-filter-field-trap)).
+- **Item keys are prefixed with the manifest `name`, verbatim** — the maps are portal-wide ([portal.md](references/portal.md#item-keys-are-portal-wide)).
+- **A stylesheet is a `.module.css`** — `plugin.css` lands in the portal's own head ([styles.md](references/styles.md#scoped-css)).
+- **Colors come from the theme variables**, and a kit `color` prop takes a CSS value — `var(--accent-main)`, not `"accent"` ([styles.md](references/styles.md#colors)).
+- **Every re-upload needs a new `version`** — the portal caches the bundle and the icons by it; bump the moment you start editing an installed plugin ([portal.md](references/portal.md#silent-failures)).

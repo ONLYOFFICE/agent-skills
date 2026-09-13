@@ -48,7 +48,7 @@ const main = () => {
   console.log(`  ui-kit:       ${result.uiKitTarball}, copied into the project with the tarballs it depends on`);
 
   if (result.sdkTarball)
-    console.log(`  sdk:          ${result.sdkTarball}, installed from the tarball until 3.0.0 is on npm`);
+    console.log(`  sdk:          ${result.sdkTarball}, installed from the vendored tarball rather than npm`);
 
   console.log(`  placeholders: ${result.iconPaths.join(", ")} - replace these with real icons`);
 

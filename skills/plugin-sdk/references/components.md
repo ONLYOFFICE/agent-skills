@@ -68,7 +68,7 @@ const workDialog = (): IModalDialog => ({
 
 Entering a folder sets `selectedItemId` to it (and `selectedItemType` to `"rooms"` on the rooms list, `"files"` inside); clicking a file leaves `selectedItemId` on the folder and fills `selectedFileInfo` (`{ id, title, fileExst }`). Both are current in `onSubmit`.
 
-- **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, and on portals before January 2026 never — a Select gated on it is dead there. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
+- **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, and on older portals never — a Select gated on it is dead there. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
 - `filterParam` filters what is *listed*, not what can be submitted. `FilterType` (`None 0`, `FilesOnly 1`, `FoldersOnly 2`, `DocumentsOnly 3`, `PresentationsOnly 4`, `SpreadsheetsOnly 5`, `ImagesOnly 7`) is **not exported from the SDK root** and a deep import is refused: `const DOCUMENTS_ONLY: TFilesSelector["filterParam"] = 3`.
 - `selectedFileInfo` is `{ id, title, fileExst }` and `@inline` in the SDK — declare your own type where you store it; anything more is `GET /files/file/{id}`.
 
