@@ -56,6 +56,10 @@ const COMPONENT_SCOPES = {
   // padding of its own looks right in the preview and ships a doubled gutter; with it, the
   // doubling is in the screenshot. The inline-end is nearly bare because the scrollbar is
   // there, which is why a symmetric padding of your own also reads as lopsided.
+  //
+  // These are the desktop values. From 1023.9px down the section drops the top padding
+  // (padding-block 0 16px, sides 24px/0) - not reproduced here, since every surface is
+  // measured at a 1280px viewport; styles.md says what a page has to add below that width.
   ArticleNavigation: {
     width: 1030,
     hasCurrentFile: false,
@@ -205,8 +209,12 @@ const boot = async () => {
         } catch {
           continue;
         }
-        add("modal from " + scope + "/" + key, message?.modalDialogProps?.dialogBodyComponent, false, 400);
-        add("aside from " + scope + "/" + key, message?.modalDialogProps?.dialogBodyComponent, false, 480);
+        const dialog = message?.modalDialogProps;
+        if (dialog?.dialogBodyComponent) {
+          // A dialog opened from a click has no current file; its width is the display type's.
+          const aside = String(dialog.displayType) === "aside";
+          add((aside ? "aside from " : "modal from ") + scope + "/" + key, dialog.dialogBodyComponent, false, aside ? 480 : 400);
+        }
         add("viewer from " + scope + "/" + key, message?.mediaViewerProps?.component, true, 0);
       }
     }
