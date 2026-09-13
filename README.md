@@ -97,12 +97,12 @@ skills/embed-sdk/
 │                        sync-sdk.mjs (validator dictionaries from the SDK types)
 └── evals/               A/B evaluation protocol (task, rubric, operator guide)
 skills/plugin-sdk/
-├── SKILL.md             router: build / audit / explain, scope tables, critical rules
-├── references/          SDK target and contract, React runtime, UI kit, item shapes, host behaviour, REST API, reading SDK 2 plugins
+├── SKILL.md             router: which job, scope table, the Explain job, the checklist of rules
+├── references/          build and audit workflows, SDK target and contract, React runtime, UI kit, item shapes, host behaviour, REST API, reading SDK 2 plugins
 ├── scripts/             generate-plugin, validate-plugin, test-validator + contract.mjs
 ├── templates/           Vite/TS config for generated projects
 ├── vendor/              packed @docspace/ui-kit (+ the tarballs it needs), copied into every generated project
-└── evals/               graded scenarios and the fixture plugin one of them starts from
+└── evals/               graded scenarios, the fixture plugin one of them starts from, trigger tests
 ```
 
 ## Development
