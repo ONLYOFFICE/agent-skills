@@ -38,24 +38,60 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { Findings } from "./validator/findings.mjs";
-import { FatalProjectError, PluginProject } from "./validator/plugin-project.mjs";
-import { harnessEntry, harnessHtml, harnessViteConfig } from "./preview/harness-files.mjs";
+import {
+  FatalProjectError,
+  PluginProject,
+} from "./validator/plugin-project.mjs";
+import {
+  harnessEntry,
+  harnessHtml,
+  harnessViteConfig,
+} from "./preview/harness-files.mjs";
 import { measureSource } from "./preview/browser-checks.mjs";
 
 const HARNESS_DIR = ".plugin-preview";
 const DEFAULT_PORT = 5599;
 
+/** The flags that take a value - written `--port 5599` as the usage line shows, or `--port=5599`. */
+const FLAGS_WITH_VALUE = new Set(["port", "themes"]);
+
 const parseArgs = (argv) => {
-  const flags = new Set(argv.filter((arg) => arg.startsWith("--")));
-  const valueOf = (name, fallback) => {
-    const hit = argv.find((arg) => arg.startsWith(`--${name}=`));
-    return hit ? hit.slice(name.length + 3) : fallback;
-  };
+  const booleanFlags = new Set();
+  const flagValues = {};
+  const positionals = [];
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (!argument.startsWith("--")) {
+      positionals.push(argument);
+      continue;
+    }
+
+    const equalsAt = argument.indexOf("=");
+    const flagName =
+      equalsAt === -1 ? argument.slice(2) : argument.slice(2, equalsAt);
+    const nextArgument = argv[index + 1];
+    const nextArgumentIsValue =
+      FLAGS_WITH_VALUE.has(flagName) &&
+      nextArgument !== undefined &&
+      !nextArgument.startsWith("--");
+
+    if (equalsAt !== -1) flagValues[flagName] = argument.slice(equalsAt + 1);
+    else if (nextArgumentIsValue) {
+      flagValues[flagName] = nextArgument;
+      index += 1;
+    } else booleanFlags.add(flagName);
+  }
+
+  const valueOf = (flagName, fallback) => flagValues[flagName] ?? fallback;
+
+  const typed = path.resolve(positionals[0] ?? ".");
+  const dir = fs.existsSync(typed) ? fs.realpathSync.native(typed) : typed;
 
   return {
-    dir: path.resolve(argv.find((arg) => !arg.startsWith("--")) ?? "."),
-    json: flags.has("--json"),
-    keep: flags.has("--keep"),
+    dir,
+    json: booleanFlags.has("json"),
+    keep: booleanFlags.has("keep"),
     port: Number(valueOf("port", DEFAULT_PORT)),
     themes: valueOf("themes", "light,dark").split(",").filter(Boolean),
   };
@@ -70,17 +106,29 @@ const parseArgs = (argv) => {
 const loadPlaywright = async (project) => {
   const bases = [
     path.join(project.dir, "package.json"),
-    path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "package.json"),
+    path.join(
+      path.dirname(
+        new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"),
+      ),
+      "package.json",
+    ),
   ];
 
   // Resolved from CommonJS, `chromium` arrives on the namespace's default; from the ESM
   // entry it is a named export. Take whichever shape came back.
-  const unwrap = (module) => (module?.chromium ? module : module?.default?.chromium ? module.default : null);
+  const unwrap = (module) =>
+    module?.chromium
+      ? module
+      : module?.default?.chromium
+        ? module.default
+        : null;
 
   for (const base of bases) {
     try {
       const resolved = createRequire(base).resolve("playwright");
-      const loaded = unwrap(await import(`file://${resolved.replace(/\\/g, "/")}`));
+      const loaded = unwrap(
+        await import(`file://${resolved.replace(/\\/g, "/")}`),
+      );
       if (loaded) return loaded;
     } catch {
       /* try the next base */
@@ -101,7 +149,10 @@ const writeHarness = (project) => {
 
   fs.writeFileSync(path.join(dir, "index.html"), harnessHtml());
   fs.writeFileSync(path.join(dir, "harness.jsx"), harnessEntry());
-  fs.writeFileSync(path.join(dir, "vite.config.mjs"), harnessViteConfig(project.dir));
+  fs.writeFileSync(
+    path.join(dir, "vite.config.mjs"),
+    harnessViteConfig(project.dir),
+  );
 
   return dir;
 };
@@ -176,7 +227,9 @@ const reportSurface = (findings, surface, theme) => {
 
   /* One finding per surface, for the widest offender. A container that overflows makes every
    * child in it overflow too, and listing them all buries the one line worth acting on. */
-  const widestSpill = [...surface.spills].sort((a, b) => b.width - a.width).slice(0, 1);
+  const widestSpill = [...surface.spills]
+    .sort((a, b) => b.width - a.width)
+    .slice(0, 1);
 
   for (const { what, width, surface: surfaceWidth } of widestSpill)
     findings.error(
@@ -209,10 +262,17 @@ const reportSurface = (findings, surface, theme) => {
  * and reporting them buries the ones that are: a plugin whose effect throws is the whole
  * point of watching the console at all.
  */
-const HARNESS_NOISE = [/\[i18n\]/, /TranslationProvider/, /Missing translation/, /favicon/i];
+const HARNESS_NOISE = [
+  /\[i18n\]/,
+  /TranslationProvider/,
+  /Missing translation/,
+  /favicon/i,
+];
 
 const reportConsole = (findings, messages) => {
-  const real = messages.filter((message) => !HARNESS_NOISE.some((pattern) => pattern.test(message)));
+  const real = messages.filter(
+    (message) => !HARNESS_NOISE.some((pattern) => pattern.test(message)),
+  );
 
   for (const message of real.slice(0, 6))
     findings.error(
@@ -223,29 +283,52 @@ const reportConsole = (findings, messages) => {
 
 /* ------------------------------------------------------------------- the run */
 
-const runBrowser = async ({ playwright, port, themes, harnessDir, css, findings }) => {
+const runBrowser = async ({
+  playwright,
+  port,
+  themes,
+  harnessDir,
+  css,
+  findings,
+}) => {
   let browser;
   try {
     browser = await playwright.chromium.launch();
   } catch (error) {
     // The package is installed but its browser build is not - a setup step, not a defect.
-    return { skipped: `chromium is not installed for this playwright - run npx playwright install chromium (${error?.message?.split("\n")[0] ?? error})` };
+    return {
+      skipped: `chromium is not installed for this playwright - run npx playwright install chromium (${error?.message?.split("\n")[0] ?? error})`,
+    };
   }
 
   const report = { themes: {}, surfaces: [], shots: [] };
 
   try {
     for (const theme of themes) {
-      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      const page = await browser.newPage({
+        viewport: { width: 1280, height: 900 },
+      });
       const messages = [];
 
-      page.on("console", (message) => message.type() === "error" && messages.push(message.text()));
-      page.on("pageerror", (error) => messages.push(String(error?.message ?? error)));
+      page.on(
+        "console",
+        (message) =>
+          message.type() === "error" && messages.push(message.text()),
+      );
+      page.on("pageerror", (error) =>
+        messages.push(String(error?.message ?? error)),
+      );
 
-      await page.goto(`http://localhost:${port}/?theme=${theme}`, { waitUntil: "load" });
+      await page.goto(`http://localhost:${port}/?theme=${theme}`, {
+        waitUntil: "load",
+      });
 
       // The harness sets this after onLoadCallback and the click traversal have finished.
-      await page.waitForFunction("window.__previewReady === true", null, { timeout: 20000 }).catch(() => {});
+      await page
+        .waitForFunction("window.__previewReady === true", null, {
+          timeout: 20000,
+        })
+        .catch(() => {});
       // Effects, then a frame for layout to settle before anything is measured.
       await page.waitForTimeout(600);
 
@@ -254,7 +337,9 @@ const runBrowser = async ({ playwright, port, themes, harnessDir, css, findings 
       if (css) await page.addStyleTag({ content: css });
       await page.waitForTimeout(150);
 
-      const observations = await page.evaluate(`${measureSource()}(${JSON.stringify(css)})`);
+      const observations = await page.evaluate(
+        `${measureSource()}(${JSON.stringify(css)})`,
+      );
 
       if (theme === themes[0]) {
         reportBoot(findings, observations.boot);
@@ -262,7 +347,8 @@ const runBrowser = async ({ playwright, port, themes, harnessDir, css, findings 
         report.surfaces = observations.surfaces.map((surface) => surface.where);
       }
 
-      for (const surface of observations.surfaces) reportSurface(findings, surface, theme);
+      for (const surface of observations.surfaces)
+        reportSurface(findings, surface, theme);
       reportConsole(findings, messages);
       report.themes[theme] = observations.surfaces;
 
@@ -282,10 +368,15 @@ const runBrowser = async ({ playwright, port, themes, harnessDir, css, findings 
 /* ---------------------------------------------------------------- reporting */
 
 const printTextReport = ({ project, findings, report, skipped }) => {
-  console.log(`${project.manifest.name} (${project.pluginName}) ${project.manifest.version}`);
+  console.log(
+    `${project.manifest.name} (${project.pluginName}) ${project.manifest.version}`,
+  );
   console.log(`${project.dir}\n`);
 
-  for (const finding of findings.all) console.log(`${finding.level.padEnd(5)} [${finding.code}] ${finding.message}`);
+  for (const finding of findings.all)
+    console.log(
+      `${finding.level.padEnd(5)} [${finding.code}] ${finding.message}`,
+    );
 
   if (skipped) {
     console.log(`\npreview skipped: ${skipped}`);
@@ -296,7 +387,9 @@ const printTextReport = ({ project, findings, report, skipped }) => {
   console.log(`\nsurfaces: ${surfaces}`);
   console.log(`themes:   ${Object.keys(report.themes).join(", ")}`);
   for (const shot of report.shots) console.log(`shot:     ${shot}`);
-  console.log(`\n${findings.errors.length} error(s), ${findings.warnings.length} warning(s)`);
+  console.log(
+    `\n${findings.errors.length} error(s), ${findings.warnings.length} warning(s)`,
+  );
 };
 
 const main = async () => {
@@ -308,10 +401,12 @@ const main = async () => {
   /* Each of these is a reason the pass cannot run rather than a defect in the plugin, so
    * each says what to do instead of failing the run. */
   let skipped = null;
-  if (!project.isBuilt) skipped = "no dist/plugin.js - run the build first (npm run build)";
+  if (!project.isBuilt)
+    skipped = "no dist/plugin.js - run the build first (npm run build)";
   else if (project.distChunks.length)
     skipped = `dist/ holds ${project.distChunks.length} chunk file(s) beside plugin.js - the archive cannot carry them, and this pass would resolve them and show the plugin working; set build.rollupOptions.output.inlineDynamicImports: true and build again (validate-plugin.mjs has the detail)`;
-  else if (!project.hasNodeModules) skipped = "no node_modules - run npm install first";
+  else if (!project.hasNodeModules)
+    skipped = "no node_modules - run npm install first";
 
   const playwright = skipped ? null : await loadPlaywright(project);
   if (!skipped && !playwright)
@@ -327,7 +422,9 @@ const main = async () => {
       harnessDir = writeHarness(project);
       server = await startServer(project, harnessDir, port);
 
-      if (!server) skipped = "vite could not be loaded from the project - it is a devDependency of a generated plugin";
+      if (!server)
+        skipped =
+          "vite could not be loaded from the project - it is a devDependency of a generated plugin";
       else {
         report = await runBrowser({
           playwright,
@@ -343,7 +440,8 @@ const main = async () => {
     }
   } finally {
     if (server) await server.close();
-    if (harnessDir && !keep && !findings.hasErrors) fs.rmSync(harnessDir, { recursive: true, force: true });
+    if (harnessDir && !keep && !findings.hasErrors)
+      fs.rmSync(harnessDir, { recursive: true, force: true });
   }
 
   if (skipped) findings.warn("preview", skipped);
@@ -351,7 +449,13 @@ const main = async () => {
   if (json)
     console.log(
       JSON.stringify(
-        { plugin: { dir: project.dir, name: project.manifest.name }, skipped, report, findings: findings.all, ok: !findings.hasErrors },
+        {
+          plugin: { dir: project.dir, name: project.manifest.name },
+          skipped,
+          report,
+          findings: findings.all,
+          ok: !findings.hasErrors,
+        },
         null,
         2,
       ),
