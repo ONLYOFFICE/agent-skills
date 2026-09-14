@@ -189,7 +189,7 @@ const dirty = JSON.stringify(config) !== JSON.stringify(saved);
 // …props: { isDisabled: invalid || !dirty, onClick: async () => { await settings.save(config); setSaved(config); /* and the toast, below */ } }
 ```
 
-The `setSaved` after a successful save is what stops a second press re-sending the same values; the portal closing the aside usually gets there first, so the snapshot earns its keep on the other path — held to the success branch, it leaves a failed save dirty and Save live for the second attempt.
+The `setSaved` after a successful save is what stops a second press re-sending the same values, and holding it to the success branch is what keeps the snapshot honest: it means "this is what is stored", so advancing it after a request that failed would record a value the server never took.
 
 **A field's error waits for the same signal.** `hasError` taken from validity alone is red the moment the aside opens — over an empty field on a fresh install, or over a stored value someone else saved — so the page greets the admin by marking a mistake they have not made. The snapshot already answers who typed: a field the user has touched is one that differs from what was loaded, so `hasError={invalid && config.webhook !== saved.webhook}` stays quiet until they edit it and turns red as they type. `isDisabled` keeps plain `invalid` — an invalid stored value is unsaveable regardless, because an untouched form is not dirty.
 

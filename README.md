@@ -99,7 +99,7 @@ skills/embed-sdk/
 skills/plugin-sdk/
 ├── SKILL.md             router: which job, scope table, the Explain job, the checklist of rules
 ├── references/          build and audit workflows, SDK target and contract, React runtime, UI kit, item shapes, host behaviour, REST API, reading SDK 2 plugins
-├── scripts/             generate-plugin, validate-plugin, test-validator + contract.mjs
+├── scripts/             generate-plugin, validate-plugin, preview-plugin, test-validator + contract.mjs
 ├── templates/           Vite/TS config for generated projects
 ├── vendor/              packed @docspace/ui-kit (+ the tarballs it needs), copied into every generated project
 └── evals/               graded scenarios, the fixture plugin one of them starts from, trigger tests

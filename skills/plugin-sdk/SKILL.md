@@ -18,7 +18,7 @@ The difficulty in all three jobs is the same: DocSpace loads plugins with almost
 
 ## Toolkit and references
 
-`$SKILL` is the directory containing this file (`<repo>/skills/plugin-sdk`, or `${CLAUDE_PLUGIN_ROOT}/skills/plugin-sdk` when installed as a Claude Code plugin). Resolve it to an absolute path once. Everything runs on Node alone — no portal, no network except `npm install` in the generated project.
+`$SKILL` is the directory containing this file (`<repo>/skills/plugin-sdk`, or `${CLAUDE_PLUGIN_ROOT}/skills/plugin-sdk` when installed as a Claude Code plugin). Resolve it to an absolute path once. Everything runs on Node alone — no portal, and no network except `npm install` in the generated project and, for the browser pass only, Playwright's own Chromium download; without it that one step reports `preview skipped` and the rest still runs ([build.md](references/build.md#7-see-it--the-step-that-catches-what-looks-broken)).
 
 ```
 $SKILL/scripts/generate-plugin.mjs   scaffold a project        $SKILL/scripts/validate-plugin.mjs   check one against the loader
@@ -80,15 +80,15 @@ Answer from the references, not from memory — the SDK's own documentation is t
 
 ## The rules that decide whether it works
 
-They apply whether writing or judging. The validator already reports an unfilled scope, a missing default export, a foreign import, a bundled React, a JSX element where a component was expected, a hook in a class-side callback, an action without its payload, a locale table under a tag the portal never sends, and a component that throws while rendering. Everything below that survives a render is yours to get right; each line links to the passage that explains it.
+They apply whether writing or judging, and **no tool catches most of them** — the validator already reports an unfilled scope, a missing default export, a foreign import, a bundled React, a JSX element where a component was expected, a hook in a class-side callback, an action without its payload, a locale table under a tag the portal never sends, and a component that throws while rendering. Everything below that survives a render — an effect without a `catch`, work in `onLoadCallback`, a settings page that never calls `setSaveButton` — is still yours to get right; each line links to the passage that explains it.
 
-- **Components get no props.** `useCurrentFile()` is `null` on a page, in settings and in a modal opened from a class-side click — hand the id over through a module variable or a factory closure ([react.md](references/react.md#what-usecurrentfile-returns-where)).
+- **Components get no props.** `useCurrentFile()` is the selection in an info panel tab or the media viewer, and `null` on a page, in settings and in a modal opened from a class-side click — there, hand the id over through a module variable or a factory closure ([react.md](references/react.md#what-usecurrentfile-returns-where)).
 - **Register items inside `onLoadCallback`, built by factory functions** — at module scope the language and API URLs are not set yet ([portal.md](references/portal.md#the-loading-sequence)).
 - **Fetch in effects, with a cleanup and a `catch`; never in `onLoadCallback`** — an uncaught throw renders the component as nothing ([react.md](references/react.md#errors-loading-language-styling)).
 - **Class-side callbacks catch their own errors and return a toast** — nothing wraps `onItemClick`, `onClick`, `eventHandler` or `onSave` ([sdk-contract.md](references/sdk-contract.md#two-kinds-of-callback)).
 - **A React settings page wires Save through `setSaveButton`** in an effect that re-runs when the form changes; `isDisabled` and `hasError` gate on what the user changed, not on validity alone, and `onClick` catches and returns a success or failure toast, since nothing else reports the save ([react.md](references/react.md#the-settings-client)).
 - **Changing an item from a component is two steps:** mutate the map through the plugin instance, then call the matching `update*Items()` ([react.md](references/react.md#actions)).
-- **A React modal has no footer and a 400×280 cap** — action row in the body; `autoMaxHeight`/`autoMaxWidth` or an aside for more; a screen is an `ArticleNavigation` page ([components.md](references/components.md#modals)).
+- **A React modal has no footer and a 400×280 cap** — action row in the body; `autoMaxHeight`/`autoMaxWidth` or an aside for more, and a long aside scrolls only where you give it the region; a screen is an `ArticleNavigation` page ([components.md](references/components.md#modals)).
 - **Hand a kit component one element carrying your own layout, never a fragment** — its wrapper is a flex row and several blocks line up side by side ([ui-kit.md](references/ui-kit.md#layout-conventions)).
 - **One portal-drawn surface at a time** — close the dialog, open the selector, reopen from submit *and* cancel, form values in module scope ([components.md](references/components.md#selectors)).
 - **Long work reports through the floating operations button** — from the class via the dispatcher its `onLoad` hands over when there is nothing to show, from an effect behind a start guard when there is ([components.md](references/components.md#work-that-takes-a-while)).

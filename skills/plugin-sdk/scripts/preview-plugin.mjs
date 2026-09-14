@@ -36,6 +36,7 @@
 import { createRequire } from "node:module";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { Findings } from "./validator/findings.mjs";
 import {
@@ -54,9 +55,20 @@ const DEFAULT_PORT = 5599;
 
 /** The flags that take a value - written `--port 5599` as the usage line shows, or `--port=5599`. */
 const FLAGS_WITH_VALUE = new Set(["port", "themes"]);
+const BOOLEAN_FLAGS = new Set(["keep", "json"]);
+const THEMES = ["light", "dark"];
 
+const USAGE =
+  "node scripts/preview-plugin.mjs <pluginDir> [--keep] [--json] [--themes light,dark] [--port N]";
+
+/*
+ * Every flag is named and every value checked, because each way this can go wrong is silent:
+ * a `--port` whose value was left out eats the plugin directory and the pass measures whatever
+ * sits in the cwd, an empty `--themes` runs no theme at all and still exits 0 - which reads as
+ * a pass over surfaces nothing looked at - and a misspelled flag used to be accepted as a
+ * boolean nobody reads.
+ */
 const parseArgs = (argv) => {
-  const booleanFlags = new Set();
   const flagValues = {};
   const positionals = [];
 
@@ -70,30 +82,69 @@ const parseArgs = (argv) => {
     const equalsAt = argument.indexOf("=");
     const flagName =
       equalsAt === -1 ? argument.slice(2) : argument.slice(2, equalsAt);
-    const nextArgument = argv[index + 1];
-    const nextArgumentIsValue =
-      FLAGS_WITH_VALUE.has(flagName) &&
-      nextArgument !== undefined &&
-      !nextArgument.startsWith("--");
+    if (!FLAGS_WITH_VALUE.has(flagName) && !BOOLEAN_FLAGS.has(flagName))
+      throw new FatalProjectError(`Unknown flag --${flagName}.\n${USAGE}`);
 
-    if (equalsAt !== -1) flagValues[flagName] = argument.slice(equalsAt + 1);
-    else if (nextArgumentIsValue) {
-      flagValues[flagName] = nextArgument;
-      index += 1;
-    } else booleanFlags.add(flagName);
+    if (equalsAt !== -1) {
+      flagValues[flagName] = argument.slice(equalsAt + 1);
+      continue;
+    }
+    if (BOOLEAN_FLAGS.has(flagName)) {
+      flagValues[flagName] = "true";
+      continue;
+    }
+
+    const nextArgument = argv[index + 1];
+    if (nextArgument === undefined || nextArgument.startsWith("--"))
+      throw new FatalProjectError(`--${flagName} needs a value.\n${USAGE}`);
+    flagValues[flagName] = nextArgument;
+    index += 1;
   }
 
-  const valueOf = (flagName, fallback) => flagValues[flagName] ?? fallback;
+  const booleanFlag = (flagName) => {
+    const value = flagValues[flagName];
+    if (value === undefined) return false;
+    if (value === "" || value === "true") return true;
+    if (value === "false") return false;
+    throw new FatalProjectError(
+      `--${flagName} takes no value, or true/false - got "${value}".`,
+    );
+  };
 
-  const typed = path.resolve(positionals[0] ?? ".");
-  const dir = fs.existsSync(typed) ? fs.realpathSync.native(typed) : typed;
+  if (positionals.length > 1)
+    throw new FatalProjectError(`One plugin directory at a time.\n${USAGE}`);
+
+  const port = Number(flagValues.port ?? DEFAULT_PORT);
+  if (!Number.isInteger(port) || port < 1 || port > 65535)
+    throw new FatalProjectError(
+      `--port takes a port number - got "${flagValues.port}".`,
+    );
+
+  const themes = (flagValues.themes ?? THEMES.join(","))
+    .split(",")
+    .map((theme) => theme.trim())
+    .filter(Boolean);
+  const unknown = themes.filter((theme) => !THEMES.includes(theme));
+  if (!themes.length || unknown.length)
+    throw new FatalProjectError(
+      `--themes takes one or more of ${THEMES.join(", ")} - got "${flagValues.themes}".`,
+    );
+
+  // realpath so the directory this reports and the harness root agree on junctions and 8.3
+  // names; one the OS will not canonicalise is left as typed, for PluginProject.load to reject.
+  let dir = path.resolve(positionals[0] ?? ".");
+  try {
+    dir = fs.realpathSync.native(dir);
+  } catch {
+    /* not there, or the OS refuses to open it - load() says so properly */
+  }
 
   return {
     dir,
-    json: booleanFlags.has("json"),
-    keep: booleanFlags.has("keep"),
-    port: Number(valueOf("port", DEFAULT_PORT)),
-    themes: valueOf("themes", "light,dark").split(",").filter(Boolean),
+    json: booleanFlag("json"),
+    keep: booleanFlag("keep"),
+    port,
+    themes,
   };
 };
 
@@ -106,12 +157,10 @@ const parseArgs = (argv) => {
 const loadPlaywright = async (project) => {
   const bases = [
     path.join(project.dir, "package.json"),
-    path.join(
-      path.dirname(
-        new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"),
-      ),
-      "package.json",
-    ),
+    // fileURLToPath, not the URL's pathname: that one is percent-encoded, so a skill living
+    // under a path with a space or a non-ASCII character resolves against a directory that
+    // does not exist and the pass reports playwright missing when it is installed.
+    path.join(path.dirname(fileURLToPath(import.meta.url)), "package.json"),
   ];
 
   // Resolved from CommonJS, `chromium` arrives on the namespace's default; from the ESM
@@ -126,9 +175,7 @@ const loadPlaywright = async (project) => {
   for (const base of bases) {
     try {
       const resolved = createRequire(base).resolve("playwright");
-      const loaded = unwrap(
-        await import(`file://${resolved.replace(/\\/g, "/")}`),
-      );
+      const loaded = unwrap(await import(pathToFileURL(resolved).href));
       if (loaded) return loaded;
     } catch {
       /* try the next base */

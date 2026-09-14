@@ -40,8 +40,8 @@ SDK `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** and DocSpace **4.0**; generat
 ```
 SKILL.md      the skill: the router, the scope table, the Explain job and the checklist of rules
 references/   the Build and Audit workflows; SDK target, class contract, item shapes, React runtime, host-drawn components, UI kit, styling, host behaviour, REST API, dependencies, reading SDK 2 plugins
-scripts/      generate, validate, self-test, and contract.mjs (the portal contract as data)
-  generator/  validator/  validator-tests/
+scripts/      generate, validate, preview in a browser, self-test, and contract.mjs (the portal contract as data)
+  generator/  validator/  validator-tests/  preview/
 templates/    build config for generated projects (inert filenames so editors ignore them)
 vendor/       the packed @docspace/ui-kit and SDK, with the tarballs they depend on
 evals/        graded scenarios, the fixture plugin one of them starts from, and the trigger tests for the description — a maintenance tool, not read by agents
