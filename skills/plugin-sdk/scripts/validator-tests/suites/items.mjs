@@ -200,7 +200,7 @@ export default ({ workspace, check }) => {
   // --- a hook called from a class-side callback ---------------------------------
   //
   // A context menu click has no runtime context; the hooks only work inside the component
-  // DocSpace renders. The finding has to say that rather than "threw".
+  // ONLYOFFICE Apps renders. The finding has to say that rather than "threw".
 
   const hookInCallback = workspace.validateProject(
     "hook-in-callback",

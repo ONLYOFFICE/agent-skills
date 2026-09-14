@@ -23,7 +23,7 @@
  * surface to a *string*: nothing has a size, no stylesheet has run, no effect has fired. So
  * the defects it cannot see are exactly the ones a user notices first - a field collapsed to
  * a sliver, a label printed over the next row, a page that drags a scrollbar across the
- * portal, a rule that restyles DocSpace itself, a panel that is blank only after its effect
+ * portal, a rule that restyles ONLYOFFICE Apps itself, a panel that is blank only after its effect
  * throws. This pass mounts the plugin's own bundle against the real UI kit and the real theme
  * variables in Chromium, at the width each surface actually gets, in both themes, and reports
  * what it measured. Exit code 1 when there is at least one ERROR.
@@ -237,7 +237,7 @@ const reportLeaks = (findings, leaks) => {
   for (const { selector, hits } of leaks)
     findings.error(
       "preview-leak",
-      `the stylesheet's rule "${selector}" matches ${hits} element(s) of portal-shaped markup planted beside the plugin - on the portal that rule restyles DocSpace itself, in every section, for every user, until the plugin is disabled. Scope it: a .module.css, or the manifest name as a prefix on the leftmost selector`,
+      `the stylesheet's rule "${selector}" matches ${hits} element(s) of portal-shaped markup planted beside the plugin - on the portal that rule restyles ONLYOFFICE Apps itself, in every section, for every user, until the plugin is disabled. Scope it: a .module.css, or the manifest name as a prefix on the leftmost selector`,
     );
 };
 

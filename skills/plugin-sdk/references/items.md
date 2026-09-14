@@ -110,7 +110,7 @@ eventHandler: async () => ({ actions: [Actions.updateArticleNavigationItems] })
 
 **A failed `fileSecurity` / `security` / `devices` check means `onClick` never runs at all.** The portal wraps your handler and returns early when a key is not allowed — and only the *click* is filtered: the row keeps your `fileTypeName` and your icons, so the user clicks a file the plugin visibly owns and nothing happens, with no toast and no console line. So these fields say "this action does not exist here", nothing softer. When a denial has to be *explained*, leave them unset and check the permission inside `onClick` — the portal hands the handler its whole file row, whose `security` map the SDK's `File` does not declare (read it through a cast, or re-fetch the file's metadata). A filtered handler has no message to show because it never ran.
 
-Clicks in the file list, upload panel and version history route to `onClick`; Ctrl/middle-click opens `viewUrl` directly. Opening "in DocSpace" = `showModal` with a `dialogBodyComponent` (an aside for document-like content) or `showMediaViewer` with a `component` ([components.md](components.md)), passing the `File` you were given — neither gets a current file from a class-side click ([react.md](react.md#what-usecurrentfile-returns-where)). Creating such files needs `enableExternalExt` ([rest-api.md](rest-api.md#creating-a-file-whose-extension-the-portal-does-not-own)).
+Clicks in the file list, upload panel and version history route to `onClick`; Ctrl/middle-click opens `viewUrl` directly. Opening "in ONLYOFFICE Apps" = `showModal` with a `dialogBodyComponent` (an aside for document-like content) or `showMediaViewer` with a `component` ([components.md](components.md)), passing the `File` you were given — neither gets a current file from a class-side click ([react.md](react.md#what-usecurrentfile-returns-where)). Creating such files needs `enableExternalExt` ([rest-api.md](rest-api.md#creating-a-file-whose-extension-the-portal-does-not-own)).
 
 ## ArticleButton
 
@@ -155,7 +155,7 @@ export const roomsPageItem = (): IArticleNavigationItem => ({
 
 ## Enum values worth having at hand
 
-`Devices` — `mobile`, `tablet`, `desktop`. `Section` — `Files`, `Accounts`, `Settings`. `ToastType` — `success`, `error`, `warning`, `info`. `PluginLocale` — 33 locales, values like `"en-US"`, `"ru"`, `"pt-BR"`. `FilesExst` covers the extensions DocSpace knows; a plain string works for your own.
+`Devices` — `mobile`, `tablet`, `desktop`. `Section` — `Files`, `Accounts`, `Settings`. `ToastType` — `success`, `error`, `warning`, `info`. `PluginLocale` — 33 locales, values like `"en-US"`, `"ru"`, `"pt-BR"`. `FilesExst` covers the extensions ONLYOFFICE Apps knows; a plain string works for your own.
 
 ### `UsersType` does not name the roles the portal shows
 
@@ -164,7 +164,7 @@ Keys are camelCase, values PascalCase — `owner: "Owner"`, `docSpaceAdmin: "Doc
 | `UsersType` member | The role as the portal labels it today |
 |---|---|
 | `owner` | Owner |
-| `docSpaceAdmin` | DocSpace admin |
+| `docSpaceAdmin` | ONLYOFFICE Apps admin |
 | `roomAdmin` | Room admin — also everyone the other four do not match |
 | `collaborator` | **User** |
 | `user` | **Guest** |

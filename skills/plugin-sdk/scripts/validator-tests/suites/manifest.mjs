@@ -170,7 +170,7 @@ export default ({ workspace, check }) => {
 
   check(
     "a plain .css import is a warning that says nothing scopes it",
-    plainCss.warningCodes.includes("css") && plainCss.hasFindingMentioning("plain stylesheet", "restyles DocSpace"),
+    plainCss.warningCodes.includes("css") && plainCss.hasFindingMentioning("plain stylesheet", "restyles ONLYOFFICE Apps"),
     plainCss.messagesFor("css"),
   );
   check(

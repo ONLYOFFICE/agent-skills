@@ -17,7 +17,7 @@
  */
 
 /*
- * Validates a DocSpace plugin project against the portal loader contract.
+ * Validates an ONLYOFFICE Apps plugin project against the portal loader contract.
  *
  *   node scripts/validate-plugin.mjs <pluginDir> [--invoke] [--json]
  *

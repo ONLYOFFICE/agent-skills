@@ -71,7 +71,7 @@ export default ({ workspace, check }) => {
 
   check(
     "a hook called at module scope is an error that names the cause",
-    !hookAtTopLevel.ok && hookAtTopLevel.mentions("Hooks only work inside the component DocSpace renders"),
+    !hookAtTopLevel.ok && hookAtTopLevel.mentions("Hooks only work inside the component ONLYOFFICE Apps renders"),
     hookAtTopLevel.messageSummary,
   );
 
@@ -97,7 +97,7 @@ export default ({ workspace, check }) => {
     "a bare import the portal does not provide is an error naming it",
     !foreignImport.ok &&
       foreignImport.errorCodes.includes("dist") &&
-      foreignImport.hasFindingMentioning('"lodash-es"', "which DocSpace does not provide"),
+      foreignImport.hasFindingMentioning('"lodash-es"', "which ONLYOFFICE Apps does not provide"),
     foreignImport.messageSummary,
   );
   check(

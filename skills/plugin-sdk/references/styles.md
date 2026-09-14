@@ -1,6 +1,6 @@
 # Styling a plugin's surfaces
 
-How a plugin comes to look like DocSpace, and how it avoids restyling DocSpace on the way. The kit's own components and their layout mechanics are in [ui-kit.md](ui-kit.md); this file is what applies whether the markup is a kit `Button`, a plain `div` or HTML the plugin generated.
+How a plugin comes to look like ONLYOFFICE Apps, and how it avoids restyling ONLYOFFICE Apps on the way. The kit's own components and their layout mechanics are in [ui-kit.md](ui-kit.md); this file is what applies whether the markup is a kit `Button`, a plain `div` or HTML the plugin generated.
 
 The one fact behind everything below: a plugin's stylesheet is not scoped to the plugin. `plugin.css` is linked into the **main document's** head, after the portal's own stylesheets, so an unprefixed rule restyles the product ([Scoped CSS](#scoped-css)) — and the portal's rules reach into your markup in return ([What beats your rules](#what-beats-your-rules)).
 
@@ -45,7 +45,7 @@ When the theme is needed as a **fact** — a whole palette for generated markup,
 
 ## Scoped CSS
 
-`plugin.css` lands in the portal's `<head>` *after* the portal's own stylesheets, so at equal specificity your rule wins: an unprefixed `pre {}` or `.card {}` restyles the product itself ([portal.md](portal.md#what-actually-breaks-the-portal)). The validator only reports how the stylesheet is imported and built; the rules themselves are read by the browser pass, which plants portal-shaped markup beside the plugin and reports every rule of yours that matches it (`preview-leak`). That covers the shapes DocSpace's DOM is mostly made of, not every selector — so a stylesheet is still either read by hand or made impossible by construction:
+`plugin.css` lands in the portal's `<head>` *after* the portal's own stylesheets, so at equal specificity your rule wins: an unprefixed `pre {}` or `.card {}` restyles the product itself ([portal.md](portal.md#what-actually-breaks-the-portal)). The validator only reports how the stylesheet is imported and built; the rules themselves are read by the browser pass, which plants portal-shaped markup beside the plugin and reports every rule of yours that matches it (`preview-leak`). That covers the shapes the portal's DOM is mostly made of, not every selector — so a stylesheet is still either read by hand or made impossible by construction:
 
 - **A CSS module** — `styles.module.css`, imported as `import styles from "./styles.module.css"` and used as `className={styles.row}`. The build hashes every class name, so there is nothing to remember and nothing to get wrong. **Prefer this**: it is the only form that cannot go wrong unread. The generated `vite.config.ts` builds `css.modules.generateScopedName` out of the manifest `name` so the hashed classes carry the plugin's prefix too; a hand-written config needs the same line.
 - **A prefix on every class**, taken from the manifest `name` (`archive-manager` → `.archive-manager-row`) — for a plain `.css` file, which the validator can only warn about. Never a bare type selector, `*`, `:root`, `html` or `body` at the top level, and never an unprefixed class: those match the portal's DOM, not yours.

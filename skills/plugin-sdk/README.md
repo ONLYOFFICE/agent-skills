@@ -1,8 +1,8 @@
-# DocSpace plugin skill
+# ONLYOFFICE Apps plugin skill
 
-A skill that teaches an AI coding agent to build, audit and explain ONLYOFFICE DocSpace plugins — React components built from the portal's own UI kit, registered through the Plugins SDK. Describe the feature ("a screen in DocSpace listing our rooms", "a context menu action that pushes the selected file to our archive") and the agent produces a built, validated project with an uploadable `dist/plugin.zip`; point it at a plugin that misbehaves and it finds the reason.
+A skill that teaches an AI coding agent to build, audit and explain ONLYOFFICE Apps plugins — React components built from the portal's own UI kit, registered through the Plugins SDK. Describe the feature ("a screen in ONLYOFFICE Apps listing our rooms", "a context menu action that pushes the selected file to our archive") and the agent produces a built, validated project with an uploadable `dist/plugin.zip`; point it at a plugin that misbehaves and it finds the reason.
 
-DocSpace loads plugins with very little error reporting: a bundle with no default export, an import the portal does not provide, a scope declared but not filled, a filter field spelled `usersType` where the portal reads `usersTypes` — each installs cleanly and does nothing. This skill encodes those rules and checks them offline. The body is [`SKILL.md`](SKILL.md); every supported agent is pointed at that one file.
+ONLYOFFICE Apps loads plugins with very little error reporting: a bundle with no default export, an import the portal does not provide, a scope declared but not filled, a filter field spelled `usersType` where the portal reads `usersTypes` — each installs cleanly and does nothing. This skill encodes those rules and checks them offline. The body is [`SKILL.md`](SKILL.md); every supported agent is pointed at that one file.
 
 ## Installing it
 
@@ -33,7 +33,7 @@ The **self-test** runs the validator against deliberately broken projects with h
 
 ## What it targets
 
-SDK `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** and DocSpace **4.0**; generated plugins are TypeScript + React 19, built with Vite and packed by the SDK's own `build-docspace-plugin`, matching the SDK's template. SDK 2 plugins (webpack, `window.Plugins`, declarative `IBox` trees) still run on the portal but are outside what the validator checks. See [references/scopes.md](references/scopes.md).
+SDK `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** and ONLYOFFICE Apps **4.0**; generated plugins are TypeScript + React 19, built with Vite and packed by the SDK's own `build-docspace-plugin`, matching the SDK's template. SDK 2 plugins (webpack, `window.Plugins`, declarative `IBox` trees) still run on the portal but are outside what the validator checks. See [references/scopes.md](references/scopes.md).
 
 ## Layout
 
