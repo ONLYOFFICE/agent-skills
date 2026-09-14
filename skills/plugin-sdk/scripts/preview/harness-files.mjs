@@ -211,9 +211,18 @@ const boot = async () => {
         }
         const dialog = message?.modalDialogProps;
         if (dialog?.dialogBodyComponent) {
-          // A dialog opened from a click has no current file; its width is the display type's.
+          // A dialog opened from a click has no current file; its box is the display type's -
+          // except that autoMaxWidth and fullScreen hand sizing to the body, which is how a
+          // large dialog is built (components.md). Measuring one inside the 400px box those
+          // flags exist to escape reports an overflow the portal never draws, so it is given
+          // the width it asks for. The height is not reproduced for any dialog: the modal's
+          // 280px cap and an aside's full height are both absent, so nothing here can show a
+          // body that would need to scroll.
           const aside = String(dialog.displayType) === "aside";
-          add((aside ? "aside from " : "modal from ") + scope + "/" + key, dialog.dialogBodyComponent, false, aside ? 480 : 400);
+          let width = 400;
+          if (aside) width = 480;
+          else if (dialog.autoMaxWidth || dialog.fullScreen) width = 0;
+          add((aside ? "aside from " : "modal from ") + scope + "/" + key, dialog.dialogBodyComponent, false, width);
         }
         add("viewer from " + scope + "/" + key, message?.mediaViewerProps?.component, true, 0);
       }

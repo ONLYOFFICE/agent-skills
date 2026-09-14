@@ -9,8 +9,11 @@ fires, add the boundary — never paste the failing query verbatim. The descript
 hard limit of 1024 characters; check the length after every edit.
 
 The product was renamed from **DocSpace** to **ONLYOFFICE Apps** in 4.0, so both names are in
-use in the wild; the description carries both. Messages 4 and 8 below keep the new name and
-the rest the old one. Do not "fix" them to one brand.
+use in the wild; the description carries both. Should-trigger 4 and 8 say ONLYOFFICE Apps, 1, 2,
+3 and 10 say DocSpace, and 5, 6, 7 and 9 name no product at all — those four are the ones that
+test triggering on a bare feature description, which is the description's second clause. Do not
+"fix" any of them to one brand, and leave message 3 in Russian: it is the only check that the
+description triggers when the first message is not in English.
 
 ## Should trigger
 
@@ -19,7 +22,7 @@ the rest the old one. Do not "fix" them to one brand.
 3. Нужен экран внутри DocSpace, где виден список всех комнат с количеством участников, с поиском. Как это сделать?
 4. Our ONLYOFFICE Apps plugin installs and is enabled but nothing shows up anywhere — no menu item, no error in the console.
 5. The settings page of my plugin opens but the Save button in the footer does nothing. It's a React component, SDK 3.
-6. `usersTypes: [UsersType.user]` on my context menu item and admins still see it, guests too. What am I doing wrong?
+6. `usersType: [UsersType.user]` on my context menu item and everyone still sees it — admins, guests, all of them. What am I doing wrong?
 7. Here is our plugin repo (webpack, `window.Plugins.Foo = plugin`). Add an info panel tab that shows who last edited the file.
 8. Review this ONLYOFFICE Apps plugin before we ship it to a customer — it's a `.journal` file viewer with a context menu action.
 9. I re-uploaded the plugin zip with the fix and the portal still runs the old version. Cache? Wrong build?
