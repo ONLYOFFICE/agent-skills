@@ -177,7 +177,7 @@ A page that calls `usePluginAPI()` itself works, but every component that wants 
 
 The portal owns the footer's Save/Cancel look, and it also overrides the button's `size`, `primary` and `scale` — what survives from the `ButtonGroup` is `label` (defaulting to "Save"), `isDisabled`, `isLoading`, `onClick`, `withLoadingAfterClick` and `disableWhileRequestRunning`.
 
-**Without `setSaveButton` the Save button has no `onClick` and saves nothing** — for a React settings page, this is the call that makes the footer work. Make it in an effect that re-runs when the form changes; that is also how `isDisabled` tracks validity. After `onClick` resolves the portal closes the aside. The button state is per plugin and cleared on close.
+**Without `setSaveButton` the Save button has no `onClick` and saves nothing** — for a React settings page, this is the call that makes the footer work. Make it in an effect that re-runs when the form changes; that is also how `isDisabled` tracks validity. After `onClick` resolves the portal closes the aside. The button state is per plugin and cleared on close. (`ISettings.saveButton`, the static declaration beside `component`, still works and is not deprecated; it is the right choice only when the button never changes state — see [sdk-contract.md](sdk-contract.md#deprecated--do-not-use-in-new-code).)
 
 **`isDisabled` covers *unchanged* as well as invalid.** The portal draws Save enabled and has no idea whether the form was touched, so a page that only guards validity opens with Save already lit over a form nobody has edited — and pressing it is a real save: a request, `setAdminPluginSettingsValue` on every open session, a version of the settings written for no reason, and an aside that closes as though something happened. Nothing reports it, and it is the state a settings aside spends most of its life in. So keep what was loaded beside what is being edited and disable Save until they differ:
 
@@ -186,14 +186,14 @@ const [saved, setSaved] = useState<TConfig>(DEFAULTS);   // what is stored
 const [config, setConfig] = useState<TConfig>(DEFAULTS); // what the form shows
 // Both are built from the same literal, so key order matches and this is a safe compare.
 const dirty = JSON.stringify(config) !== JSON.stringify(saved);
-// …props: { isDisabled: invalid || !dirty, onClick: async () => { await settings.save(config); setSaved(config); } }
+// …props: { isDisabled: invalid || !dirty, onClick: async () => { await settings.save(config); setSaved(config); /* and the toast, below */ } }
 ```
 
-The `setSaved` after a successful save is what stops a second press re-sending the same values; the portal closing the aside usually gets there first, but a save that fails leaves the aside open, and then it is the only thing keeping Save honest.
+The `setSaved` after a successful save is what stops a second press re-sending the same values; the portal closing the aside usually gets there first, so the snapshot earns its keep on the other path — held to the success branch, it leaves a failed save dirty and Save live for the second attempt.
 
 **A field's error waits for the same signal.** `hasError` taken from validity alone is red the moment the aside opens — over an empty field on a fresh install, or over a stored value someone else saved — so the page greets the admin by marking a mistake they have not made. The snapshot already answers who typed: a field the user has touched is one that differs from what was loaded, so `hasError={invalid && config.webhook !== saved.webhook}` stays quiet until they edit it and turns red as they type. `isDisabled` keeps plain `invalid` — an invalid stored value is unsaveable regardless, because an untouched form is not dirty.
 
-`onClick` may also **return an `IMessage`**, which the host dispatches — a success or failure toast without reaching for a hook. (`ISettings.saveButton`, the static declaration beside `component`, still works and is not deprecated; it is the right choice only when the button never changes state — see [sdk-contract.md](sdk-contract.md#deprecated--do-not-use-in-new-code).)
+**A save says how it went.** `save()` is a request, and the footer reports nothing either way — the aside closes once `onClick` resolves, on a rejected request exactly as on a stored one — so an admin without the console open cannot tell a saved key from a lost one. Wrap the call in `try/catch` and **return an `IMessage`** from each branch, which the host dispatches: the toast without reaching for a hook, `ToastType.success` against `ToastType.error`, and `setSaved` only on the branch that stored something. It is a report rather than an offer to retry — the aside is already closing — so the error line says what to go back and check, not merely that something failed.
 
 ```tsx
 function SettingsPage() {
@@ -219,7 +219,16 @@ function SettingsPage() {
       component: Components.button,                       // the SDK's Components and ButtonSize, not the kit's
       // Not `isDisabled: invalid` alone - that leaves Save lit on a form nobody edited.
       props: { label: t("save"), size: SdkButtonSize.normal, isDisabled: invalid || !dirty, withLoadingAfterClick: true,
-               onClick: async () => { await settings.save(config); setSaved(config); } },
+               onClick: async () => {
+                 try {
+                   await settings.save(config);
+                   setSaved(config);                                 // only here - a failed save stays dirty
+                   return { actions: [Actions.showToast], toastProps: [{ type: ToastType.success, title: t("saved") }] };
+                 } catch {
+                   // The aside closes on this branch too, so the toast is the only account of it.
+                   return { actions: [Actions.showToast], toastProps: [{ type: ToastType.error, title: t("saveFailed") }] };
+                 }
+               } },
     });
   }, [settings, config, loaded, invalid, dirty]);
 
