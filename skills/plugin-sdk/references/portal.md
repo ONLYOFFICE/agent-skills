@@ -74,6 +74,7 @@ None of these produce an error the user sees; most leave nothing in the console.
 | A whole scope never appears | it exists in the installed SDK but not in this portal ([scopes.md](scopes.md)) |
 | A modal opened from the context menu knows nothing about the file | `useCurrentFile()` is `null` there — hand the id over ([react.md](react.md#what-usecurrentfile-returns-where)) |
 | The settings aside's Save button saves nothing | `usePluginSettings().setSaveButton(...)` never called |
+| A settings save that failed looks exactly like one that worked | the aside closes on either, and `onClick` returned no toast ([react.md](react.md#the-settings-client)) |
 | A class field holds the wrong value after load | it shares a name with a manifest field (`settings`, `name`, `version`, `url`, `enabled`, `image`, `description`) — overwritten in step 3 |
 | Works everywhere except chat / AI-agent views | suppressed there by design |
 

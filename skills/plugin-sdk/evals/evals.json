@@ -31,6 +31,7 @@
         "clicking a room calls navigate() from usePluginActions()",
         "the settings page calls settings.load() in an effect, handles its null (nothing saved yet) instead of destructuring it blindly, and calls settings.setSaveButton() in an effect that re-runs when the form changes",
         "the Save button's isDisabled is tied to both checks - https on the url and a 1-60 number for the minutes - and its onClick awaits settings.save(...)",
+        "that onClick catches the save and reports it, returning an IMessage with showToast and ToastType.success or ToastType.error, since the portal closes the aside on a failed save exactly as on a stored one and reports neither",
         "the settings form is built from FieldContainer units: a TextInput for the url with hasError/errorMessage, a ComboBox of {key, label} environments, a TextInput for the minutes, and the notify ToggleButton in a sized row - no raw <input> or <button>",
         "the EventListener item uses Events.ROOM_CREATE and Events.RENAME or ROOM_EDIT from the enum, and its eventHandler takes no arguments and returns only toasts and update*Items actions",
         "the ArticleButton component is a single IconButton sized 32 that calls navigate() to the page",
