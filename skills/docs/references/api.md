@@ -65,6 +65,12 @@ Init **replaces** the placeholder with a sandboxed `<iframe>`:
 * Critical: the iframe sets `allow="autoplay; camera; microphone; display-capture; clipboard-write;"`. If your app itself sits inside an outer iframe, that outer iframe must cascade the same permissions down or features silently break.
 * `docEditor.destroyEditor()` removes the frame, leaving an empty `<div id="...">`. Full method catalog: [`methods.md`](./methods.md).
 
+## Inside a Component Framework: the placeholder can't be framework-owned
+
+The DOM replacement above (`init` swaps the placeholder for an iframe) happens **outside** whatever framework hosts this page — the framework never sees it coming. If the placeholder element is declared in the framework's own render tree/template (so the framework believes it owns and controls that node's contents) and something later causes the surrounding component to re-render — a prop change, a sibling state update, anything that touches that subtree — the framework's rendering layer tries to reconcile against a node the SDK has already replaced out from under it and no longer recognizes. This surfaces as a native DOM exception thrown by the framework's own render/commit machinery, not as anything ONLYOFFICE-specific, which makes it easy to misdiagnose as an unrelated app bug. It reproduces reliably on exactly the interactions a real user performs immediately after opening the editor — switching a mode/co-editing dropdown, any control whose change handler tears down and reinitializes the editor, or any unrelated re-render that happens to touch that part of the tree — so it is very likely to surface in the first few clicks of an E2E pass, not require a rare edge case to trigger.
+
+The fix is to never let the framework own that node's contents at all: give it one persistent wrapper the framework renders once and never declares children into, then create the actual placeholder element and mount/unmount `DocsAPI.DocEditor` on it **imperatively**, inside whatever lifecycle hook already owns the editor instance and already calls `destroyEditor()` on teardown (see `onRequestClose` in [`events.md`](./configuration/events.md)). With nothing in the framework's own render output ever describing that subtree's contents, there is nothing for it to reconcile, regardless of how often the surrounding component re-renders.
+
 ## Companion Guides
 
 * **`config`** -> [`config.md`](./configuration/config.md)

@@ -11,7 +11,7 @@ metadata:
 ## When to Use
 
 Apply when writing or reviewing an `nginx.conf`/server block that:
-- terminates TLS and/or fronts a docker-compose stack as the only publicly exposed service (see [`docker.md`](docker.md)'s docker-compose checklist for the service-topology rule this assumes),
+- terminates TLS and/or fronts a docker-compose stack as the only publicly exposed service (see [`compose.md`](compose.md)'s docker-compose checklist for the service-topology rule this assumes),
 - reverse-proxies to an app backend and/or a static frontend build,
 - proxies to an ONLYOFFICE Document Server container so the browser only ever talks to one origin.
 
@@ -90,7 +90,25 @@ The default (1MB) rejects realistic office documents outright with a `413` befor
 
 ## Proxying the ONLYOFFICE Document Server
 
-When Document Server sits behind this proxy under a subpath (e.g. `/docserver/`) rather than getting its own published port:
+**Default to giving Document Server its own origin — a dedicated published port on this same proxy is enough; it doesn't need a separate domain.** A sub-path mount (`/docserver/` on the app's own origin) looks appealing because it lets the CSP below stay at a plain `'self'` with no second origin to name, but Document Server generates some of its own URLs **server-side**, with no awareness of any path prefix it might be mounted under — concretely, the co-editing changes-log cache link (`/cache/files/.../Editor.bin`, handed to the editor's own client-side SDK over the editing WebSocket mid-session) comes back rooted at whatever bare `Host` header this proxy forwarded, never prefixed with `/docserver`. There is no request header that communicates "you're also mounted under this path" for Document Server to honor even if you wanted it to. The result is not a proxying error you'll see in this server's logs at all — the editor loads, opens, and looks completely normal, and then silently fails with a **CSP violation in the browser console** partway through a live session (blocked as a cross-origin script load, since the generated link doesn't match this origin), which reads exactly like "the editor randomly breaks sometimes" with nothing pointing back at the proxy config as the cause. A sub-path mount is not inherently broken for *every* Document Server feature — plain open/edit/save works fine, since those URLs are all client-supplied — but it is fragile in a way that only surfaces once a feature exercises one of Document Server's own self-referential links, so treat "sub-path mount, tested by opening a document once" as unverified, not as passing.
+
+```nginx
+# Recommended: Document Server gets its own server block / published port,
+# proxied at root with no rewrite — it can never generate a self-referential
+# URL your CSP or your routing doesn't already expect.
+server {
+    listen 8082;
+    location / {
+        proxy_pass http://documentserver;
+        proxy_set_header Host $http_host;  # not $host — Document Server needs the port too
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_http_version 1.1;
+    }
+}
+```
+
+If a sub-path mount is genuinely required (e.g. only one port can be published), the checklist below still applies, but budget time to test every feature that produces a Document-Server-issued link — version history's diff view is one confirmed example — not just the initial open.
 
 * **Rewrite the path correctly** — `proxy_pass` to the container's root with the subpath stripped (`rewrite ^/docserver/(.*)$ /$1 break;` ahead of `proxy_pass http://documentserver;`), and make sure every asset/script/API path the editor's own JS requests resolves back through the same subpath, not a bare root reference.
 * **Pass WebSocket upgrade headers** — `proxy_set_header Upgrade $http_upgrade;` and `proxy_set_header Connection "upgrade";` on the location(s) that proxy to Document Server. Without these, the editor still loads and looks fine, but real-time co-authoring's socket connection fails silently — the single most common "it works alone but breaks for two users" symptom in a proxied setup.
@@ -98,4 +116,4 @@ When Document Server sits behind this proxy under a subpath (e.g. `/docserver/`)
 
 ## Docker/Compose Placement
 
-This proxy is its own compose service — see [`docker.md`](docker.md)'s SERVICES checklist for why a frontend's static build shouldn't be baked into this same image, and its Security Audit table for the container-level checks (non-root user, no `:latest`, resource limits) that apply to this service like any other.
+This proxy is its own compose service — see [`compose.md`](compose.md)'s SERVICES checklist for why a frontend's static build shouldn't be baked into this same image, and its Security Audit table for the container-level checks (non-root user, no `:latest`, resource limits) that apply to this service like any other.

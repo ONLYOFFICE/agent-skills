@@ -107,7 +107,7 @@ whichever relationship between them turns out to be true at runtime. See
 `internal/documents/adapters/output/onlyoffice`'s `Client.WithPublicOrigin`
 in the reference Go sample app for the pattern (rewrite at the HTTP-client
 boundary, not scattered through call sites) — and
-[`infrastructure/docker.md`](../infrastructure/docker.md) for the Compose
+[`infrastructure/compose.md`](../infrastructure/compose.md) for the Compose
 env-var wiring this depends on.
 
 ## Example (Express.js)

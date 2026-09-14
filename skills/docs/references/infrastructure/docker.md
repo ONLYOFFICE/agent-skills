@@ -1,6 +1,6 @@
 ---
 name: docker
-description: Guidelines for writing Dockerfiles and docker-compose configs - image size, layer caching, multi-stage builds, and container security
+description: Guidelines for writing Dockerfiles - image size, layer caching, multi-stage builds, and Dockerfile-side container security
 license: Apache-2.0
 metadata:
   author: ONLYOFFICE
@@ -10,9 +10,10 @@ metadata:
 
 Apply these guidelines when:
 - Writing or reviewing a `Dockerfile`
-- Writing or reviewing a `docker-compose.yml`
 - The Makefile's `docker` recipe needs an image to actually build (see [`makefile.md`](makefile.md))
-- Image size, build speed, or container security come up
+- Image size, build speed, or Dockerfile-side container security come up
+
+For running the resulting image(s) together — `docker-compose.yml`, networking, environment/secrets wiring, runtime hardening (`read_only`, `cap_drop`, `tmpfs`), and the ONLYOFFICE Document Server address-split — see [`compose.md`](compose.md) instead.
 
 ## Dockerfile Checklist
 
@@ -130,6 +131,13 @@ denied` on first write, and it repeats on every restart until the volume
 itself is recreated (`docker compose down -v`, or removing the named
 volume) — rebuilding the image alone does not fix an already-seeded volume.
 
+This build-time ownership fix is necessary but not sufficient once the
+container is also run with runtime hardening flags (`read_only`,
+`cap_drop`, `tmpfs:`) — those interact with a non-root `USER` in ways a
+Dockerfile alone can't fix and that only show up once the container is
+actually started this way. See [`compose.md`](compose.md)'s Runtime
+Hardening section.
+
 ### Node.js / TypeScript
 ```dockerfile
 FROM node:20-alpine AS deps
@@ -187,39 +195,14 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 ```
 
-**Dockerfile `HEALTHCHECK` vs. compose `healthcheck.test` are not the same syntax.** In a
-Dockerfile, `CMD` is part of the `HEALTHCHECK` instruction itself, so the array that follows
-is just the exec-form command — no extra `"CMD"` element:
+**Dockerfile `HEALTHCHECK` vs. compose `healthcheck.test` are not the same syntax** — see
+[`compose.md`](compose.md) for the exact translation mistake and why it bites hardest on the
+distroless/scratch images this guide recommends for compiled binaries (no shell, so the
+exec-form `"CMD"` array is the only option, and it's the array most likely to get copied
+straight from the Dockerfile without the prefix compose needs).
 
-```dockerfile
-HEALTHCHECK CMD ["/server", "-healthcheck"]
-```
+## Security Audit (Dockerfile)
 
-In `docker-compose.yml`, `healthcheck.test` has no separate instruction keyword to carry that
-meaning, so compose requires the mode as the array's first element — `"CMD"`, `"CMD-SHELL"`, or
-`"NONE"` — and rejects the array otherwise (`healthcheck.test must start either by "CMD",
-"CMD-SHELL" or "NONE"`). Copying the Dockerfile's array straight into compose drops that
-element and fails:
-
-```yaml
-# Wrong - compose has no HEALTHCHECK keyword to imply "CMD"
-healthcheck:
-  test: ["/server", "-healthcheck"]
-
-# Right
-healthcheck:
-  test: ["CMD", "/server", "-healthcheck"]
-```
-
-This bites hardest on the distroless/scratch images this guide recommends for compiled
-binaries (see the Base Image Decision Tree): there's no shell, so `CMD-SHELL` (and a curl-based
-check) is off the table, and the exec-form `"CMD"` array with a self-check flag the binary
-implements (`-healthcheck` above) is the only option — which is exactly the array most likely
-to get copied from the Dockerfile without the prefix.
-
-## Security Audit
-
-### Dockerfile
 | Check | Severity | Fix |
 | :--- | :--- | :--- |
 | Running as root | Critical | Add `USER nonroot` after creating the user |
@@ -231,107 +214,10 @@ to get copied from the Dockerfile without the prefix.
 | Privileged instructions | High | Avoid `--privileged`, drop capabilities |
 | Package manager cache retained | Low | Clean in the same `RUN` layer |
 
-### Runtime / compose
-| Check | Severity | Fix |
-| :--- | :--- | :--- |
-| Container running as root | Critical | Set the user in the Dockerfile or compose |
-| Writable root filesystem | Medium | `read_only: true` in compose |
-| All capabilities retained | High | `cap_drop: [ALL]`, add only what's needed |
-| No resource limits | Medium | Set `mem_limit` and `cpus` |
-| Host network mode | High | Use a bridge or custom network |
-| Sensitive mounts (`/etc`, `docker.sock`) | Critical | Never mount these in production |
-| No log driver configured | Low | Set `logging:` with size limits |
-
-**Reverse proxy (nginx) in front of this stack:** CORS reflection, CSP, TLS/cookie interaction, and client body-size limits are their own set of traps distinct from the container checks above — see [`nginx.md`](nginx.md), not this file, for those.
-
-## docker-compose Checklist
-
-```
-SERVICES
-├── Use depends_on with condition: service_healthy
-├── Add healthchecks for every service
-├── Set resource limits (mem_limit, cpus)
-├── Use named volumes for persistent data
-├── Pin image versions
-└── When a UI exists, give it its own service/image — don't bake the built
-    SPA into the reverse-proxy's image just because that proxy will serve it.
-    Baking them together means a frontend-only change forces a proxy rebuild
-    (and vice versa), and the two can't be scaled, rebuilt, or replaced
-    independently. A multi-stage build inside the *frontend's own* Dockerfile
-    (build stage -> nginx/static-serving stage) is fine; the reverse proxy
-    in front of it is still a separate compose service — see [`nginx.md`](nginx.md)
-    for what that proxy itself needs to get right.
-
-NETWORKING
-├── Create explicit networks (don't rely on default)
-├── Separate frontend and backend networks
-├── Only expose ports that need external access
-└── Use internal: true for backend-only networks
-
-ENVIRONMENT
-├── Use env_file for secrets, not inline environment
-├── Never commit .env files (add to .gitignore)
-├── Use variable substitution: ${VAR:-default} — but only for
-│   non-secrets (ports, log levels, feature flags)
-├── Document all required env vars in `.env.example` with
-│   placeholder values that are never copied into application source
-└── JWT / session / proxy secrets in application code:
-    ├── Read from the environment; if unset, fail at startup
-    ├── Never hardcode a fallback like envOr("JWT_SECRET", "change-me-…")
-    │   in a backend module — a grader (and a prod deploy that forgot
-    │   .env) will treat that string as a shipped secret
-    └── `.env.example` is the only place a placeholder string belongs
-
-WHEN A SERVICE'S ADDRESS IS USED BOTH SERVER-SIDE AND FROM THE BROWSER
-├── A compose service name (e.g. http://documentserver) only resolves
-│   inside the compose network — never hand it to the browser
-├── The browser needs the published host port or public domain instead
-│   (e.g. http://localhost:8080) - a *different* value from what your
-│   own backend uses to reach that service
-└── Carry both as separate env vars even when local dev makes them look
-    interchangeable; conflating them surfaces as ERR_NAME_NOT_RESOLVED
-    in the browser console, not as a container-side error
-
-RUNNING AN ONLYOFFICE DOCUMENT SERVER + BACKEND LOCALLY IN COMPOSE
-├── Fixing the browser's address (above) surfaces a second-order problem:
-│   Document Server builds self-referential URLs (a save/force-save
-│   callback's `url`, a conversion response's `fileUrl`) from whatever
-│   origin the BROWSER used to reach it that session — not from any address
-│   your backend is configured with. Your backend then has to download
-│   from that same address to finish the save, even though it's the
-│   "browser-facing" one.
-├── `localhost` can never be that shared address: inside your backend's
-│   own container it means that container, not your host machine, so the
-│   download fails with connection-refused, not an auth error.
-└── Fix this in the code that downloads, not the network: your backend
-    already knows both its internal Document Server address and the public
-    one it handed the browser — when a Document-Server-issued URL's origin
-    matches the public one, rewrite it to the internal origin before
-    fetching (path/query untouched). No /etc/hosts, no compose networking
-    config, works unmodified on a fresh clone. It's a no-op when a
-    deployment only has one public Document Server address (both
-    configured values equal), and does real, identical work whenever a
-    production deployment splits an internal address (private VPC,
-    internal load balancer) from a public one the browser uses — not just
-    a dev-only shim. See [`callback/handler.md`](../callback/handler.md)
-    for the full rationale and the `WithPublicOrigin` pattern.
-
-DEVELOPMENT vs PRODUCTION
-├── Use compose profiles or override files
-├── Dev: bind mounts for hot reload, debug ports exposed
-├── Prod: named volumes, no debug ports, restart: unless-stopped
-└── docker-compose.override.yml for dev-only config
-```
-
-### Troubleshooting
-| Symptom | Likely cause | Fix |
-| :--- | :--- | :--- |
-| Container exits immediately | CMD/ENTRYPOINT crashes, missing env vars | `docker compose logs <service>` |
-| Port already in use | Another service/process on the same port | Change the host port: `"3001:3000"` |
-| Volume permissions denied (`mkdir`/`open`: permission denied) on a `USER nonroot`/distroless image | Named volume was first seeded from a mount-point directory the image never chowned to that UID, so it came up `root:root` | Pre-create and `chown` the directory in an earlier build stage, `COPY --chown` it into the final stage (see the persistent-directory pattern above) — then `docker compose down -v` (or remove that one named volume) so it gets re-seeded from the fixed image; rebuilding alone won't fix a volume that already exists |
-| Build cache not working | `COPY . .` invalidates cache too early | Copy deps first, then source |
-| `depends_on` doesn't wait | No healthcheck condition | Add `condition: service_healthy` |
-| Container OOM killed | No memory limit, or limit too low | Set an appropriate `mem_limit` |
+**Running the resulting image(s) togaether** — docker-compose service topology, networking,
+environment/secrets wiring, the runtime/compose half of the security audit, and troubleshooting
+a container that builds fine but misbehaves once actually started — is [`compose.md`](compose.md),
+not this file.
 
 ## Proactive Triggers
 

@@ -20,7 +20,7 @@ No event is strictly mandatory to boot the editor, but a production integration 
 1. **onDocumentReady** (function) - *FUNCTIONALLY REQUIRED* — fires once the document has finished parsing and rendering.
 2. **onDocumentStateChange** (function) - *FUNCTIONALLY REQUIRED* — fires on change; `event.data` is `true` while local edits are unsaved, `false` once pushed to the editing engine.
 
-## Core Configuration Options (Top 10 Most Used Events)
+## Core Configuration Options (Most-Used Events)
 
 | Parameter | Type | Default | Description / Constraints |
 | :--- | :--- | :--- | :--- |
@@ -32,7 +32,9 @@ No event is strictly mandatory to boot the editor, but a production integration 
 | **onRequestRefreshFile** | function | *None* | Replaces `onOutdatedVersion`. Typically calls `refreshFile(config)` — see [`methods.md`](../methods.md). |
 | **onRequestEditRights** | function | *None* | Fires when switching from viewing to editing. |
 | **onRequestHistory** | function | *None* | User opened the version history panel. **Done path:** fetch the file's version list from your backend, then call `docEditor.refreshHistory(opts)` — see [`methods.md`](../methods.md). A handler that only `console.log`s leaves the panel empty; there is no static config `history` field that fills it. |
-| **onRequestRestore** | function | *None* | User picked a historical version to restore. Fetch that version's snapshot/`setHistoryData` payload and apply it (typically via `setHistoryData` / reload with that revision's key). Pair with `onRequestHistory` whenever version history is in scope. |
+| **onRequestHistoryData** | function | *None* | User picked a **specific version** inside the (already-populated) history panel to view its diff. `event.data` is that version's plain number — not an object. **Done path:** fetch that version's `url`/`key`/`fileType`, the *previous* version's `url`/`key`/`fileType` (for the diff), and the changes-package URL, then call `docEditor.setHistoryData(opts)` — see [`methods.md`](../methods.md). This is a distinct event from `onRequestHistory` above (which only populates the *list*) and from `onRequestRestore` below (which *reverts* content) — a build that wires `onRequestHistory` but not this one shows a populated history list where every version silently fails to open, which reads as "history doesn't work" with no server-side error to point at, since Document Server never receives a response it can act on. |
+| **onRequestHistoryClose** | function | *None* | User closed the history panel. **Done path:** tear down the current editor instance (`destroyEditor()`) and reinitialize against the file's *current* revision — don't try to reconcile whatever historical version the panel had last shown. |
+| **onRequestRestore** | function | *None* | User picked a historical version to **restore** (revert current content to it) — a write, distinct from viewing it via `onRequestHistoryData` above. Fetch that version's bytes and save them as a new current revision (a new `document.key`, per [`configuration/document.md`](./document.md)), then reinitialize the editor against that new revision. Pair with `onRequestHistory` whenever version history is in scope. |
 | **onRequestSaveAs** | function | *None* | Fires on "Save Copy as...". |
 | **onMetaChange** | function | *None* | Fires on metadata change (e.g. favorite toggle). |
 
@@ -48,6 +50,8 @@ No event is strictly mandatory to boot the editor, but a production integration 
   "onRequestRefreshFile": "function() {}",
   "onRequestEditRights": "function() {}",
   "onRequestHistory": "function() {}",
+  "onRequestHistoryData": "function(event) {}",
+  "onRequestHistoryClose": "function() {}",
   "onRequestRestore": "function(event) {}",
   "onRequestSaveAs": "function(event) {}",
   "onMetaChange": "function(event) {}"
