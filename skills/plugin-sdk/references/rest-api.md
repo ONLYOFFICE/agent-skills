@@ -1,4 +1,4 @@
-# Talking to the DocSpace REST API
+# Talking to the ONLYOFFICE Apps REST API
 
 Two callers, two clients ([sdk-contract.md → Two kinds of callback](sdk-contract.md#two-kinds-of-callback) has the wider comparison). A **React component** uses `usePluginAPI()`, which needs no scope, unwraps the `response` envelope and authenticates itself ([react.md → API client](react.md#the-api-client)). A **class-side callback** — menu click, file click, event, create-dialog `onSave` — has `fetch` against `getAPI()`, needs the `API` scope, reads `.response` itself and rides the session cookies.
 
@@ -66,7 +66,7 @@ An entry the portal stores has an **integer** id; an entry inside a connected th
 
 ## Endpoints to start from
 
-The handful the official plugins reach for. **Everything else is in the [ONLYOFFICE DocSpace API reference](https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts/)** (sections: Files, Rooms, People, Group, Portal, Settings, Security, ThirdParty, …) — look endpoints and their query parameters up there rather than recalling them; a path remembered from another product answers 404.
+The handful the official plugins reach for. **Everything else is in the [ONLYOFFICE Apps API reference](https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts/)** (sections: Files, Rooms, People, Group, Portal, Settings, Security, ThirdParty, …) — look endpoints and their query parameters up there rather than recalling them; a path remembered from another product answers 404.
 
 **The API is also typed inside the project.** `@onlyoffice/docspace-api-sdk` is installed as a dependency of the kit — a generated client whose types are the same contract the portal serves:
 

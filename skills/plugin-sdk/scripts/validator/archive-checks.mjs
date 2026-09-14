@@ -112,7 +112,7 @@ export class ArchiveChecks extends Check {
       else
         this.error(
           "dist",
-          `dist/plugin.js imports "${specifier}", which DocSpace does not provide - drop it from "external" in the build config so it is bundled into plugin.js. DocSpace provides: ${HOST_PROVIDED_SPECIFIERS.map((s) => `"${s}"`).join(", ")}`,
+          `dist/plugin.js imports "${specifier}", which ONLYOFFICE Apps does not provide - drop it from "external" in the build config so it is bundled into plugin.js. ONLYOFFICE Apps provides: ${HOST_PROVIDED_SPECIFIERS.map((s) => `"${s}"`).join(", ")}`,
         );
     }
 

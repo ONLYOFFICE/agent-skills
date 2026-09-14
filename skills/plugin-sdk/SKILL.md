@@ -1,6 +1,6 @@
 ---
 name: plugin-sdk
-description: Build, audit and explain ONLYOFFICE DocSpace (ONLYOFFICE Apps) plugins made with the Plugins SDK. Use whenever someone wants to create, scaffold, extend or change a DocSpace plugin, or describes a feature inside the portal without naming the SDK, React or the UI kit — an item in the context menu, main button or profile menu, a page in the sidebar, a tab in the info panel, a handler for a custom file type, a reaction to a portal event, an admin settings form ("a button in DocSpace that converts a file", "a screen inside DocSpace listing our rooms"). Use it too when a plugin installs but does nothing, renders blank, shows for the wrong users or does not change after a re-upload; when someone asks to review, debug, fix or migrate an existing plugin; and for questions about scopes, hooks, items, actions or how the portal loads plugins. Not for plugins inside the document editor (ONLYOFFICE Docs plugins and macros), for embedding DocSpace into another site (embed-sdk), or for standalone REST API scripts.
+description: Build, audit and explain ONLYOFFICE Apps (formerly DocSpace) plugins made with the Plugins SDK. Use whenever someone wants to create, scaffold, extend or change an ONLYOFFICE Apps plugin, or describes a feature inside the portal without naming the SDK, React or the UI kit — an item in the context menu, main button or profile menu, a page in the sidebar, a tab in the info panel, a handler for a custom file type, a reaction to a portal event, an admin settings form ("a button in ONLYOFFICE Apps that converts a file", "a screen inside ONLYOFFICE Apps listing our rooms"). Use it too when a plugin installs but does nothing, renders blank, shows for the wrong users or does not change after a re-upload; when someone asks to review, debug, fix or migrate an existing plugin; and for questions about scopes, hooks, items, actions or how the portal loads plugins. Not for plugins inside the document editor (ONLYOFFICE Docs plugins and macros), for embedding ONLYOFFICE Apps into another site (embed-sdk), or for standalone REST API scripts.
 license: Apache-2.0
 metadata:
   author: ONLYOFFICE
@@ -8,13 +8,13 @@ metadata:
   docspace-version: "4.0"
 ---
 
-# ONLYOFFICE DocSpace plugins
+# ONLYOFFICE Apps plugins
 
 Three jobs: **building** a plugin, **auditing** one that misbehaves, **explaining** how the SDK and the portal work.
 
 A plugin has two halves. A **class** registers items — a context menu entry, a sidebar page, an info panel tab — and answers the portal's loader. Every visible surface is a **React component** built from the portal's own `@docspace/ui-kit`, rendered by the portal inside its own React tree, with the plugin runtime reachable through hooks. The portal supplies React and the kit at load time; the plugin ships only its own code as an ES module.
 
-The difficulty in all three jobs is the same: DocSpace loads plugins with almost no error reporting. A missing default export, a package that should have been bundled, a filter field spelled in the singular instead of the plural — each installs, enables, and does nothing, with at most one line in the console. The tooling here catches that before anything reaches a portal.
+The difficulty in all three jobs is the same: ONLYOFFICE Apps loads plugins with almost no error reporting. A missing default export, a package that should have been bundled, a filter field spelled in the singular instead of the plural — each installs, enables, and does nothing, with at most one line in the console. The tooling here catches that before anything reaches a portal.
 
 ## Toolkit and references
 

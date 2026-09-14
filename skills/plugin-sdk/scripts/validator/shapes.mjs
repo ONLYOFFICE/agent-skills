@@ -109,7 +109,7 @@ export class ShapeChecks extends Check {
     if (isReactElement(value))
       this.error(
         "item",
-        `${where} component is a JSX element (<Something />) - DocSpace expects the component itself (component: Something), which it renders with the plugin runtime in context`,
+        `${where} component is a JSX element (<Something />) - ONLYOFFICE Apps expects the component itself (component: Something), which it renders with the plugin runtime in context`,
       );
     else
       this.error(

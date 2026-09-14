@@ -5,7 +5,7 @@ The SDK decides what **compiles**, the portal decides what **runs**. A scope tha
 | | Version |
 |---|---|
 | SDK | `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** |
-| Portal | DocSpace **4.0** |
+| Portal | ONLYOFFICE Apps **4.0** |
 | React | **19** — supplied by the portal; the plugin declares it for types and the JSX runtime |
 | UI kit | `@docspace/ui-kit` — supplied by the portal at load time, never bundled |
 

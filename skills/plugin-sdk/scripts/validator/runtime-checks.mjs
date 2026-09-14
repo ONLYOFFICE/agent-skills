@@ -177,7 +177,7 @@ export class RuntimeChecks extends Check {
     else if (/inside a plugin component/.test(message))
       this.error(
         "runtime",
-        `the bundle threw while loading: ${e.message}. Hooks only work inside the component DocSpace renders; at module scope or inside a plain callback they throw, and the plugin never registers`,
+        `the bundle threw while loading: ${e.message}. Hooks only work inside the component ONLYOFFICE Apps renders; at module scope or inside a plain callback they throw, and the plugin never registers`,
       );
     else if (/Cannot find module 'react'/.test(message) && /docspace-plugin-sdk/.test(message))
       this.warn(

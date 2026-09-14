@@ -17,7 +17,7 @@
  */
 
 /*
- * Scaffolds a DocSpace plugin project: a class implementing every interface its declared
+ * Scaffolds an ONLYOFFICE Apps plugin project: a class implementing every interface its declared
  * scopes require, a Vite + React build with the host-provided packages external, the packed
  * ui-kit and SDK, placeholder assets. It registers no items on purpose - a TODO per scope.
  * Run with no arguments for the options.

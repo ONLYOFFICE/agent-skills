@@ -93,7 +93,7 @@ export const measure = (css) => {
   const observations = { surfaces: [], leaks: [], boot: window.__previewBootError ?? null };
 
   /* A rule of the plugin's that matches portal-shaped markup restyles the product. The probe
-   * holds the elements and class names DocSpace's own DOM is made of, so a match here is the
+   * holds the elements and class names the portal's own DOM is made of, so a match here is the
    * same match the portal would suffer. */
   const probe = document.getElementById("leak-probe");
   if (probe) {
