@@ -41,18 +41,23 @@ router — read the matching reference before writing code.
 When sources disagree, the higher one wins — say so to the user instead of switching between them.
 
 1. **The installed package's types**: `node_modules/@onlyoffice/docspace-sdk-js/dist/types/main.d.ts` — the exact contract of the version the project runs.
-2. **The docs site** for the portal's SDK version: `https://api.onlyoffice.com/docspace/javascript-sdk/get-started/`
-   (+ `quickstart/`, `playground/`, `authentication-security/`), `embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|frame}-mode/`,
-   `customization/{theming|locale|ui-elements}/`, `events-and-callbacks/`, the generated reference under `usage-sdk/`
-   (`classes/SDK/`, `classes/SDKInstance/`, `classes/SDKError/`, `type-aliases/…`, `enumerations/…`), samples such as
-   `samples/basic-samples/init-manager/`, and the live demo `https://demo-embed.onlyoffice.com/`. Section URLs without a
-   final page segment 404; pages offer "View as Markdown".
+2. **The docs site** for the portal's SDK version, starting at `https://api.onlyoffice.com/docspace/javascript-sdk/get-started/`
+   (the introduction; the section has no page of its own): the guides beside it,
+   `get-started/{quickstart|playground|authentication-security}/`, one page per mode under
+   `embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|forms|frame}-mode/`,
+   `customization/{theming|locale|ui-elements}/`, `events-and-callbacks/`, the generated reference by kind under
+   `usage-sdk/{classes|type-aliases|enumerations|variables}/` (`classes/SDKInstance/`, `classes/SDKError/`,
+   `type-aliases/TFrameConfig/`, `type-aliases/TLoginResult/`, `enumerations/SDKErrorCode/`, …), samples such as
+   `samples/basic-samples/init-manager/`, and the live demo `https://demo-embed.onlyoffice.com/`. **Read pages as
+   Markdown**: replace the trailing slash of any page URL with `.md` (`…/embedding-modes/manager-mode.md`,
+   `…/usage-sdk/type-aliases/TFrameConfig.md`). The index of every page with a one-line summary each is
+   `https://api.onlyoffice.com/llms.txt`, section "ONLYOFFICE DocSpace: Embed SDK".
 3. **The SDK sources** at the matching tag: `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/v2.2.0/src/types/index.ts`,
    `…/src/enums/index.ts`, `…/src/constants/index.ts`.
 4. **This skill** — the process, the traps and the portal behaviours the types cannot express. Facts marked
    "client 4.0.0" were verified against that portal release.
 
-Forms, Chat and Personal modes may have no docs page; the types, the SDK README and this skill's references cover them.
+Chat, Personal and Public room have no guide page yet; the reference pages, the SDK README and this skill's references cover them.
 
 ## Not covered here — name the edge when you reach it
 
@@ -83,10 +88,12 @@ which works only once the portal's dispatcher reads it; probe the portal version
 
 ## Step 0 — discover the portal, then choose the connection
 
-Ask for the portal URL, then run the probe (full reading guide: [discovery](references/discovery.md)):
+Ask for the portal URL, then run the probe (full reading guide: [discovery](references/discovery.md)). `$SKILL` is the
+directory holding this file — `<repo>/skills/embed-sdk`, or `${CLAUDE_PLUGIN_ROOT}/skills/embed-sdk` when installed as a
+Claude Code plugin; resolve it to an absolute path once, the scripts are not on the project's path:
 
 ```
-node scripts/probe-portal.mjs https://portal.example.com --origin https://your-host.example
+node $SKILL/scripts/probe-portal.mjs https://portal.example.com --origin https://your-host.example
 ```
 
 It reports the portal's SDK version and OAuth marker, the `X-Frame-Options` / `frame-ancestors` headers of the frame
@@ -241,7 +248,7 @@ Recipes: [auth-recipes](references/auth-recipes.md).
 
 ## Before handing over
 
-1. Every `TFrameConfig` passes `node scripts/validate-config.mjs '<json>'` — fix and re-run, at most 3 iterations.
+1. Every `TFrameConfig` passes `node $SKILL/scripts/validate-config.mjs '<json>'` — fix and re-run, at most 3 iterations.
 2. Run the self-check protocol in [testing](references/testing.md#self-check-protocol--run-it-before-handing-the-integration-over):
    probe, attach, clean console, `onAppReady`, one real action per mode, the auth failure path.
 3. Report portal version, connection method, the origins to allow-list, the modes used, and every line outside this

@@ -59,11 +59,11 @@ Ten iterations of "it still does not load" are cheaper to avoid than to debug. A
 code is written, and before reporting success, go through this in order and quote the
 results in the report. Every step is scriptable; a Playwright run covers 3–6.
 
-1. **Portal facts.** `node scripts/probe-portal.mjs {portal} --origin {dev origin}`:
+1. **Portal facts.** `node $SKILL/scripts/probe-portal.mjs {portal} --origin {dev origin}`:
    bundle version, frame headers, OAuth discovery, allow-list. Any red line here is the
    portal admin's task, not yours — report it as such.
 2. **Configs.** Every `TFrameConfig` you produced passes
-   `node scripts/validate-config.mjs '<json>'` with 0 errors.
+   `node $SKILL/scripts/validate-config.mjs '<json>'` with 0 errors.
 3. **The frame attaches.** Start the dev server, open the page, wait for
    `iframe#{frameId}` to be attached and assert `new URL(src)`: origin = the portal, pathname =
    the mode's base path (table in [config-reference.md](config-reference.md)), `frameId` in
