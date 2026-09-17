@@ -122,7 +122,7 @@ ${scopes.itemMapScopes
   // translates a label or calls getAPI() at module scope would capture empty values.
   //
   // Anything with a visible surface is a React component (a .tsx file under src/,
-  // built from @docspace/ui-kit) handed over as the item's \`component\`. Icons are
+  // built from @onlyoffice/apps-ui-kit) handed over as the item's \`component\`. Icons are
   // referenced by file name and resolved against assets/. Labels should come from
   // t() in ./locales, which means adding the key to TStrings first.
   onLoadCallback = async (): Promise<void> => {

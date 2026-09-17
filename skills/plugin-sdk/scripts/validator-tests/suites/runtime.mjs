@@ -115,7 +115,7 @@ export default ({ workspace, check }) => {
 
   const kitSubpath = workspace.validateProject(
     "kit-subpath",
-    throwProject(contextMenuPlugin({ imports: `import { Button } from "@docspace/ui-kit/components/button";\nimport { jsx } from "react/jsx-runtime";` })),
+    throwProject(contextMenuPlugin({ imports: `import { Button } from "@onlyoffice/apps-ui-kit/components/button";\nimport { jsx } from "react/jsx-runtime";` })),
   );
 
   check(

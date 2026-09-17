@@ -340,7 +340,7 @@ export class ProjectChecks extends Check {
       ["dialogFooter:", "IModalDialog.dialogFooter", "the footer rendered inside dialogBodyComponent"],
       ["newDialogBody", "IModalDialog.onLoad", "state inside dialogBodyComponent"],
       // Components.button is legitimate - the settings Save button is still a ButtonGroup.
-      [/Components\.(box|text|label|input|textArea|checkbox|toggleButton|comboBox|iFrame|img|skeleton|link|iconButton)/, "the declarative component tree", "a React component built from @docspace/ui-kit"],
+      [/Components\.(box|text|label|input|textArea|checkbox|toggleButton|comboBox|iFrame|img|skeleton|link|iconButton)/, "the declarative component tree", "a React component built from @onlyoffice/apps-ui-kit"],
     ];
 
     for (const [needle, what, instead] of deprecated)
@@ -388,7 +388,7 @@ export class ProjectChecks extends Check {
 
     const text = project.buildConfigText;
 
-    // A regex external (/^@docspace\/ui-kit(\/.*)?$/) counts as naming the package.
+    // A regex external (/^@onlyoffice\/apps-ui-kit(\/.*)?$/) counts as naming the package.
     const mentions = (specifier) =>
       text.includes(`"${specifier}"`) ||
       text.includes(`'${specifier}'`) ||

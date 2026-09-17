@@ -12,7 +12,7 @@ metadata:
 
 Three jobs: **building** a plugin, **auditing** one that misbehaves, **explaining** how the SDK and the portal work.
 
-A plugin has two halves. A **class** registers items — a context menu entry, a sidebar page, an info panel tab — and answers the portal's loader. Every visible surface is a **React component** built from the portal's own `@docspace/ui-kit`, rendered by the portal inside its own React tree, with the plugin runtime reachable through hooks. The portal supplies React and the kit at load time; the plugin ships only its own code as an ES module.
+A plugin has two halves. A **class** registers items — a context menu entry, a sidebar page, an info panel tab — and answers the portal's loader. Every visible surface is a **React component** built from the portal's own `@onlyoffice/apps-ui-kit`, rendered by the portal inside its own React tree, with the plugin runtime reachable through hooks. The portal supplies React and the kit at load time; the plugin ships only its own code as an ES module.
 
 The difficulty in all three jobs is the same: DocSpace loads plugins with almost no error reporting. A missing default export, a package that should have been bundled, a filter field spelled in the singular instead of the plural — each installs, enables, and does nothing, with at most one line in the console. The tooling here catches that before anything reaches a portal.
 
@@ -36,7 +36,7 @@ $SKILL/references/                   the knowledge base — read these instead o
 | Calling the REST API from a component and from the class, file bytes, uploads, `cspDomains` | [rest-api.md](references/rest-api.md) |
 | Reading an SDK 2 plugin (declarative trees) | [sdk-2-plugins.md](references/sdk-2-plugins.md) |
 
-Kit component props are in the installed package's `.d.ts` files (`node_modules/@docspace/ui-kit/dist/types`); SDK interfaces in `@onlyoffice/docspace-plugin-sdk`'s. Read those for signatures; the references cover what the types do not say.
+Kit component props are in the installed package's `.d.ts` files (`node_modules/@onlyoffice/apps-ui-kit/dist/types`); SDK interfaces in `@onlyoffice/docspace-plugin-sdk`'s. Read those for signatures; the references cover what the types do not say.
 
 ## Which job is this
 
@@ -110,7 +110,7 @@ A plugin built against SDK 2 (webpack, `window.Plugins.X = plugin`, `body: IBox`
 
 ### 4. Write the feature
 
-Replace every TODO in `onLoadCallback` with real items, built by **factory functions** rather than module constants — a constant is built before the portal has set the language. Components go in their own `.tsx` files under `src/`, handed to items as `component: Page` — the component, never `<Page />` — built from `@docspace/ui-kit` and inline styles, plus a `.module.css` where inline styles cannot reach (`:hover`, keyframes, media queries, generated markup) — a module, because `plugin.css` lands in the portal's own document and only hashed class names cannot restyle DocSpace ([react.md → Scoped CSS](references/react.md#scoped-css)). Read [items.md](references/items.md) for the item, [react.md](references/react.md) whenever there is a visible surface, [ui-kit.md](references/ui-kit.md) before writing a form, [rest-api.md](references/rest-api.md) for API calls — and apply [the rules](#the-rules-that-decide-whether-it-works). Keep the placeholder icons only if the user has nothing better, and say they are placeholders.
+Replace every TODO in `onLoadCallback` with real items, built by **factory functions** rather than module constants — a constant is built before the portal has set the language. Components go in their own `.tsx` files under `src/`, handed to items as `component: Page` — the component, never `<Page />` — built from `@onlyoffice/apps-ui-kit` and inline styles, plus a `.module.css` where inline styles cannot reach (`:hover`, keyframes, media queries, generated markup) — a module, because `plugin.css` lands in the portal's own document and only hashed class names cannot restyle DocSpace ([react.md → Scoped CSS](references/react.md#scoped-css)). Read [items.md](references/items.md) for the item, [react.md](references/react.md) whenever there is a visible surface, [ui-kit.md](references/ui-kit.md) before writing a form, [rest-api.md](references/rest-api.md) for API calls — and apply [the rules](#the-rules-that-decide-whether-it-works). Keep the placeholder icons only if the user has nothing better, and say they are placeholders.
 
 **Take the proven library; do not write your own** for anything with a format or a security dimension behind it — archives, PDF, spreadsheets, markdown, sanitising HTML, date arithmetic. Take the obvious widely used package, **check it on the registry before writing the import**, and say in the report what it does *not* handle. Nothing at all for what the browser already does (`fetch`, `Intl`, `crypto.subtle`, `structuredClone`) or the kit already renders. Criteria, commands, the usual answers and why this matters more inside a plugin: [react.md → Dependencies](references/react.md#dependencies).
 

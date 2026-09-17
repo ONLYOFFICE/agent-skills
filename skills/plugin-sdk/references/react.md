@@ -479,10 +479,10 @@ Custom properties go on your own root, never `:root`. Keyframe names are global 
 The portal provides exactly six specifiers to a module plugin and rewrites the bundle's imports to its own copies:
 
 ```
-react   react-dom   react/jsx-runtime   react/jsx-dev-runtime   @onlyoffice/docspace-plugin-sdk/react   @docspace/ui-kit
+react   react-dom   react/jsx-runtime   react/jsx-dev-runtime   @onlyoffice/docspace-plugin-sdk/react   @onlyoffice/apps-ui-kit
 ```
 
-Everything else **must be bundled** — a bare import of anything else (`lodash-es`, the SDK root, a `@docspace/ui-kit/…` subpath) makes the loader refuse the plugin with a console error naming it. The reverse is quieter and worse: bundling one of the six installs cleanly and breaks at render — a second React or SDK React entry makes every hook throw (every component blank), a second ui-kit renders light and left-to-right. The SDK **root** is deliberately not external: it is enums and types, and the host does not provide it. The generator's `vite.config.ts` encodes the list; copy its `external` exactly if you write your own.
+Everything else **must be bundled** — a bare import of anything else (`lodash-es`, the SDK root, a `@onlyoffice/apps-ui-kit/…` subpath) makes the loader refuse the plugin with a console error naming it. The reverse is quieter and worse: bundling one of the six installs cleanly and breaks at render — a second React or SDK React entry makes every hook throw (every component blank), a second ui-kit renders light and left-to-right. The SDK **root** is deliberately not external: it is enums and types, and the host does not provide it. The generator's `vite.config.ts` encodes the list; copy its `external` exactly if you write your own.
 
 ## Dependencies
 

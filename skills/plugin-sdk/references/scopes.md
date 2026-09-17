@@ -7,7 +7,7 @@ The SDK decides what **compiles**, the portal decides what **runs**. A scope tha
 | SDK | `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** |
 | Portal | DocSpace **4.0** |
 | React | **19** — supplied by the portal; the plugin declares it for types and the JSX runtime |
-| UI kit | `@docspace/ui-kit` — supplied by the portal at load time, never bundled |
+| UI kit | `@onlyoffice/apps-ui-kit` — supplied by the portal at load time, never bundled |
 
 The skill tracks a portal release, not a range, and carries no history. A plugin cannot express a minimum portal version anyway — `minDocSpaceVersion` in `config.json` is written by the packer from the installed SDK.
 

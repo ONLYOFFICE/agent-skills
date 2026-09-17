@@ -1,14 +1,14 @@
-# Building UI with `@docspace/ui-kit`
+# Building UI with `@onlyoffice/apps-ui-kit`
 
 The portal's own component library: it reads theme, accent and direction from contexts the portal fills, so a kit `Button` is the portal's button in either theme. Reach for the kit first, plain `div`s with inline styles for layout, a stylesheet where inline styles cannot reach — `:hover`, keyframes, media queries, generated markup — as long as every selector is scoped ([react.md → Scoped CSS](react.md#scoped-css)). Raw HTML controls never: an unstyled `<button>` or `<input>` is the one thing that immediately looks foreign.
 
-**Props are documented in the package itself**, one JSDoc line per prop: `node_modules/@docspace/ui-kit/dist/types/components/<name>/<Name>.types.d.ts` (enums in `<Name>.enums.d.ts`). Read those rather than guessing or casting; this file only records what the types cannot tell you.
+**Props are documented in the package itself**, one JSDoc line per prop: `node_modules/@onlyoffice/apps-ui-kit/dist/types/components/<name>/<Name>.types.d.ts` (enums in `<Name>.enums.d.ts`). Read those rather than guessing or casting; this file only records what the types cannot tell you.
 
-**The styles ship too, and they are where layout surprises are answered.** `dist/cjs/components/<name>/<Name>.module.scss.js` carries the component's real CSS, inlined as a string next to its class-name map. When a control collapses, overflows, or draws somewhere you did not put it, read that file before theorising: a `position: absolute` on a label or a `display: inline-block` on a wrapper explains the behaviour that no prop does. It is worth one look **before** writing a surface too, not only after it looks wrong — the trap list below is the handful of components where that look has already been taken, not the extent of the problem. The same goes for what the kit does *not* contain — check the package rather than assuming a component exists or does not.
+**The styles ship too, and they are where layout surprises are answered.** The kit is ESM-only: `dist/esm/components/<name>/<Name>.module.scss/index.js` holds the class-name map and imports `index.css` beside it, and that CSS file is the component's real stylesheet. When a control collapses, overflows, or draws somewhere you did not put it, read that file before theorising: a `position: absolute` on a label or a `display: inline-block` on a wrapper explains the behaviour that no prop does. It is worth one look **before** writing a surface too, not only after it looks wrong — the trap list below is the handful of components where that look has already been taken, not the extent of the problem. The same goes for what the kit does *not* contain — check the package rather than assuming a component exists or does not.
 
 ## Imports and enums
 
-Import from the barrel only — `@docspace/ui-kit/components/button` is refused by the portal at load. Never bundle the kit ([react.md → Bundling](react.md#bundling)).
+Import from the barrel only — `@onlyoffice/apps-ui-kit/components/button` is refused by the portal at load. Never bundle the kit ([react.md → Bundling](react.md#bundling)).
 
 `ButtonSize` exists in **both** the kit and the SDK: the kit's is for the kit's `Button`, the SDK's for the `ButtonGroup` passed to `setSaveButton`. Alias one when both appear in a file (`import { ButtonSize as SdkButtonSize } from "@onlyoffice/docspace-plugin-sdk"`).
 

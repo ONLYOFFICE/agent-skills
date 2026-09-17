@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, ButtonSize, Textarea } from "@docspace/ui-kit";
+import { Button, ButtonSize, Textarea } from "@onlyoffice/apps-ui-kit";
 import { usePluginActions } from "@onlyoffice/docspace-plugin-sdk/react";
 import { ToastType } from "@onlyoffice/docspace-plugin-sdk";
 

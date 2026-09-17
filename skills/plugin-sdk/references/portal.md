@@ -55,14 +55,14 @@ None of these produce an error the user sees; most leave nothing in the console.
 | Symptom | Cause |
 |---|---|
 | Nothing loads at all: no bundle request, no console output | `plugins.enabled` is off, or the paid period expired |
-| Installs, enables, does nothing; console `Failed to load module plugin` | the bundle imports a package the portal does not provide — a library that should have been bundled, the SDK **root** marked external, a `@docspace/ui-kit/…` subpath |
+| Installs, enables, does nothing; console `Failed to load module plugin` | the bundle imports a package the portal does not provide — a library that should have been bundled, the SDK **root** marked external, a `@onlyoffice/apps-ui-kit/…` subpath |
 | Same; console `Cannot use import statement outside a module` | an ES module bundle with no `"runtime": "module"` |
 | Same; console clean | (module) no default export — still assigning `window.Plugins.X`; (legacy) `window.Plugins.X` ≠ `pluginName` |
 | Installation stops halfway; no CSS, no items | `getStatus()` returned `hide`, or `onLoadCallback` threw |
 | One scope is dead, others work | scope declared but its getter is missing, or `add*Item` never called |
 | A tab, page or modal opens **blank**; console `[Plugin: name] …` | the component threw — swallowed by the error boundary. Usually an unguarded fetch/parse, a conditional hook, or a bundled React (next row) |
 | Every component blank; `usePluginRuntime must be used inside a plugin component` | a second React or SDK React entry in the bundle — fix the `external` list |
-| Components render light and LTR on a dark/RTL portal | a bundled `@docspace/ui-kit` |
+| Components render light and LTR on a dark/RTL portal | a bundled `@onlyoffice/apps-ui-kit` |
 | A hook "throws outside a component" from a click | hooks called in a class-side callback |
 | Filter by user role ignored | wrong field name — see [the filter field trap](#the-filter-field-trap) |
 | Item renders, click does nothing | the returned action has no matching payload field ([react.md → Actions](react.md#actions)) |

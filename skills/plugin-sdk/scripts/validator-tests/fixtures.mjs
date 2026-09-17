@@ -38,7 +38,7 @@ export default {
   build: {
     lib: { entry: "src/index.ts", formats: ["es"] },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@docspace\\/ui-kit(\\/.*)?$/],
+      external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@onlyoffice\\/apps-ui-kit(\\/.*)?$/],
     },
   },
 };
@@ -116,7 +116,7 @@ export const contextMenuPlugin = ({
   itemKey = "fixture-good-item",
   filters = `usersTypes: ["Owner"]`,
   click = TOAST_MESSAGE,
-  imports = `import { jsx } from "react/jsx-runtime";\nimport { useState } from "react";\nimport { Button, ButtonSize } from "@docspace/ui-kit";\nimport { usePluginActions } from "@onlyoffice/docspace-plugin-sdk/react";`,
+  imports = `import { jsx } from "react/jsx-runtime";\nimport { useState } from "react";\nimport { Button, ButtonSize } from "@onlyoffice/apps-ui-kit";\nimport { usePluginActions } from "@onlyoffice/docspace-plugin-sdk/react";`,
 }) =>
   mapScopePlugin({
     imports,
@@ -309,7 +309,7 @@ export const scopeSource = ({ adder, getter, members = [] }) =>
 export const renderSurfacesPlugin = ({ tabBody, pageBody, kit = "", memo = false }) => `
 import { jsx } from "react/jsx-runtime";
 import { useCurrentFile } from "@onlyoffice/docspace-plugin-sdk/react";
-${kit ? `import { ${kit} } from "@docspace/ui-kit";` : ""}
+${kit ? `import { ${kit} } from "@onlyoffice/apps-ui-kit";` : ""}
 
 const Tab = () => { ${tabBody} };
 const PageBody = () => { ${pageBody} };

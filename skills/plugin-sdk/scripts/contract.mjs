@@ -22,7 +22,7 @@
  */
 
 export const SDK_PACKAGE = "@onlyoffice/docspace-plugin-sdk";
-export const UI_KIT_PACKAGE = "@docspace/ui-kit";
+export const UI_KIT_PACKAGE = "@onlyoffice/apps-ui-kit";
 
 export const SDK_REACT_ENTRY = `${SDK_PACKAGE}/react`;
 const SDK_MAJOR = 3;
