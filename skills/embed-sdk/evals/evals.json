@@ -1,0 +1,124 @@
+{
+  "skill": "embed-sdk",
+  "format": "Each eval is one fresh session per arm. Arms: baseline = no skill, prompt plus the docs link given in `docs_hint`; skill = plugin installed, same prompt without the hint. Operator answers are given identically in both arms and only when asked. Assertions are graded by grep on the produced code or by reading the transcript; weight C = 2 (silent breakage), Q = 1.",
+  "docs_hint": "Documentation: https://api.onlyoffice.com/docspace/javascript-sdk/get-started/ and https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/",
+  "models": ["claude-haiku-4-5", "claude-sonnet-5", "claude-opus-5", "codex (gpt-5.6)"],
+  "operator_answers": {
+    "portal url": "{PORTAL_URL}",
+    "portal or sdk version": "Not sure — the portal was upgraded recently. Find out yourself if you can.",
+    "oauth app available": "Yes, a confidential OAuth client exists; client id and secret will be in .env.",
+    "room / file / agent ids": "any numeric ids, e.g. 12345, 67890, 11111",
+    "styling": "Keep it minimal."
+  },
+  "evals": [
+    {
+      "id": "E1-public-room-viewer",
+      "title": "Documents for visitors: public room + viewer in a modal",
+      "source": "testing scenario E1",
+      "prompt": "Build a page on our marketing site (plain HTML + JS, no framework) where a visitor without any DocSpace account sees the documents of our public room {ROOM_ID}. Clicking a document opens it read-only in a modal on the same page. The room's share token must not be hardcoded in the repository. Our portal is {PORTAL_URL}.",
+      "assertions": [
+        { "id": "a1", "weight": "C", "check": "public-room mode with both id and requestToken", "how": "grep -n 'initPublicRoom\\|\"public-room\"' and confirm `id` and `requestToken` are both passed" },
+        { "id": "a2", "weight": "C", "check": "requestToken comes from config/env, not a literal in source", "how": "grep -n requestToken: value is read from a config object, data attribute or env injection" },
+        { "id": "a3", "weight": "C", "check": "viewer frame passes the file id and a unique frameId per open document", "how": "grep -n 'initViewer\\|\"viewer\"' → `id:` present; frameId built from the file id" },
+        { "id": "a4", "weight": "C", "check": "destroyFrame() on modal close", "how": "grep -n destroyFrame in the close handler" },
+        { "id": "a5", "weight": "Q", "check": "the click is taken from onFileManagerClick / onEditorOpen payload (id, title), not from DOM scraping inside the iframe", "how": "grep -n 'onFileManagerClick\\|onEditorOpen'" },
+        { "id": "a6", "weight": "Q", "check": "connection method chosen after establishing the portal version (probe or question)", "how": "transcript" },
+        { "id": "a7", "weight": "Q", "check": "setup notes tell the admin to allow-list the site origin", "how": "README/SETUP mentions Developer Tools → Embed SDK or /api/2.0/security/csp" }
+      ]
+    },
+    {
+      "id": "E2-employee-cabinet",
+      "title": "Employee cabinet: silent hash login, table manager, in-app editor",
+      "source": "testing scenario E2",
+      "prompt": "React 18 + Vite app. Our backend returns each employee's DocSpace email and a portal-compatible password hash at GET /api/docspace-credentials. Before the Documents page renders, sign the user in to DocSpace silently with those credentials; on failure show a 'Reconnect DocSpace' screen. The Documents page shows room {ROOM_ID} as a table sorted by name A→Z. Clicking a file opens the editor in our own modal, not on the portal. Portal: {PORTAL_URL}.",
+      "assertions": [
+        { "id": "b1", "weight": "C", "check": "login runs through a hidden system frame", "how": "grep -n 'initSystem\\|\"system\"'" },
+        { "id": "b2", "weight": "C", "check": "getUserInfo() session probe before login", "how": "grep -n getUserInfo" },
+        { "id": "b3", "weight": "C", "check": "login result checked with status !== 200 → Reconnect screen", "how": "grep -n -A3 'login(' shows a status check" },
+        { "id": "b4", "weight": "C", "check": "sortBy uses \"AZ\" or FilterSortBy.Name, sortOrder ascending", "how": "grep -n sortBy" },
+        { "id": "b5", "weight": "C", "check": "editor frames pass id and have unique frameIds; destroyFrame on close", "how": "grep -n 'initEditor\\|destroyFrame'" },
+        { "id": "b6", "weight": "C", "check": "StrictMode double mount handled (ref guard or documented removal)", "how": "main.tsx + frame component" },
+        { "id": "b7", "weight": "Q", "check": "the deliverable says the hash-login path cannot serve accounts with 2FA", "how": "README or code comment" },
+        { "id": "b8", "weight": "Q", "check": "the deliverable warns that a cross-origin host needs OAuth or same-site hosting when browsers block third-party cookies", "how": "README" }
+      ]
+    },
+    {
+      "id": "E3-select-then-upload",
+      "title": "Intake: pick a room, remember it, upload into it",
+      "source": "testing scenario E3",
+      "prompt": "Vue 3 page: the user picks a room through the DocSpace room selector; we store the room id (and its public share token if the room has one). Then the page shows an uploader that drops files into that room. Everything without a page reload. Portal: {PORTAL_URL}.",
+      "assertions": [
+        { "id": "c1", "weight": "C", "check": "room-selector payload handled as an array: items[0].id", "how": "grep -n onSelectCallback" },
+        { "id": "c2", "weight": "C", "check": "share token read from items[0].requestTokens?.[0]?.requestToken", "how": "grep -n requestTokens" },
+        { "id": "c3", "weight": "C", "check": "uploader initialized with id = the selected room, after destroying the selector frame", "how": "grep -n 'initUploader' and 'destroyFrame'" },
+        { "id": "c4", "weight": "C", "check": "no programmatic upload() on the uploader frame", "how": "grep -n 'upload(' must not target the uploader instance" },
+        { "id": "c5", "weight": "Q", "check": "SDK instance kept in shallowRef, init in onMounted, destroy in onBeforeUnmount", "how": "component source" },
+        { "id": "c6", "weight": "Q", "check": "onCloseCallback destroys the selector too", "how": "grep -n onCloseCallback" }
+      ]
+    },
+    {
+      "id": "F1-2fa-question",
+      "title": "2FA in an existing WordPress connector (question, no build)",
+      "source": "Ibragimov, testing log row 15",
+      "kind": "qa",
+      "prompt": "Our WordPress plugin logs users into DocSpace with the Embed SDK (system frame, getHashSettings → createHash → login). Users with two-factor authentication enabled on the portal cannot log in. Add a field for the 2FA code to the login form, resend the auth request with the code and obtain the session. What exactly do I change?",
+      "assertions": [
+        { "id": "d1", "weight": "C", "check": "states that login() has no code argument and the portal's SDK handler reads only email and passwordHash, so 2FA cannot be completed through the SDK", "how": "transcript" },
+        { "id": "d2", "weight": "C", "check": "does not propose a code field wired to login() as a working solution", "how": "transcript" },
+        { "id": "d3", "weight": "Q", "check": "offers the real options: OAuth getToken, portal sign-in in another tab (cookie session), disabling 2FA for the integration account", "how": "transcript" },
+        { "id": "d4", "weight": "Q", "check": "explains the asc_auth_key cookie boundary in cross-origin frames when the plugin runs on another origin", "how": "transcript" }
+      ]
+    },
+    {
+      "id": "F2-cross-origin-todo",
+      "title": "Todo app on another origin: file selector + viewer",
+      "source": "Fomin, testing log row 17",
+      "prompt": "Build a small React todo-list app (Vite, runs on http://localhost:5173) and add the ability to attach a document from our DocSpace {PORTAL_URL} to a task through a file picker, then view the attached document inside the task card. I am signed in to the portal in another tab.",
+      "assertions": [
+        { "id": "e1", "weight": "C", "check": "tells the operator to allow-list http://localhost:5173 before the first run", "how": "README / transcript" },
+        { "id": "e2", "weight": "C", "check": "file-selector payload handled as an object (item.id, item.title)", "how": "grep -n onSelectCallback" },
+        { "id": "e3", "weight": "C", "check": "viewer frame with id and unique frameId; destroyFrame on detach", "how": "grep" },
+        { "id": "e4", "weight": "C", "check": "names the third-party-cookie wall: a signed-in portal tab does not authenticate a cross-origin frame in Safari/cookie-blocking Chrome; proposes OAuth getToken or same-site hosting rather than an API key in the browser", "how": "README / transcript" },
+        { "id": "e5", "weight": "Q", "check": "does not flip between API key and OAuth across iterations; picks one and says why", "how": "transcript" },
+        { "id": "e6", "weight": "Q", "check": "runs or describes the self-check (probe, iframe attached, console clean, onAppReady)", "how": "transcript" }
+      ]
+    },
+    {
+      "id": "F3-workspace-chat-oauth",
+      "title": "Workspace page: room manager, personal files, AI chat under OAuth",
+      "source": "Fedorov, testing log row 2",
+      "prompt": "Express 4 backend + React 18 frontend. Add /workspace: on the left the file manager of room {ROOM_ID}; on the right two tabs — 'My files' and 'Assistant' (the DocSpace AI chat for agent {AGENT_ID}). Everything under the same DocSpace user. Authentication through our OAuth application; put every needed parameter into .env. Portal: {PORTAL_URL}.",
+      "assertions": [
+        { "id": "f1", "weight": "C", "check": "getToken callback calling a backend endpoint; code exchange and refresh on the backend; no client_secret in the frontend", "how": "grep -n getToken; server code" },
+        { "id": "f2", "weight": "C", "check": "three frames with distinct frameIds; hidden tabs keep frames mounted (CSS), not remounted", "how": "component source" },
+        { "id": "f3", "weight": "C", "check": "chat preconditions stated: full (non-guest) user, AI enabled on the portal, token scopes covering the profile; troubleshooting note for 'only Chat history, no composer'", "how": "README / transcript" },
+        { "id": "f4", "weight": "C", "check": "refresh-token rotation handled strictly (new pair persisted atomically, old token never retried)", "how": "server code" },
+        { "id": "f5", "weight": "Q", "check": "scopes taken from /api/2.0/scopes or /.well-known/openid-configuration, not hardcoded from memory", "how": "README / code" },
+        { "id": "f6", "weight": "Q", "check": "portal version established (probe) before choosing npm 2.2.0", "how": "transcript" }
+      ]
+    },
+    {
+      "id": "F4-nextjs-forms-intake",
+      "title": "Next.js client intake: template picker, prefilled form, readback, createFile",
+      "source": "Gopienko, testing log row 8",
+      "prompt": "Next.js 14 (App Router) page for our CRM: the visitor is signed in to our site, not to the portal. They pick a form template through the DocSpace file selector; the editor opens with fields prefilled from CRM data; after filling, we read the field values back to show a summary; the finished document is saved as a new file in the client's room (create the room on first visit). If the room was deleted, show a clear screen instead of a broken frame. Auth through our OAuth app. Portal: {PORTAL_URL}.",
+      "assertions": [
+        { "id": "g1", "weight": "C", "check": "executeInEditor callback declared with three parameters (editor, asc, data) and the connector created inside it", "how": "grep -n executeInEditor -A3" },
+        { "id": "g2", "weight": "C", "check": "form filling via connector.callCommand + Document Builder API (GetAllForms/SetText…), no executeMethod('SetFormValue'/'GetFormValue')", "how": "grep -n 'SetFormValue\\|GetFormValue' must be empty; grep callCommand" },
+        { "id": "g3", "weight": "C", "check": "values read back with GetFormsData() before the summary", "how": "grep -n GetFormsData" },
+        { "id": "g4", "weight": "C", "check": "createFile title keeps the template's extension (.pdf for a PDF form) and targets a folder id, not rootFolderId", "how": "grep -n createFile" },
+        { "id": "g5", "weight": "C", "check": "onNotFound handled as 'room deleted' with a dedicated screen", "how": "grep -n onNotFound" },
+        { "id": "g6", "weight": "Q", "check": "SDK imported client-side only (useEffect / dynamic import), no window.DocSpace at module top level", "how": "grep" },
+        { "id": "g7", "weight": "Q", "check": "REST calls (room creation, templates) are marked as outside the SDK with a pointer to the REST docs", "how": "README" }
+      ]
+    },
+    {
+      "id": "G1-admin-panel-full",
+      "title": "Internal admin panel (the original A/B task)",
+      "source": "task.md / prompt.txt / rubric.md in this directory",
+      "prompt": "See prompt.txt",
+      "assertions": [{ "id": "rubric", "weight": "—", "check": "39 checkpoints in rubric.md", "how": "rubric.md" }]
+    }
+  ],
+  "trigger_tests": "trigger-tests.md"
+}

@@ -1,0 +1,15 @@
+{
+  "version": "3.0.0",
+  "sources": {
+    "docs": { "base": "https://api.onlyoffice.com/docspace/plugins-sdk", "verify": true },
+    "restDocs": { "base": "https://api.onlyoffice.com/docspace/api-backend", "verify": true },
+    "repo": { "base": "https://github.com/ONLYOFFICE/docspace-plugin-sdk", "verify": true },
+    "npmRegistry": { "base": "https://api.npmjs.org", "verify": false }
+  },
+  "placeholderHosts": ["portal.example.com", "localhost", "www.apache.org", "www.w3.org"],
+  "versionPatterns": [
+    { "file": "SKILL.md", "pattern": "sdk-version: \"{v}\"" },
+    { "file": "README.md", "pattern": "\\*\\*`\\^{v}`\\*\\*" },
+    { "file": "README.md", "pattern": "SDK {v} is released" }
+  ]
+}

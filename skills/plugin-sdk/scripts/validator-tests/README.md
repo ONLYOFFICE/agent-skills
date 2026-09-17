@@ -4,7 +4,7 @@ The self-test behind [`../test-validator.mjs`](../test-validator.mjs): builds th
 
 | File | What it holds |
 |---|---|
-| [`harness.mjs`](harness.mjs) | a temp workspace, a validator run, a scoreboard — knows nothing about DocSpace |
+| [`harness.mjs`](harness.mjs) | a temp workspace, a validator run, a scoreboard — knows nothing about ONLYOFFICE Apps |
 | [`fixtures.mjs`](fixtures.mjs) | the material to vary: manifests, hand-written ES module bundles, source files, a Vite config |
 | [`suites/`](suites/) | the claims, one file per area: `manifest` (manifest, assets, registration, how a stylesheet is imported), `items`, `ui` (modals), `runtime` (load, imports, build config, settings), `render` (each surface rendered with its own runtime), `locales` (tables keyed by a tag `PluginLocale` does not have), `sdk-drift` |
 

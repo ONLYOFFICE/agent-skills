@@ -105,6 +105,17 @@ export class PluginProject {
     return fs.existsSync(this.bundlePath);
   }
 
+  /** JavaScript emitted beside plugin.js - the chunks of a code-split build, which the packer never ships. */
+  get distChunks() {
+    const dist = path.dirname(this.bundlePath);
+    if (!fs.existsSync(dist)) return [];
+
+    return fs
+      .readdirSync(dist)
+      .filter((name) => /\.(m?js|cjs)$/.test(name) && name !== "plugin.js")
+      .sort();
+  }
+
   /** Only some plugins emit one - a project styled entirely with the kit and inline styles does not. */
   get hasStylesheet() {
     return fs.existsSync(this.stylesheetPath);

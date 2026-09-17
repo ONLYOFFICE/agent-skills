@@ -37,6 +37,7 @@ const CASES = [
   { name: "unknown event is a warning", config: { ...BASE, events: { onWhatever: null } }, code: 0, has: ["WARN:", "onWhatever"] },
   { name: "accessToken plus getToken warns", config: { ...BASE, accessToken: "a", getToken: "b" }, code: 0, has: ["getToken wins"] },
   { name: "requestToken outside public-room warns", config: { ...BASE, requestToken: "tok" }, code: 0, has: ["WARN:", "requestToken"] },
+  { name: "manager over a shared room takes requestToken without a warning", config: { ...BASE, rootPath: "/rooms/share", requestToken: "tok" }, code: 0, lacks: ["WARN:"] },
 
   // --- should fail ------------------------------------------------------------
   { name: "sortBy Name is rejected with the AZ hint", config: { ...BASE, filter: { sortBy: "Name" } }, code: 1, has: ["ERROR:", "sortBy", 'did you mean "AZ"'] },
@@ -46,6 +47,7 @@ const CASES = [
   { name: "viewer without id is rejected", config: { ...BASE, mode: "viewer" }, code: 1, has: ["ERROR:", "id"] },
   { name: "public-room without requestToken is rejected", config: { ...BASE, mode: "public-room", id: 7 }, code: 1, has: ["ERROR:", "requestToken"] },
   { name: "public-room without id is rejected", config: { ...BASE, mode: "public-room", requestToken: "tok" }, code: 1, has: ["ERROR:", "id"] },
+  { name: "manager over a shared room without requestToken is rejected", config: { ...BASE, rootPath: "/rooms/share" }, code: 1, has: ["ERROR:", "requestToken"] },
   { name: "bad theme enum is rejected", config: { ...BASE, theme: "dark" }, code: 1, has: ["ERROR:", "theme"] },
   { name: "bad viewAs enum is rejected", config: { ...BASE, viewAs: "list" }, code: 1, has: ["ERROR:", "viewAs"] },
   { name: "bad sortOrder is rejected", config: { ...BASE, filter: { sortOrder: "asc" } }, code: 1, has: ["ERROR:", "sortOrder"] },
@@ -61,6 +63,7 @@ for (const c of CASES) {
   const problems = [];
   if (code !== c.code) problems.push(`exit ${code}, expected ${c.code}`);
   for (const needle of c.has ?? []) if (!out.includes(needle)) problems.push(`output lacks "${needle}"`);
+  for (const needle of c.lacks ?? []) if (out.includes(needle)) problems.push(`output contains "${needle}"`);
   if (problems.length) {
     failed++;
     console.log(`FAIL  ${c.name}\n      ${problems.join("; ")}\n      ${out.trim().split("\n").join("\n      ")}`);
@@ -69,5 +72,14 @@ for (const c of CASES) {
   }
 }
 
-console.log(`\n${CASES.length - failed}/${CASES.length} expectations passed`);
+const SOURCES = path.resolve(path.dirname(VALIDATOR), "..", "..", "..", "tools", "sync-sources.mjs");
+const sources = spawnSync(process.execPath, [SOURCES, "--skill", "embed-sdk", "--check"], { encoding: "utf8" });
+if (sources.status !== 0) {
+  failed++;
+  console.log(`FAIL  links and pinned versions trace to sources.json\n      ${`${sources.stdout}${sources.stderr}`.trim().split("\n").join("\n      ")}`);
+} else {
+  console.log("ok    links and pinned versions trace to sources.json");
+}
+
+console.log(`\n${CASES.length + 1 - failed}/${CASES.length + 1} expectations passed`);
 process.exit(failed ? 1 : 0);

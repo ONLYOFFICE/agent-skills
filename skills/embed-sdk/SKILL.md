@@ -1,102 +1,105 @@
 ---
 name: embed-sdk
 description: >
-  Embed ONLYOFFICE DocSpace into web apps with the DocSpace Embed SDK
+  Embed ONLYOFFICE Apps (formerly DocSpace) into web apps with the Embed SDK
   (@onlyoffice/docspace-sdk-js).
-  Use when the user wants to embed a DocSpace file manager, document editor or
+  Use when the user wants to embed an ONLYOFFICE Apps file manager, document editor or
   viewer, room/file selector dialog, file uploader, forms gallery, AI chat, or
   personal files section; when configuring TFrameConfig, authentication (login
-  hash flow, OAuth getToken, public room tokens), frame events, SDKInstance
-  methods, or programmatic form filling via executeInEditor; or when debugging
-  a blank/failing DocSpace iframe or CSP errors.
+  hash flow, OAuth getToken, public room tokens, API keys, 2FA questions), frame
+  events, SDKInstance methods, or programmatic form filling via executeInEditor; when
+  a host app (WordPress, Nextcloud, CRM, React/Next/Vue/Angular page) shows a DocSpace
+  iframe that is blank, returns 401, fails CSP or X-Frame-Options; or when a connector
+  built on this SDK needs a new login or file flow. Not for DocSpace plugins
+  (plugin-sdk) or for the Document Server Docs API outside an embedded frame.
 license: Apache-2.0
 metadata:
   author: ONLYOFFICE
   sdk-version: "2.2.0"
 ---
 
-# ONLYOFFICE DocSpace Embed SDK
+# ONLYOFFICE Apps Embed SDK
 
-The Embed SDK (`@onlyoffice/docspace-sdk-js`, historically "JavaScript SDK") embeds
-DocSpace UI into a host page as an iframe and talks to it over postMessage.
-You create an instance per frame, configure it with a `TFrameConfig`, and call promise-based
-methods on it. This file is the router: read the matching reference file before writing code.
+The Embed SDK (`@onlyoffice/docspace-sdk-js`, historically "JavaScript SDK") embeds ONLYOFFICE
+Apps UI into a host page as an iframe and talks to it over postMessage: one instance per frame,
+configured by a `TFrameConfig`, driven by promise-based methods and events. This file is the
+router — read the matching reference before writing code.
 
 ## Pinned facts
 
-- Package: `@onlyoffice/docspace-sdk-js`, current version **2.2.0**. Node >= 18 to build.
-- Three ways to connect:
-  1. **npm** (CJS/ESM): `import SDK from "@onlyoffice/docspace-sdk-js"`.
-  2. **IIFE script tag from the portal**: `<script src="{portal}/static/scripts/sdk/{version}/api.js">`.
-     Config can be passed as query params on the script URL; `init=true` auto-initializes.
-  3. **React wrapper** `@onlyoffice/docspace-react` (props: `url`, `email`,
-     `onRequestPasswordHash`, `onUnsuccessLogin`, `onSetDocspaceInstance`) with a built-in
-     login flow. Warning: the wrapper bundles **its own copy** of the SDK, and the bundled
-     SDK version does not match the wrapper's own version (verified: wrapper 2.1.0 bundles
-     SDK 2.0.0 — no forms/chat/personal, no OAuth). Check
-     `node_modules/@onlyoffice/docspace-react/package.json` → `dependencies` for the truth.
-- Known portal bundle versions (`/static/scripts/sdk/{v}/api.js`): 1.0.1, 2.0.0, 2.1.0, 2.2.0.
-- OAuth capability marker: the string `getToken` inside the portal's `api.js` → SDK >= 2.2.
-- The global `window.DocSpace.SDK` (with the `frames` registry keyed by `frameId`) exists
-  even with the npm import — the module sets it as a side effect.
-- Instance methods are promise-based with a `methodTimeout` of 30 000 ms by default.
+- Package `@onlyoffice/docspace-sdk-js`, current version **2.2.0** (`npm i @onlyoffice/docspace-sdk-js@^2.2.0`,
+  GitHub tag `v2.2.0`, Node >= 18). The portal also serves the same code as a script:
+  `{portal}/static/scripts/sdk/{version}/api.js` (known versions 1.0.1, 2.0.0, 2.1.0, 2.2.0).
+- `window.DocSpace.SDK` (with the `frames` registry keyed by `frameId`) exists even with the npm
+  import — the module sets it as a side effect.
+- Methods resolve or reject within `methodTimeout` (30 000 ms by default).
+- `@onlyoffice/docspace-react` bundles its own SDK copy that has lagged behind its version number;
+  check `node_modules/@onlyoffice/docspace-react/package.json` before using it ([discovery](references/discovery.md#the-react-wrapper)).
 
-## Where to look things up
+## Sources, and which one wins
 
-Prefer these sources over your training data; when they disagree with your memory, the
-sources win:
+When sources disagree, the higher one wins — say so to the user instead of switching between them.
 
-1. Docs site (HTML only — no `.md` variants, no `llms.txt`; section URLs without a final
-   page segment 404):
-   - `https://api.onlyoffice.com/docspace/javascript-sdk/get-started/` (+ `quickstart/`,
-     `playground/`, `authentication-security/`)
-   - `https://api.onlyoffice.com/docspace/javascript-sdk/embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|frame}-mode/`
-   - `https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/` — generated API
-     reference (`enumerations/…`, `classes/SDKInstance/`, `type-aliases/…`, `variables/…`)
-   - `https://api.onlyoffice.com/docspace/javascript-sdk/samples/…`
-   - Live demo: `https://demo-embed.onlyoffice.com/`
-2. Source of truth — the SDK repository on GitHub. Fetch these raw files directly
-   (prefer the release tag matching your SDK version, e.g. `v2.1.0`; if the target
-   version has no tag yet, use `master`):
-   - `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/{tag-or-master}/src/types/index.ts`
-     — the complete `TFrameConfig`/events contract
-   - `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/{tag-or-master}/src/enums/index.ts`
-     — all enums incl. the sort API values
-   - `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/{tag-or-master}/src/constants/index.ts`
-     — `defaultConfig` defaults
-   A local clone of the repo, if one happens to be present, is equivalent — but never
-   rely on it existing.
+1. **The installed package's types**: `node_modules/@onlyoffice/docspace-sdk-js/dist/types/main.d.ts` — the exact contract of the version the project runs.
+2. **The docs site** for the portal's SDK version: `https://api.onlyoffice.com/docspace/javascript-sdk/get-started/`
+   (+ `quickstart/`, `playground/`, `authentication-security/`), `embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|frame}-mode/`,
+   `customization/{theming|locale|ui-elements}/`, `events-and-callbacks/`, the generated reference under `usage-sdk/`
+   (`classes/SDK/`, `classes/SDKInstance/`, `classes/SDKError/`, `type-aliases/…`, `enumerations/…`), samples such as
+   `samples/basic-samples/init-manager/`, and the live demo `https://demo-embed.onlyoffice.com/`. Section URLs without a
+   final page segment 404; pages offer "View as Markdown".
+3. **The SDK sources** at the matching tag: `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/v2.2.0/src/types/index.ts`,
+   `…/src/enums/index.ts`, `…/src/constants/index.ts`.
+4. **This skill** — the process, the traps and the portal behaviours the types cannot express. Facts marked
+   "client 4.0.0" were verified against that portal release.
 
-The docs site covers only 8 modes. **Forms, Chat and Personal modes have no docs pages** —
-for those, rely on this skill's references and the SDK source.
+Forms, Chat and Personal modes may have no docs page; the types, the SDK README and this skill's references cover them.
 
-## Step 0 — discover the portal and pick the connection method
+## Not covered here — name the edge when you reach it
 
-Before generating integration code, ask the user:
+- **The portal REST API** (`/api/2.0/...`): folders vs sections (`folderId` is a destination, `rootFolderId` the root of a
+  section — using it as a destination returns 403), templates, sharing, users. Sources:
+  `https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts/` (one page per operation under `usage-api/`)
+  and the `@onlyoffice/docspace-api-sdk` packages.
+- **The editor's own APIs** (Docs API, Document Builder, plugins) beyond [editor-automation](references/editor-automation.md).
+- **Two-factor authentication** — `login()` cannot complete it (token table).
+- **One portal's deployment** — proxies, cookie policies, header rewrites. Step 0 probes; interpreting an odd result is the admin's job.
 
-1. **Which DocSpace portal** they are connecting to (the `src` URL). Without it you cannot
-   check CSP or the portal's SDK version.
-2. The portal's DocSpace/SDK version, if they know it.
+## Which token is which
 
-If the version is unknown, detect it. `{portal}/static/scripts/sdk/{v}/api.js` is **always
-publicly accessible** (no auth), so a plain GET from anywhere (curl, browser, CI) works:
-probe the known versions above (200 → available, 404 → not); optionally sniff the bundle
-text for capability markers (`getToken` → >= 2.2).
+| Thing | Lives | Grants | SDK entry | Cannot |
+|---|---|---|---|---|
+| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult` | finish when 2FA is on unless the portal reads `login`'s `code` argument (client 4.0.0 does not); survive third-party-cookie blocking |
+| Session cookie `asc_auth_key` | browser, portal origin | every request the iframe makes | nothing to pass | be sent from a cross-origin iframe when the browser blocks third-party cookies → `401` despite a live session |
+| `requestToken` (share key) | room share link, or `items[0].requestTokens[0].requestToken` from a room-selector | anonymous access to one room | `public-room` (`id` + `requestToken`); manager with `rootPath: "/rooms/share"` | anything outside that room; must never be committed |
+| OAuth access token | your backend (refresh token stays there) | API calls as the user, sent as `Bearer` — no cookie involved | `getToken` (preferred) or `accessToken`, SDK >= 2.2 | outlive expiry unless `getToken` re-fetches |
+| API key | your backend | REST as the key owner, `Bearer`, scopes = key permissions | REST; in a frame the SDK forwards whatever `getToken` returns — plausible but **unverified**, confirm with `getUserInfo()` | be refreshed or revoked per session |
 
-Then choose:
+Two consequences ([auth-recipes §6–7](references/auth-recipes.md)): a signed-in portal tab does **not** make a
+cross-origin frame work in Safari or cookie-blocking Chrome — use OAuth `getToken` or same-site hosting; and an
+account with **2FA** gets no session from `login()` on client 4.0.0 — its dispatcher reads only `email` and
+`passwordHash`. `login()` resolves `{ url: "/" }` on success, `{ url: "/confirm/…" }` when a second factor is
+pending, and an error with `status` on failure. SDK 2.2.0 adds a fifth `code` argument for the second call,
+which works only once the portal's dispatcher reads it; probe the portal version before promising it.
 
-| Version relation | Recommendation |
-|---|---|
-| npm package >= portal SDK | npm is fine; do not use features newer than the portal |
-| **npm package < portal SDK** | **Use the portal-hosted IIFE** — it is always in sync with the portal backend (frame paths, postMessage protocol, mode set). Keep the npm package for TypeScript types only |
-| Portal version undetectable | Portal-hosted IIFE as the safe default |
+## Step 0 — discover the portal, then choose the connection
 
-Quick start (npm): `new SDK()` → `sdk.initManager({ frameId: "ds-frame", src: "https://portal" })`
-→ later `instance.destroyFrame()`. With the IIFE: `window.DocSpace.SDK.initManager(...)`.
+Ask for the portal URL, then run the probe (full reading guide: [discovery](references/discovery.md)):
+
+```
+node scripts/probe-portal.mjs https://portal.example.com --origin https://your-host.example
+```
+
+It reports the portal's SDK version and OAuth marker, the `X-Frame-Options` / `frame-ancestors` headers of the frame
+pages, OAuth discovery and the CSP allow-list, and recommends the connection. Rules of thumb: portal on SDK 2.2 +
+bundler → npm; portal older than the package or no build step → the portal script, npm for types only; version
+undetectable → the portal script. `/old-sdk/system` carries `X-Frame-Options: SAMEORIGIN` and embeds only while the
+CSP `frame-ancestors` header is present and lists your origin (client 4.0.0); an `X-Frame-Options` line without
+`frame-ancestors` in the probe is a portal-side problem — forward it to the admin verbatim.
+
+Quick start (npm): `new SDK().initManager({ frameId: "ds-frame", src: "https://portal" })` → later `instance.destroyFrame()`.
+With the script: `window.DocSpace.SDK.initManager(...)`.
 
 ## Routing table
-
-Read the mode's reference file before writing code.
 
 | Task | mode | Wrapper | Required config | Reference |
 |---|---|---|---|---|
@@ -109,183 +112,137 @@ Read the mode's reference file before writing code.
 | Anonymous public room | `public-room` | `initPublicRoom` | `src`, `id` (room), `requestToken` | [public-room](references/modes/public-room.md) |
 | Upload UI | `uploader` | `initUploader` | `src`, `id` (folder) | [uploader](references/modes/uploader.md) |
 | Forms gallery | `forms` | `initForms` | `src`, `id` (room) | [forms](references/modes/forms.md) |
-| AI chat | `chat` | `initChat` | `src` (`agentId` optional) | [chat](references/modes/chat.md) |
+| AI chat | `chat` | `initChat` | `src`; a signed-in non-guest user with AI enabled (`agentId` optional) | [chat](references/modes/chat.md) |
 | Personal files | `personal` | `initPersonal` | `src` | [personal](references/modes/personal.md) |
-| Programmatic form filling inside the editor | `editor` + connector | — | — | [editor-automation](references/editor-automation.md) |
+| Fill forms inside the editor | `editor` + connector | — | — | [editor-automation](references/editor-automation.md) |
 
-Other references: [config-reference](references/config-reference.md) (all fields by mode),
-[methods](references/methods.md), [events](references/events.md),
-[auth-recipes](references/auth-recipes.md), [testing](references/testing.md),
-[frameworks/react](references/frameworks/react.md) ·
-[nextjs](references/frameworks/nextjs.md) · [vue](references/frameworks/vue.md) ·
-[angular](references/frameworks/angular.md).
+Also: [config-reference](references/config-reference.md) (fields that bite, by mode), [methods](references/methods.md),
+[events](references/events.md), [auth-recipes](references/auth-recipes.md), [testing](references/testing.md) (self-check
+protocol), [frameworks/react](references/frameworks/react.md) · [nextjs](references/frameworks/nextjs.md) ·
+[vue](references/frameworks/vue.md) · [angular](references/frameworks/angular.md).
 
 ## Critical rules
 
-Violating any of these produces integrations that look right but fail.
+Each one exists because the failure is silent: the integration looks right and does nothing.
 
-### Config and initialization
-
-1. `id` is required for editor/viewer. Without it the frame opens an empty `/doceditor`
-   with no explicit error.
-2. public-room needs **both** `id` (room id) and `requestToken`. The frame URL is
-   `/sdk/public-room?folder={id}&key={requestToken}`; without `id` the portal's server render
-   fails and the frame shows a white "Something went wrong" screen with no event.
-   `agentId` is optional for chat (omit → user chat).
-3. Sort API values differ from enum key names: `FilterSortBy.Name = "AZ"`,
-   `ModifiedDate = "DateAndTime"`, `CreationDate = "DateAndTimeCreation"`. A handwritten
-   `sortBy: "Name"` silently returns an unsorted list — always use the enum constants.
-4. Every enum except `SDKMode` is a `const enum`: values are inlined at compile time,
-   `Object.values(...)` on them does not exist at runtime.
-5. The DOM container's `id` must equal `config.frameId` — that string is the only wiring
-   between markup and the SDK. Multiple frames on one page need unique `frameId`s
-   (e.g. `block-1`, `editor-${fileId}`).
-6. Script-tag configs arrive as strings: only `"true"`/`"false"` are converted to booleans;
-   numeric options stay strings. Pass `src` explicitly even when it equals the script
-   origin. `init=true` enables auto-initialization. Filter params are passed as **bare,
-   case-sensitive keys** (`count=25&sortOrder=descending&sortBy=AZ`) — the parser routes
-   them into `config.filter` by exact match. Legacy bracket/lowercase forms
-   (`filter[count]`, `sortorder`) are **not recognized** (verified by SDK tests): they land
-   as junk root-level keys and the filter silently keeps its defaults.
-7. `noLoader` defaults to `true`, but Manager and System modes force the loader on.
-
-### Lifecycle
-
-8. Before re-initializing, call `instance?.destroyFrame?.()`, or legally re-init the same
-   `frameId` (the `frames` registry reuses the instance). Otherwise you leak `message`
-   listeners and duplicate iframes.
-9. React StrictMode double-invokes effects in dev → double init/destroy breaks the frame.
-   Guard with a ref or disable StrictMode — see [frameworks/react](references/frameworks/react.md).
-10. To keep editor state across tab switches, hide the frame with CSS (`display:none`)
-    instead of unmounting it.
-11. Browser only: `window.DocSpace` does not exist on the server. In Next.js initialize in
-    `useEffect` or `dynamic(..., { ssr: false })`.
-
-### CSP
-
-12. The host domain must be allow-listed on the portal
-    (`{portal}/developer-tools/javascript-sdk`), or the SDK renders a CSP error page inside
-    the iframe. Same-origin embedding skips the check. Production pattern: whitelist
-    programmatically via `GET/PUT /api/2.0/security/csp` when the integration is connected.
-    `checkCSP: false` is not a fix — it only disables early diagnostics.
-13. In SDK < 2.2 the CSP failure is distinguishable only by the exact message string
-    ("The current domain is not set in the Content Security Policy (CSP) settings.");
-    in 2.2+ check `SDKError.code === "CSP_VIOLATION"`.
-
-### Methods and their results
-
-14. Methods called before the frame is ready fail with
-    `SDKError(DISCONNECTED, "Message bus is not connected with frame")`; after that each
-    call is bounded by `methodTimeout` (30 s) → `TIMEOUT`. Call methods after `onAppReady`.
-15. **The portal never rejects a method call — API-level failures resolve** (verified in
-    the DocSpace client dispatcher: every method is wrapped in `try/catch` and the caught
-    error is returned as the payload). Inspect the payload of any API-backed method:
-    `status !== 200` means failure. Notorious cases: `login()` (invalid credentials) and
-    `createRoom()` (`status: 402` = pricing plan limit — link the user to
-    `{portal}/portal-settings/payments/portal-payments`). A method the current mode's page
-    does not implement resolves with the literal string `"Wrong method for this mode"`.
-    Rejections (`SDKError`) come only from the SDK transport layer. Support matrix and
-    details: [methods](references/methods.md).
-16. Before `login`, check for a live session: `getUserInfo()` and compare the email —
-    logging in again is redundant and slow.
-17. `upload()` works **only in Forms mode** (`MODE_MISMATCH` otherwise); Uploader mode
-    accepts files only through its UI. Upload timeout is 120 s.
-18. `createFile`/`createFolder` operate on the current folder of an open manager/personal
-    frame — resolve its id via `getFolderInfo()`.
-18a. `executeInEditor(cb, data)` invokes `cb(editor, asc, data)` — **three** arguments, the
-    SDK's `(instance, data?)` type is wrong. `editor` is the DocsAPI object: call
-    `editor.createConnector()` yourself. Form fields are filled with the Document Builder
-    API inside `connector.callCommand` (`Api.GetDocument().GetAllForms()` → `SetText`,
-    `SetChecked`, …) with data passed through `Asc.scope`. `executeMethod("SetFormValue")`,
-    `"GetFormValue"`, `"GetAllForms"`, `"GetFormsByTag"` **do not exist as plugin methods**
-    even though api.onlyoffice.com documents them and ships a sample using them — no sdkjs
-    release implements them, and the connector does not error on unknown names, the call just
-    silently does nothing. Read `GetFormsData()` back to verify.
-    Details: [editor-automation](references/editor-automation.md).
-
-### Authentication — security checklist
-
-19. Passwords travel only as hashes: `getHashSettings()` → `createHash(password, settings)`
-    → `login(email, hash)`. The plaintext `password` parameter of `login` is dev-only.
-20. OAuth: prefer the `getToken` callback over a static `accessToken` (the SDK cannot
-    refresh a static token); do the code exchange and refresh on the backend;
-    `client_secret` and refresh tokens must never reach the browser. Missing both →
-    `TOKEN_RESOLVE_FAILED` + the `onAuthError` event.
-21. Never commit `requestToken`s or password hashes to source; avoid returning
-    `passwordHash` to the browser (see [auth-recipes](references/auth-recipes.md) — the
-    OAuth flow removes that need).
-
-### Versioning
-
-22. The SDK version must match the portal. An npm package older than the portal does not
-    know newer modes/fields (2.0.0 has no forms/chat/personal); one newer than the portal
-    generates frames the portal cannot serve. Both failure modes look like a blank frame
-    or `TIMEOUT` with no clear error. When npm < portal, use the portal-hosted IIFE and
-    keep npm for types only (Step 0).
+1. **Required ids.** editor/viewer need `id` (without it an empty `/doceditor` opens, no error). public-room needs both
+   `id` and `requestToken` (without `id` the portal's server render fails: white "Something went wrong", no event).
+2. **Enum values are API strings, not key names.** `FilterSortBy.Name` is `"AZ"`, `ModifiedDate` is `"DateAndTime"`,
+   `CreationDate` is `"DateAndTimeCreation"`; `sortBy: "Name"` returns an unsorted list. Every enum except `SDKMode`
+   is a `const enum` — inlined at compile time, not iterable at runtime.
+3. **`frameId` is the only wiring.** The container's DOM `id` must equal `config.frameId`; several frames need distinct
+   ids (`editor-${fileId}`). Events that never fire mean the two differ.
+4. **Script-tag configs are strings.** Only `"true"`/`"false"` become booleans; filter params are bare, case-sensitive
+   keys (`sortBy=AZ`); bracket and lowercase forms are silently dropped; pass `src` explicitly; `init=true`
+   auto-initializes ([config-reference](references/config-reference.md#script-tag-configs)).
+5. **Loader and waiting.** `noLoader` defaults to `true` but Manager and System force the loader on; `waiting: true`
+   parks a frame until `setConfig` (ignored by System); a System frame never reports completion — call `setIsLoaded()`.
+6. **Lifecycle.** `destroyFrame()` is synchronous and complete: the container keeps its `id`, listeners and pending calls
+   go, the registry entry is deleted, `init*` may follow at once. Re-initializing an existing `frameId` reuses the
+   instance; a second instance on a live container leaks listeners and duplicates iframes. React StrictMode
+   double-invokes effects in dev — guard with a ref ([react](references/frameworks/react.md)). Keep editor state
+   across tabs by hiding with CSS, not unmounting. `window.DocSpace` is browser-only — never touch it during SSR.
+7. **CSP and frame headers.** The host origin must be allow-listed (Developer Tools → Embed SDK, or
+   `PUT /api/2.0/security/csp`; `GET` is anonymous on client 4.0.0), or the frame shows the SDK's CSP page
+   (`SDKError.code === "CSP_VIOLATION"` on 2.2+, message-string match before). `checkCSP: false` only silences the
+   early check. CSP is not the only wall: `X-Frame-Options` without `frame-ancestors` (Step 0) and third-party-cookie
+   blocking (token table) both kill the frame with no SDK event.
+8. **Call methods after `onAppReady`.** Earlier calls reject with `DISCONNECTED` ("Message bus is not connected with
+   frame"); later ones are bounded by `methodTimeout` → `TIMEOUT`.
+9. **The portal never rejects a method — API failures resolve** (client 4.0.0 wraps every handler in `try/catch` and
+   returns the error as the payload). Check `status !== 200` on every API-backed result: `login()` with wrong
+   credentials, `createRoom()` with `402` (plan limit → `{portal}/portal-settings/payments/portal-payments`). A method
+   the mode's page lacks resolves with the string `"Wrong method for this mode"` ([methods](references/methods.md)).
+10. **Sign in the cheap way first.** `getUserInfo()` and compare the email before `login(email, hash)`; passwords
+    travel only as hashes (`getHashSettings` → `createHash` → `login`); the plaintext `password` and `session`
+    arguments never reach the portal from the frame; a `url` under `/confirm/` in the result means a second
+    factor is pending and needs a second `login` with the `code` argument, which client 4.0.0 does not read
+    yet (token table).
+11. **Uploads and files.** `upload(file)` works only in Forms mode (`MODE_MISMATCH` elsewhere, 120 s timeout); Uploader
+    accepts files only through its UI. `createFile(folderId, title, templateId?, formId?)` is `POST /files/{folderId}/file`:
+    the **format comes from the extension in `title`** (a PDF form copied under a `.docx` title stops being a form),
+    `folderId` is a folder from `getFolderInfo()` or a selector — never a section's `rootFolderId`. Personal mode
+    answers `"Wrong method for this mode"` to every data method.
+12. **`executeInEditor(cb, data)` calls `cb(editor, asc, data)` — three arguments** (SDK <= 2.1 typed it wrong). Create the
+    connector yourself (`editor.createConnector()`); fill forms with the Document Builder API inside
+    `connector.callCommand` (`GetAllForms()` → `SetText`/`SetChecked`, data through `Asc.scope`, no closures).
+    `executeMethod("SetFormValue" | "GetFormValue" | "GetAllForms" | "GetFormsByTag")` **does not exist** despite the
+    docs and sample — unknown names succeed silently. Read `GetFormsData()` back
+    ([editor-automation](references/editor-automation.md)).
+13. **OAuth.** Prefer `getToken` over a static `accessToken` (the SDK cannot refresh a static token); exchange and
+    refresh on the backend; `client_secret` and refresh tokens never reach the browser; rotation is strict — the old
+    refresh token dies when the new pair is issued, persist atomically, never retry with the old one. Scopes:
+    `GET {portal}/api/2.0/scopes` (authenticated), discovery `GET {portal}/.well-known/openid-configuration`. Missing
+    both `getToken` and `accessToken` → `TOKEN_RESOLVE_FAILED` + `onAuthError`. Never commit `requestToken`s or hashes.
+14. **Match the SDK to the portal.** npm older than the portal lacks modes and fields (2.0.0 has no forms/chat/personal/
+    OAuth); npm newer produces frames the portal cannot serve. Both look like a blank frame or `TIMEOUT`. When npm >
+    portal, load the portal script and keep npm for types (Step 0).
 
 ## Authentication decision tree
 
 ```
 Who is the frame's user?
-├─ Already signed in to DocSpace (cookie)  → nothing to do
-├─ Anonymous, public room                  → public-room + id (room) + requestToken
-├─ Programmatic password login             → hidden system frame:
-│    getHashSettings → createHash → store hash server-side →
-│    on each visit: getUserInfo (session alive?) → login(email, hash) → check status !== 200
-├─ DocSpace OAuth app (SDK >= 2.2)         → getToken: () => fetch("/api/token")
-│    backend: authorization-code (+PKCE), refresh 30–60 s before expiry, rotate refresh token
-└─ Host portal with an OAuth provider      → providerName + inviteKey/emplType/uid
-                                             (forms/chat/personal modes)
+├─ Signed in, page on the portal's site               → nothing to do
+├─ Signed in, page on another origin                  → expect 401s from third-party-cookie blocking;
+│                                                        use OAuth getToken (or accept the limit explicitly)
+├─ Anonymous, public room                             → public-room + id + requestToken
+├─ Programmatic password login                        → hidden System frame: getHashSettings → createHash →
+│    store hash server-side; each visit: getUserInfo → login(email, hash) → status !== 200 = failure
+│    (2FA on the account → this path cannot finish; go OAuth)
+├─ ONLYOFFICE Apps OAuth app (SDK >= 2.2)             → getToken: () => fetch("/api/token"); backend does
+│    authorization-code (+PKCE), refresh 30–60 s before expiry, strict rotation
+├─ Backend automation, nobody in the browser          → API key against REST, not a frame
+└─ Host portal is an OAuth provider (Nextcloud-style) → providerName + inviteKey/emplType/uid (forms/chat/personal)
 ```
 
-Multi-frame page: one frame performs the login; park the others with `waiting: true` and
-re-init them afterwards. Full recipes: [auth-recipes](references/auth-recipes.md).
+Multi-frame page: one frame logs in, the rest wait with `waiting: true` and are re-initialized afterwards.
+Recipes: [auth-recipes](references/auth-recipes.md).
 
 ## Events essentials
 
-- `onAppReady` = frame initialized, methods may be called; `onContentReady` = content
-  visible — the moment to reveal the iframe and drop your spinner.
-- **Selector payloads differ in shape**: room-selector fires with an **array**
-  (`items[0].id`, `.label`, `.icon`, `.requestTokens[0].requestToken`); file-selector with
-  an **object** (`item.id`, `.title`, `.icon`, `.documentType`).
-- `onNoAccess` → offer a "request access" flow; `onNotFound` → the room/folder was deleted,
-  drop your stored mapping.
-- `onEditorOpen` — intercept opening the editor from the manager (e.g. open your own modal).
-- `downloadToEvent: true` + `onDownload(url)` — intercept downloads (bridge files into the
-  host system).
-- External storage bridge: `onGetExternalData` (request/response correlated by `callId`,
-  sync or Promise) / `onSetExternalData` (fire-and-forget).
-- Full table with payload shapes: [events](references/events.md).
+- `onAppReady` — methods may be called; `onContentReady` — reveal the iframe, drop your spinner.
+- Selector payloads differ: room-selector fires an **array** (`items[0].id`, `.label`, `.requestTokens[0].requestToken`);
+  file-selector an **object** (`item.id`, `.title`, `.documentType`).
+- Manager payloads are the portal's file object (client 4.0.0): `onFileManagerClick` fires for files only with `id`,
+  `title`, `fileExst`, `fileType`, `folderId`, `security`, `viewUrl`, `webUrl`…; `onEditorOpen` adds `share` and `action`
+  (`"view" | "fill" | "edit"`), or carries the freshly created file. Registering either handler suppresses the portal's
+  own open action — open the file in your own frame.
+- `onNoAccess` → request-access flow; `onNotFound` → the entity was deleted, drop your mapping.
+- `downloadToEvent: true` + `onDownload(url)` intercepts downloads; `onGetExternalData`/`onSetExternalData` bridge host
+  storage (correlated by `callId`). Full table: [events](references/events.md).
 
 ## Troubleshooting
 
-| Symptom | Cause | Check / action |
+| Symptom | Cause | Action |
 |---|---|---|
-| Blank iframe | missing `id` (editor/viewer); empty/invalid `src` | console: `SDK Warning: src is empty…` |
-| CSP error page inside frame | host domain not allow-listed | add it in DevTools → JavaScript SDK, or via the CSP API |
-| `Message bus is not connected…` | method called before `onAppReady` | move the call into the handler |
-| `SDKError TIMEOUT` | frame not responding for 30 s; method unsupported by mode/portal version | verify mode and portal version |
-| Events never fire | `frameId` ≠ container DOM id | compare markup and config |
+| Blank iframe | missing `id` (editor/viewer); empty or invalid `src` | console: `SDK Warning: src is empty…`; rule 1 |
+| Browser refuses to display the frame | no `frame-ancestors` header on that page, or origin not in it | Step 0 probe; portal admin |
+| CSP error page inside the frame | host origin not allow-listed | Developer Tools → Embed SDK, or the CSP API |
+| Frame loads, its API calls return 401 while the portal tab is signed in | third-party cookies blocked cross-origin | OAuth `getToken` or same-site hosting |
+| `login()` returns `status !== 200` for a correct password | 2FA on the account | OAuth; sign in on the portal in another tab; disable 2FA for the integration account |
+| Chat shows only "Chat history", no composer | guest user, AI disabled, or OAuth token lacks profile scopes | [chat](references/modes/chat.md) |
+| `Message bus is not connected…` | method before `onAppReady` | rule 8 |
+| `SDKError TIMEOUT` | frame not answering; method unsupported by mode or portal version | rule 14; [methods](references/methods.md) |
+| Events never fire | `frameId` ≠ container id | rule 3 |
 | `window is undefined` | SSR | `useEffect` / dynamic import |
-| Broken/duplicated frame in dev (React) | StrictMode double effects | guard or disable StrictMode |
-| `login` "succeeds" but no session | `response.status` not checked | rule 15 |
-| Method resolves with `"Wrong method for this mode"` | method not implemented by the current mode's page | see the support matrix in [methods](references/methods.md); switch mode (often System or Manager) |
-| Script-tag `filter[...]`/lowercase params ignored | legacy bracket syntax not recognized | use bare case-sensitive keys: `count=`, `sortOrder=`, `sortBy=` (rule 6) |
-| `MODE_MISMATCH` from `upload()` | mode ≠ forms | use Forms, or the Uploader UI |
-| `TOKEN_RESOLVE_FAILED` / `onAuthError` | `getToken` threw or missing | check the backend token endpoint |
-| `api.js` loaded but `window.DocSpace` empty | script-tag race between two consumers | remove and re-append the script tag |
-| System frame loads forever | it has no content | call `frames[frameId].setIsLoaded()` |
+| Broken or duplicated frame in dev (React) | StrictMode double effects | rule 6 |
+| `login` "succeeds" but no session | `status` not checked | rule 9 |
+| `"Wrong method for this mode"` | method not implemented by that page | switch mode (System or Manager) |
+| Script-tag `filter[...]` or lowercase params ignored | legacy syntax not recognized | rule 4 |
+| `MODE_MISMATCH` from `upload()` | mode ≠ forms | rule 11 |
+| `TOKEN_RESOLVE_FAILED` / `onAuthError` | `getToken` threw or missing | check the token endpoint |
+| `createFile` made the wrong format | extension taken from `title` | rule 11 |
+| REST 403 on a folder you can see | `rootFolderId` used as destination | use `folderId` — REST is outside this skill |
+| `api.js` loaded but `window.DocSpace` empty | two consumers race on the script tag | remove and re-append the tag |
+| System frame loads forever | it has no content | `frames[frameId].setIsLoaded()` |
 
-`SDKError.code` values: `TIMEOUT`, `DISCONNECTED`, `CSP_VIOLATION`, `MODE_MISMATCH`,
-`INVALID_CONFIG`, `UPLOAD_FAILED`, `PARSE_ERROR`, `TOKEN_RESOLVE_FAILED`.
+`SDKError.code`: `TIMEOUT`, `DISCONNECTED`, `CSP_VIOLATION`, `MODE_MISMATCH`, `INVALID_CONFIG`, `UPLOAD_FAILED`,
+`PARSE_ERROR`, `TOKEN_RESOLVE_FAILED`.
 
-## Validation protocol
+## Before handing over
 
-Before delivering integration code, validate the config you generated:
-
-```
-node scripts/validate-config.mjs '<TFrameConfig JSON>'
-```
-
-On errors, fix the config and re-run — at most 3 iterations. Do not deliver code whose
-config fails validation.
+1. Every `TFrameConfig` passes `node scripts/validate-config.mjs '<json>'` — fix and re-run, at most 3 iterations.
+2. Run the self-check protocol in [testing](references/testing.md#self-check-protocol--run-it-before-handing-the-integration-over):
+   probe, attach, clean console, `onAppReady`, one real action per mode, the auth failure path.
+3. Report portal version, connection method, the origins to allow-list, the modes used, and every line outside this
+   skill you touched (REST, 2FA, portal headers).

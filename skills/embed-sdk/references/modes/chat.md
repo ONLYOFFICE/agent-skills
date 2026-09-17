@@ -20,6 +20,30 @@ sdk.initChat({
 });
 ```
 
+## Preconditions — the page renders an empty chat when any of them fails
+
+Verified against the portal's `/sdk/chat` page (client 4.0.0): the composer, toolbar and agent
+context are rendered only when `canUseAi` is true, which requires **a signed-in user who is not
+a guest/visitor**. Otherwise the page still fires `onAppReady`, calls `setIsLoaded()` and shows
+the "no access" state — visually a blank chat with only a "Chat history" control and no input.
+Nothing arrives on `onAppError` or `onNoAccess` in that case.
+
+Before generating a chat integration, make sure that:
+
+1. The frame's user is a full portal user (not a guest, not anonymous). Public-room tokens do
+   not open chat.
+2. AI is enabled on the portal (admin settings → AI); on a portal without a configured AI
+   provider the same empty state appears for everyone.
+3. Under OAuth (`getToken`), the token's scopes let the page load the user's profile and
+   settings — the OAuth branch fetches them with the token and silently falls back to
+   `canUseAi = false` when that request fails. Check the scope list of your OAuth app
+   against `GET {portal}/api/2.0/scopes`.
+4. `agentId`, if set, is a numeric agent room id the user can open; `entityId` likewise.
+
+Troubleshooting order for "empty chat": sign in as a full user on the portal itself and open
+the agent there → if that works, compare the frame's user (`getUserInfo()` from a Manager or
+System frame with the same credentials) and the OAuth scopes.
+
 Key points:
 
 - The iframe path is `/sdk/chat`.

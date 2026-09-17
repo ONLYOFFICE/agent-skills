@@ -22,6 +22,9 @@
  * anything else, and a bundled React breaks every hook.
  */
 
+import * as fs from "node:fs";
+import * as path from "node:path";
+
 import {
   articleButtonPlugin,
   contextMenuPlugin,
@@ -68,7 +71,7 @@ export default ({ workspace, check }) => {
 
   check(
     "a hook called at module scope is an error that names the cause",
-    !hookAtTopLevel.ok && hookAtTopLevel.mentions("Hooks only work inside the component DocSpace renders"),
+    !hookAtTopLevel.ok && hookAtTopLevel.mentions("Hooks only work inside the component ONLYOFFICE Apps renders"),
     hookAtTopLevel.messageSummary,
   );
 
@@ -94,7 +97,7 @@ export default ({ workspace, check }) => {
     "a bare import the portal does not provide is an error naming it",
     !foreignImport.ok &&
       foreignImport.errorCodes.includes("dist") &&
-      foreignImport.hasFindingMentioning('"lodash-es"', "which DocSpace does not provide"),
+      foreignImport.hasFindingMentioning('"lodash-es"', "which ONLYOFFICE Apps does not provide"),
     foreignImport.messageSummary,
   );
   check(
@@ -235,5 +238,69 @@ export default ({ workspace, check }) => {
     "unbuilt project warns instead of failing",
     unbuilt.ok && unbuilt.warningCodes.includes("dist"),
     unbuilt.errorSummary,
+  );
+
+  // --- an archive packed before the last edit ----------------------------------
+  //
+  // Same symptom as a plugin that never loaded: it installs, and the change is not there.
+
+  const stalePacked = workspace.write("stale-zip", {
+    pkg: manifestFor("good", "FixtureGood"),
+    bundle: contextMenuPlugin({}),
+    src: contextMenuSource(),
+  });
+
+  const staleZip = path.join(stalePacked, "dist", "plugin.zip");
+  fs.writeFileSync(staleZip, "stands in for an archive - only its mtime is read here");
+  const longAgo = new Date(Date.now() - 60_000);
+  fs.utimesSync(staleZip, longAgo, longAgo);
+
+  const stale = workspace.validate(stalePacked);
+
+  check(
+    "an archive older than the sources is reported",
+    stale.warningCodes.includes("zip"),
+    stale.messagesFor("zip"),
+  );
+  check(
+    "the message says the upload would ship the previous build",
+    stale.messagesFor("zip").includes("ships the previous build"),
+    stale.messagesFor("zip"),
+  );
+
+  // --- a code-split build --------------------------------------------------------
+  //
+  // Vite writes every dynamic import() as a chunk beside plugin.js; the packer ships plugin.js
+  // alone and the portal imports it from a blob URL, so the chunk is unreachable either way.
+
+  const splitDir = workspace.write("split-bundle", {
+    pkg: manifestFor("good", "FixtureGood"),
+    bundle: contextMenuPlugin({}) + `\nexport const lazy = () => import("./chunk-abc.js");\n`,
+    src: contextMenuSource(),
+  });
+  fs.writeFileSync(path.join(splitDir, "dist", "chunk-abc.js"), "export const part = 1;\n");
+
+  const split = workspace.validate(splitDir);
+
+  check(
+    "chunks beside plugin.js are an error naming the fix",
+    split.errorCodes.includes("dist") && split.messagesFor("dist").includes("inlineDynamicImports"),
+    split.messageSummary,
+  );
+  check(
+    "the message says the chunk is unreachable from a blob URL",
+    split.messagesFor("dist").includes("blob URL"),
+    split.messagesFor("dist"),
+  );
+
+  const importOnlyDir = workspace.write("split-import-only", {
+    pkg: manifestFor("good", "FixtureGood"),
+    bundle: contextMenuPlugin({}) + `\nexport const lazy = () => import("./chunk-def.js");\n`,
+    src: contextMenuSource(),
+  });
+
+  check(
+    "a relative import() in plugin.js is reported even when the chunk is not in dist/",
+    workspace.validate(importOnlyDir).errorCodes.includes("dist"),
   );
 };

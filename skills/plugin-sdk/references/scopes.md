@@ -5,7 +5,7 @@ The SDK decides what **compiles**, the portal decides what **runs**. A scope tha
 | | Version |
 |---|---|
 | SDK | `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** |
-| Portal | DocSpace **4.0** |
+| Portal | ONLYOFFICE Apps **4.0** |
 | React | **19** — supplied by the portal; the plugin declares it for types and the JSX runtime |
 | UI kit | `@onlyoffice/apps-ui-kit` — supplied by the portal at load time, never bundled |
 
@@ -34,5 +34,7 @@ The skill tracks a portal release, not a range, and carries no history. A plugin
 `API` exists for class-side callbacks that build URLs from `getAPI()`; a React component reaches the API through `usePluginAPI()` without it.
 
 ## Anything not in that table
+
+**The editor is a different product.** Nothing in that table reaches inside an open document — the SDK exports no editor member at all. A plugin owns a file extension, opens its own viewer over a file, reads and writes its bytes through the REST API, and sends the user into the editor by opening its URL ([react.md → Opening a document](react.md#opening-a-document-is-a-page-load)); a control in the editor's toolbar, or anything that changes what the editor draws, is an ONLYOFFICE Docs plugin or macro — a separate format with its own API, installed into the editor rather than the portal. "A button in the document" belongs there; "a button beside the document" is a `ContextMenu` or `InfoPanel` item here.
 
 The table is the whole list. Nothing outside it may be generated or described as available — not a scope, interface or enum member — however plausible it sounds and however often it appears in material about the SDK. A name the SDK does not export is a loud build error; a name a newer SDK exports but no shipped portal handles compiles, uploads, enables and silently shows nothing. When a request has no scope here, say the target pair does not support it and offer the closest entry point — a whole screen → `ArticleNavigation`, a small persistent control → `ArticleButton`. `scripts/contract.mjs` enforces the same list in the scaffolder and the validator, and the validator's `sdk-drift` finding reports an installed SDK that diverges from it. Keeping the pair current is described in the skill's [README](../README.md#keeping-it-current).

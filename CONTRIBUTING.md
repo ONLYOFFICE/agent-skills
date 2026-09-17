@@ -18,7 +18,8 @@ the README table, nothing else.
 | `README.md` | yes | For people: what the skill does, how to install it alone, what it targets, how to maintain it. Nothing in `SKILL.md` links to it. |
 | `references/` | yes | The knowledge base, one topic per file, loaded on demand. The place for "what the portal/SDK actually does" — tables, payload shapes, recipes, pitfalls. |
 | `evals/` | yes | The measuring instrument — see below. Not read by agents. |
-| `scripts/` | if useful | Offline tools an agent runs: validators, generators. Every validator ships with a `test-validator.mjs` that exercises it against known-good and known-bad input and exits non-zero on a mismatch — the validator is what makes a rule mechanical, so it must not silently rot. Node only, no dependencies, no network. |
+| `scripts/` | if useful | Tools an agent runs: validators, generators, probes. Every validator ships with a `test-validator.mjs` that exercises it against known-good and known-bad input and exits non-zero on a mismatch — the validator is what makes a rule mechanical, so it must not silently rot. Node only, no dependencies. No network, with one exception: a script named `probe-*.mjs` may query the portal or site the user named, reads only, and never runs from the self-test. |
+| `sources.json` | yes | The skill's external sources: the SDK version it targets, the sites it links to, the placeholder hosts of its examples. `node tools/sync-sources.mjs --check` fails when a link or a pinned version is not traceable to it — see `.claude/skills/sync-sources/SKILL.md` for moving a skill to another site or SDK release. |
 | `templates/`, `vendor/` | if needed | Files a generator copies into a project. |
 
 Content language is English throughout: models read it.
@@ -46,11 +47,18 @@ evals of the skill you changed after the last content change, once — the proto
 each skill's `evals/README.md`. The best new scenario is a real failure turned into a
 check: watch it fail, fix the skill, watch it pass.
 
+Feedback from testing (the internal testing log, issues, a reflection somebody wrote after a
+session) is an input to this loop, not a note to file: every remark becomes either a new
+scenario or assertion in `evals/`, a new rule or reference passage in the skill, or is closed
+with a comment saying why not. A remark that only changes prose without a check behind it
+tends to be lost on the next rewrite.
+
 ## Before opening a pull request
 
 ```
 claude plugin validate . --strict
 node skills/<name>/scripts/test-validator.mjs   # for every skill that has a validator
+node tools/sync-sources.mjs --check             # every link and pinned version traces to sources.json
 ```
 
 Commit messages say what changed and why in one line, in the imperative, without a type

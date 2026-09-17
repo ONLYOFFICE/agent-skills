@@ -17,7 +17,7 @@
  */
 
 /*
- * Scaffolds a DocSpace plugin project: a class implementing every interface its declared
+ * Scaffolds an ONLYOFFICE Apps plugin project: a class implementing every interface its declared
  * scopes require, a Vite + React build with the host-provided packages external, the packed
  * ui-kit and SDK, placeholder assets. It registers no items on purpose - a TODO per scope.
  * Run with no arguments for the options.
@@ -48,7 +48,7 @@ const main = () => {
   console.log(`  ui-kit:       ${result.uiKitTarball}, copied into the project`);
 
   if (result.sdkTarball)
-    console.log(`  sdk:          ${result.sdkTarball}, installed from the tarball until 3.0.0 is on npm`);
+    console.log(`  sdk:          ${result.sdkTarball}, installed from the vendored tarball until 3.0.0 is on npm`);
 
   console.log(`  placeholders: ${result.iconPaths.join(", ")} - replace these with real icons`);
 

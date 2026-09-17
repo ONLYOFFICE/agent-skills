@@ -11,8 +11,8 @@ the list of skills; the plugin manifests only point here.
 
 | Skill | Targets | Purpose |
 |---|---|---|
-| [`embed-sdk`](skills/embed-sdk/SKILL.md) | Embed SDK **2.2.0** | Embedding DocSpace into web apps with the [Embed SDK](https://api.onlyoffice.com/docspace/javascript-sdk/get-started/) ([`@onlyoffice/docspace-sdk-js`](https://github.com/ONLYOFFICE/docspace-sdk-js)): mode selection, `TFrameConfig`, authentication (password hash flow, OAuth `getToken`, public room tokens), frame events, instance methods, editor automation, troubleshooting |
-| [`plugin-sdk`](skills/plugin-sdk/SKILL.md) | Plugins SDK **3.0.0**, DocSpace **4.0** | Building, auditing and explaining DocSpace plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started/) ([`@onlyoffice/docspace-plugin-sdk`](https://github.com/ONLYOFFICE/docspace-plugin-sdk)): React components built from the portal's `@docspace/ui-kit`, the plugin runtime hooks, the eleven scopes, item shapes and filters, actions and payloads, host behaviour, plus offline scripts that scaffold a buildable Vite project and check one against the portal loader contract |
+| [`embed-sdk`](skills/embed-sdk/SKILL.md) | Embed SDK **2.2.0** | Embedding ONLYOFFICE Apps (formerly DocSpace) into web apps with the [Embed SDK](https://api.onlyoffice.com/docspace/javascript-sdk/get-started/) ([`@onlyoffice/docspace-sdk-js`](https://github.com/ONLYOFFICE/docspace-sdk-js)): mode selection, `TFrameConfig`, authentication (password hash flow, OAuth `getToken`, public room tokens), frame events, instance methods, editor automation, troubleshooting |
+| [`plugin-sdk`](skills/plugin-sdk/SKILL.md) | Plugins SDK **3.0.0**, ONLYOFFICE Apps **4.0** | Building, auditing and explaining ONLYOFFICE Apps plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started/) ([`@onlyoffice/docspace-plugin-sdk`](https://github.com/ONLYOFFICE/docspace-plugin-sdk)): React components built from the portal's `@onlyoffice/apps-ui-kit`, the plugin runtime hooks, the eleven scopes, item shapes and filters, actions and payloads, host behaviour, plus offline scripts that scaffold a buildable Vite project and check one against the portal loader contract |
 
 Every skill follows the router pattern: `SKILL.md` holds the decision tables and critical
 rules; details live in `references/` and are loaded on demand. Each skill carries its own
@@ -79,8 +79,11 @@ alike — the one directory to use when a project mixes agents.
 
 ```
 .claude-plugin/          plugin + marketplace manifests
+.claude/skills/          repository-internal skills (sync-sources) — not shipped in the plugin
+tools/                   sync-sources.mjs: every link and pinned version traces to a skill's sources.json
 skills/embed-sdk/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
+├── sources.json         SDK version, docs/repo/demo sites, placeholder hosts
 ├── references/
 │   ├── config-reference.md    TFrameConfig fields by mode (kept in sync with SDK types)
 │   ├── modes/                 one file per SDK mode
@@ -90,15 +93,16 @@ skills/embed-sdk/
 │   ├── auth-recipes.md        production authentication recipes
 │   ├── testing.md             e2e-testing embedded frames
 │   └── frameworks/            React / Next.js / Vue / Angular recipes
-├── scripts/             validate-config.mjs (offline TFrameConfig validator) + its self-test
+├── scripts/             probe-portal.mjs (Step 0 as a script), validate-config.mjs + its self-test,
+│                        sync-sdk.mjs (validator dictionaries from the SDK types)
 └── evals/               A/B evaluation protocol (task, rubric, operator guide)
 skills/plugin-sdk/
-├── SKILL.md             router: build / audit / explain, scope tables, critical rules
-├── references/          SDK target and contract, React runtime, UI kit, item shapes, host behaviour, REST API, reading SDK 2 plugins
-├── scripts/             generate-plugin, validate-plugin, test-validator + contract.mjs
+├── SKILL.md             router: which job, scope table, the Explain job, the checklist of rules
+├── references/          build and audit workflows, SDK target and contract, React runtime, UI kit, item shapes, host behaviour, REST API, reading SDK 2 plugins
+├── scripts/             generate-plugin, validate-plugin, preview-plugin, test-validator + contract.mjs
 ├── templates/           Vite/TS config for generated projects
-├── vendor/              packed @docspace/ui-kit (+ the tarballs it needs), copied into every generated project
-└── evals/               graded scenarios and the fixture plugin one of them starts from
+├── vendor/              packed @onlyoffice/apps-ui-kit and SDK, copied into every generated project
+└── evals/               graded scenarios, the fixture plugin one of them starts from, trigger tests
 ```
 
 ## Development

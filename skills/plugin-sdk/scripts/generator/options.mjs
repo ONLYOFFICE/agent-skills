@@ -147,7 +147,7 @@ export const parseCliOptions = (argv) => {
     pluginName,
     scopeNames,
     targetDir,
-    description: readFlag(argv, "description") ?? `DocSpace plugin ${name}`,
+    description: readFlag(argv, "description") ?? `ONLYOFFICE Apps plugin ${name}`,
     author: readFlag(argv, "author") ?? "",
     extraLocales,
     vendoredTarballs: resolveVendoredTarballs(readFlag(argv, "ui-kit")),

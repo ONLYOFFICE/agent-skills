@@ -19,7 +19,7 @@ Webpack build (`webpack && node ./scripts/createZip.js`), `window.Plugins.<Plugi
 | Data loading | `onLoad` resolving to the new tree | `useEffect` |
 | API from UI | `getAPI()` + `fetch` | `usePluginAPI()` |
 
-Selectors, the create-file dialog, the media viewer's `playlistFilter` and the floating operations button are unchanged — the same data shapes from a message or a component ([react.md → Portal-provided UI](react.md#portal-provided-ui)).
+Selectors, the create-file dialog, the media viewer's `playlistFilter` and the floating operations button are unchanged — the same data shapes from a message or a component ([components.md](components.md)).
 
 Migrate whole, not half: `runtime: "module"`, the Vite config from a fresh scaffold, `export default plugin`, a component for every surface that had a tree. An ES module without the runtime field never runs.
 

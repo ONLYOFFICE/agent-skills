@@ -21,6 +21,7 @@
  */
 
 import * as fs from "node:fs";
+import * as path from "node:path";
 
 import {
   HOST_PROVIDED_SPECIFIERS,
@@ -62,7 +63,34 @@ export class ArchiveChecks extends Check {
     if (bytes > PORTAL_LIMITS.maxFileBytes)
       this.error("dist", `dist/plugin.js is ${megabytes(bytes)} MB, limit is ${PORTAL_LIMITS.maxFileLabel}`);
 
-    return this.#checkBundleImports(fs.readFileSync(project.bundlePath, "utf8"));
+    const code = fs.readFileSync(project.bundlePath, "utf8");
+    this.#checkSplitBundle(code);
+    return this.#checkBundleImports(code);
+  }
+
+  /**
+   * A code-split build. The packer zips plugin.js alone and the portal imports it from a
+   * blob URL, where a relative import() has nothing to resolve against - so a chunk is
+   * unreachable whether or not it sits in dist/, and the surface that first needs it renders
+   * blank. Libraries that lazy-load their own parts (diagram renderers, per-format parsers)
+   * produce dozens of chunks without the plugin author writing a single import().
+   */
+  #checkSplitBundle(code) {
+    const chunks = this.project.distChunks;
+    const dynamicImports = code.match(/\bimport\(\s*["']\.{1,2}\//g)?.length ?? 0;
+
+    if (!chunks.length && !dynamicImports) return;
+
+    const shown = chunks.slice(0, 3).join(", ");
+    const more = chunks.length > 3 ? ` and ${chunks.length - 3} more` : "";
+    const where = chunks.length
+      ? `dist/ holds ${chunks.length} JavaScript file(s) beside plugin.js (${shown}${more})`
+      : `dist/plugin.js has ${dynamicImports} relative import() call(s)`;
+
+    this.error(
+      "dist",
+      `${where} - the build split the bundle into chunks. The packer zips plugin.js alone and the portal imports it from a blob URL, where a relative import() cannot resolve, so the first surface that needs a chunk renders blank (the preview, which serves dist/ whole, would show it working). Set build.rollupOptions.output.inlineDynamicImports: true - the generator's vite.config does - and build again`,
+    );
   }
 
   /** The same judgement the portal makes, so the finding matches what its console would say. */
@@ -84,7 +112,7 @@ export class ArchiveChecks extends Check {
       else
         this.error(
           "dist",
-          `dist/plugin.js imports "${specifier}", which DocSpace does not provide - drop it from "external" in the build config so it is bundled into plugin.js. DocSpace provides: ${HOST_PROVIDED_SPECIFIERS.map((s) => `"${s}"`).join(", ")}`,
+          `dist/plugin.js imports "${specifier}", which ONLYOFFICE Apps does not provide - drop it from "external" in the build config so it is bundled into plugin.js. ONLYOFFICE Apps provides: ${HOST_PROVIDED_SPECIFIERS.map((s) => `"${s}"`).join(", ")}`,
         );
     }
 
@@ -126,6 +154,8 @@ export class ArchiveChecks extends Check {
       return;
     }
 
+    this.#checkArchiveIsCurrent();
+
     const bytes = fs.statSync(project.zipPath).size;
     if (bytes > PORTAL_LIMITS.maxFileBytes)
       this.error("zip", `dist/plugin.zip is ${megabytes(bytes)} MB, limit is ${PORTAL_LIMITS.maxFileLabel}`);
@@ -155,6 +185,44 @@ export class ArchiveChecks extends Check {
   }
 
   /** The packer renames fields on the way in, which is why these pairs look odd. */
+  /*
+   * The archive against the mtimes of what went into it. An upload only replaces what is
+   * installed if the archive is newer than the last edit - a zip packed before it carries the
+   * previous build, and the portal has no way to say so: it installs cleanly and the change
+   * is simply not there. Cheap to check and unrelated to whether the version moved.
+   */
+  #checkArchiveIsCurrent() {
+    const { project } = this;
+    const packedAt = fs.statSync(project.zipPath).mtimeMs;
+
+    const inputs = [
+      ...project.sourceFiles,
+      ...(project.buildConfigFile ? [path.join(project.dir, project.buildConfigFile)] : []),
+      project.packageJsonPath,
+    ];
+
+    const newer = inputs
+      .filter((file) => {
+        try {
+          // A second of slack: the packer runs right after the build touches these.
+          return fs.statSync(file).mtimeMs > packedAt + 1000;
+        } catch {
+          return false;
+        }
+      })
+      .map((file) => path.relative(project.dir, file).split(path.sep).join("/"));
+
+    if (!newer.length) return;
+
+    const shown = newer.slice(0, 3).join(", ");
+    const more = newer.length > 3 ? ` and ${newer.length - 3} more` : "";
+
+    this.warn(
+      "zip",
+      `dist/plugin.zip is older than ${shown}${more} - the archive does not contain the latest edit, so uploading it ships the previous build. Run the build again`,
+    );
+  }
+
   #checkPackedConfig(config) {
     const { manifest, scopes } = this.project;
 

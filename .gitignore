@@ -4,3 +4,4 @@ node_modules/
 
 # eval workspaces: generated plugin projects, not sources
 skills/*-workspace/
+.plugin-preview/

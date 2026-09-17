@@ -9,15 +9,16 @@
  *
  * Exit code 0 = OK (warnings allowed), 1 = errors found or input unreadable.
  *
- * The dictionary below is hand-synced with src/types + src/enums of the SDK.
- * Regenerate on every SDK release.
+ * The dictionaries below are generated from the SDK types by sync-sdk.mjs:
+ *   node sync-sdk.mjs --from <sdk checkout or node_modules/@onlyoffice/docspace-sdk-js> --write
+ * Run it with --check on every SDK release; edit MODE_REQUIREMENTS and SORTBY_HINTS by hand.
  */
 
 import { readFileSync } from "node:fs";
 
 const MODES = [
-  "manager", "editor", "viewer", "room-selector", "file-selector",
-  "system", "public-room", "uploader", "forms", "chat", "personal",
+  "manager", "editor", "viewer", "room-selector", "file-selector", "system", "public-room",
+  "uploader", "forms", "chat", "personal",
 ];
 
 const ENUMS = {
@@ -32,10 +33,7 @@ const ENUMS = {
 };
 
 const FILTER_ENUMS = {
-  sortBy: [
-    "AZ", "DateAndTime", "DateAndTimeCreation", "LastOpened", "Author",
-    "Room", "roomType", "Size", "Tags", "Type", "usedspace",
-  ],
+  sortBy: ["Author", "DateAndTimeCreation", "LastOpened", "DateAndTime", "AZ", "Room", "roomType", "Size", "Tags", "Type", "usedspace"],
   sortOrder: ["ascending", "descending"],
 };
 
@@ -48,61 +46,45 @@ const SORTBY_HINTS = {
 };
 
 const BOOLEAN_FIELDS = [
-  "noLoader", "checkCSP", "disableActionButton", "downloadToEvent",
-  "infoPanelVisible", "init", "showFilter", "showHeader", "showMenu",
-  "showSelectorCancel", "showSelectorHeader", "showSettings", "showSignOut",
-  "showTitle", "waiting", "withBreadCrumbs", "withSearch", "withSubtitle",
-  "isFolderUpload", "isMultipleUpload",
+  "noLoader", "checkCSP", "disableActionButton", "downloadToEvent", "editorGoBack",
+  "infoPanelVisible", "init", "showFilter", "showHeader", "showMenu", "showSelectorCancel",
+  "showSelectorHeader", "showSettings", "showSignOut", "showTitle", "waiting",
+  "withBreadCrumbs", "withSearch", "withSubtitle", "isFolderUpload", "isMultipleUpload",
 ];
 
 const KNOWN_KEYS = [
-  // required
-  "frameId", "mode", "src",
-  // general
-  "width", "height", "theme", "locale", "type", "name", "noLoader", "waiting",
-  "checkCSP", "destroyText", "methodTimeout", "events", "stylesUrl",
-  "integrationUrl", "init",
-  // entity / auth
-  "id", "requestToken", "getToken", "accessToken", "tokenExpiresAt",
-  "providerName", "inviteKey", "emplType", "uid",
-  // manager
-  "rootPath", "viewAs", "viewTableColumns", "showMenu", "showFilter",
-  "showTitle", "showHeader", "showHeaderBanner", "showSettings", "showSignOut",
-  "infoPanelVisible", "disableActionButton", "filter",
-  // selectors
-  "selectorType", "filterParam", "roomType", "acceptButtonLabel",
-  "cancelButtonLabel", "buttonColor", "showSelectorCancel", "showSelectorHeader",
-  "withBreadCrumbs", "withSearch", "withSubtitle",
-  // editor / viewer
-  "editorType", "editorGoBack", "editorCustomization", "downloadToEvent",
-  // uploader
-  "linkMainText", "secondaryText", "extensionsText", "acceptExtensions",
-  "isFolderUpload", "isMultipleUpload", "maxPerUploadSize", "maxTotalUploadSize",
-  // forms
-  "destination", "libraryId", "headerOffset", "headerHeight",
-  // chat
-  "agentId", "entityId", "fileId", "threadId",
-  // personal
-  "personalDestination",
+  "noLoader", "roomType", "acceptButtonLabel", "cancelButtonLabel", "buttonColor",
+  "checkCSP", "destroyText", "methodTimeout", "disableActionButton", "downloadToEvent",
+  "editorCustomization", "editorGoBack", "editorType", "events", "filter", "filterParam",
+  "frameId", "height", "id", "infoPanelVisible", "init", "integrationUrl", "locale", "mode",
+  "name", "requestToken", "getToken", "accessToken", "tokenExpiresAt", "rootPath",
+  "selectorType", "showFilter", "showHeader", "showHeaderBanner", "showMenu",
+  "headerOffset", "headerHeight", "providerName", "inviteKey", "emplType", "uid",
+  "showSelectorCancel", "showSelectorHeader", "showSettings", "showSignOut", "showTitle",
+  "src", "stylesUrl", "theme", "type", "viewAs", "viewTableColumns", "waiting", "width",
+  "withBreadCrumbs", "withSearch", "withSubtitle", "destination", "personalDestination",
+  "libraryId", "linkMainText", "secondaryText", "extensionsText", "acceptExtensions",
+  "isFolderUpload", "isMultipleUpload", "maxPerUploadSize", "maxTotalUploadSize", "agentId",
+  "entityId", "fileId", "threadId",
 ];
 
 const KNOWN_FILTER_KEYS = [
-  "count", "page", "sortBy", "sortOrder", "search", "withSubfolders", "folder",
+  "count", "folder", "page", "search", "sortBy", "sortOrder", "withSubfolders",
 ];
 
 const KNOWN_CUSTOMIZATION_KEYS = [
   "anonymous", "autosave", "comments", "compactHeader", "compactToolbar",
   "compatibleFeatures", "forcesave", "help", "hideRightMenu", "hideRulers",
-  "integrationMode", "macros", "macrosMode", "mentionShare", "mobileForceView",
-  "plugins", "toolbarHideFileName", "toolbarNoTabs", "uiTheme", "unit", "zoom",
+  "integrationMode", "macros", "macrosMode", "mentionShare", "mobileForceView", "plugins",
+  "toolbarHideFileName", "toolbarNoTabs", "uiTheme", "unit", "zoom",
 ];
 
 const KNOWN_EVENTS = [
   "onAppError", "onAuthError", "onAppReady", "onAuthSuccess", "onCloseCallback",
-  "onContentReady", "onDownload", "onEditorCloseCallback", "onNoAccess",
-  "onNotFound", "onSelectCallback", "onSignOut", "onEditorOpen",
-  "onFileManagerClick", "onUploadSuccess", "onUploadError", "onUploadProgress",
-  "onCustomAction", "onNavigate", "onGetExternalData", "onSetExternalData",
+  "onContentReady", "onDownload", "onEditorCloseCallback", "onNoAccess", "onNotFound",
+  "onSelectCallback", "onSignOut", "onEditorOpen", "onFileManagerClick", "onUploadSuccess",
+  "onUploadError", "onUploadProgress", "onCustomAction", "onNavigate", "onGetExternalData",
+  "onSetExternalData",
 ];
 
 // mode → { errors: required fields, warnings: strongly recommended fields }
@@ -153,7 +135,7 @@ if (!config.mode) {
   err(`mode: "${config.mode}" is not a known mode (${MODES.join(", ")})`);
 }
 if (!config.src) {
-  err("src: missing — the DocSpace portal origin is required");
+  err("src: missing — the ONLYOFFICE Apps portal origin is required");
 } else {
   try {
     const u = new URL(config.src);
@@ -268,8 +250,12 @@ if (config.events !== undefined) {
 if (config.accessToken !== undefined && config.getToken !== undefined) {
   warn("accessToken and getToken both set — getToken wins; drop accessToken");
 }
-if (config.mode !== "public-room" && config.requestToken) {
-  warn(`requestToken set in "${config.mode}" mode — only meaningful for public-room and shared-file access`);
+const sharedRoomManager = config.mode === "manager" && /\/rooms\/share\b/.test(String(config.rootPath ?? ""));
+if (config.mode !== "public-room" && config.requestToken && !sharedRoomManager) {
+  warn(`requestToken set in "${config.mode}" mode — only meaningful for public-room, or for manager with rootPath "/rooms/share"`);
+}
+if (sharedRoomManager && !config.requestToken) {
+  err(`requestToken: required when manager mode uses rootPath "/rooms/share"`);
 }
 
 // --- report -----------------------------------------------------------------------

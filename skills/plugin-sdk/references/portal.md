@@ -62,6 +62,7 @@ None of these produce an error the user sees; most leave nothing in the console.
 | One scope is dead, others work | scope declared but its getter is missing, or `add*Item` never called |
 | A tab, page or modal opens **blank**; console `[Plugin: name] …` | the component threw — swallowed by the error boundary. Usually an unguarded fetch/parse, a conditional hook, or a bundled React (next row) |
 | Every component blank; `usePluginRuntime must be used inside a plugin component` | a second React or SDK React entry in the bundle — fix the `external` list |
+| A surface that needs a lazily loaded module opens **blank** on the portal and worked in the preview; a `TypeError` about `./chunk-….js` in the console | the build split the bundle: the archive carries `plugin.js` alone and a blob-URL module cannot resolve a relative `import()` — `inlineDynamicImports` ([react.md → Bundling](react.md#bundling)) |
 | Components render light and LTR on a dark/RTL portal | a bundled `@onlyoffice/apps-ui-kit` |
 | A hook "throws outside a component" from a click | hooks called in a class-side callback |
 | Filter by user role ignored | wrong field name — see [the filter field trap](#the-filter-field-trap) |
@@ -73,24 +74,31 @@ None of these produce an error the user sees; most leave nothing in the console.
 | A whole scope never appears | it exists in the installed SDK but not in this portal ([scopes.md](scopes.md)) |
 | A modal opened from the context menu knows nothing about the file | `useCurrentFile()` is `null` there — hand the id over ([react.md](react.md#what-usecurrentfile-returns-where)) |
 | The settings aside's Save button saves nothing | `usePluginSettings().setSaveButton(...)` never called |
+| A settings save that failed looks exactly like one that worked | the aside closes on either, and `onClick` returned no toast ([react.md](react.md#the-settings-client)) |
 | A class field holds the wrong value after load | it shares a name with a manifest field (`settings`, `name`, `version`, `url`, `enabled`, `image`, `description`) — overwritten in step 3 |
 | Works everywhere except chat / AI-agent views | suppressed there by design |
 
 ### Silent failures in the UI layer
 
-The plugin loaded and rendered, and what the user sees is still wrong. They read as styling bugs and are not; fixes in [ui-kit.md](ui-kit.md#behavioural-traps) and [react.md → Modals](react.md#modals).
+The plugin loaded and rendered, and what the user sees is still wrong. They read as styling bugs and are not — nearly every one is a component default rather than a rule: fixes in [ui-kit.md](ui-kit.md#behavioural-traps) and [components.md → Modals](components.md#modals). For the ones that really are the stylesheet, [styles.md](styles.md).
 
 | Symptom | Cause |
 |---|---|
 | The blocks of a surface sit **side by side**, vertically centred, instead of stacked — and controls inside them each break onto their own line | several children were handed to a kit component at once (a fragment as a tab's `content`, a dialog body, `children`); the box it wraps them in is a flex row |
-| The progress button **stays in the panel** after the job ended, still reading "…ing" | the last update set `operations[i].completed` but not **`operationsCompleted`** on the button props. The outer flag is what the portal watches; on it, the panel dismisses the button and clears the plugin's entries by itself ([react.md → Progress button](react.md#the-floating-operations-button)) |
+| The progress button **stays in the panel** after the job ended, still reading "…ing" | the last update set `operations[i].completed` but not **`operationsCompleted`** on the button props. The outer flag is what the portal watches; on it, the panel dismisses the button and clears the plugin's entries by itself ([components.md → Progress button](components.md#the-floating-operations-button)) |
 | Clicking a room lands on the **rooms list**, and the address bar reads `/rooms/shared/undefined/filter?searchArea=…` | the link had no `?folder={id}`. The section tells one room from the list by the query, not the path, and then rewrote the address from its own state ([react.md → Paths navigate takes](react.md#paths-navigate-takes)) |
 | A row action fires on a row it **cannot apply to** — archiving an archived room, restoring a live one | the action was gated on `security` alone. The portal uses two independent tests, and so must a plugin: `security.Move` answers "may this user" (it hides *both* archive and restore), while `rootFolderType === 20` (`FolderType.Archive`) decides *which of the two* the row gets |
+| The settings aside opens with **Save already active** — or with a field already red — over a form nobody has touched | `isDisabled` and `hasError` were given validity alone. The portal cannot tell a touched form from an untouched one; the page has to compare what is loaded with what is shown ([react.md → Settings client](react.md#the-settings-client)) |
 | A form with **no labels**, though every field has `labelText` | `FieldContainer.labelVisible` defaults to `false` |
 | A form with an **empty band under every field** — spacing roughly twice what you set | `FieldContainer`'s own margin, plus your `gap` |
 | A panel looks **empty**, but clicking in it and typing works | a `Textarea` as a flex item collapses to ~1px |
 | A toggle's label is drawn **over the next row** | `ToggleButton` has no intrinsic size and an absolutely positioned label |
-| A selector opened from a modal is **visible but dead** | two portal surfaces are open at once and the modal's backdrop covers the selector — close one before opening the other ([react.md → Selectors](react.md#selectors)) |
+| A selector opened from a modal is **visible but dead** | two portal surfaces are open at once and the modal's backdrop covers the selector — close one before opening the other ([components.md → Selectors](components.md#selectors)) |
+| The Files selector's **Select** button never enables when a file is clicked | `getIsDisabled` waits for `selectedFileInfo`, which reaches it late or, on older portals, never — gate on the folder ([components.md → The Files selector](components.md#the-files-selector-folder-vs-file)) |
+| A copy, move or create into a folder the user **can** write to fails with *"You don't have enough permission"* | a portal id went into the JSON body as a string, so the server resolved it as a third-party id ([rest-api.md → Identifiers](rest-api.md#identifiers)) |
+| "Open" on a document the plugin created shows the 404 page or downloads the file | the link was `webUrl`/`viewUrl`, or went through `navigate()` — the editor is a page load ([react.md → Opening a document](react.md#opening-a-document-is-a-page-load)) |
+| A "running" row shows a line of text where a spinner should be | `Loader` defaults to `LoaderTypes.base`, which renders its label as text ([ui-kit.md](ui-kit.md#behavioural-traps)) |
+| A control at the **left or right edge** of a media-viewer surface, or in its top band, cannot be clicked — the viewer pages to the next file or closes instead | the viewer's 73px paging strips and 64px header are fixed *above* the plugin's content, which fills the whole viewport; the strips exist only when the folder has more than one matching file ([components.md → Media viewer](components.md#media-viewer)) |
 | Generated markup is **double-spaced** with nothing extra in the DOM | the modal body inherits `white-space: pre-line` |
 | `file.viewUrl` answers **404 while the metadata answers 200** | no content stream until the first write — that 404 is an empty file, and the metadata cannot tell you so ([rest-api.md](rest-api.md#a-files-contents-are-not-part-of-the-api)) |
 | A dialog will not grow past 400×280 | `autoMaxWidth`/`autoMaxHeight` are what hand sizing to the body; the kit's `isLarge`/`isHuge` are not forwarded |
@@ -130,16 +138,7 @@ A module plugin runs in the portal's own window — its DOM, cookies and `localS
 - **Throwing in `onLoadCallback` or at module scope** aborts the plugin silently. Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
-- **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` restyles the product; how to scope one is [react.md → Scoped CSS](react.md#scoped-css). What that does not settle is what beats *you*: a property set on your wrapper only **inherits**, and any portal rule aimed at the descendant itself — the kit's `.body { white-space: pre-line }` — outranks the inherited value. So generated HTML has to be styled descendant by descendant from a root you own:
-
-  ```css
-  .myplugin-rendered, .myplugin-rendered * { white-space: normal; }
-  .myplugin-rendered pre, .myplugin-rendered pre code { white-space: pre; }
-  .myplugin-rendered p, .myplugin-rendered li { line-height: 20px; margin: 0; }
-  .myplugin-rendered { color: var(--text-color); }
-  ```
-
-  Whatever sanitiser you use on that markup is bundled into `plugin.js` and counts against the archive limit.
+- **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` or `.card {}` restyles the product itself — in every section, for every user, until the plugin is disabled. Nothing checks the rules, and the fix is a form that cannot go wrong: [styles.md → Scoped CSS](styles.md#scoped-css). The reverse direction — portal rules reaching into your markup — is [what beats your rules](styles.md#what-beats-your-rules).
 - **`cspDomains`** origins are added to the **portal's** CSP, not just yours. List only what you call. (`scpDomains` is a real typo in shipped plugins — it silently does nothing.)
 - **Timers and listeners at module scope or in `onLoadCallback`** keep running after the plugin is disabled, until a full reload; inside a component's effect they clean up with it.
 
