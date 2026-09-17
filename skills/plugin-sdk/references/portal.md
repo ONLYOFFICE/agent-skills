@@ -21,7 +21,7 @@ Module plugins (`"runtime": "module"` in the packed `config.json` — everything
 7. `getStatus()`; `hide` stops the sequence.
 8. `plugin.css`, if packed, is linked into the **main** document's head as `<link id="plugin-styles-<pluginName>">`.
 9. Every declared scope's getter is read and the items copied into portal-wide maps, filtered by `usersTypes`/`usersType` and `devices` for the current user and device.
-10. Settings scope: `setAdminPluginSettingsValue(storedSettingsString)`.
+10. Settings scope: `setAdminPluginSettingsValue(storedSettingsString)`, then `getStatus()` again — a plugin can hide itself by its own stored configuration.
 
 Legacy plugins (no `runtime`; webpack, SDK ≤ 2) run from step 4 on, but the bundle is injected as a `<script>` into one hidden `<iframe id="plugin-iframe">` shared by all plugins, and the plugin is `iframeWindow.Plugins[pluginName]` — a mismatch yields an empty plugin with no error.
 

@@ -8,7 +8,7 @@ The SDK root contains no runtime logic — enums and types only. Every interface
 
 `status`, `onLoadCallback`, `updateStatus`, `getStatus`, `setOnLoadCallback`; optional `language`/`setLanguage`/`getLanguage` — implement them if the plugin shows any text.
 
-- `PluginStatus` is `active` or `hide`. `hide` from `getStatus()` stops installation before items or CSS are read — a kill switch, disastrous by accident.
+- `PluginStatus` is `active` or `hide`, and a live switch rather than only an install-time gate: `hide` from `getStatus()` stops installation before items or CSS are read, and read later it unregisters the items already published and unloads `plugin.css`; `active` puts both back. The portal re-reads it after `onLoadCallback`, after stored settings reach `setAdminPluginSettingsValue`, after a component's `usePluginSettings().save()`, and on every `Actions.updateStatus` — a kill switch, disastrous by accident. A plugin with no `getStatus()` counts as `active`; the admin's enable switch overrides it either way.
 - Write members as **arrow-function class fields**, not methods: the loader calls them from its own code, so `this` has to be bound.
 
 ## How the portal gets the plugin
