@@ -1,7 +1,7 @@
 {
   "skill": "embed-sdk",
   "format": "Each eval is one fresh session per arm. Arms: baseline = no skill, prompt plus the docs link given in `docs_hint`; skill = plugin installed, same prompt without the hint. Operator answers are given identically in both arms and only when asked. Assertions are graded by grep on the produced code or by reading the transcript; weight C = 2 (silent breakage), Q = 1.",
-  "docs_hint": "Documentation: https://api.onlyoffice.com/docspace/javascript-sdk/get-started/ and https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/",
+  "docs_hint": "Documentation: https://api.onlyoffice.com/docspace/javascript-sdk/get-started/ and https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/classes/SDKInstance/",
   "models": ["claude-haiku-4-5", "claude-sonnet-5", "claude-opus-5", "codex (gpt-5.6)"],
   "operator_answers": {
     "portal url": "{PORTAL_URL}",
