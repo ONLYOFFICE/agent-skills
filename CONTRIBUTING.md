@@ -55,3 +55,7 @@ node skills/<name>/scripts/test-validator.mjs   # for every skill that has a val
 
 Commit messages say what changed and why in one line, in the imperative, without a type
 prefix ("Warn that FieldContainer's own margin doubles against a column gap").
+
+Do not add `Co-Authored-By` trailers or any other AI-attribution lines to commit messages
+or pull request descriptions. Same rule as `docspace-ui-kit-react` and the DocSpace client.
+
