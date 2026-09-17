@@ -69,4 +69,4 @@ id; clicking a file opens the in-app editor; a wrong password yields a graceful 
 | Date | Model | Scenarios | with_skill | without_skill | Notes |
 |---|---|---|---|---|---|
 | 2026-09-17 | claude-sonnet-5 | E1–E3, F1–F4, 1 sample each | 62/73 weighted (83% of checks) | 39/73 weighted (47%) | Documentation = local build of the 2.2.0 site. Critical failures 4 vs 12. F4 with_skill had read `evals.json` and is discounted. Expectations were rewritten afterwards (E1, F1, F3, F4); baselines to be regraded |
-| 2026-09-17 | claude-sonnet-5 | E1–E3, F1–F4, 1 sample each | 74/77 weighted (96% of checks) | 51/77 weighted (62%) | Iteration 2 after the wave-2 text and the rewritten expectations; baselines regraded, not rerun. Critical failures 1 vs 9. No with_skill run read `evals/` |
+| 2026-09-17 | claude-sonnet-5 | E1–E3, F1–F4, 1 sample each | 87/89 weighted (97% of checks) | 59/89 weighted (60%) | Iteration 2: with_skill rerun after the wave-2 text, baselines regraded against the final expectations (composite ones split, OAuth state/PKCE and CSP checks added). Critical failures 0 vs 10. No with_skill run read `evals/` |
