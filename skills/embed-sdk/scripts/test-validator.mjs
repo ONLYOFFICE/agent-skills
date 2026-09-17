@@ -76,8 +76,6 @@ for (const c of CASES) {
   }
 }
 
-// The dictionaries must match the SDK's types. The SDK checkout is expected beside this repository
-// (../docspace-sdk-js, the layout the SDK's own docs:sync assumes); without it the step is skipped, not failed.
 const SDK_CHECKOUT = path.resolve(path.dirname(VALIDATOR), "..", "..", "..", "..", "docspace-sdk-js");
 if (existsSync(path.join(SDK_CHECKOUT, "src", "types", "index.ts"))) {
   const sync = spawnSync(process.execPath, [path.join(path.dirname(VALIDATOR), "sync-sdk.mjs"), "--from", SDK_CHECKOUT, "--check"], { encoding: "utf8" });
