@@ -1,23 +1,28 @@
 #!/usr/bin/env node
 /**
- * Keeps every external link and pinned version in a skill traceable to its sources.json.
+ * Keeps every external link and pinned version in the repository traceable to its sources.
  *
  *   node tools/sync-sources.mjs [--skill <name>] --check
- *       every URL in the skill must come from a manifest source or a placeholder host;
- *       every versionPattern must match the manifest version. Exit 1 otherwise.
+ *       every URL in a skill must be built on one of its sources or point at a placeholder
+ *       host; every versionPattern must match the manifest version. Exit 1 otherwise.
  *   node tools/sync-sources.mjs [--skill <name>] --verify
  *       --check plus one request per distinct source URL; non-2xx answers exit 1.
- *   node tools/sync-sources.mjs --skill <name> --map <old base>=<new base>
- *       move a source to another site: rewrite the base in the manifest and every link
- *       built on it, then re-run --check. Use it for staging hosts, a local docs build or a
- *       renamed docs section.
+ *   node tools/sync-sources.mjs --host <name>=<url>
+ *       point a host at another site for the whole plugin: rewrite it in the root
+ *       sources.json and every link built on it in every skill, then re-run --check.
+ *       Use it for the staging site or a local docs build, and again to switch back.
  *   node tools/sync-sources.mjs --skill <name> --set-version <x.y.z>
  *       change the pinned SDK version: manifest, every versionPattern, every link built on
- *       a source whose base contains {version}.
+ *       a source whose path contains {version}.
  *
- * sources.json, next to SKILL.md:
+ * sources.json at the repository root:
+ *   hosts     name → origin (or origin plus a fixed prefix), the only place a site is named
+ *   sources   name → { host, path?, verify? } for the links of the repository README
+ *
+ * sources.json next to a SKILL.md:
  *   version            the SDK version the skill targets
- *   sources            name → { base, verify? }; base may contain {version}
+ *   sources            name → { host, path?, verify? }; the link base is hosts[host] + path,
+ *                      and path may contain {version}
  *   placeholderHosts   hosts that are examples, not sources (portal.example.com, localhost)
  *   versionPatterns    { file, pattern } — regex with {v} for the version, one match each
  *
@@ -32,6 +37,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILLS = path.join(ROOT, "skills");
+const ROOT_MANIFEST = path.join(ROOT, "sources.json");
 const URL_RE = /https?:\/\/[^\s)>\]"'`]+/g;
 const TIMEOUT_MS = 8000;
 
@@ -42,9 +48,14 @@ const flag = (name) => {
 };
 const has = (name) => args.includes(name);
 const onlySkill = flag("--skill");
-const mapArg = flag("--map");
+const hostArg = flag("--host");
 const setVersion = flag("--set-version");
 const verify = has("--verify");
+
+function fail(message) {
+  console.error(`ERROR: ${message}`);
+  process.exit(2);
+}
 
 function skillDirs() {
   return readdirSync(SKILLS)
@@ -73,16 +84,35 @@ function skillFiles(dir) {
   return files.filter((f) => path.basename(f) !== "sources.json");
 }
 
+function readJson(file) {
+  return JSON.parse(readFileSync(file, "utf8"));
+}
+
+if (!existsSync(ROOT_MANIFEST)) fail("sources.json not found at the repository root");
+const root = readJson(ROOT_MANIFEST);
+const hosts = root.hosts ?? {};
+
 function readManifest(dir) {
   const file = path.join(dir, "sources.json");
-  const m = JSON.parse(readFileSync(file, "utf8"));
+  const m = readJson(file);
   m.__file = file;
   m.__dir = dir;
+  m.__files = skillFiles(dir);
+  m.__name = path.basename(dir);
+  for (const [name, src] of Object.entries(m.sources)) {
+    if (!src.host) fail(`${rel(file)}: source "${name}" has no host — name one from ${rel(ROOT_MANIFEST)}`);
+    if (!hosts[src.host]) fail(`${rel(file)}: source "${name}" names host "${src.host}", which ${rel(ROOT_MANIFEST)} does not declare`);
+  }
   return m;
 }
 
+/** The link base of a source under the current hosts, with {version} still unexpanded. */
+function baseOf(src) {
+  return hosts[src.host] + (src.path ?? "");
+}
+
 function expand(base, version) {
-  return base.replaceAll("{version}", version);
+  return base.replaceAll("{version}", version ?? "");
 }
 
 function trimUrl(u) {
@@ -100,13 +130,13 @@ function classify(url, manifests) {
   })();
   for (const m of manifests) {
     for (const [name, src] of Object.entries(m.sources)) {
-      const base = expand(src.base, m.version);
+      const template = baseOf(src);
+      const base = expand(template, m.version);
       if (url === base || url.startsWith(base + "/") || url.startsWith(base + "#") || url.startsWith(base + "?")) {
         return { kind: "source", source: name, manifest: m };
       }
-      if (src.base.includes("{version}")) {
-        const prefix = src.base.split("{version}")[0];
-        if (url.startsWith(prefix)) return { kind: "stale-version", source: name, manifest: m };
+      if (template.includes("{version}") && url.startsWith(template.split("{version}")[0])) {
+        return { kind: "stale-version", source: name, manifest: m };
       }
     }
     if (m.placeholderHosts?.some((h) => host === h || host.startsWith(h + ":"))) return { kind: "placeholder" };
@@ -118,8 +148,7 @@ function classify(url, manifests) {
 function scan(files, manifests) {
   const findings = [];
   for (const file of files) {
-    const text = readFileSync(file, "utf8");
-    const lines = text.split("\n");
+    const lines = readFileSync(file, "utf8").split("\n");
     lines.forEach((line, i) => {
       for (const raw of line.match(URL_RE) ?? []) {
         const url = trimUrl(raw);
@@ -178,67 +207,97 @@ function rewrite(files, from, to) {
   return count;
 }
 
-const manifests = skillDirs().map(readManifest);
-if (!manifests.length) {
-  console.error(onlySkill ? `ERROR: skills/${onlySkill}/sources.json not found` : "ERROR: no skills/*/sources.json found");
-  process.exit(2);
+/** One line per host, source and pattern: the manifests are read by people more often than by this script. */
+function formatManifest(m) {
+  const lines = ["{"];
+  const entries = Object.entries(m);
+  entries.forEach(([key, value], i) => {
+    const comma = i < entries.length - 1 ? "," : "";
+    if ((key === "sources" || key === "hosts") && value && typeof value === "object") {
+      const inner = Object.entries(value).map(([k, v]) => `    ${JSON.stringify(k)}: ${JSON.stringify(v).replaceAll('":', '": ').replaceAll(',"', ', "')}`);
+      lines.push(`  ${JSON.stringify(key)}: {`, inner.join(",\n"), `  }${comma}`);
+    } else if (key === "versionPatterns" && Array.isArray(value)) {
+      const inner = value.map((v) => `    ${JSON.stringify(v).replaceAll('":', '": ').replaceAll(',"', ', "')}`);
+      lines.push(`  ${JSON.stringify(key)}: [`, inner.join(",\n"), `  ]${comma}`);
+    } else {
+      lines.push(`  ${JSON.stringify(key)}: ${JSON.stringify(value)}${comma}`);
+    }
+  });
+  lines.push("}");
+  return lines.join("\n") + "\n";
 }
 
-if (mapArg || setVersion) {
-  if (manifests.length !== 1) {
-    console.error("ERROR: --map and --set-version need exactly one skill (--skill <name>)");
-    process.exit(2);
-  }
-  const m = manifests[0];
-  const files = skillFiles(m.__dir);
-  if (mapArg) {
-    const [from, to] = mapArg.split("=");
-    if (!from || !to) {
-      console.error("ERROR: --map expects <old base>=<new base>");
-      process.exit(2);
-    }
-    let touched = false;
-    for (const src of Object.values(m.sources)) {
-      if (src.base.startsWith(from)) {
-        src.base = to + src.base.slice(from.length);
-        touched = true;
+function writeManifest(m) {
+  const { __file, __dir, __files, __name, ...clean } = m;
+  writeFileSync(__file, formatManifest(clean));
+}
+
+const rootManifest = { ...root, sources: root.sources ?? {}, __dir: ROOT, __file: ROOT_MANIFEST, __files: [path.join(ROOT, "README.md")].filter(existsSync), __name: "README.md" };
+for (const [name, src] of Object.entries(rootManifest.sources)) {
+  if (!src.host || !hosts[src.host]) fail(`${rel(ROOT_MANIFEST)}: source "${name}" names an undeclared host`);
+}
+
+const manifests = skillDirs().map(readManifest);
+if (!manifests.length) fail(onlySkill ? `skills/${onlySkill}/sources.json not found` : "no skills/*/sources.json found");
+
+if (hostArg) {
+  if (onlySkill) fail("--host applies to the whole plugin; drop --skill");
+  const eq = hostArg.indexOf("=");
+  const name = eq > 0 ? hostArg.slice(0, eq) : "";
+  const to = eq > 0 ? hostArg.slice(eq + 1).replace(/\/+$/, "") : "";
+  if (!name || !to) fail("--host expects <name>=<url>");
+  if (!hosts[name]) fail(`host "${name}" is not declared in ${rel(ROOT_MANIFEST)} (known: ${Object.keys(hosts).join(", ")})`);
+  if (!/^https?:\/\//.test(to)) fail(`"${to}" is not an http(s) URL`);
+  const from = hosts[name];
+  if (from === to) {
+    console.log(`${name} already points at ${to}`);
+  } else {
+    let total = 0;
+    for (const m of [...manifests, rootManifest]) {
+      let n = 0;
+      for (const src of Object.values(m.sources)) {
+        if (src.host !== name) continue;
+        const suffix = src.path ?? "";
+        n += rewrite(m.__files, expand(from + suffix, m.version), expand(to + suffix, m.version));
       }
+      if (n) console.log(`${m.__name}: ${n} link(s) moved`);
+      total += n;
     }
-    if (!touched) {
-      console.error(`ERROR: no source base in ${rel(m.__file)} starts with ${from}`);
-      process.exit(2);
-    }
-    const n = rewrite(files, expand(from, m.version), expand(to, m.version));
-    console.log(`mapped ${from} → ${to}: ${n} link(s) rewritten in ${path.basename(m.__dir)}`);
+    hosts[name] = to;
+    root.hosts = hosts;
+    writeFileSync(ROOT_MANIFEST, formatManifest(root));
+    console.log(`host ${name}: ${from} → ${to}, ${total} link(s) rewritten`);
   }
-  if (setVersion) {
-    const old = m.version;
-    for (const vp of m.versionPatterns ?? []) {
-      const file = path.join(m.__dir, vp.file);
-      if (!existsSync(file)) continue;
-      const text = readFileSync(file, "utf8");
-      const re = new RegExp(vp.pattern.replaceAll("{v}", "([0-9]+\\.[0-9]+\\.[0-9]+)"), "g");
-      writeFileSync(file, text.replace(re, (whole, v) => whole.replace(v, setVersion)));
-    }
-    for (const src of Object.values(m.sources)) {
-      if (src.base.includes("{version}")) rewrite(files, expand(src.base, old), expand(src.base, setVersion));
-    }
-    m.version = setVersion;
-    console.log(`version ${old} → ${setVersion} in ${path.basename(m.__dir)}`);
+}
+
+if (setVersion) {
+  if (manifests.length !== 1) fail("--set-version needs exactly one skill (--skill <name>)");
+  const m = manifests[0];
+  const old = m.version;
+  for (const vp of m.versionPatterns ?? []) {
+    const file = path.join(m.__dir, vp.file);
+    if (!existsSync(file)) continue;
+    const text = readFileSync(file, "utf8");
+    const re = new RegExp(vp.pattern.replaceAll("{v}", "([0-9]+\\.[0-9]+\\.[0-9]+)"), "g");
+    writeFileSync(file, text.replace(re, (whole, v) => whole.replace(v, setVersion)));
   }
-  const { __file, __dir, ...clean } = m;
-  writeFileSync(__file, JSON.stringify(clean, null, 2) + "\n");
+  for (const src of Object.values(m.sources)) {
+    const template = baseOf(src);
+    if (template.includes("{version}")) rewrite(m.__files, expand(template, old), expand(template, setVersion));
+  }
+  m.version = setVersion;
+  writeManifest(m);
+  console.log(`version ${old} → ${setVersion} in ${m.__name}`);
 }
 
 let problems = 0;
 const toVerify = new Map();
 for (const m of manifests) {
-  const name = path.basename(m.__dir);
-  const findings = scan(skillFiles(m.__dir), [m]);
+  const findings = scan(m.__files, [m]);
   for (const f of findings) {
     if (f.kind === "foreign") {
       problems++;
-      console.log(`FOREIGN  ${rel(f.file)}:${f.line}  ${f.url}  — not in ${name}/sources.json (add a source or a placeholder host)`);
+      console.log(`FOREIGN  ${rel(f.file)}:${f.line}  ${f.url}  — not built on a source of ${m.__name}/sources.json (add a source or a placeholder host)`);
     } else if (f.kind === "stale-version") {
       problems++;
       console.log(`STALE    ${rel(f.file)}:${f.line}  ${f.url}  — built on "${f.source}" with a version other than ${m.version}`);
@@ -248,22 +307,17 @@ for (const m of manifests) {
   }
   for (const p of checkVersions(m)) {
     problems++;
-    console.log(`VERSION  ${name}/${p}`);
+    console.log(`VERSION  ${m.__name}/${p}`);
   }
-  console.log(`${name}: ${findings.length} link(s) scanned, version ${m.version}`);
+  console.log(`${m.__name}: ${findings.length} link(s) scanned, version ${m.version}`);
 }
 
-const rootReadme = path.join(ROOT, "README.md");
-const rootManifest = path.join(ROOT, "tools", "sources.json");
-if (!onlySkill && existsSync(rootReadme)) {
-  const rootManifests = existsSync(rootManifest)
-    ? [...manifests, { ...JSON.parse(readFileSync(rootManifest, "utf8")), __dir: ROOT, __file: rootManifest }]
-    : manifests;
-  for (const f of scan([rootReadme], rootManifests)) {
+if (!onlySkill) {
+  for (const f of scan(rootManifest.__files, [...manifests, rootManifest])) {
     if (f.kind === "foreign") {
       problems++;
-      console.log(`FOREIGN  README.md:${f.line}  ${f.url}  — not in any sources.json`);
-    } else if (f.kind === "source" && verify) {
+      console.log(`FOREIGN  README.md:${f.line}  ${f.url}  — not built on any source`);
+    } else if (f.kind === "source" && verify && f.manifest.sources[f.source].verify !== false) {
       toVerify.set(f.url, `README.md:${f.line}`);
     }
   }
@@ -282,4 +336,4 @@ if (problems) {
   console.log(`${problems} problem(s)`);
   process.exit(1);
 }
-console.log("OK: every link comes from a manifest and every pinned version matches");
+console.log("OK: every link is built on a declared host and every pinned version matches");
