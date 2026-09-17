@@ -81,8 +81,8 @@ the browser withholds the portal cookie — that is the token table in SKILL.md 
 | No build step (plain HTML, CMS page) | the portal script; config may go on the script URL as query params, `init=true` auto-initializes (see [config-reference](config-reference.md#script-tag-configs)) |
 | Portal version undetectable | the portal script, newest known version that answers 200 |
 
-An npm package **older** than the portal lacks newer modes and fields (2.0.0 has no forms,
-chat, personal, OAuth); one **newer** than the portal produces frames the portal cannot
+An npm package **older** than the portal lacks newer modes and fields (2.0.0 and 2.1.0 have no uploader,
+forms, chat, personal or OAuth — checked against the published packages); one **newer** than the portal produces frames the portal cannot
 serve. Both look like a blank frame or `TIMEOUT` with no clear error.
 
 ## Capabilities by portal SDK version
@@ -90,9 +90,9 @@ serve. Both look like a blank frame or `TIMEOUT` with no clear error.
 | Portal SDK | Modes | Auth | Notes |
 |---|---|---|---|
 | 1.x | manager, editor, viewer, room-selector, file-selector, system | cookie session, hash login | no `SDKError`, no `methodTimeout` — add your own timeouts |
-| 2.0 | + public-room, uploader | + `requestToken` | `executeInEditor`, `onEditorOpen` appear |
-| 2.1 | + forms, personal | | `onFileManagerClick` appears |
-| 2.2 | + chat | + OAuth `getToken` / `accessToken` | `SDKError` codes, `methodTimeout`, `onContentReady`, `onNoAccess`, `onNotFound`, external-data bridge |
+| 2.0 | + public-room | + `requestToken` | `executeInEditor`, `onEditorOpen`, `onContentReady`, `onNoAccess`, `onNotFound` appear |
+| 2.1 | no new modes | | `onFileManagerClick` appears |
+| 2.2 | + uploader, forms, personal, chat | + OAuth `getToken` / `accessToken` | `SDKError` codes, `methodTimeout`, `upload`, `navigateSection`, `setCustomActions`, external-data bridge |
 
 ## The React wrapper
 

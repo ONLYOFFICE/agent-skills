@@ -189,6 +189,10 @@ function report(f) {
   say();
   say("Recommendations:");
 
+  if (!f.newest) {
+    say("  - No SDK bundle answered. If the user confirms this is an ONLYOFFICE Apps portal that is simply unreachable from here, load the portal script at runtime and try the known versions newest-first (2.2.0, 2.1.0, 2.0.0); keep npm for types only, use nothing that needs a version the portal may lack, and say in the report that the version was not verified.");
+  }
+
   if (f.newest) {
     const cmp = compareVersions(NPM_VERSION, f.newest);
     if (cmp === 0) {
@@ -200,11 +204,9 @@ function report(f) {
     }
     const modes = compareVersions(f.newest, "2.2.0") >= 0
       ? "manager, editor, viewer, room-selector, file-selector, system, public-room, uploader, forms, chat, personal"
-      : compareVersions(f.newest, "2.1.0") >= 0
-        ? "manager, editor, viewer, room-selector, file-selector, system, public-room, uploader, forms, personal (no chat, no OAuth)"
-        : compareVersions(f.newest, "2.0.0") >= 0
-          ? "manager, editor, viewer, room-selector, file-selector, system, public-room, uploader (no forms, chat, personal, OAuth)"
-          : "manager, editor, viewer, room-selector, file-selector, system (1.x)";
+      : compareVersions(f.newest, "2.0.0") >= 0
+        ? "manager, editor, viewer, room-selector, file-selector, system, public-room (no uploader, forms, chat, personal or OAuth before 2.2)"
+        : "manager, editor, viewer, room-selector, file-selector, system (1.x)";
     say(`  - Modes this portal can serve: ${modes}.`);
     if (f.oauthMarker && f.openid.status === 200) {
       say("  - OAuth is available: prefer getToken over password hashes; it also sidesteps third-party-cookie blocking in cross-origin frames.");
