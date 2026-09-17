@@ -46,10 +46,8 @@ if (!located) {
   console.error(`ERROR: no SDK types under "${from}" — expected src/types/index.ts + src/enums/index.ts or dist/types/types/index.d.ts + dist/types/enums/index.d.ts`);
   process.exit(2);
 }
-// Windows checkouts carry CRLF; every pattern below matches on \n.
 const typesSrc = readFileSync(located.types, "utf8").replace(/\r\n/g, "\n");
 const enumsSrc = readFileSync(located.enums, "utf8").replace(/\r\n/g, "\n");
-/** Types and enums the SDK does not declare — an older SDK, or a renamed symbol. Reported, never thrown. */
 const missing = [];
 let version = null;
 const pkg = path.join(from, "package.json");
