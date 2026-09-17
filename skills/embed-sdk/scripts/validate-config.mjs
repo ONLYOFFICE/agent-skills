@@ -182,7 +182,10 @@ for (const f of BOOLEAN_FIELDS) {
 // --- unknown top-level keys ---------------------------------------------------
 
 for (const key of Object.keys(config)) {
-  if (!KNOWN_KEYS.includes(key)) {
+  if (KNOWN_KEYS.includes(key)) continue;
+  if (KNOWN_FILTER_KEYS.includes(key)) {
+    err(`${key}: belongs inside "filter" (filter.${key}) — at the top level the SDK ignores it and the list keeps its defaults`);
+  } else {
     warn(`unknown config key "${key}" — a typo, or a field from a different SDK version (this dictionary targets 2.2.0)`);
   }
 }
@@ -251,8 +254,9 @@ if (config.accessToken !== undefined && config.getToken !== undefined) {
   warn("accessToken and getToken both set — getToken wins; drop accessToken");
 }
 const sharedRoomManager = config.mode === "manager" && /\/rooms\/share\b/.test(String(config.rootPath ?? ""));
-if (config.mode !== "public-room" && config.requestToken && !sharedRoomManager) {
-  warn(`requestToken set in "${config.mode}" mode — only meaningful for public-room, or for manager with rootPath "/rooms/share"`);
+const tokenModes = ["public-room", "editor", "viewer"];
+if (config.requestToken && !tokenModes.includes(config.mode) && !sharedRoomManager) {
+  warn(`requestToken set in "${config.mode}" mode — read only by public-room, editor and viewer (sent as share= on /doceditor), or manager with rootPath "/rooms/share"`);
 }
 if (sharedRoomManager && !config.requestToken) {
   err(`requestToken: required when manager mode uses rootPath "/rooms/share"`);
