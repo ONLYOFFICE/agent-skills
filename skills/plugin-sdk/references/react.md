@@ -83,7 +83,7 @@ A class-side callback returns an `IMessage` — `{ actions: [Actions.x, …], <p
 | `sendPostMessage` | `postMessage` | — | the target iframe must be in the DOM |
 | `saveSettings` | `settings` | — (use `usePluginSettings().save()`) | |
 | `updateProps` / `updateContext` | `newProps` / `contextProps` | — | SDK 2 declarative trees only; **silently ignored** elsewhere, never an error |
-| `updateStatus` | none | — | class-side only: it is an `Actions` member with no counterpart in the runtime a component gets |
+| `updateStatus` | none | — | class-side only: it is an `Actions` member with no counterpart in the runtime a component gets. A component flips the plugin through `usePluginSettings().save()` instead, which makes the portal re-read `getStatus()` |
 | `update*Items` (`updateContextMenuItems`, `updateInfoPanelItems`, `updateMainButtonItems`, `updateProfileMenuItems`, `updateFileItems`, `updateEventListenerItems`, `updateArticleButtonItems`, `updateArticleNavigationItems`) | none | same names | make the portal re-read the plugin's map for that scope |
 
 An event handler (`EventListener`) is not limited by the host — its message goes through the same dispatcher as any other class-side callback, so a modal, a selector, `navigate` and the progress button all work from it. Keep it to item updates anyway: the event fires when the portal *opens a dialog*, not when anything completed ([items.md](items.md#the-event-fires-when-the-dialog-opens)). The three actions no class-side callback can use are `updateProps`, `updateContext` and `updateCreateDialogModal` (see the table row above). There is no action for opening the settings aside (`openInfoPanel` closes it).
@@ -172,7 +172,7 @@ A page that calls `usePluginAPI()` itself works, but every component that wants 
 | Method | Does |
 |---|---|
 | `load<T>()` | the stored object, or `null` when nothing was saved or the string is not JSON |
-| `save(data)` | stores `JSON.stringify(data)`, then calls `setAdminPluginSettingsValue` on the class |
+| `save(data)` | stores `JSON.stringify(data)`, then calls `setAdminPluginSettingsValue` on the class and re-reads `getStatus()` |
 | `setSaveButton(button)` | supplies the aside's Save button — a `ButtonGroup` `{ component: Components.button, props: { label, size, onClick, isDisabled, withLoadingAfterClick, disableWhileRequestRunning } }` |
 
 The portal owns the footer's Save/Cancel look, and it also overrides the button's `size`, `primary` and `scale` — what survives from the `ButtonGroup` is `label` (defaulting to "Save"), `isDisabled`, `isLoading`, `onClick`, `withLoadingAfterClick` and `disableWhileRequestRunning`.
