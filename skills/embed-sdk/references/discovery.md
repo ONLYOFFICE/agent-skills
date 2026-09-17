@@ -17,10 +17,10 @@ Capabilities by portal SDK version · The React wrapper
 ## The probe script
 
 ```
-node scripts/probe-portal.mjs https://portal.example.com --origin https://your-host.example
+node $SKILL/scripts/probe-portal.mjs https://portal.example.com --origin https://your-host.example
 ```
 
-It needs Node >= 18 and network access to the portal only; it sends anonymous GET/HEAD
+`$SKILL` is the skill directory (SKILL.md → Step 0). It needs Node >= 18 and network access to the portal only; it sends anonymous GET/HEAD
 requests and prints a report plus recommendations. `--json` prints the raw findings. Read
 the report top to bottom:
 
