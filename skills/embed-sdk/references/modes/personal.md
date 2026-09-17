@@ -2,7 +2,7 @@
 
 File manager over the user's personal space: My Documents, Favorites, Recent, Trash.
 No docs-site page exists — this file and the SDK source are the reference. Requires a
-portal on SDK >= 2.1.
+portal on SDK >= 2.2.
 
 ```js
 const instance = sdk.initPersonal({

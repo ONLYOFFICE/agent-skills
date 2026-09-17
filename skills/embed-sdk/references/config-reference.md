@@ -98,7 +98,7 @@ ignored when `agentId` is set), `fileId` (attach to the composer), `threadId` (r
 in pre-release builds). Renders a composer only for a signed-in non-guest user with AI enabled —
 [chat](modes/chat.md).
 
-## Personal (SDK >= 2.1)
+## Personal (SDK >= 2.2)
 
 `personalDestination` initial section (`my-documents` default, `favorites`, `recent`, `trash`,
 `settings`); manager-family display options apply; only `setConfig` and `navigateSection` are

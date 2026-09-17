@@ -181,8 +181,8 @@ Each one exists because the failure is silent: the integration looks right and d
     refresh token dies when the new pair is issued, persist atomically, never retry with the old one. Scopes:
     `GET {portal}/api/2.0/scopes` (authenticated), discovery `GET {portal}/.well-known/openid-configuration`. Missing
     both `getToken` and `accessToken` → `TOKEN_RESOLVE_FAILED` + `onAuthError`. Never commit `requestToken`s or hashes.
-14. **Match the SDK to the portal.** npm older than the portal lacks modes and fields (2.0.0 has no forms/chat/personal/
-    OAuth); npm newer produces frames the portal cannot serve. Both look like a blank frame or `TIMEOUT`. When npm >
+14. **Match the SDK to the portal.** npm older than the portal lacks modes and fields (2.0.0 and 2.1.0 have no uploader/forms/
+    chat/personal/OAuth); npm newer produces frames the portal cannot serve. Both look like a blank frame or `TIMEOUT`. When npm >
     portal, load the portal script and keep npm for types (Step 0).
 
 ## Authentication decision tree

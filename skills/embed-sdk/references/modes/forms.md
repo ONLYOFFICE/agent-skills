@@ -1,7 +1,7 @@
 # Forms mode
 
 Forms gallery for the room given by `id`. The docs site has a guide (`embedding-modes/forms-mode/`);
-this file adds what it does not say. Requires a portal on SDK >= 2.1.
+this file adds what it does not say. Requires a portal on SDK >= 2.2.
 
 ```js
 const instance = sdk.initForms({
