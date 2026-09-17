@@ -34,6 +34,9 @@ Key points:
 - `downloadToEvent: true` + `onDownload(url)` intercepts downloads.
 - Keep editor state across tab switches by hiding the frame with CSS, not unmounting.
 - One frame per document; reuse `frameId` only via destroy → init.
+- `requestToken` (the room's share key) opens a file of a public room with no session: the SDK
+  appends `share=<token>&is_file=true` to `/doceditor`. This is how a viewer inside a public-room
+  page shows its documents ([public-room](public-room.md)).
 - Programmatic access to document content (forms, fields, signatures):
   [editor-automation.md](../editor-automation.md).
 - `onEditorOpen` is a **manager-mode** event (fires when the user opens the editor from
