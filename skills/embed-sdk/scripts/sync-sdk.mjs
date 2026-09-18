@@ -46,8 +46,9 @@ if (!located) {
   console.error(`ERROR: no SDK types under "${from}" — expected src/types/index.ts + src/enums/index.ts or dist/types/types/index.d.ts + dist/types/enums/index.d.ts`);
   process.exit(2);
 }
-const typesSrc = readFileSync(located.types, "utf8");
-const enumsSrc = readFileSync(located.enums, "utf8");
+const typesSrc = readFileSync(located.types, "utf8").replace(/\r\n/g, "\n");
+const enumsSrc = readFileSync(located.enums, "utf8").replace(/\r\n/g, "\n");
+const missing = [];
 let version = null;
 const pkg = path.join(from, "package.json");
 if (existsSync(pkg)) {
@@ -60,7 +61,10 @@ if (existsSync(pkg)) {
 
 function typeBlock(name) {
   const m = typesSrc.match(new RegExp(`export type ${name} = \\{\\n([\\s\\S]*?)\\n\\};`));
-  if (!m) throw new Error(`type ${name} not found in ${located.types}`);
+  if (!m) {
+    missing.push(`type ${name} (${path.basename(located.types)})`);
+    return "";
+  }
   return m[1];
 }
 
@@ -81,13 +85,19 @@ function fields(block) {
 
 function enumValues(name) {
   const m = enumsSrc.match(new RegExp(`export (?:declare )?(?:const )?enum ${name} \\{([\\s\\S]*?)\\n\\}`));
-  if (!m) throw new Error(`enum ${name} not found in ${located.enums}`);
+  if (!m) {
+    missing.push(`enum ${name} (${path.basename(located.enums)})`);
+    return [];
+  }
   return [...m[1].matchAll(/=\s*"([^"]+)"/g)].map((x) => x[1]);
 }
 
 function union(name) {
   const m = typesSrc.match(new RegExp(`export type ${name} = ([^;]+);`));
-  if (!m) throw new Error(`type ${name} not found in ${located.types}`);
+  if (!m) {
+    missing.push(`type ${name} (${path.basename(located.types)})`);
+    return [];
+  }
   return [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
 }
 
@@ -157,7 +167,7 @@ function diff(label, want, have) {
   return `${label}: ${missing.length ? `missing ${missing.join(", ")}` : ""}${missing.length && stale.length ? "; " : ""}${stale.length ? `stale ${stale.join(", ")}` : ""}`;
 }
 
-const problems = [];
+const problems = missing.map((m) => `missing in the SDK: ${m} — the types predate this validator, or the symbol was renamed`);
 for (const key of ["MODES", "BOOLEAN_FIELDS", "KNOWN_KEYS", "KNOWN_FILTER_KEYS", "KNOWN_CUSTOMIZATION_KEYS", "KNOWN_EVENTS"]) {
   const d = diff(key, derived[key], current[key]);
   if (d) problems.push(d);
@@ -171,6 +181,12 @@ for (const group of ["ENUMS", "FILTER_ENUMS"]) {
 const versionInHeader = validator.match(/@onlyoffice\/docspace-sdk-js \(([0-9.]+)\)/)?.[1] ?? null;
 if (version && versionInHeader && version !== versionInHeader) {
   problems.push(`version: validator says ${versionInHeader}, types say ${version}`);
+}
+
+if (mode === "--write" && missing.length) {
+  for (const p of problems) console.log(`DIFF: ${p}`);
+  console.log("refusing to write: the SDK lacks symbols this validator needs, the dictionaries would lose entries");
+  process.exit(1);
 }
 
 if (mode === "--check") {

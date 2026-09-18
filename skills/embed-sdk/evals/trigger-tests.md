@@ -1,7 +1,9 @@
 # Trigger tests for the `description`
 
 Twenty first messages, each sent to a fresh session with the plugin installed and nothing
-else said. Record whether the agent loaded `onlyoffice:embed-sdk` before answering. Target:
+else said. Record whether the agent loaded `onlyoffice:embed-sdk` before answering.
+`node skills/embed-sdk/evals/run-triggers.mjs --model sonnet` does exactly that through `claude -p`
+with this repository as `--plugin-dir`, three runs per message, and prints the misses. Target:
 every "should" triggers, no "should not" does, on each model in `evals.json` → `models`.
 Run three times per message; a message counts as triggering when it does so in at least two
 runs. When a "should" misses, add the missing situation to the description; when a "should
@@ -44,4 +46,4 @@ not" fires, add the boundary — never paste the failing query verbatim.
 
 | Date | Model | Should (10) | Should not (10) | Notes |
 |---|---|---|---|---|
-| | | | | |
+| 2026-09-17 | claude-sonnet-5 | 10 (each 3/3) | 10 (each 0/3) | Description as of commit 908d350. "Create a DocSpace plugin…" went to `onlyoffice:plugin-sdk` in all three runs, as intended |

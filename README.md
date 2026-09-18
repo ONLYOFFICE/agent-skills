@@ -80,10 +80,12 @@ alike — the one directory to use when a project mixes agents.
 ```
 .claude-plugin/          plugin + marketplace manifests
 .claude/skills/          repository-internal skills (sync-sources) — not shipped in the plugin
-tools/                   sync-sources.mjs: every link and pinned version traces to a skill's sources.json
+sources.json             the external hosts (docs site, GitHub, raw files, demo) named once for every skill;
+                         `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at a staging or local docs build
+tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
 skills/embed-sdk/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
-├── sources.json         SDK version, docs/repo/demo sites, placeholder hosts
+├── sources.json         SDK version, which hosts it links to and at which paths, placeholder hosts
 ├── references/
 │   ├── config-reference.md    TFrameConfig fields by mode (kept in sync with SDK types)
 │   ├── modes/                 one file per SDK mode

@@ -1,10 +1,23 @@
 # Authentication recipes
 
 Four production-proven flows plus the two walls integrators hit around them. Pick via the
-decision tree and the token table in SKILL.md.
+decision tree in SKILL.md and the token table below.
 
-Contents: 1 credential replay · 2 OAuth · 3 public rooms · 4 portal-provider auto-login ·
-5 API keys · 6 the cross-origin cookie wall · 7 two-factor authentication · 8 multi-frame pages
+Contents: which token is which · 1 credential replay · 2 OAuth · 3 public rooms · 4 portal-provider
+auto-login · 5 API keys · 6 the cross-origin cookie wall · 7 two-factor authentication · 8 multi-frame pages
+
+## Which token is which
+
+| Thing | Lives | Grants | SDK entry | Cannot |
+|---|---|---|---|---|
+| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult` | finish when 2FA is on unless the portal reads `login`'s `code` argument (client 4.0.0 does not); survive third-party-cookie blocking |
+| Session cookie `asc_auth_key` | browser, portal origin | every request the iframe makes | nothing to pass | be sent from a cross-origin iframe when the browser blocks third-party cookies → `401` despite a live session |
+| `requestToken` (share key) | room share link, or `items[0].requestTokens[0].requestToken` from a room-selector | anonymous access to one room and its files | `public-room` (`id` + `requestToken`); manager with `rootPath: "/rooms/share"`; editor/viewer (`share=` on `/doceditor`) | anything outside that room; must never be committed |
+| OAuth access token | your backend (refresh token stays there) | API calls as the user, sent as `Bearer` — no cookie involved | `getToken` (preferred) or `accessToken`, SDK >= 2.2 | outlive expiry unless `getToken` re-fetches |
+| API key | your backend | REST as the key owner, `Bearer`, scopes = key permissions | REST; in a frame the SDK forwards whatever `getToken` returns — plausible but **unverified**, confirm with `getUserInfo()` | be refreshed or revoked per session |
+
+`login()` resolves `{ url: "/" }` on success, `{ url: "/confirm/…" }` when a second factor is pending, and an error
+with `status` on failure — it never rejects.
 
 ## 1. Credential-replay (password hash) — the classic plugin flow
 
@@ -92,15 +105,31 @@ sends `Authorization: Bearer <token>` on its API requests. The SDK does not pars
 - Cache `{ accessToken, refreshToken, expiresAt }` per user session; serve the access
   token from your `/api/docspace/token` endpoint.
 - Refresh proactively 30–60 s before expiry. **Rotation is strict**: the refresh token you
-  used is invalidated the moment the new pair is issued. Persist the new pair atomically
-  before answering the frame, never retry a refresh with the previous token, and make a
-  health check that "tests" refresh only against the pair it then stores — a check that
-  refreshes and discards the result kills the real session.
+  used is invalidated the moment the new pair is issued. The token endpoint therefore does
+  three things in this order and nothing else: refresh, persist the new pair, answer.
+
+  ```js
+  app.get("/api/docspace/token", async (req, res) => {
+    let pair = await store.get(req.session.userId);
+    if (!pair) return res.status(401).json({ error: "not_linked" });
+    if (pair.expiresAt - Date.now() < 60_000) {
+      const fresh = await exchange({ grant_type: "refresh_token", refresh_token: pair.refreshToken });
+      pair = { accessToken: fresh.access_token, refreshToken: fresh.refresh_token, expiresAt: Date.now() + fresh.expires_in * 1000 };
+      await store.set(req.session.userId, pair);
+    }
+    res.json({ access_token: pair.accessToken });
+  });
+  ```
+
+  Never retry a refresh with the previous token, serialise concurrent refreshes per user (two
+  frames asking at once must share one exchange), and never write a health check that refreshes
+  and discards the result — it kills the real session.
 - Revoke both tokens at `POST {portal}/oauth2/token/revoke`-equivalent on logout;
   never expose `client_secret` or refresh tokens to the browser.
-- Scopes: the catalogue is `GET {portal}/api/2.0/scopes` (authenticated; anonymous → 403);
-  anonymous discovery goes through `GET {portal}/.well-known/openid-configuration`. Scopes
-  differ between portal versions — do not hardcode. The chat and personal pages need the
+- Scopes: read the catalogue from `GET {portal}/api/2.0/scopes` (authenticated; anonymous → 403)
+  when the app is registered and put the chosen list in configuration, not in code; discovery is
+  `GET {portal}/.well-known/openid-configuration`. Scopes differ between portal versions — a list
+  typed from memory is the second most common OAuth defect after the refresh handling. The chat and personal pages need the
   scopes that read the user's profile; without them the frame renders as "no access".
 
 There is **no automatic re-auth**: on `onAuthError` show your own re-login UX.
@@ -175,7 +204,8 @@ Whether the second step is reachable depends on the portal:
 - **Client 4.0.0**: the SDK dispatcher runs `login(email, passwordHash)` and ignores everything
   else, so the code never reaches the portal and the account stays signed out — even though the
   store already has a `loginWithCode(userName, passwordHash, code)` the dispatcher never calls.
-  Adding a "code" field to your form does not help there.
+  Adding a "code" field to your form does not help there, so do not ship one as the fix: the
+  deliverable for such a portal is the OAuth route below, stated as such.
 - **A portal whose dispatcher reads `code`**: call `login(email, hash, undefined, undefined,
   code)` (SDK 2.2.0) after the `/confirm/…` answer, then check `status`. Probe the portal version
   first and do not promise the flow on 4.0.0.

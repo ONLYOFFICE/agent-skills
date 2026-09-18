@@ -1,127 +1,72 @@
 # Evaluating the embed-sdk skill: with vs. without
 
-An A/B protocol that demonstrates what the skill changes. The same task prompt is given to
-the same model twice — once in a clean session without the skill, once with it — and both
-results are graded against the same rubric.
+An A/B protocol that measures what the skill changes. The same task prompt is given to the
+same model twice — once with the skill installed, once without it but with the documentation —
+and both results are graded against the same expectations.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| [evals.json](evals.json) | The scenario set: E1–E3 from the internal testing plan, four scenarios rebuilt from real failures (2FA question, cross-origin todo app, workspace with chat under OAuth, Next.js form intake), and the original admin-panel task. Each has a prompt, operator answers and weighted assertions with grep hints |
+| [evals.json](evals.json) | The scenario set in skill-creator format: E1–E3 from the internal testing plan, F1–F4 rebuilt from real failures (2FA question, cross-origin todo app, workspace with chat under OAuth, Next.js form intake), and G1, the original admin-panel task. Each has a prompt, an `expected_output` and `expectations`: strings prefixed `[C]` (critical, weight 2 — a silent breakage) or `[Q]` (quality, weight 1), ending in a `(how: …)` hint for the grader |
 | [trigger-tests.md](trigger-tests.md) | 10 messages that must trigger the skill and 10 that must not; results table |
-| [prompt.txt](prompt.txt) | The original admin-panel task, copy-paste-ready (replace `{…}` placeholders first) |
-| [task.md](task.md) | Operator guide for that task: annotated prompt + operator answers + the trap map (never show to the agent) |
-| [rubric.md](rubric.md) | Its 39 graded checkpoints mapped to SKILL.md rules, with grep hints |
+| [prompt.txt](prompt.txt) | The G1 task, copy-paste-ready (replace `{…}` placeholders first) |
+| [task.md](task.md) | Operator guide for G1: annotated prompt + operator answers + the trap map (never show to the agent) |
+| [rubric.md](rubric.md) | G1's 39 graded checkpoints mapped to SKILL.md rules, with grep hints |
 
 ## Running the scenario set
 
-One scenario is one prompt run twice in fresh, isolated directories — **baseline**: no plugin,
-the prompt plus the `docs_hint` line from `evals.json` (the honest comparison is against an
-agent that has the documentation, not against one that has nothing); **skill**: plugin
-installed, prompt alone. Answer questions only when asked, with the `operator_answers`. Grade
-the assertions (C = 2, Q = 1), record tokens and wall time, and compare by errors — the
-internal testing showed no wall-time difference between the arms on strong models, and none is
-expected. Run on every model in `models`; a scenario that both arms pass on every model is a
-passage doing no work. `F1-2fa-question` is a question, not a build: grade the transcript.
-Turn every new failure from the testing log into a scenario here before fixing the skill:
-watch it fail, fix, watch it pass.
+Ask `skill-creator`, which owns the mechanics ("run the evals for skills/embed-sdk on sonnet"),
+or follow the same steps by hand:
 
-## Setup
+1. One scenario is one prompt run twice, in fresh directories, in the same turn. **with_skill**:
+   the skill directory is named, the agent may read it and run its scripts. **without_skill**:
+   no skill; the prompt plus the `docs_hint` line from `evals.json` — the honest comparison is
+   against an agent that has the documentation, not against one that has nothing.
+2. Fill the placeholders (`{PORTAL_URL}`, `{ROOM_ID}`, `{FORMS_ROOM_ID}`, `{AGENT_ID}`) identically
+   in both arms. A fictional portal is fine for static grading; the agent then cannot probe it, and
+   the expectations about version handling test what it does with that.
+3. Put the `operator_answers` into the prompt as facts the customer would give if asked; a
+   subagent cannot ask. Same text in both arms.
+4. **Isolation.** The run directory is the agent's whole workspace. The with_skill agent reads the
+   skill directory and nothing else outside; it must never read `evals/` — `evals.json` is its own
+   answer key, and a run that read it is discarded. The without_skill agent reads nothing outside
+   its directory but the documentation site. Ask each run to end with a "Sources" section listing
+   every file read outside its directory and every URL fetched, and check it.
+5. Grade every expectation from the code, not from the report's prose: `[C]` = 2 points, `[Q]` = 1.
+   F1 is a question — grade `answer.md`. G1 is graded by `rubric.md`.
+6. Record tokens and wall time from the task notifications; compare by errors first. On strong
+   models the arms cost about the same.
 
-Two empty directories, identical machine/model/settings:
+The model is not deterministic; one run is one sample. For the scenario a change was meant to
+affect, run two or three samples before reading one changed check as a regression. Baseline
+outputs are reusable while the prompt and model are unchanged: after a change to the
+expectations only, regrade them instead of rerunning.
 
-```
-mkdir demo-baseline demo-skill
-```
+Turn every new failure from the testing log into a scenario here before fixing the skill: watch
+it fail, fix, watch it pass. A check both arms pass on every model is a passage doing no work.
 
-**Run A — baseline (no skill):**
+## Verification stages for G1
 
-```
-cd demo-baseline
-claude            # plain session, no plugin
-# paste the prepared prompt.txt (placeholders filled) as the first message
-```
+Grade G1 through four gates, in order. Stages A–C need no portal.
 
-**Run B — with the skill:**
+**Gate A — Discovery behavior (before any code).** Did the agent establish the portal's SDK
+version before writing integration code? Did it react to the 2.0.0-vs-portal version conflict
+planted in the task (the AI-chat requirement does not exist in SDK 2.0.0)?
 
-```
-cd demo-skill
-claude --plugin-dir /path/to/agent-skills
-# paste the SAME prepared prompt.txt
-```
+**Gate B — Static code review.** Go through [rubric.md](rubric.md) top to bottom; most checkpoints
+have a grep hint.
 
-Fair-test rules:
+**Gate C — Config validation.** Extract every `TFrameConfig` the agent produced into JSON and run
+each through `node scripts/validate-config.mjs '<json>'`. Score: configs with 0 errors.
 
-- **Isolation**: create the run directories away from any workspace that contains this
-  skill repo, the SDK sources, its `specs/`, or sample integrations — an exploring agent
-  WILL read sibling directories (observed in practice: a baseline found the skill next
-  door and used its validator and rules, invalidating the run). Also scope the agent
-  explicitly: "treat this directory as your entire workspace; do not read outside it".
-- **Contamination audit after each run** (a baseline that touched the skill, `specs/` or
-  `evals/` is invalid): grep the session transcript for the skills repo (`agent-skills`),
-  `SKILL.md`, `specs/`, `evals/` if a transcript is available; if not (some harnesses
-  don't persist subagent transcripts), ask the agent directly to enumerate every file
-  it accessed outside its working directory — its context is intact and the final
-  report often self-reports the sources it used.
-- Same model and effort settings in both runs; fresh session each (no history).
-- Do not mention the skill, DocSpace docs, or any hints in the prompt — task.md only.
-- Answer the agent's questions identically in both runs (see "operator answers" in
-  task.md). If the baseline never asks, that is itself a scored observation.
-- Fill `{PORTAL_URL}` in task.md with a real test portal if you want the live stage
-  (D below); any https URL works for static grading.
+**Gate D — Live smoke test (optional, needs a real portal).** Allow-list the dev origin, `npm run
+dev`: manager renders; StrictMode double-mount does not break the frame; room selector returns an
+id; clicking a file opens the in-app editor; a wrong password yields a graceful error.
 
-## Verification stages
+## Results
 
-Grade each run through four gates, in order. Stages A–C need no portal.
-
-**Gate A — Discovery behavior (before any code).**
-Did the agent ask which portal / establish the portal's SDK version before writing
-integration code? Did it react to the 2.0.0-vs-portal version conflict planted in the
-task (the AI-chat requirement does not exist in SDK 2.0.0)? Record: questions asked,
-connection method chosen (npm / portal IIFE / hybrid).
-
-**Gate B — Static code review.**
-Go through [rubric.md](rubric.md) top to bottom. Each checkpoint has a grep hint —
-most can be checked mechanically. Fill the score column for both runs.
-
-**Gate C — Config validation.**
-Extract every `TFrameConfig` object the agent produced (manager, selector, editor,
-system, forms/uploader) into JSON and run each through the validator:
-
-```
-node skills/embed-sdk/scripts/validate-config.mjs '<json>'
-```
-
-Score: number of configs passing with 0 errors.
-
-**Gate D — Live smoke test (optional, needs a real portal).**
-1. Add the dev origin to the portal CSP allowlist (the agent should have told you to —
-   that instruction is itself a rubric item).
-2. `npm run dev`, open the app: manager renders; StrictMode double-mount does not
-   duplicate/break the frame; room selector returns an id; clicking a file opens the
-   in-app editor; login flow works with a wrong password (graceful error, because
-   `login()` resolves with `status !== 200`).
-
-## Scoring
-
-Rubric checkpoints are weighted: **critical = 2 points** (violations produce silently
-broken integrations), **quality = 1 point**. Sum per run; report as
-`score / max` plus the Gate A narrative. A useful demo artifact is the diff table:
-checkpoint × (baseline, skill) with one-line evidence quotes.
-
-## Expected divergence (what the demo typically shows)
-
-| Behavior | Baseline (typical) | With skill (expected) |
-|---|---|---|
-| Portal discovery | starts coding immediately | asks portal URL/version, probes `/static/scripts/sdk/{v}/api.js` |
-| Version conflict (npm 2.0.0 vs chat requirement) | writes `initChat` against 2.0.0 (does not exist) | flags conflict; portal IIFE or unpin, npm kept for types |
-| `sortBy` | `"Name"` (silently unsorted) | `"AZ"` / enum constant |
-| `login()` result | assumes resolve = success | checks `response.status !== 200` |
-| Selector payload | treats room payload as object | `items[0].id`, `.requestTokens[0].requestToken` |
-| Programmatic upload | calls `upload()` on manager/uploader frame | Forms frame, or Uploader UI, with explanation |
-| StrictMode | double init breaks frame in dev | ref-guard or documented StrictMode handling |
-| CSP | not mentioned; or `checkCSP: false` "fix" | tells operator to allow-list the dev origin |
-
-Baseline runs are not always this weak — grade honestly; the rubric, not the table above,
-is the source of truth.
+| Date | Model | Scenarios | with_skill | without_skill | Notes |
+|---|---|---|---|---|---|
+| 2026-09-17 | claude-sonnet-5 | E1–E3, F1–F4, 1 sample each | 62/73 weighted (83% of checks) | 39/73 weighted (47%) | Documentation = local build of the 2.2.0 site. Critical failures 4 vs 12. F4 with_skill had read `evals.json` and is discounted. Expectations were rewritten afterwards (E1, F1, F3, F4); baselines to be regraded |
+| 2026-09-17 | claude-sonnet-5 | E1–E3, F1–F4, 1 sample each | 87/89 weighted (97% of checks) | 59/89 weighted (60%) | Iteration 2: with_skill rerun after the wave-2 text, baselines regraded against the final expectations (composite ones split, OAuth state/PKCE and CSP checks added). Critical failures 0 vs 10. No with_skill run read `evals/` |

@@ -35,4 +35,4 @@ Key points:
 - Front-end "read-only-ish" embeds combine `editorGoBack: false`, `editorType: "embedded"`,
   `theme: "Base"` and a trimmed column set.
 
-Config field reference: [config-reference.md](../config-reference.md#manager-mode).
+Config field reference: [config-reference.md](../config-reference.md#manager-and-filter).
