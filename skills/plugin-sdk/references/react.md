@@ -79,11 +79,11 @@ A class-side callback returns an `IMessage` — `{ actions: [Actions.x, …], <p
 | `showMediaViewer` / `updateMediaViewer` / `closeMediaViewer` | `mediaViewerProps` (with `component`) | same names | see [Media viewer](components.md#media-viewer) |
 | `addFloatingOperationsButton` / `updateFloatingOperationsButton` / `removeFloatingOperationsButton` | `floatingOperationsButtonProps` / same / `floatingOperationsButtonPropsId` (a bare string) | same names | see [Progress button](components.md#the-floating-operations-button) |
 | `navigate` | `navigatePath` | `navigate(path)` | an absolute portal path — the ones worth knowing are [below](#paths-navigate-takes). The SDK's doc says later actions run once navigation finishes; the host does not sequence anything (the action loop is a synchronous `forEach`), so the next action fires immediately, against the page you are leaving |
-| `openInfoPanel` | `infoPanelTab?` | `openInfoPanel(tab?)` | `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, `"info_ai_chat"`, or the `key` of your own info-panel item. **It closes your modal, aside, settings aside and selector first** — the panel is not a second surface beside them, so anything the user was filling in is gone. Pass your `key` unprefixed; the host makes `info_plugin-<key>` itself. To send someone from a list into an item with your tab already open, this is the pair to use — `navigate(path)` then `openInfoPanel(key)` — not a modal reproducing the tab, which would show the row's data in a surface the user cannot act on |
+| `openInfoPanel` | `infoPanelTab?` | `openInfoPanel(tab?)` | `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, or the `key` of your own info-panel item — those four are the only portal tabs it knows; any other string, `"info_ai_chat"` included, is taken for a plugin key and prefixed, and no tab at all stores an invalid view and loses the user's remembered one, so always pass a tab. **It closes your modal, aside, settings aside and selector first** — the panel is not a second surface beside them, so anything the user was filling in is gone. Pass your `key` unprefixed; the host makes `info_plugin-<key>` itself. To send someone from a list into an item with your tab already open, this is the pair to use — `navigate(path)` then `openInfoPanel(key)` — not a modal reproducing the tab, which would show the row's data in a surface the user cannot act on |
 | `sendPostMessage` | `postMessage` | — | the target iframe must be in the DOM |
 | `saveSettings` | `settings` | — (use `usePluginSettings().save()`) | |
 | `updateProps` / `updateContext` | `newProps` / `contextProps` | — | SDK 2 declarative trees only; **silently ignored** elsewhere, never an error |
-| `updateStatus` | none | — | class-side only: it is an `Actions` member with no counterpart in the runtime a component gets. A component flips the plugin through `usePluginSettings().save()` instead, which makes the portal re-read `getStatus()` |
+| `updateStatus` | none | — | class-side only: the portal re-reads `getStatus()` and applies it — `active` registers every declared scope's items and loads the CSS, `hide` takes them back ([sdk-contract.md](sdk-contract.md#iplugin--always-required)). Set the field first (`this.updateStatus(PluginStatus.hide)`), then return the action; the portal does not watch the field. A component has no counterpart: `usePluginSettings().save()` is the one moment the runtime re-reads the status |
 | `update*Items` (`updateContextMenuItems`, `updateInfoPanelItems`, `updateMainButtonItems`, `updateProfileMenuItems`, `updateFileItems`, `updateEventListenerItems`, `updateArticleButtonItems`, `updateArticleNavigationItems`) | none | same names | make the portal re-read the plugin's map for that scope |
 
 An event handler (`EventListener`) is not limited by the host — its message goes through the same dispatcher as any other class-side callback, so a modal, a selector, `navigate` and the progress button all work from it. Keep it to item updates anyway: the event fires when the portal *opens a dialog*, not when anything completed ([items.md](items.md#the-event-fires-when-the-dialog-opens)). The three actions no class-side callback can use are `updateProps`, `updateContext` and `updateCreateDialogModal` (see the table row above). There is no action for opening the settings aside (`openInfoPanel` closes it).
@@ -203,10 +203,12 @@ function SettingsPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    settings.load<TConfig>().then((stored) => {
+    // `await`, never `.then`: the SDK types load() as a Promise, the portal answers synchronously.
+    void (async () => {
+      const stored = await settings.load<TConfig>();
       const next = { ...DEFAULTS, ...(stored ?? {}) };
       setConfig(next); setSaved(next); setLoaded(true);
-    });
+    })();
   }, [settings]);
 
   const invalid = config.webhook.length > 0 && !/^https:\/\//.test(config.webhook);
@@ -250,6 +252,8 @@ function SettingsPage() {
 ```
 
 Registered with `this.setAdminPluginSettings({ component: SettingsPage })` in `onLoadCallback`. Class-side code reads stored values in `setAdminPluginSettingsValue` — a string, arriving after installation; parse in `try/catch`.
+
+Three facts about the store itself that the page does not put together. **The whole object is one string the server caps at 255 characters** — a longer `save()` is refused with a 400, not truncated, so a settings object is a few short scalars, and anything bulkier lives in a file or a portal entity the plugin refers to by id; the `catch` above is what turns that refusal into a toast. **`load()` answers synchronously on the portal** although the SDK types it as a `Promise` — `await` it, as the example does, rather than chaining `.then`, which throws on a plain object and blanks the page. **After `save()` the portal calls `setAdminPluginSettingsValue` and then re-reads `getStatus()`**, so a plugin can hide or show itself from its own configuration ([sdk-contract.md](sdk-contract.md#iplugin--always-required)).
 
 
 ## Errors, loading, language, styling

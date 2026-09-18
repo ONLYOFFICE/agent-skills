@@ -205,7 +205,7 @@ export class RuntimeChecks extends Check {
       else
         this.error(
           "runtime",
-          `onLoadCallback threw: ${e.message}. The portal awaits it during installation, so a throw there aborts the plugin with no CSS, no items and nothing in the console`,
+          `onLoadCallback threw: ${e.message}. The portal awaits it during installation, so a throw there aborts the plugin with no CSS, no items and one console line: "[Plugin: <name>] Failed to load module plugin"`,
         );
 
       return true;
@@ -218,7 +218,7 @@ export class RuntimeChecks extends Check {
     if (status === "hide")
       this.warn(
         "runtime",
-        "getStatus() is hide after onLoadCallback - the host stops here and renders nothing. Intentional only if the plugin hides itself until it is configured",
+        "getStatus() is hide after onLoadCallback - the portal registers no items and loads no CSS until it reads active again (after the stored settings arrive, after a settings save, or on Actions.updateStatus). Intentional only if the plugin hides itself until it is configured",
       );
     else if (status !== "active")
       this.error("runtime", `getStatus() returned "${status}", expected "active" or "hide"`);

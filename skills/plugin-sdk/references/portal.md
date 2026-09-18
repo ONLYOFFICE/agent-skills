@@ -18,10 +18,10 @@ Module plugins (`"runtime": "module"` in the packed `config.json` — everything
 4. `setLanguage(locale)` — the `LANGUAGE` cookie, falling back to the portal's own `culture` when the cookie is unset. **Once per instance, and only here**: it is not called again when the language changes ([below](#a-language-change-reloads-every-plugin)).
 5. If declared: `setAPI(origin, proxy, prefix)`.
 6. `await plugin.onLoadCallback()`.
-7. `getStatus()`; `hide` stops the sequence.
+7. `getStatus()` — a plugin without one counts as `active`. `hide` skips the next two steps (and the PostMessage callback) but is not final: the status is re-read at step 10, after every `usePluginSettings().save()` and on every `Actions.updateStatus`, and `active` then performs them ([sdk-contract.md](sdk-contract.md#iplugin--always-required)).
 8. `plugin.css`, if packed, is linked into the **main** document's head as `<link id="plugin-styles-<pluginName>">`.
 9. Every declared scope's getter is read and the items copied into portal-wide maps, filtered by `usersTypes`/`usersType` and `devices` for the current user and device.
-10. Settings scope: `setAdminPluginSettingsValue(storedSettingsString)`, then `getStatus()` again — a plugin can hide itself by its own stored configuration.
+10. Settings scope: `setAdminPluginSettingsValue(storedSettingsString)`, then `getStatus()` again — `active` registers the items and CSS (again, harmlessly), `hide` removes them.
 
 Legacy plugins (no `runtime`; webpack, SDK ≤ 2) run from step 4 on, but the bundle is injected as a `<script>` into one hidden `<iframe id="plugin-iframe">` shared by all plugins, and the plugin is `iframeWindow.Plugins[pluginName]` — a mismatch yields an empty plugin with no error.
 
@@ -30,7 +30,7 @@ Consequences:
 - **An ES module without `"runtime": "module"`** is injected as a classic script and dies on its first `import`.
 - **Register items in `onLoadCallback`, not at module scope.** Both reach the maps in time (they are read at step 9), but at module scope neither the language nor the API URLs are set yet — a factory that translates a label or calls `getAPI()` there captures empty values.
 - **Anything registered after step 9 is invisible** until the matching `update*Items` action — items added from a timer or an un-awaited promise.
-- **Stored settings do not wait for `onLoadCallback` to finish.** For a module plugin the loader calls `installPlugin()` — which is what awaits `onLoadCallback` — **without awaiting it**, then calls `setAdminPluginSettingsValue` immediately. So the value lands after the synchronous prefix of `onLoadCallback` and before anything after its first `await`: step 10 happens *inside* step 6. Do not read a settings value in `onLoadCallback` and do not order the two; components read settings with `usePluginSettings().load()`, class-side code reacts in `setAdminPluginSettingsValue`. (The legacy non-module path does await, and there the order is as numbered.)
+- **Stored settings arrive after `onLoadCallback`, not during it.** Step 10 runs once installation has finished, so a settings value read in `onLoadCallback` is still `null` — components read settings with `usePluginSettings().load()`, class-side code reacts in `setAdminPluginSettingsValue`. The status re-read that follows is what lets a plugin stay `hide` until it is configured: set the status from the parsed value there, and the portal registers the items the moment a valid configuration is saved.
 - **Disabled plugins are still fetched and executed**, so module-scope side effects run even when switched off.
 - **Enable/disable is live** (a `change-web-plugin` socket room): items appear or vanish in every open session without a reload; on re-enable the bundle is not re-fetched, so module-scope state survives while `onLoadCallback` and `setAPI` run again — `setLanguage` and `setAdminPluginSettingsValue` are not repeated.
 
@@ -58,7 +58,7 @@ None of these produce an error the user sees; most leave nothing in the console.
 | Installs, enables, does nothing; console `Failed to load module plugin` | the bundle imports a package the portal does not provide — a library that should have been bundled, the SDK **root** marked external, a `@docspace/ui-kit/…` subpath |
 | Same; console `Cannot use import statement outside a module` | an ES module bundle with no `"runtime": "module"` |
 | Same; console clean | (module) no default export — still assigning `window.Plugins.X`; (legacy) `window.Plugins.X` ≠ `pluginName` |
-| Installation stops halfway; no CSS, no items | `getStatus()` returned `hide`, or `onLoadCallback` threw |
+| Installation stops halfway; no CSS, no items | `onLoadCallback` threw (console: `[Plugin: <name>] Failed to load module plugin`), or `getStatus()` returned `hide` — reversible: the portal re-reads it after the stored settings arrive, after a settings save and on `Actions.updateStatus` |
 | One scope is dead, others work | scope declared but its getter is missing, or `add*Item` never called |
 | A tab, page or modal opens **blank**; console `[Plugin: name] …` | the component threw — swallowed by the error boundary. Usually an unguarded fetch/parse, a conditional hook, or a bundled React (next row) |
 | Every component blank; `usePluginRuntime must be used inside a plugin component` | a second React or SDK React entry in the bundle — fix the `external` list |
@@ -121,9 +121,9 @@ The maps are flat and shared across every installed plugin: two plugins using ke
 
 ## Which actions work from which callback
 
-| Callback belongs to | `updateProps` / `updateContext` | `saveSettings` | everything else |
+| Callback belongs to | `updateProps` / `updateContext` | `saveSettings` / `updateStatus` | everything else |
 |---|---|---|---|
-| A React component (`usePluginActions()`) | not offered — a component owns its state | not offered — `usePluginSettings().save()` | all work |
+| A React component (`usePluginActions()`) | not offered — a component owns its state | not offered — `usePluginSettings().save()` stores the value and re-reads the status | all work |
 | A menu item, file click, `subMenu.onClick`, event handler, selector or create-dialog callback | **silently ignored** — the setter they need belongs to a mounted element | works | all work |
 | A button inside an SDK 2 declarative tree | works | works | `showMediaViewer`/`closeMediaViewer` are a silent no-op |
 | Any other element in a declarative tree | works | works | all work |
@@ -135,7 +135,7 @@ The maps are flat and shared across every installed plugin: two plugins using ke
 A module plugin runs in the portal's own window — its DOM, cookies and `localStorage` in reach. The only guard is the error boundary around each plugin component; everything outside a component is unguarded.
 
 - **Throwing in a class-side callback.** Nothing wraps them, so a rejection is a dead click that tells the user nothing: catch and return a toast ([sdk-contract.md](sdk-contract.md#two-kinds-of-callback)).
-- **Throwing in `onLoadCallback` or at module scope** aborts the plugin silently. Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
+- **Throwing in `onLoadCallback` or at module scope** aborts the plugin with one console line, `[Plugin: <name>] Failed to load module plugin`, and nothing in the UI. Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
 - **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` or `.card {}` restyles the product itself — in every section, for every user, until the plugin is disabled. Nothing checks the rules, and the fix is a form that cannot go wrong: [styles.md → Scoped CSS](styles.md#scoped-css). The reverse direction — portal rules reaching into your markup — is [what beats your rules](styles.md#what-beats-your-rules).
@@ -152,6 +152,7 @@ Enforced server-side; exceeding one rejects the upload.
 | Assets | 10 files, `.svg` `.png` `.jpg` `.jpeg` only, no subdirectories |
 | Plugins per portal | 100 |
 | Upload format | `.zip` containing `plugin.js` and `config.json` |
+| Stored settings (`save()` / `saveSettings`) | one string of 255 characters; longer is refused with a 400, not truncated |
 | Context menu nesting | 2 levels |
 | Article buttons | 5 per sidebar across all plugins (the same map renders in the article and the apps sidebar) |
 
