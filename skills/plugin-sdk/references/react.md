@@ -15,7 +15,7 @@ The portal wraps the component in the runtime provider and an error boundary and
 | `IArticleNavigationItem.component` | a full page at `/p/<key>` (under the section's path) | the section body — full width, scrolls, and **already padded on every side** ([styles.md](styles.md#conventions)), with its inline-end left bare for the scrollbar, so an outer padding of your own doubles the gutter against a bare right edge; no heading, so a `Heading` and a ~640px cap on text read well |
 | `IInfoPanelItem.component` | body of an info panel tab | ~337px wide, already scrolls; the file/room title block above it, which only `isHeaderVisible: false` removes ([items.md](items.md#infopanel)) |
 | `IArticleButtonItem.component` | a 32×32 slot in the sidebar, `overflow: hidden` | nothing — a single `IconButton size={32}` is what fits |
-| `IModalDialog.dialogBodyComponent` | body of a modal or aside | header from `dialogHeader`, close cross, padding; **no footer slot** |
+| `IModalDialog.dialogBodyComponent` | body of a modal or aside | header from `dialogHeader`, close cross, **no footer slot**; a modal is padded on every side, an **aside only on the sides** — its vertical gutter is yours ([components.md](components.md#modals)) |
 | `IMediaViewer.component` | the whole viewport, behind the viewer's chrome | a 64px header and two 73px paging strips fixed *above* your content ([components.md → Media viewer](components.md#media-viewer)) |
 | `ISettings.component` | the plugin's settings aside | header, then the plugin's metadata below your component behind a separator the portal draws itself, a Save/Cancel footer |
 
