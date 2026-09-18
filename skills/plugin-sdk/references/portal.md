@@ -12,7 +12,7 @@ What the loader actually does with a plugin — not what the types allow — and
 
 Module plugins (`"runtime": "module"` in the packed `config.json` — everything built with SDK 3):
 
-1. `GET plugin.js` as text. Every bare-specifier import is rewritten to the portal's copy — for exactly the six specifiers in [react.md → Bundling](react.md#bundling). Any other bare specifier **aborts the load** with a console error naming it.
+1. `GET plugin.js` as text. Every bare-specifier import is rewritten to the portal's copy — for exactly the five specifiers in [react.md → Bundling](react.md#bundling). Any other bare specifier **aborts the load** with a console error naming it.
 2. `import()` as a blob URL; the default export is the plugin. Module-scope code runs here.
 3. The manifest record is `Object.assign`ed **onto** the plugin object — `name`, `version`, `scopes`, `url`, `enabled`, `settings`, `image`, `description`, … — overwriting your same-named fields.
 4. `setLanguage(locale)` — the `LANGUAGE` cookie, falling back to the portal's own `culture` when the cookie is unset. **Once per instance, and only here**: it is not called again when the language changes ([below](#a-language-change-reloads-every-plugin)).
