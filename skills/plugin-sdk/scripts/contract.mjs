@@ -38,13 +38,15 @@ export const HOST_PROVIDED_SPECIFIERS = [
   "react",
   "react-dom",
   "react/jsx-runtime",
-  "react/jsx-dev-runtime",
   SDK_REACT_ENTRY,
   UI_KIT_PACKAGE,
 ];
 
-/** What a plugin build must list as `external` - the dev runtime only exists in dev builds. */
-export const REQUIRED_EXTERNALS = HOST_PROVIDED_SPECIFIERS.filter((s) => s !== "react/jsx-dev-runtime");
+/**
+ * What a plugin build must list as `external` - the same list. `react/jsx-dev-runtime` is not
+ * on it: the portal dropped its shim, so a development build that imports it is refused.
+ */
+export const REQUIRED_EXTERNALS = HOST_PROVIDED_SPECIFIERS;
 
 /**
  * Per scope: the interface, the members the loader calls, the item shape it reads, and the

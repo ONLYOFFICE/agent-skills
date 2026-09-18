@@ -118,8 +118,7 @@ export const resolveHostModules = (project) => {
     try {
       urls[specifier] = pathToFileURL(require.resolve(specifier)).href;
     } catch {
-      // The dev runtime is only in a development build; its absence is not a finding.
-      if (specifier !== "react/jsx-dev-runtime") missing.push(specifier);
+      missing.push(specifier);
     }
   }
 
