@@ -1,21 +1,22 @@
 {
   "version": "2.2.0",
   "sources": {
-    "docs": { "base": "https://api.onlyoffice.com/docspace/javascript-sdk", "verify": true },
-    "restDocs": { "base": "https://api.onlyoffice.com/docspace/api-backend", "verify": true },
-    "repo": { "base": "https://github.com/ONLYOFFICE/docspace-sdk-js", "verify": true },
-    "raw": { "base": "https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/v{version}", "verify": true },
-    "demo": { "base": "https://demo-embed.onlyoffice.com", "verify": true }
+    "docs": {"host": "apiSite", "path": "/docspace/javascript-sdk", "verify": true},
+    "restDocs": {"host": "apiSite", "path": "/docspace/api-backend", "verify": true},
+    "llms": {"host": "apiSite", "path": "/llms.txt", "verify": true},
+    "repo": {"host": "github", "path": "/docspace-sdk-js", "verify": true},
+    "raw": {"host": "raw", "path": "/docspace-sdk-js/v{version}", "verify": true},
+    "demo": {"host": "demo", "verify": true}
   },
   "placeholderHosts": ["portal.example.com", "portal", "host", "localhost", "admin.internal.example.com", "your-host.example", "www.apache.org", "www.w3.org"],
   "versionPatterns": [
-    { "file": "SKILL.md", "pattern": "sdk-version: \"{v}\"" },
-    { "file": "SKILL.md", "pattern": "current version \\*\\*{v}\\*\\*" },
-    { "file": "SKILL.md", "pattern": "docspace-sdk-js@\\^{v}" },
-    { "file": "SKILL.md", "pattern": "GitHub tag `v{v}`" },
-    { "file": "README.md", "pattern": "Embed SDK \\*\\*{v}\\*\\*" },
-    { "file": "scripts/validate-config.mjs", "pattern": "docspace-sdk-js \\({v}\\)" },
-    { "file": "scripts/validate-config.mjs", "pattern": "this dictionary targets {v}" },
-    { "file": "scripts/probe-portal.mjs", "pattern": "const NPM_VERSION = \"{v}\"" }
+    {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
+    {"file": "SKILL.md", "pattern": "current version \\*\\*{v}\\*\\*"},
+    {"file": "SKILL.md", "pattern": "docspace-sdk-js@\\^{v}"},
+    {"file": "SKILL.md", "pattern": "GitHub tag `v{v}`"},
+    {"file": "README.md", "pattern": "Embed SDK \\*\\*{v}\\*\\*"},
+    {"file": "scripts/validate-config.mjs", "pattern": "docspace-sdk-js \\({v}\\)"},
+    {"file": "scripts/validate-config.mjs", "pattern": "this dictionary targets {v}"},
+    {"file": "scripts/probe-portal.mjs", "pattern": "const NPM_VERSION = \"{v}\""}
   ]
 }

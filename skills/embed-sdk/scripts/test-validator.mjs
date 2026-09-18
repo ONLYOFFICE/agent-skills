@@ -6,6 +6,7 @@
  */
 
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -38,9 +39,12 @@ const CASES = [
   { name: "accessToken plus getToken warns", config: { ...BASE, accessToken: "a", getToken: "b" }, code: 0, has: ["getToken wins"] },
   { name: "requestToken outside public-room warns", config: { ...BASE, requestToken: "tok" }, code: 0, has: ["WARN:", "requestToken"] },
   { name: "manager over a shared room takes requestToken without a warning", config: { ...BASE, rootPath: "/rooms/share", requestToken: "tok" }, code: 0, lacks: ["WARN:"] },
+  { name: "a viewer takes requestToken without a warning - the SDK sends it as share=", config: { ...BASE, mode: "viewer", id: 5, requestToken: "tok" }, code: 0, lacks: ["WARN:"] },
+  { name: "a room selector with requestToken warns", config: { ...BASE, mode: "room-selector", requestToken: "tok" }, code: 0, has: ["WARN:", "requestToken"] },
 
   // --- should fail ------------------------------------------------------------
   { name: "sortBy Name is rejected with the AZ hint", config: { ...BASE, filter: { sortBy: "Name" } }, code: 1, has: ["ERROR:", "sortBy", 'did you mean "AZ"'] },
+  { name: "sortBy at the top level is an error pointing at filter.sortBy", config: { ...BASE, sortBy: "AZ" }, code: 1, has: ["ERROR:", "filter.sortBy"] },
   { name: "unknown mode is rejected", config: { ...BASE, mode: "nope" }, code: 1, has: ["ERROR: mode"] },
   { name: "missing src is rejected", config: { frameId: "f", mode: "manager" }, code: 1, has: ["ERROR: src"] },
   { name: "editor without id is rejected", config: { ...BASE, mode: "editor" }, code: 1, has: ["ERROR:", "id"] },
@@ -70,6 +74,19 @@ for (const c of CASES) {
   } else {
     console.log(`ok    ${c.name}`);
   }
+}
+
+const SDK_CHECKOUT = path.resolve(path.dirname(VALIDATOR), "..", "..", "..", "..", "docspace-sdk-js");
+if (existsSync(path.join(SDK_CHECKOUT, "src", "types", "index.ts"))) {
+  const sync = spawnSync(process.execPath, [path.join(path.dirname(VALIDATOR), "sync-sdk.mjs"), "--from", SDK_CHECKOUT, "--check"], { encoding: "utf8" });
+  if (sync.status !== 0) {
+    failed++;
+    console.log(`FAIL  validator dictionaries match the SDK checkout\n      ${`${sync.stdout}${sync.stderr}`.trim().split("\n").join("\n      ")}`);
+  } else {
+    console.log("ok    validator dictionaries match the SDK checkout");
+  }
+} else {
+  console.log(`skip  validator dictionaries vs the SDK checkout (no ${SDK_CHECKOUT})`);
 }
 
 const SOURCES = path.resolve(path.dirname(VALIDATOR), "..", "..", "..", "tools", "sync-sources.mjs");

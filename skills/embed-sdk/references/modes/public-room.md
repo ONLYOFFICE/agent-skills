@@ -33,6 +33,11 @@ Key points:
 - No authentication of any kind is needed — public-room frames on multi-frame pages can
   be initialized immediately, before any login completes (unlike other frames, which may
   need parking with `waiting: true` — see [auth-recipes.md](../auth-recipes.md)).
+- Opening one of the room's files: `initViewer` / `initEditor` with `id: file.id` and the **same**
+  `requestToken` — the SDK sends it as `share=` on `/doceditor`, so the frame needs no session.
+  The `/sdk/public-room` page answers `setConfig` only and fires no click events; a listing that
+  must react to clicks is `mode: "manager"` + `rootPath: "/rooms/share"` + `requestToken` with
+  `onFileManagerClick` / `onEditorOpen` ([manager](manager.md)).
 - Anonymous users in the editor: control the name prompt with
   `editorCustomization.anonymous = { request: false }`.
 - Never commit a `requestToken` to source control — it grants room access to anyone

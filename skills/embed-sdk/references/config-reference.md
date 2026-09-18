@@ -42,7 +42,7 @@ Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs �
 | `destroyText` | HTML dropped into the placeholder after `destroyFrame()` |
 | `stylesUrl`, `integrationUrl` | SDK 2.2: custom stylesheet inside the frame; host URL to return to from external portal pages |
 | `getToken` / `accessToken` / `tokenExpiresAt` | SDK >= 2.2 only; `getToken` wins when both are set; the SDK does not parse the token |
-| `requestToken` | public-room (required) and manager over a shared room (`rootPath: "/rooms/share"`); anywhere else it does nothing |
+| `requestToken` | public-room (required); manager over a shared room (`rootPath: "/rooms/share"`); editor and viewer, where the SDK sends it as `share=<token>&is_file=true` on `/doceditor` so a file of a public room opens without a session (SDK 2.0+). Ignored by the selectors, system, uploader, forms, chat and personal pages |
 | `providerName`, `inviteKey`, `emplType`, `uid` | forms, chat, personal: portal-provider auto sign-in |
 | `headerOffset`, `headerHeight` | forms/personal: header-row inline-start padding / header height; **chat: container insets** (`padding-inline-start` / `padding-block-start`) |
 
@@ -98,7 +98,7 @@ ignored when `agentId` is set), `fileId` (attach to the composer), `threadId` (r
 in pre-release builds). Renders a composer only for a signed-in non-guest user with AI enabled —
 [chat](modes/chat.md).
 
-## Personal (SDK >= 2.1)
+## Personal (SDK >= 2.2)
 
 `personalDestination` initial section (`my-documents` default, `favorites`, `recent`, `trash`,
 `settings`); manager-family display options apply; only `setConfig` and `navigateSection` are
