@@ -18,7 +18,7 @@
  * The harness the browser pass loads: a page that mounts the plugin's own built bundle with
  * the real UI kit, the real theme variables and a real layout engine.
  *
- * It is the mirror image of the plugin's build. There the six host-provided specifiers are
+ * It is the mirror image of the plugin's build. There the five host-provided specifiers are
  * external, because the portal rewrites them to its own copies; here they must be bundled
  * out of the project's node_modules, because there is no portal. That is also what makes the
  * pass worth running: importing a kit component injects the component's real stylesheet
@@ -302,7 +302,7 @@ import { fileURLToPath } from "node:url";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 
-// The plugin's own build keeps these six external because the portal supplies them. Here
+// The plugin's own build keeps these five external because the portal supplies them. Here
 // they are bundled from the project's node_modules: the point of this page is to run the
 // bundle against the real kit and the real React, which is what the portal does too.
 export default defineConfig({

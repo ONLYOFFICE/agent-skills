@@ -2,7 +2,7 @@
   "name": "onlyoffice",
   "displayName": "ONLYOFFICE Developer Tools",
   "version": "0.1.0",
-  "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships.",
+  "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships. Also ships the ONLYOFFICE Apps MCP server (HTTP).",
   "author": {
     "name": "Ascensio System SIA",
     "email": "integration@onlyoffice.com",
@@ -21,5 +21,6 @@
     "react",
     "document-management"
   ],
-  "skills": "./skills"
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
 }

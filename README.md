@@ -19,6 +19,16 @@ rules; details live in `references/` and are loaded on demand. Each skill carrie
 `evals/` — the same task run with and without the skill, graded against a rubric — and
 those, not intuition, decide whether a change to the skill text stays.
 
+The plugin also ships an MCP server, `docspace`, over HTTP at
+`https://mcp.onlyoffice.com/mcp` (declared in [`.mcp.json`](.mcp.json)). It gives the
+agent live access to an ONLYOFFICE Apps workspace alongside the skills' static knowledge. The
+endpoint requires authentication (it answers `401` to an unauthenticated `initialize`);
+in Claude Code, run `/mcp` and authenticate the `docspace` server before first use.
+
+The server is installed with the plugin. The manual and `npx skills add` install paths
+copy skills only, so it has to be added by hand there:
+`claude mcp add --transport http docspace https://mcp.onlyoffice.com/mcp`.
+
 ## Install
 
 Pick your agent. Every path below ends with `skills/<name>/` (the directory holding a
@@ -80,6 +90,7 @@ alike — the one directory to use when a project mixes agents.
 ```
 .claude-plugin/          plugin + marketplace manifests
 .claude/skills/          repository-internal skills (sync-sources) — not shipped in the plugin
+.mcp.json                MCP servers shipped with the plugin (docspace, HTTP)
 sources.json             the external hosts (docs site, GitHub, raw files, demo) named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at a staging or local docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json

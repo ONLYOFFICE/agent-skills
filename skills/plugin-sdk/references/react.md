@@ -15,7 +15,7 @@ The portal wraps the component in the runtime provider and an error boundary and
 | `IArticleNavigationItem.component` | a full page at `/p/<key>` (under the section's path) | the section body — full width, scrolls, and **already padded on every side** ([styles.md](styles.md#conventions)), with its inline-end left bare for the scrollbar, so an outer padding of your own doubles the gutter against a bare right edge; no heading, so a `Heading` and a ~640px cap on text read well |
 | `IInfoPanelItem.component` | body of an info panel tab | ~337px wide, already scrolls; the file/room title block above it, which only `isHeaderVisible: false` removes ([items.md](items.md#infopanel)) |
 | `IArticleButtonItem.component` | a 32×32 slot in the sidebar, `overflow: hidden` | nothing — a single `IconButton size={32}` is what fits |
-| `IModalDialog.dialogBodyComponent` | body of a modal or aside | header from `dialogHeader`, close cross, padding; **no footer slot** |
+| `IModalDialog.dialogBodyComponent` | body of a modal or aside | header from `dialogHeader`, close cross, **no footer slot**; a modal is padded on every side, an **aside only on the sides** — its vertical gutter is yours ([components.md](components.md#modals)) |
 | `IMediaViewer.component` | the whole viewport, behind the viewer's chrome | a 64px header and two 73px paging strips fixed *above* your content ([components.md → Media viewer](components.md#media-viewer)) |
 | `ISettings.component` | the plugin's settings aside | header, then the plugin's metadata below your component behind a separator the portal draws itself, a Save/Cancel footer |
 
@@ -79,11 +79,11 @@ A class-side callback returns an `IMessage` — `{ actions: [Actions.x, …], <p
 | `showMediaViewer` / `updateMediaViewer` / `closeMediaViewer` | `mediaViewerProps` (with `component`) | same names | see [Media viewer](components.md#media-viewer) |
 | `addFloatingOperationsButton` / `updateFloatingOperationsButton` / `removeFloatingOperationsButton` | `floatingOperationsButtonProps` / same / `floatingOperationsButtonPropsId` (a bare string) | same names | see [Progress button](components.md#the-floating-operations-button) |
 | `navigate` | `navigatePath` | `navigate(path)` | an absolute portal path — the ones worth knowing are [below](#paths-navigate-takes). The SDK's doc says later actions run once navigation finishes; the host does not sequence anything (the action loop is a synchronous `forEach`), so the next action fires immediately, against the page you are leaving |
-| `openInfoPanel` | `infoPanelTab?` | `openInfoPanel(tab?)` | `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, `"info_ai_chat"`, or the `key` of your own info-panel item. **It closes your modal, aside, settings aside and selector first** — the panel is not a second surface beside them, so anything the user was filling in is gone. Pass your `key` unprefixed; the host makes `info_plugin-<key>` itself. To send someone from a list into an item with your tab already open, this is the pair to use — `navigate(path)` then `openInfoPanel(key)` — not a modal reproducing the tab, which would show the row's data in a surface the user cannot act on |
+| `openInfoPanel` | `infoPanelTab?` | `openInfoPanel(tab?)` | `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, or the `key` of your own info-panel item — those four are the only portal tabs it knows; any other string, `"info_ai_chat"` included, is taken for a plugin key and prefixed, and no tab at all stores an invalid view and loses the user's remembered one, so always pass a tab. **It closes your modal, aside, settings aside and selector first** — the panel is not a second surface beside them, so anything the user was filling in is gone. Pass your `key` unprefixed; the host makes `info_plugin-<key>` itself. To send someone from a list into an item with your tab already open, this is the pair to use — `navigate(path)` then `openInfoPanel(key)` — not a modal reproducing the tab, which would show the row's data in a surface the user cannot act on |
 | `sendPostMessage` | `postMessage` | — | the target iframe must be in the DOM |
 | `saveSettings` | `settings` | — (use `usePluginSettings().save()`) | |
 | `updateProps` / `updateContext` | `newProps` / `contextProps` | — | SDK 2 declarative trees only; **silently ignored** elsewhere, never an error |
-| `updateStatus` | none | — | class-side only: it is an `Actions` member with no counterpart in the runtime a component gets |
+| `updateStatus` | none | — | class-side only: the portal re-reads `getStatus()` and applies it — `active` registers every declared scope's items and loads the CSS, `hide` takes them back ([sdk-contract.md](sdk-contract.md#iplugin--always-required)). Set the field first (`this.updateStatus(PluginStatus.hide)`), then return the action; the portal does not watch the field. A component has no counterpart: `usePluginSettings().save()` is the one moment the runtime re-reads the status |
 | `update*Items` (`updateContextMenuItems`, `updateInfoPanelItems`, `updateMainButtonItems`, `updateProfileMenuItems`, `updateFileItems`, `updateEventListenerItems`, `updateArticleButtonItems`, `updateArticleNavigationItems`) | none | same names | make the portal re-read the plugin's map for that scope |
 
 An event handler (`EventListener`) is not limited by the host — its message goes through the same dispatcher as any other class-side callback, so a modal, a selector, `navigate` and the progress button all work from it. Keep it to item updates anyway: the event fires when the portal *opens a dialog*, not when anything completed ([items.md](items.md#the-event-fires-when-the-dialog-opens)). The three actions no class-side callback can use are `updateProps`, `updateContext` and `updateCreateDialogModal` (see the table row above). There is no action for opening the settings aside (`openInfoPanel` closes it).
@@ -172,7 +172,7 @@ A page that calls `usePluginAPI()` itself works, but every component that wants 
 | Method | Does |
 |---|---|
 | `load<T>()` | the stored object, or `null` when nothing was saved or the string is not JSON |
-| `save(data)` | stores `JSON.stringify(data)`, then calls `setAdminPluginSettingsValue` on the class |
+| `save(data)` | stores `JSON.stringify(data)`, then calls `setAdminPluginSettingsValue` on the class and re-reads `getStatus()` |
 | `setSaveButton(button)` | supplies the aside's Save button — a `ButtonGroup` `{ component: Components.button, props: { label, size, onClick, isDisabled, withLoadingAfterClick, disableWhileRequestRunning } }` |
 
 The portal owns the footer's Save/Cancel look, and it also overrides the button's `size`, `primary` and `scale` — what survives from the `ButtonGroup` is `label` (defaulting to "Save"), `isDisabled`, `isLoading`, `onClick`, `withLoadingAfterClick` and `disableWhileRequestRunning`.
@@ -203,10 +203,12 @@ function SettingsPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    settings.load<TConfig>().then((stored) => {
+    // `await`, never `.then`: the SDK types load() as a Promise, the portal answers synchronously.
+    void (async () => {
+      const stored = await settings.load<TConfig>();
       const next = { ...DEFAULTS, ...(stored ?? {}) };
       setConfig(next); setSaved(next); setLoaded(true);
-    });
+    })();
   }, [settings]);
 
   const invalid = config.webhook.length > 0 && !/^https:\/\//.test(config.webhook);
@@ -251,6 +253,8 @@ function SettingsPage() {
 
 Registered with `this.setAdminPluginSettings({ component: SettingsPage })` in `onLoadCallback`. Class-side code reads stored values in `setAdminPluginSettingsValue` — a string, arriving after installation; parse in `try/catch`.
 
+Three facts about the store itself that the page does not put together. **The whole object is one string the server caps at 255 characters** — a longer `save()` is refused with a 400, not truncated, so a settings object is a few short scalars, and anything bulkier lives in a file or a portal entity the plugin refers to by id; the `catch` above is what turns that refusal into a toast. **`load()` answers synchronously on the portal** although the SDK types it as a `Promise` — `await` it, as the example does, rather than chaining `.then`, which throws on a plain object and blanks the page. **After `save()` the portal calls `setAdminPluginSettingsValue` and then re-reads `getStatus()`**, so a plugin can hide or show itself from its own configuration ([sdk-contract.md](sdk-contract.md#iplugin--always-required)).
+
 
 ## Errors, loading, language, styling
 
@@ -261,12 +265,12 @@ Registered with `this.setAdminPluginSettings({ component: SettingsPage })` in `o
 
 ## Bundling
 
-The portal provides exactly six specifiers to a module plugin and rewrites the bundle's imports to its own copies:
+The portal provides exactly five specifiers to a module plugin and rewrites the bundle's imports to its own copies:
 
 ```
-react   react-dom   react/jsx-runtime   react/jsx-dev-runtime   @onlyoffice/docspace-plugin-sdk/react   @onlyoffice/apps-ui-kit
+react   react-dom   react/jsx-runtime   @onlyoffice/docspace-plugin-sdk/react   @onlyoffice/apps-ui-kit
 ```
 
-Everything else **must be bundled** — a bare import of anything else (`lodash-es`, the SDK root, a `@onlyoffice/apps-ui-kit/…` subpath) makes the loader refuse the plugin with a console error naming it. The reverse is quieter and worse: bundling one of the six installs cleanly and breaks at render — a second React or SDK React entry makes every hook throw (every component blank), a second ui-kit renders light and left-to-right. The SDK **root** is deliberately not external: it is enums and types, and the host does not provide it. The generator's `vite.config.ts` encodes the list; copy its `external` exactly if you write your own. What it costs to bundle anything else is in [dependencies.md](dependencies.md).
+Everything else **must be bundled** — a bare import of anything else (`lodash-es`, the SDK root, a `@onlyoffice/apps-ui-kit/…` subpath) makes the loader refuse the plugin with a console error naming it. `react/jsx-dev-runtime` is not on the list either: a development build imports it and is refused, so upload only what `vite build` produced. The reverse is quieter and worse: bundling one of the five installs cleanly and breaks at render — a second React or SDK React entry makes every hook throw (every component blank), a second ui-kit renders light and left-to-right. The SDK **root** is deliberately not external: it is enums and types, and the host does not provide it. The generator's `vite.config.ts` encodes the list; copy its `external` exactly if you write your own. What it costs to bundle anything else is in [dependencies.md](dependencies.md).
 
 **Bundled, and into one file.** Vite writes every dynamic `import()` — yours or a library's, and diagram or format libraries lazy-load their own parts — as a separate chunk beside `plugin.js`. The packer zips `plugin.js` alone, and the portal imports it from a blob URL, where `import("./chunk-….js")` has nothing to resolve against: the first surface that needs the chunk renders blank with a `TypeError` in the console, while the preview, which serves `dist/` whole, shows it working. `build.rollupOptions.output.inlineDynamicImports: true` folds the chunks back into `plugin.js`; the generator's config sets it, and the validator refuses a `dist/` with JavaScript beside `plugin.js`.

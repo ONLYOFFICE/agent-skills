@@ -33,7 +33,7 @@ $SKILL/references/                   the knowledge base — read these instead o
 | Which scopes exist, what version to target, what is not supported | [scopes.md](references/scopes.md) |
 | What the class implements, how the portal gets it, localisation, deprecated members | [sdk-contract.md](references/sdk-contract.md) |
 | Fields of each item type, which filter field the host reads, where each item renders | [items.md](references/items.md) |
-| Where a component renders and what it can reach: hooks, what `useCurrentFile` returns where, actions, the API and settings clients, errors and loading, the six specifiers | [react.md](references/react.md) |
+| Where a component renders and what it can reach: hooks, what `useCurrentFile` returns where, actions, the API and settings clients, errors and loading, the five specifiers | [react.md](references/react.md) |
 | Any surface the **host** draws — a modal or aside, a file/room/people picker and how to sequence one against a modal, the create-file dialog, the media viewer, the progress button, work that takes longer than a second | [components.md](references/components.md) |
 | Kit conventions, the layout mechanics of its wrappers, the behavioural traps its types do not state, icons | [ui-kit.md](references/ui-kit.md) |
 | Anything visual that is not a kit prop: theme variables, the type scale and spacing, scoping a stylesheet, which rules win | [styles.md](references/styles.md) |

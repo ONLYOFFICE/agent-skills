@@ -1,6 +1,6 @@
 # Third-party dependencies
 
-Anything imported beyond the six specifiers the portal provides ([react.md → Bundling](react.md#bundling)) is compiled into `plugin.js`, shipped inside the 5 MB archive, and executed in the portal's own window — its DOM, its cookies, the signed-in user's session. Both halves of that matter, and they pull in opposite directions.
+Anything imported beyond the five specifiers the portal provides ([react.md → Bundling](react.md#bundling)) is compiled into `plugin.js`, shipped inside the 5 MB archive, and executed in the portal's own window — its DOM, its cookies, the signed-in user's session. Both halves of that matter, and they pull in opposite directions.
 
 **Do not hand-write what a well-known library already does.** Archive formats, PDF or spreadsheet output, HTML sanitising, markdown, date arithmetic, charts, fuzzy search, diffing — a few hundred lines of your own is a few hundred lines of unreviewed edge cases (zip64, CRC, DST, XSS), and they surface on the user's real file rather than on the one you tested. Take the established package and spend the effort on the feature.
 
