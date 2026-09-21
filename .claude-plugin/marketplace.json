@@ -12,7 +12,7 @@
     {
       "name": "onlyoffice",
       "source": "./",
-      "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships."
+      "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships. Also ships the ONLYOFFICE Apps MCP server (HTTP)."
     }
   ]
 }
