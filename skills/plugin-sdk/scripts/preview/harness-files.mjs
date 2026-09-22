@@ -21,19 +21,18 @@
  * It is the mirror image of the plugin's build. There the five host-provided specifiers are
  * external, because the portal rewrites them to its own copies; here they must be bundled
  * out of the project's node_modules, because there is no portal. That is also what makes the
- * pass worth running: importing a kit component injects the component's real stylesheet
- * (the kit ships each one inlined next to it, through style-inject), so the surface is laid
- * out by the CSS that will lay it out on the portal - which no offline check can see.
+ * pass worth running: importing a kit component pulls in the component's real stylesheet
+ * (the kit ships each one as a CSS file that the component's module imports), so the surface
+ * is laid out by the CSS that will lay it out on the portal - which no offline check can see.
+ * The theme variables come the same way: the theme-provider component imports the sheet that
+ * defines them for the .light/.dark classes it sets on <body>, so importing
+ * ThemeProviderComponent from the barrel is enough. Without it every var() in the plugin's
+ * CSS would silently fall back and a colour finding would be noise.
  *
- * Two things the DocSpace client provides and the kit does not, so the harness provides them
- * and says so rather than pretending the page is the portal:
- *
- *   - the stylesheet that *defines* the theme variables. The kit's ThemeProvider sets the
- *     .light/.dark classes on <body>, but the barrel does not pull the sheet those classes
- *     carry, so it is imported by path for its side effect. Without it every var() in the
- *     plugin's CSS silently falls back and a colour finding would be noise.
- *   - the base typography. The provider sets --font-family as a variable; the rule that
- *     applies it to the document lives in the client's own stylesheet.
+ * One thing the ONLYOFFICE Apps client provides and the kit does not, so the harness provides it and
+ * says so rather than pretending the page is the portal: the base typography. The provider
+ * sets --font-family as a variable; the rule that applies it to the document lives in the
+ * client's own stylesheet.
  */
 
 import { SCOPE_CONTRACT } from "../contract.mjs";
@@ -296,7 +295,15 @@ boot();
 export const harnessStylesheetImport = (relativeCssPath) =>
   `import "${relativeCssPath}";\n`;
 
-export const harnessViteConfig = (projectDir) => `import { defineConfig } from "vite";
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+
+export const harnessViteConfig = (projectDir, peerAliases = []) => {
+  // Each peer of the kit the project lacks is aliased, with any subpath, to its stub module.
+  const aliasEntries = peerAliases
+    .map(({ peer, file }) => `{ find: new RegExp(${JSON.stringify(`^${escapeRegExp(peer)}(/.*)?$`)}), replacement: ${JSON.stringify(file)} }`)
+    .join(", ");
+
+  return `import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
 
@@ -320,6 +327,9 @@ export default defineConfig({
     // unfiltered.
     forwardConsole: false,
   },
+  // The kit's peers this project does not install, each answered by a stub - see peer-stubs.mjs.
+  resolve: { alias: [${aliasEntries}] },
   optimizeDeps: { include: ["@onlyoffice/apps-ui-kit", "react", "react-dom/client"] },
 });
 `;
+};

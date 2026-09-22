@@ -52,8 +52,8 @@ export const generate = (options, { templatesDir }) => {
   const scopes = selectScopes(scopeNames);
   const icons = placeholderIcons({ itemIconFiles: scopes.itemIconFiles, letter: pluginName.charAt(0).toUpperCase() });
 
-  // The kit, the `file:` dependencies its own package.json names (npm resolves those against
-  // the project), and the packed SDK while 3.0.0 is unpublished - all into the project root.
+  // The kit, and the packed SDK while 3.0.0 is unpublished - into the project root, where the
+  // manifest's `file:` entries point.
   for (const tarball of vendoredTarballs.all) {
     fs.mkdirSync(targetDir, { recursive: true });
     fs.copyFileSync(tarball, path.join(targetDir, path.basename(tarball)));

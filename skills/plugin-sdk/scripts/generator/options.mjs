@@ -64,7 +64,7 @@ const requireFlag = (argv, flagName) => {
   return value;
 };
 
-const isUiKitTarball = (fileName) => /^onlyoffice-apps-ui-kit-.*\.tgz$/.test(fileName);
+const isUiKitTarball = (fileName) => /^onlyoffice-apps-ui-kit(-.*)?\.tgz$/.test(fileName);
 const isPluginSdkTarball = (fileName) => /^onlyoffice-docspace-plugin-sdk-.*\.tgz$/.test(fileName);
 
 const VENDOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "vendor");

@@ -58,7 +58,7 @@ is also stated in `skills/plugin-sdk/references/scopes.md`. When an SDK is relea
   Finish with `--verify` on the links and the README table.
 - `plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
   generator and validator) and the version pair in `references/scopes.md`; if the
-  client's `libs/ui-kit` changed, repack the tarball in `vendor/` and update
+  kit changed (`docspace-ui-kit-react`, `pnpm build && pnpm pack` on the branch the portal builds against), replace the tarball in `vendor/` and update
   `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
   validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.
 

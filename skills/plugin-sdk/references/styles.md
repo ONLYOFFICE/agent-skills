@@ -55,7 +55,7 @@ Only the **leftmost** selector has to carry the scope; descendants inside a root
 ```css
 .archive-manager-tree { display: grid; gap: 4px; }
 .archive-manager-tree pre { white-space: pre; }
-.archive-manager-row:hover { background: var(--button-background-hover); }
+.archive-manager-row:hover { background: var(--background-service-color); }
 ```
 
 Custom properties go on your own root, never `:root`. Keyframe names are global too — prefix them. Reviewing a plugin, run the browser pass and then read whatever it could not reach against this section; a `css` warning from the validator only means the stylesheet is in a form static checks cannot judge.

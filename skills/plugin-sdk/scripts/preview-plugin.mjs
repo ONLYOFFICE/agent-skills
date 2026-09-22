@@ -48,6 +48,7 @@ import {
   harnessHtml,
   harnessViteConfig,
 } from "./preview/harness-files.mjs";
+import { collectPeerStubs, peerStubFileName, peerStubSource } from "./preview/peer-stubs.mjs";
 import { measureSource } from "./preview/browser-checks.mjs";
 
 const HARNESS_DIR = ".plugin-preview";
@@ -194,14 +195,25 @@ const writeHarness = (project) => {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(path.join(dir, "shots"), { recursive: true });
 
+  // The kit's peers the project does not install (the portal supplies them) become stub
+  // modules, and the Vite config aliases each peer to its stub - see peer-stubs.mjs.
+  const stubs = collectPeerStubs(project.dir);
+  const stubsDir = path.join(dir, "peer-stubs");
+  if (stubs.length > 0) fs.mkdirSync(stubsDir);
+  const peerAliases = stubs.map((stub) => {
+    const file = path.join(stubsDir, peerStubFileName(stub.peer));
+    fs.writeFileSync(file, peerStubSource(stub));
+    return { peer: stub.peer, file };
+  });
+
   fs.writeFileSync(path.join(dir, "index.html"), harnessHtml());
   fs.writeFileSync(path.join(dir, "harness.jsx"), harnessEntry());
   fs.writeFileSync(
     path.join(dir, "vite.config.mjs"),
-    harnessViteConfig(project.dir),
+    harnessViteConfig(project.dir, peerAliases),
   );
 
-  return dir;
+  return { dir, stubbedPeers: stubs.map((stub) => stub.peer) };
 };
 
 /** The plugin's own stylesheet, so the page is styled as the portal styles it. */
@@ -433,6 +445,10 @@ const printTextReport = ({ project, findings, report, skipped }) => {
   const surfaces = report.surfaces.length ? report.surfaces.join(", ") : "none";
   console.log(`\nsurfaces: ${surfaces}`);
   console.log(`themes:   ${Object.keys(report.themes).join(", ")}`);
+  if (report.stubbedPeers?.length)
+    console.log(
+      `peers:    ${report.stubbedPeers.join(", ")} - stubbed; the portal supplies them and a plugin project does not install them`,
+    );
   for (const shot of report.shots) console.log(`shot:     ${shot}`);
   console.log(
     `\n${findings.errors.length} error(s), ${findings.warnings.length} warning(s)`,
@@ -462,11 +478,12 @@ const main = async () => {
 
   let server = null;
   let harnessDir = null;
+  let stubbedPeers = [];
   let report = { themes: {}, surfaces: [], shots: [] };
 
   try {
     if (!skipped) {
-      harnessDir = writeHarness(project);
+      ({ dir: harnessDir, stubbedPeers } = writeHarness(project));
       server = await startServer(project, harnessDir, port);
 
       if (!server)
@@ -482,6 +499,7 @@ const main = async () => {
           findings,
         });
 
+        report.stubbedPeers = stubbedPeers;
         if (report.skipped) skipped = report.skipped;
       }
     }
