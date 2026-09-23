@@ -30,7 +30,7 @@ Migrate whole, not half: `runtime: "module"`, the Vite config from a fresh scaff
 - `updateProps` **replaces** the element's props (send the full set); `newProps` only admits form controls — a `text`/`box` is updated via `contextName` + `updateContext`. Both work only from callbacks inside a rendered tree, not from a menu item ([actions.md](react/actions.md#which-actions-work-from-which-callback)).
 - `checkbox`/`toggleButton` `onChange` receive **nothing** — the plugin tracks state and returns `updateProps`.
 - **`onLoad` replaces every section at once.** A modal's `onLoad` must resolve to `{ newDialogHeader, newDialogBody, newDialogFooter }` — omitted ones are wiped; settings → `{ settings, saveButton? }`; info panel / article button → `{ body }`. A rejected `onLoad` leaves the skeleton forever.
-- **A modal's `onClose` must itself return `{ actions: [Actions.closeModal] }`** — Esc, cross and backdrop call it, none of them closes the dialog.
+- **A tree modal's `onClose` must itself return `{ actions: [Actions.closeModal] }`** — Esc, cross and backdrop call it, none of them closes the dialog. (A `dialogBodyComponent` modal is the opposite: the host closes it after `onClose` — [modal-dialog.md](components/modal-dialog.md).)
 - Toasts: `withCross`/`timeout` are ignored; `title` is the body.
 - Dead values still in the types: `ButtonSize.extraSmall` (emits `"extra-small"`, no height class), `InputSize.big`/`huge`, `borderProp` as a CSS string (only the object form renders), `IText.display`, `label` props beyond its fixed list.
 - `input` defaults: `maxLength` 255, `tabIndex` −1.

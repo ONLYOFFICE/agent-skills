@@ -18,7 +18,7 @@ The runtime object is rebuilt only when the current file or user changes, so `ap
 | Component rendered as | `useCurrentFile()` |
 |---|---|
 | Info panel tab | the selected file/folder/room, live |
-| Media viewer | the file on screen, updates as the user pages |
+| Media viewer | the file on screen — the one passed as `fileId`, then each file the user pages to ([media-viewer.md](../components/media-viewer.md)) |
 | Modal opened from **another component** via `showModal` | that component's current file |
 | Modal opened from a **class-side callback** (context menu, main button, file click, event) | **`null`** — the message carries no selection |
 | Sidebar page, sidebar button, settings page | `null` |

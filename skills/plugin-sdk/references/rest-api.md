@@ -68,7 +68,7 @@ List endpoints page with `count` + `startIndex` and take filter/sort as query pa
 | Folder **contents** — the total is inside the payload | `/files/{id}`, `/files/@my`, `/files/rooms` | the payload itself: `{ files, folders, total, … }` |
 | A paged **collection** — the total is a top-level envelope field | `/files/rooms/{id}/share`, `/files/file/{id}/links`, `/people`, groups | `{ total, items }` — the rows are under **`items`**, whatever the endpoint's own field was called |
 
-Reading `.folders` or `.files` off the second kind gives `undefined` with no error and an empty surface, which is the failure this costs. Class-side the envelope is not unwrapped at all, so `total` and the rows sit where the server put them, under `.response`.
+Reading `.folders` or `.files` off the second kind gives `undefined` with no error and an empty surface, which is the failure this costs. Class-side the envelope is not unwrapped at all, so everything sits where the server put it: the rows under `.response`, and a collection's `total` beside it at the top level.
 
 ### Walking a folder tree
 

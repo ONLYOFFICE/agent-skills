@@ -5,7 +5,7 @@ Admin-configurable options — a page of the plugin's own in its settings aside.
 | | |
 |---|---|
 | Types | `ISettingsPlugin`, `ISettings`; `usePluginSettings()` returns `PluginSettingsClient` |
-| The loader calls | `getAdminPluginSettings()`, then `setAdminPluginSettingsValue(stored)` |
+| The portal calls | `setAdminPluginSettingsValue(stored)` after `onLoadCallback` and after each `usePluginSettings().save()`; `getAdminPluginSettings()` each time the settings aside opens |
 | Surface | the plugin's settings aside, `ISettings.component` — the layout is [below](#registering-the-page) |
 | `useCurrentFile()` | `null` |
 
@@ -29,7 +29,7 @@ The page renders in an aside: a header, then your component, then the plugin's m
 
 The portal owns the footer's Save/Cancel look, and it also overrides the button's `size`, `primary` and `scale` — what survives from the `ButtonGroup` is `label` (defaulting to "Save"), `isDisabled`, `isLoading`, `onClick`, `withLoadingAfterClick` and `disableWhileRequestRunning`.
 
-**Without `setSaveButton` the Save button has no `onClick` and saves nothing** — for a React settings page, this is the call that makes the footer work. Make it in an effect that re-runs when the form changes; that is also how `isDisabled` tracks validity. After `onClick` resolves the portal closes the aside. The button state is per plugin and cleared on close. (`ISettings.saveButton`, the static declaration beside `component`, still works and is not deprecated; it is the right choice only when the button never changes state — see [below](#a-static-savebutton).)
+**Without `setSaveButton` — and without a static `saveButton` — the Save button has no `onClick` and saves nothing** — for a React settings page, this is the call that makes the footer work. Make it in an effect that re-runs when the form changes; that is also how `isDisabled` tracks validity. After `onClick` resolves the portal closes the aside. The button state is per plugin and cleared on close. (`ISettings.saveButton`, the static declaration beside `component`, still works and is not deprecated; it is the right choice only when the button never changes state — see [below](#a-static-savebutton).)
 
 **`isDisabled` covers *unchanged* as well as invalid.** The portal draws Save enabled and has no idea whether the form was touched, so a page that only guards validity opens with Save already lit over a form nobody has edited — and pressing it is a real save: a request, a `setAdminPluginSettingsValue` call in the session that saved, a version of the settings written for no reason, and an aside that closes as though something happened. Nothing reports it, and it is the state a settings aside spends most of its life in. So keep what was loaded beside what is being edited and disable Save until they differ:
 
