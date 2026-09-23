@@ -14,7 +14,7 @@ Three jobs: **building** a plugin, **auditing** one that misbehaves, **explainin
 
 A plugin has two halves. A **class** registers items — a context menu entry, a sidebar page, an info panel tab — and answers the portal's loader. Every visible surface is a **React component** built from the portal's own `@docspace/ui-kit`, rendered by the portal inside its own React tree, with the plugin runtime reachable through hooks. The portal supplies React and the kit at load time; the plugin ships only its own code as an ES module.
 
-The difficulty in all three jobs is the same: ONLYOFFICE Apps loads plugins with almost no error reporting. A missing default export, a package that should have been bundled, a filter field spelled in the singular instead of the plural — each installs, enables, and does nothing, with at most one line in the console. The tooling here catches that before anything reaches a portal.
+The difficulty in all three jobs is the same: ONLYOFFICE Apps reports almost nothing about a plugin once it has loaded. A bundle that fails to load, or whose `onLoadCallback` throws, is at least flagged to the administrator on the plugin's card; past that point a filter field spelled in the singular instead of the plural, a scope declared and never filled, an action returned without its payload — each installs, enables, and does nothing, with at most one line in the console. The tooling here catches that before anything reaches a portal.
 
 ## Toolkit and references
 
@@ -76,7 +76,7 @@ That table is the whole list — never invent a scope, hook or field; a feature 
 
 Answer from the references, not from memory — the SDK's own documentation is thin on what the portal does with what you give it, and material circulating about the SDK describes scopes, hooks and interfaces that never shipped. If you cannot point at the scope, interface, hook, field or action in the references or the installed SDK, say it is not supported on the target pair and name the closest thing that is.
 
-"Why doesn't my item appear?" and "why is my page blank?" are the most frequent questions; the answers are nearly always in the silent-failures tables in [portal.md](references/portal.md#silent-failures). Start there. Give the direct answer, then the reason — and label portal quirks as quirks (the filter field is `usersTypes` for some scopes and `usersType` for others; a modal opened from a menu has no current file), so people can tell principle from accident.
+"Why doesn't my item appear?" and "why is my page blank?" are the most frequent questions; the answers are nearly always in the silent-failures tables in [portal.md](references/portal.md#silent-failures). Start there — after asking what the plugin's card in Settings → Integration → Plugins says, since a plugin that failed to load or initialize is flagged there with the portal's own reason ([portal.md → When loading fails](references/portal.md#when-loading-fails)). Give the direct answer, then the reason — and label portal quirks as quirks (the filter field is `usersTypes` for some scopes and `usersType` for others; a modal opened from a menu has no current file), so people can tell principle from accident.
 
 ## The rules that decide whether it works
 

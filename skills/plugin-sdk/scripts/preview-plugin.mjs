@@ -229,7 +229,7 @@ const reportBoot = (findings, boot) => {
   if (!boot) return;
   findings.error(
     "preview-load",
-    `onLoadCallback() threw in the browser: ${boot}. On the portal this aborts installation - no items, no CSS, nothing in the UI`,
+    `onLoadCallback() threw in the browser: ${boot}. On the portal this aborts installation - no items, no CSS, nothing for users, and "Failed to initialize" on the administrator's plugin card`,
   );
 };
 
