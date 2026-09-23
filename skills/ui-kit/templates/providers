@@ -1,0 +1,33 @@
+// src/AppProviders.tsx — the two providers the kit needs, composed once.
+//
+// Requires "resolveJsonModule": true in tsconfig.json for the locale import.
+import type { ReactNode } from "react";
+import { ThemeKeys } from "@onlyoffice/apps-ui-kit/enums";
+import { ThemeProvider } from "@onlyoffice/apps-ui-kit/providers/theme";
+import { TranslationProvider } from "@onlyoffice/apps-ui-kit/providers/translation";
+import common from "@onlyoffice/apps-ui-kit/locales/en/Common.json";
+
+// Map<language, Map<namespace, resources>>. "Common" holds the kit's own
+// labels — the toast titles, the tile menus, the back button in Article. Add
+// namespaces of your own to the inner map; the kit reads only this one.
+const translations = new Map([["en", new Map([["Common", common]])]]);
+
+type AppProvidersProps = {
+  children: ReactNode;
+  /** Sets the writing direction and the font family, and the label language. */
+  locale?: string;
+  /** ThemeKeys.BaseStr, DarkStr, or SystemStr to follow the operating system. */
+  theme?: ThemeKeys;
+};
+
+export function AppProviders({ children, locale = "en", theme = ThemeKeys.BaseStr }: AppProvidersProps) {
+  return (
+    // No `colorTheme`: that is the portal's custom accent palette, and outside
+    // the portal leaving it out simply keeps the kit's own accent.
+    <ThemeProvider initialTheme={theme} locale={locale}>
+      <TranslationProvider locale={locale} translations={translations}>
+        {children}
+      </TranslationProvider>
+    </ThemeProvider>
+  );
+}
