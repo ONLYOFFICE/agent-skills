@@ -106,7 +106,7 @@ Fix what it reports and run it again. Then **look at the screenshots** it writes
 
 `preview skipped` is a setup step, never a pass: it names what is missing (`npm run build` first, `npm install` first, or `npm i -D playwright && npx playwright install chromium`). A skipped run has measured nothing — do not report the surfaces as checked.
 
-**What it is not.** The kit's stylesheets are in the page; the DocSpace client's own are not. So it proves a rule of yours escapes, and it cannot prove the reverse — that a portal rule beats one of yours ([styles.md → What beats your rules](styles.md#what-beats-your-rules)). The portal API answers nothing here, so a surface that needs data renders its loading or empty branch — worth seeing, and not the same as seeing it with data. One real upload still settles both.
+**What it is not.** The kit's stylesheets are in the page; the ONLYOFFICE Apps client's own are not. So it proves a rule of yours escapes, and it cannot prove the reverse — that a portal rule beats one of yours ([styles.md → What beats your rules](styles.md#what-beats-your-rules)). The portal API answers nothing here, so a surface that needs data renders its loading or empty branch — worth seeing, and not the same as seeing it with data. One real upload still settles both.
 
 ## 8. Report
 

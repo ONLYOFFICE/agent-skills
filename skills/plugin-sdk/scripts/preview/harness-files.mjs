@@ -25,7 +25,7 @@
  * (the kit ships each one inlined next to it, through style-inject), so the surface is laid
  * out by the CSS that will lay it out on the portal - which no offline check can see.
  *
- * Two things the DocSpace client provides and the kit does not, so the harness provides them
+ * Two things the ONLYOFFICE Apps client provides and the kit does not, so the harness provides them
  * and says so rather than pretending the page is the portal:
  *
  *   - the stylesheet that *defines* the theme variables. The kit's ThemeProvider sets the
@@ -84,7 +84,7 @@ export const harnessHtml = () => `<!doctype html>
 <meta charset="utf-8" />
 <title>plugin preview</title>
 <style>
-  /* The portal's own global typography - in the DocSpace client's stylesheet, not the kit. */
+  /* The portal's own global typography - in the ONLYOFFICE Apps client's stylesheet, not the kit. */
   html, body { margin: 0; padding: 0; }
   body {
     font-family: var(--font-family, "Open Sans", sans-serif);

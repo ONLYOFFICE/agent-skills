@@ -1,6 +1,6 @@
 # How the portal loads and runs a plugin
 
-What the loader actually does with a plugin — not what the types allow — and therefore why a plugin can install cleanly and do nothing. Observed in the DocSpace client this skill targets.
+What the loader actually does with a plugin — not what the types allow — and therefore why a plugin can install cleanly and do nothing. Observed in the ONLYOFFICE Apps client this skill targets.
 
 ## Before anything loads: the switches
 

@@ -10,7 +10,7 @@ One cause outranks everything and costs one question: **is the plugin system swi
 
 ## 1. Locate and build
 
-Find the project — a `package.json` containing `pluginName`; never inside the DocSpace client repository. If `dist/plugin.zip` is missing or older than `src/`: `cd <plugin-dir> && npm install && npm run build`. A failed build is the finding — report the compiler error and stop.
+Find the project — a `package.json` containing `pluginName`; never inside the ONLYOFFICE Apps client repository. If `dist/plugin.zip` is missing or older than `src/`: `cd <plugin-dir> && npm install && npm run build`. A failed build is the finding — report the compiler error and stop.
 
 ## 2. Run the validator
 

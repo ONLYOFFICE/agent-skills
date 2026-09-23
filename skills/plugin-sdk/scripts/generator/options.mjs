@@ -98,7 +98,7 @@ const resolveVendoredTarballs = (value) => {
 
   if (!kit || !isUiKitTarball(path.basename(kit)))
     throw new CliError(
-      `${value ? `--ui-kit ${value}` : given} holds no docspace-ui-kit-*.tgz - pack the kit from libs/ui-kit in a DocSpace client checkout (pnpm build && pnpm pack)`,
+      `${value ? `--ui-kit ${value}` : given} holds no docspace-ui-kit-*.tgz - pack the kit from libs/ui-kit in an ONLYOFFICE Apps client checkout (pnpm build && pnpm pack)`,
     );
 
   const all = tarballs.includes(kit) ? tarballs : [kit, ...tarballs];
