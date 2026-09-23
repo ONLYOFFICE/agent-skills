@@ -12,10 +12,10 @@ What the loader actually does with a plugin — not what the types allow — and
 
 Module plugins (`"runtime": "module"` in the packed `config.json` — everything built with SDK 3):
 
-1. `GET plugin.js` as text. Every bare-specifier import is rewritten to the portal's copy — for exactly the five specifiers in [react.md → Bundling](react.md#bundling). Any other bare specifier **aborts the load** with a console error naming it.
+1. `GET plugin.js` as text. Every bare-specifier import is rewritten to the portal's copy — for exactly the five specifiers in [react.md → Bundling](react.md#bundling). Any other bare specifier **aborts the load**, with the specifier named in the console and on the plugin's card ([below](#when-loading-fails)).
 2. `import()` as a blob URL; the default export is the plugin. Module-scope code runs here.
 3. The manifest record is `Object.assign`ed **onto** the plugin object — `name`, `version`, `scopes`, `url`, `enabled`, `settings`, `image`, `description`, … — overwriting your same-named fields.
-4. `setLanguage(locale)` — the `LANGUAGE` cookie, falling back to the portal's own `culture` when the cookie is unset. **Once per instance, and only here**: it is not called again when the language changes ([below](#a-language-change-reloads-every-plugin)).
+4. `setLanguage(locale)` — the `LANGUAGE` cookie, falling back to the portal's own `culture` when the cookie is unset. **Once per load**: it is not called again when the language changes ([below](#a-language-change-reloads-every-plugin)); switching the plugin back on repeats steps 4–10 on the same instance.
 5. If declared: `setAPI(origin, proxy, prefix)`.
 6. `await plugin.onLoadCallback()`.
 7. `getStatus()` — a plugin without one counts as `active`. `hide` skips the next two steps (and the PostMessage callback) but is not final: the status is re-read at step 10, after every `usePluginSettings().save()` and on every `Actions.updateStatus`, and `active` then performs them ([sdk-contract.md](sdk-contract.md#iplugin--always-required)).
@@ -23,16 +23,16 @@ Module plugins (`"runtime": "module"` in the packed `config.json` — everything
 9. Every declared scope's getter is read and the items copied into portal-wide maps, filtered by `usersTypes`/`usersType` and `devices` for the current user and device.
 10. Settings scope: `setAdminPluginSettingsValue(storedSettingsString)`, then `getStatus()` again — `active` registers the items and CSS (again, harmlessly), `hide` removes them.
 
-Legacy plugins (no `runtime`; webpack, SDK ≤ 2) run from step 4 on, but the bundle is injected as a `<script>` into one hidden `<iframe id="plugin-iframe">` shared by all plugins, and the plugin is `iframeWindow.Plugins[pluginName]` — a mismatch yields an empty plugin with no error.
+Legacy plugins (no `runtime`; webpack, SDK ≤ 2) run from step 4 on, but the bundle is injected as a `<script>` into one hidden `<iframe id="plugin-iframe">` shared by all plugins, and the plugin is `iframeWindow.Plugins[pluginName]` — a mismatch is reported as a load failure, the script having registered no plugin under that name ([below](#when-loading-fails)).
 
 Consequences:
 
-- **An ES module without `"runtime": "module"`** is injected as a classic script and dies on its first `import`.
+- **An ES module without `"runtime": "module"`** is injected as a classic script and dies on its first `import`; the plugin's card then reads *Failed to load* with the browser's syntax error.
 - **Register items in `onLoadCallback`, not at module scope.** Both reach the maps in time (they are read at step 9), but at module scope neither the language nor the API URLs are set yet — a factory that translates a label or calls `getAPI()` there captures empty values.
 - **Anything registered after step 9 is invisible** until the matching `update*Items` action — items added from a timer or an un-awaited promise.
 - **Stored settings arrive after `onLoadCallback`, not during it.** Step 10 runs once installation has finished, so a settings value read in `onLoadCallback` is still `null` — components read settings with `usePluginSettings().load()`, class-side code reacts in `setAdminPluginSettingsValue`. The status re-read that follows is what lets a plugin stay `hide` until it is configured: set the status from the parsed value there, and the portal registers the items the moment a valid configuration is saved.
 - **Disabled plugins are still fetched and executed**, so module-scope side effects run even when switched off.
-- **Enable/disable is live** (a `change-web-plugin` socket room): items appear or vanish in every open session without a reload; on re-enable the bundle is not re-fetched, so module-scope state survives while `onLoadCallback` and `setAPI` run again — `setLanguage` and `setAdminPluginSettingsValue` are not repeated.
+- **Enable/disable is live** (a `change-web-plugin` socket room): items appear or vanish in every open session without a reload. On re-enable the bundle is not re-fetched, so module-scope state survives, and the same instance goes through steps 4–10 again — `setLanguage`, `setAPI`, `onLoadCallback`, `getStatus`, and for a Settings plugin `setAdminPluginSettingsValue` with the settings string that session holds. A throw there marks the plugin as failed to initialize ([below](#when-loading-fails)).
 
 ### A language change reloads every plugin
 
@@ -48,17 +48,30 @@ Switching the interface language does not notify the plugin — it **drops and r
 - `nameLocale` / `descriptionLocale` — `{ "ru": "…", "en-US": "…" }`, used for the plugin list only; item labels you localise yourself.
 - `cssUrl` — points at `plugin.css`; re-installing updates the `<link>` in place, disabling removes it. CSS is the one thing torn down on disable — script side effects are not.
 
+## When loading fails
+
+A plugin that never becomes a plugin is reported — to the administrator. The upload ends with a toast, **Failed to load** or **Failed to initialize**, carrying the reason; after that, on every page load, the plugin's card in Settings → Integration → Plugins shows an error icon whose tooltip is that reason, and the plugin's settings aside shows the same failure as its status. Users see nothing: for them the plugin is simply not there.
+
+| The card says | The reason reads | Cause |
+|---|---|---|
+| **Failed to load** — the toggle is off and locked; the plugin stays in the list so it can be deleted | *The bundle imports "lodash-es", which the portal does not provide …* — the portal's own sentence, naming the specifier | a bare import outside the five specifiers: a library that should have been bundled, the SDK **root** marked external, a `@docspace/ui-kit/…` subpath |
+| | *The plugin module has no default export* | still assigning `window.Plugins.X` instead of `export default plugin` |
+| | the exception's own message | module-scope code threw, or the bundle is not valid JavaScript for the browser |
+| | the browser's syntax error, e.g. *Cannot use import statement outside a module* | an ES module bundle without `"runtime": "module"`, loaded as a legacy script |
+| | *The request for … failed with HTTP 404* | the bundle URL does not answer — a broken upload |
+| | *The script ran but registered no plugin named "X"*, or *Failed to load the script …* | (legacy) `window.Plugins.X` ≠ `pluginName`, or the script URL does not answer |
+| **Failed to initialize** — a warning icon; the toggle stays on | the exception's own message | `onLoadCallback` threw — or `setLanguage`, `setAPI`, `setAdminPluginSettingsValue` or `getStatus` did — at load or on a re-enable |
+
+The console carries the same failure: `[Plugin: <name>] Failed to load module plugin:` for the first group (`Failed to load plugin:` for a legacy bundle), `[Plugin: <name>] Plugin initialization failed:` for the second. Ask for the tooltip text before reading code — it names the cause directly. Everything that goes wrong after a plugin has loaded is below, and none of it is reported.
+
 ## Silent failures
 
-None of these produce an error the user sees; most leave nothing in the console.
+The plugin loaded, so the portal reports nothing: none of these produce an error anyone sees, and most leave nothing in the console.
 
 | Symptom | Cause |
 |---|---|
 | Nothing loads at all: no bundle request, no console output | `plugins.enabled` is off, or the paid period expired |
-| Installs, enables, does nothing; console `Failed to load module plugin` | the bundle imports a package the portal does not provide — a library that should have been bundled, the SDK **root** marked external, a `@docspace/ui-kit/…` subpath |
-| Same; console `Cannot use import statement outside a module` | an ES module bundle with no `"runtime": "module"` |
-| Same; console clean | (module) no default export — still assigning `window.Plugins.X`; (legacy) `window.Plugins.X` ≠ `pluginName` |
-| Installation stops halfway; no CSS, no items | `onLoadCallback` threw (console: `[Plugin: <name>] Failed to load module plugin`), or `getStatus()` returned `hide` — reversible: the portal re-reads it after the stored settings arrive, after a settings save and on `Actions.updateStatus` |
+| Installed and enabled, no CSS and no items; the plugin's settings aside gives its status as *Need enter settings* | `getStatus()` returned `hide` — reversible: the portal re-reads it after the stored settings arrive, after a settings save and on `Actions.updateStatus` |
 | One scope is dead, others work | scope declared but its getter is missing, or `add*Item` never called |
 | A tab, page or modal opens **blank**; console `[Plugin: name] …` | the component threw — swallowed by the error boundary. Usually an unguarded fetch/parse, a conditional hook, or a bundled React (next row) |
 | Every component blank; `usePluginRuntime must be used inside a plugin component` | a second React or SDK React entry in the bundle — fix the `external` list |
@@ -135,7 +148,7 @@ The maps are flat and shared across every installed plugin: two plugins using ke
 A module plugin runs in the portal's own window — its DOM, cookies and `localStorage` in reach. The only guard is the error boundary around each plugin component; everything outside a component is unguarded.
 
 - **Throwing in a class-side callback.** Nothing wraps them, so a rejection is a dead click that tells the user nothing: catch and return a toast ([sdk-contract.md](sdk-contract.md#two-kinds-of-callback)).
-- **Throwing in `onLoadCallback` or at module scope** aborts the plugin with one console line, `[Plugin: <name>] Failed to load module plugin`, and nothing in the UI. Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
+- **Throwing in `onLoadCallback` or at module scope** aborts the plugin: no items, no CSS, and for users no sign of it — only the administrator's plugin card says *Failed to initialize* or *Failed to load* ([When loading fails](#when-loading-fails)). Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
 - **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` or `.card {}` restyles the product itself — in every section, for every user, until the plugin is disabled. Nothing checks the rules, and the fix is a form that cannot go wrong: [styles.md → Scoped CSS](styles.md#scoped-css). The reverse direction — portal rules reaching into your markup — is [what beats your rules](styles.md#what-beats-your-rules).

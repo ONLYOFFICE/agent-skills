@@ -92,7 +92,7 @@ Mounts the built bundle in Chromium against the **real** UI kit and the **real**
 
 | Code | What the user would have seen |
 |---|---|
-| `preview-load` | `onLoadCallback()` threw in the browser — on the portal this aborts installation: no items, no CSS, nothing in the UI. The most severe code here |
+| `preview-load` | `onLoadCallback()` threw in the browser — on the portal this aborts installation: no items, no CSS, nothing for users, and *Failed to initialize* on the administrator's plugin card. The most severe code here |
 | `preview-console` | the browser logged an error while the surfaces mounted — the portal's boundary swallows it and leaves the surface blank |
 | `preview-leak` | one of the plugin's own CSS rules matched portal-shaped markup planted beside it — that rule restyles ONLYOFFICE Apps itself. This is the check the references say nothing performs; now something does |
 | `preview-collapsed` | a control that came out a few px wide — the panel that looks empty and still accepts typing |
@@ -114,7 +114,7 @@ Fix what it reports and run it again. Then **look at the screenshots** it writes
 - anything left as a placeholder — icons especially;
 - every third-party package the plugin now bundles, one line each: what it does, why it was the one to take, **and what it does not handle** — a library's known blind spot ([dependencies.md](dependencies.md)) becomes the plugin's silent bug, so it is part of the decision, not a footnote;
 - what could not be checked offline: a request whose shape only the portal answers, anything behind a real upload, an untested edge in someone else's format, a render path no fixture was pushed through;
-- install: upload the zip in Settings → Integration → Plugins, then **fully reload the page**. No upload control, or nothing after installing → the portal has plugins switched off ([portal.md](portal.md#before-anything-loads-the-switches));
+- install: upload the zip in Settings → Integration → Plugins, then **fully reload the page**. No upload control, or nothing after installing → the portal has plugins switched off ([portal.md](portal.md#before-anything-loads-the-switches)); a *Failed to load* or *Failed to initialize* toast after the upload carries the reason ([portal.md → When loading fails](portal.md#when-loading-fails)) — fix it and upload again under a new `version`;
 - bump `version` before every re-upload — the portal caches the bundle and the icons by version.
 
 If they asked for something the portal cannot do, say so here rather than burying it — but **a limitation needs positive evidence, not an exhausted search.** "No `Actions` member refreshes the file list" is a fact about `Actions`; "the plugin cannot refresh the file list" is a claim about the portal, and it is usually the endpoint that was wrong. Until you have tried the thing that would disprove it, keep it out of the README, the CHANGELOG and the code comments, where a false explanation reads as settled to everyone who comes after.
