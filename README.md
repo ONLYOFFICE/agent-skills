@@ -13,6 +13,7 @@ the list of skills; the plugin manifests only point here.
 |---|---|---|
 | [`embed-sdk`](skills/embed-sdk/SKILL.md) | Embed SDK **2.2.0** | Embedding ONLYOFFICE Apps (formerly DocSpace) into web apps with the [Embed SDK](https://api.onlyoffice.com/docspace/javascript-sdk/get-started/) ([`@onlyoffice/docspace-sdk-js`](https://github.com/ONLYOFFICE/docspace-sdk-js)): mode selection, `TFrameConfig`, authentication (password hash flow, OAuth `getToken`, public room tokens), frame events, instance methods, editor automation, troubleshooting |
 | [`plugin-sdk`](skills/plugin-sdk/SKILL.md) | Plugins SDK **3.0.0**, ONLYOFFICE Apps **4.0** | Building, auditing and explaining ONLYOFFICE Apps plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started/) ([`@onlyoffice/docspace-plugin-sdk`](https://github.com/ONLYOFFICE/docspace-plugin-sdk)): React components built from the portal's `@onlyoffice/apps-ui-kit`, the plugin runtime hooks, the eleven scopes, item shapes and filters, actions and payloads, host behaviour, plus offline scripts that scaffold a buildable Vite project and check one against the portal loader contract |
+| [`ui-kit`](skills/ui-kit/SKILL.md) | UI kit **4.0.0** | Building React 19 screens in your own application with the ONLYOFFICE UI kit ([`@onlyoffice/apps-ui-kit`](https://github.com/ONLYOFFICE/docspace-ui-kit-react), the public name of the portal's `@docspace/ui-kit`): setting it up (the two providers, and why the stylesheet needs no import), which of the 98 components fits a job, barrel versus subpath imports, the boundary between the public components and the portal-internal modules, per-component pages synced from the kit's own READMEs, and an offline check of a project's kit usage |
 
 Every skill follows the router pattern: `SKILL.md` holds the decision tables and critical
 rules; details live in `references/` and are loaded on demand. Each skill carries its own
@@ -37,7 +38,7 @@ Pick your agent. Every path below ends with `skills/<name>/` (the directory hold
 ### Claude Code
 
 Install as a plugin — it stays updatable through `/plugin`, and the skills appear as
-`onlyoffice:embed-sdk` and `onlyoffice:plugin-sdk`:
+`onlyoffice:embed-sdk`, `onlyoffice:plugin-sdk` and `onlyoffice:ui-kit`:
 
 ```
 /plugin marketplace add git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git
@@ -116,6 +117,9 @@ skills/plugin-sdk/
 ├── templates/           Vite/TS config for generated projects
 ├── vendor/              packed @onlyoffice/apps-ui-kit and SDK, copied into every generated project
 └── evals/               graded scenarios, the fixture plugin one of them starts from, trigger tests
+skills/ui-kit/           being built; the directories below appear as their phase lands
+├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
+└── sources.json         kit version, the commit the synced pages came from, hosts it links to
 ```
 
 ## Development
