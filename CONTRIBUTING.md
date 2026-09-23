@@ -19,7 +19,8 @@ the README table, nothing else.
 | `references/` | yes | The knowledge base, one topic per file, loaded on demand. The place for "what the portal/SDK actually does" — tables, payload shapes, recipes, pitfalls. |
 | `evals/` | yes | The measuring instrument — see below. Not read by agents. |
 | `scripts/` | if useful | Tools an agent runs: validators, generators, probes. Every validator ships with a `test-validator.mjs` that exercises it against known-good and known-bad input and exits non-zero on a mismatch — the validator is what makes a rule mechanical, so it must not silently rot. Node only, no dependencies. No network, with one exception: a script named `probe-*.mjs` may query the portal or site the user named, reads only, and never runs from the self-test. |
-| `sources.json` | yes | The skill's external sources: the SDK version it targets, which of the hosts declared in the root `sources.json` it links to and at which paths, the placeholder hosts of its examples. A new site is a new host at the root first. `node tools/sync-sources.mjs --check` fails when a link or a pinned version is not traceable to it — see `.claude/skills/sync-sources/SKILL.md` for moving a skill to another site or SDK release. |
+| `sources.json` | yes | The skill's external sources: the SDK version it targets, which of the hosts declared in the root `sources.json` it links to and at which paths, the placeholder hosts of its examples, and `skipDirs` — the directories of synced pages the link check leaves alone. A new site is a new host at the root first. `node tools/sync-sources.mjs --check` fails when a link or a pinned version is not traceable to it — see `.claude/skills/sync-sources/SKILL.md` for moving a skill to another site or SDK release. |
+| a directory in `skipDirs` | if synced | Pages copied from an upstream repository by a `tools/sync-*.mjs`, each carrying a provenance header and a hash of its body. Never hand-edited: the text is corrected upstream and the sync is run again, and the sync tool's `--check` runs in the skill's self-test to catch an edit made here anyway. `skills/ui-kit/references/components/` is the one today. |
 | `templates/`, `vendor/` | if needed | Files a generator copies into a project. |
 
 Content language is English throughout: models read it.
@@ -59,6 +60,7 @@ tends to be lost on the next rewrite.
 claude plugin validate . --strict
 node skills/<name>/scripts/test-validator.mjs   # for every skill that has a validator
 node tools/sync-sources.mjs --check             # every link and pinned version traces to sources.json
+node tools/sync-ui-kit.mjs --check              # no synced page was edited here
 ```
 
 Commit messages say what changed and why in one line, in the imperative, without a type
