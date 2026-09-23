@@ -33,7 +33,7 @@ updateFloatingOperationsButton(op(100, true));   // sets operationsCompleted - t
 
 ## Work that takes a while
 
-Packing an archive, walking a room, converting a batch: anything past a second or two. Two shapes fit it, and the question that picks between them is whether the user needs a **surface** — something to look at or interact with while it runs — not where the click came from.
+Packing an archive, walking a room, converting a batch: anything past a second or two. Two shapes fit it, and the question that picks between them is whether the user needs a **surface** — something to look at or interact with while it runs — not where the click came from. A few named steps started by hand are a third case, at the end.
 
 **No surface: run it from the class, and report through the progress button's `onLoad`.** A callback returns one `IMessage` and cannot send a second, but `addFloatingOperationsButton` carries an `onLoad` the host calls with its dispatcher, and holding that function is holding a channel back to the portal for as long as the plugin wants one. So a menu item that exports a folder needs no modal at all:
 
@@ -103,13 +103,16 @@ const ExportPanel = () => {
         finish();
         showToast({ type: ToastType.success, title: t("export.done") });
       } catch (e) {
+        // Aborted mid-file is abandoned too, like the check above - not a failure to report.
+        if (isPluginApiError(e) && e.code === "ABORTED") return removeFloatingOperationsButton(BUTTON);
         finish(true);   // never leave it spinning: an unfinished entry is never dismissed
         showToast({ type: ToastType.error, title: isPluginApiError(e) ? e.message : t("export.failed") });
       }
     })();
 
-    // No remove() here: a finished job is already on its way out, and one still writing keeps its
-    // button - that is the only place it reports, so the surface closing must not take it away.
+    // Closing the surface abandons this job: abort, and the loop drops the button itself. A job that
+    // writes should rather finish - leave the abort out, and its button, the only place it reports,
+    // stays after the surface is gone (see below).
     return () => controller.abort();
   }, []);
 

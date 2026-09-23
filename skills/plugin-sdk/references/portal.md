@@ -18,9 +18,9 @@ Module plugins (`"runtime": "module"` in the packed `config.json` — everything
 4. `setLanguage(locale)` — the `LANGUAGE` cookie, falling back to the portal's own `culture` when the cookie is unset. **Once per load**: it is not called again when the language changes ([below](#a-language-change-reloads-every-plugin)); switching the plugin back on repeats steps 4–10 on the same instance.
 5. If declared: `setAPI(origin, proxy, prefix)`.
 6. `await plugin.onLoadCallback()`.
-7. `getStatus()` — a plugin without one counts as `active`. `hide` skips the next two steps (and the PostMessage callback) but is not final: the status is re-read at step 10, after every `usePluginSettings().save()` and on every `Actions.updateStatus`, and `active` then performs them ([plugin.md](plugins/plugin.md#iplugin--always-required)).
+7. `getStatus()` — a plugin without one counts as `active`. `hide` skips the next two steps (and the PostMessage callback) but is not final: the status is re-read at step 10, after every `usePluginSettings().save()` and on every `Actions.updateStatus`, and `active` then performs the two steps — not the PostMessage callback, which waits for the next load ([plugin.md](plugins/plugin.md#iplugin--always-required)).
 8. `plugin.css`, if packed, is linked into the **main** document's head as `<link id="plugin-styles-<pluginName>">`.
-9. Every declared scope's getter is read and the items copied into portal-wide maps, filtered by `usersTypes`/`usersType` and `devices` for the current user and device.
+9. Every declared item scope's getter is read and the items copied into portal-wide maps, filtered by `usersTypes`/`usersType` and `devices` for the current user and device — except `ContextMenu`, whose filters all run when the menu opens, and `File`, whose `devices` is checked at the click.
 10. Settings scope: `setAdminPluginSettingsValue(storedSettingsString)`, then `getStatus()` again — `active` registers the items and CSS (again, harmlessly), `hide` removes them.
 
 Legacy plugins (no `runtime`; webpack, SDK ≤ 2) run from step 4 on, but the bundle is injected as a `<script>` into one hidden `<iframe id="plugin-iframe">` shared by all plugins, and the plugin is `iframeWindow.Plugins[pluginName]` — a mismatch is reported as a load failure, the script having registered no plugin under that name ([below](#when-loading-fails)).
@@ -36,7 +36,7 @@ Consequences:
 
 ### A language change reloads every plugin
 
-Switching the interface language does not notify the plugin — it **drops and reinstates** it: the plugin list is emptied, every bundle re-fetched and `import()`ed as a *new* module, and the sequence above runs again from step 2 on the new instance. Opening Settings → Integration does the same thing. Two consequences worth designing around:
+Switching the interface language does not notify the plugin — it **drops and reinstates** it: the plugin list is emptied, every bundle re-fetched and `import()`ed as a *new* module, and the sequence above runs again from step 1, on a new instance. Opening Settings → Integration does the same thing. Two consequences worth designing around:
 
 - **Nothing needs re-translating.** Labels are rebuilt because the factories run again, so `setLanguage` has no rebuilding to do ([plugin.md → Localisation](plugins/plugin.md#localisation)).
 - **Module-scope side effects double.** The old instance is discarded without a teardown — the SDK has no `onUnload` and the portal calls none — so a `setInterval` or a `window` listener started at module scope or in `onLoadCallback` keeps running, and the new copy starts another beside it. Every language switch and every visit to the Integration tab adds one more. Module-scope *state* meanwhile resets, and a still-mounted surface may be closing over the previous module's copy of it.
@@ -50,7 +50,7 @@ Switching the interface language does not notify the plugin — it **drops and r
 
 ## When loading fails
 
-A plugin that never becomes a plugin is reported — to the administrator. The upload ends with a toast, **Failed to load** or **Failed to initialize**, carrying the reason; after that, on every page load, the plugin's card in Settings → Integration → Plugins shows an error icon whose tooltip is that reason, and the plugin's settings aside shows the same failure as its status. Users see nothing: for them the plugin is simply not there.
+A plugin that never becomes a plugin is reported — to the administrator. The upload ends with a toast, **Failed to load** or **Failed to initialize**, carrying the reason; after that, on every page load, the plugin's card in Settings → Integration → Plugins shows an icon — red for a load failure, in the warning colour for an initialization failure — whose tooltip is that reason, and the plugin's settings aside shows the same failure as its status. Users see nothing: for them the plugin is simply not there.
 
 | The card says | The reason reads | Cause |
 |---|---|---|
@@ -86,7 +86,7 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 | A sidebar page redirects to the root | the item's `appears` excludes the section the URL is under, or the key is unknown |
 | A whole scope never appears | it exists in the installed SDK but not in this portal ([scopes.md](plugins/scopes.md)) |
 | A modal opened from the context menu knows nothing about the file | `useCurrentFile()` is `null` there — hand the id over ([hooks.md](react/hooks.md#what-usecurrentfile-returns-where)) |
-| The settings aside's Save button saves nothing | `usePluginSettings().setSaveButton(...)` never called |
+| The settings aside's Save button saves nothing | `usePluginSettings().setSaveButton(...)` never called, and no static `saveButton` declared |
 | A settings save that failed looks exactly like one that worked | the aside closes on either, and `onClick` returned no toast ([settings-plugin.md](plugins/settings-plugin.md#the-settings-client)) |
 | A class field holds the wrong value after load | it shares a name with a manifest field (`settings`, `name`, `version`, `url`, `enabled`, `image`, `description`) — overwritten in step 3 |
 | Works everywhere except chat / AI-agent views | suppressed there by design |
@@ -116,17 +116,17 @@ The plugin loaded and rendered, and what the user sees is still wrong. They read
 | `file.viewUrl` answers **404 while the metadata answers 200** | no content stream until the first write — that 404 is an empty file, and the metadata cannot tell you so ([rest-api.md](rest-api.md#a-files-contents-are-not-part-of-the-api)) |
 | A dialog will not grow past 400×280 | `autoMaxWidth`/`autoMaxHeight` are what hand sizing to the body; the kit's `isLarge`/`isHuge` are not forwarded ([modal-dialog.md](components/modal-dialog.md)) |
 | A second `showModal` closed the first dialog | one dialog at a time — a confirmation belongs inside the component ([modal-dialog.md](components/modal-dialog.md)) |
-| An action does nothing and logs nothing — `updateProps` from a menu click, a media viewer from a tree button | the callback it came from cannot carry it ([which actions work from which callback](react/actions.md#which-actions-work-from-which-callback)) |
+| An action does nothing and logs nothing — `updateProps` or `updateCreateDialogModal` from a menu click | the callback it came from cannot carry it ([which actions work from which callback](react/actions.md#which-actions-work-from-which-callback)) |
 
 ## What actually breaks the portal
 
 A module plugin runs in the portal's own window — its DOM, cookies and `localStorage` in reach. The only guard is the error boundary around each plugin component; everything outside a component is unguarded.
 
-- **Throwing in a class-side callback.** Nothing wraps them, so a rejection is a dead click that tells the user nothing: catch and return a toast ([plugin.md](plugins/plugin.md#two-kinds-of-callback)).
+- **Throwing in a class-side callback.** Nothing wraps them — the create dialog's `onSave` is caught, and the failure dropped when there is no `onError` — so a rejection is a dead click that tells the user nothing: catch and return a toast ([plugin.md](plugins/plugin.md#two-kinds-of-callback)).
 - **Throwing in `onLoadCallback` or at module scope** aborts the plugin: no items, no CSS, and for users no sign of it — only the administrator's plugin card says *Failed to initialize* or *Failed to load* ([When loading fails](#when-loading-fails)). Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
-- **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` or `.card {}` restyles the product itself — in every section, for every user, until the plugin is disabled. Nothing checks the rules, and the fix is a form that cannot go wrong: [styles.md → Scoped CSS](styles.md#scoped-css). The reverse direction — portal rules reaching into your markup — is [what beats your rules](styles.md#what-beats-your-rules).
+- **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` or `.card {}` restyles the product itself — in every section, for every user, until the plugin is disabled. Only the browser pass reads the rules, and only against portal-shaped markup ([build.md → 7. See it](build.md#7-see-it--the-step-that-catches-what-looks-broken)), so the fix is a form that cannot go wrong: [styles.md → Scoped CSS](styles.md#scoped-css). The reverse direction — portal rules reaching into your markup — is [what beats your rules](styles.md#what-beats-your-rules).
 - **`cspDomains`** origins are added to the **portal's** CSP, not just yours. List only what you call. (`scpDomains` is a real typo in shipped plugins — it silently does nothing.)
 - **Timers and listeners at module scope or in `onLoadCallback`** keep running after the plugin is disabled, until a full reload; inside a component's effect they clean up with it.
 

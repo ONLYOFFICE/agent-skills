@@ -5,7 +5,7 @@ Class-side code that calls the REST API.
 | | |
 |---|---|
 | Types | `IApiPlugin` |
-| The loader calls | `setAPI(origin, proxy, prefix)`; your callbacks read `getAPI()` |
+| The portal calls | `setAPI(origin, proxy, prefix)` as the plugin loads; `getAPI()` is for your own callbacks |
 | Items | none |
 
 `API` exists for class-side callbacks that build URLs from `getAPI()`; a React component reaches the API through `usePluginAPI()` without it ([api.md](../react/api.md)).

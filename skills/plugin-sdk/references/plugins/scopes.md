@@ -17,10 +17,10 @@ The skill tracks a portal release, not a range, and carries no history. A plugin
 
 `IPlugin` is not a scope — it is the mandatory base every plugin implements ([plugin.md](plugin.md)). Declare a scope in `package.json:scopes` **and** implement its interface, or nothing happens. Each scope links to its page.
 
-| Scope | Interface | Getter the loader calls | Items keyed by | Renders a React component |
+| Scope | Interface | What the portal calls | Items keyed by | Renders a React component |
 |---|---|---|---|---|
-| [`API`](api-plugin.md) | `IApiPlugin` | `getAPI` (after `setAPI`) | — | — |
-| [`Settings`](settings-plugin.md) | `ISettingsPlugin` | `getAdminPluginSettings` | — | `ISettings.component` |
+| [`API`](api-plugin.md) | `IApiPlugin` | `setAPI` (`getAPI` is the plugin's own) | — | — |
+| [`Settings`](settings-plugin.md) | `ISettingsPlugin` | `setAdminPluginSettingsValue`; `getAdminPluginSettings` when the settings aside opens | — | `ISettings.component` |
 | [`ContextMenu`](../items/context-menu-item.md) | `IContextMenuPlugin` | `getContextMenuItems` | `key` | — (a click may open a modal) |
 | [`InfoPanel`](../items/info-panel-item.md) | `IInfoPanelPlugin` | `getInfoPanelItems` | `key` | `component` |
 | [`MainButton`](../items/main-button-item.md) | `IMainButtonPlugin` | `getMainButtonItems` | `key` | — |

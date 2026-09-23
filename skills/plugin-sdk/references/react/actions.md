@@ -15,7 +15,7 @@ Contents: [The actions](#the-actions) · [Surfaces the portal draws](#surfaces-t
 | `showMediaViewer` / `updateMediaViewer` / `closeMediaViewer` | `mediaViewerProps` (with `component`) | same names | see [media-viewer.md](../components/media-viewer.md) |
 | `addFloatingOperationsButton` / `updateFloatingOperationsButton` / `removeFloatingOperationsButton` | `floatingOperationsButtonProps` / same / `floatingOperationsButtonPropsId` (a bare string) | same names | see [floating-operations-button.md](../components/floating-operations-button.md) |
 | `navigate` | `navigatePath` | `navigate(path)` | an absolute portal path — the ones worth knowing are [below](#paths-navigate-takes). The SDK's doc says later actions run once navigation finishes; the host does not sequence anything (the action loop is a synchronous `forEach`), so the next action fires immediately, against the page you are leaving |
-| `openInfoPanel` | `infoPanelTab?` | `openInfoPanel(tab?)` | `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, or the `key` of your own info-panel item — those four are the only portal tabs it knows; any other string, `"info_ai_chat"` included, is taken for a plugin key and prefixed, and no tab at all stores an invalid view and loses the user's remembered one, so always pass a tab. **It closes your modal, aside, settings aside and selector first** — the panel is not a second surface beside them, so anything the user was filling in is gone. Pass your `key` unprefixed; the host makes `info_plugin-<key>` itself. To send someone from a list into an item with your tab already open, this is the pair to use — `navigate(path)` then `openInfoPanel(key)` — not a modal reproducing the tab, which would show the row's data in a surface the user cannot act on |
+| `openInfoPanel` | `infoPanelTab?` | `openInfoPanel(tab?)` | `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, or the `key` of your own info-panel item — those four are the only portal tabs it knows; any other string, `"info_ai_chat"` included, is taken for a plugin key and prefixed, and no tab at all stores an invalid view and loses the user's remembered one, so always pass a tab. **It closes your modal, aside, settings aside and selector first** — the panel is not a second surface beside them, so anything the user was filling in is gone. Pass your `key` unprefixed; the host makes `info_plugin-<key>` itself. To send someone from a list into an item with your tab already open, this is the pair to use — `navigate(path)` then `openInfoPanel(key)`, unaffected by the unsequenced navigation because the panel belongs to no page — not a modal reproducing the tab, which would show the row's data in a surface the user cannot act on |
 | `sendPostMessage` | `postMessage` | — | the target iframe must be in the DOM ([post-message-plugin.md](../plugins/post-message-plugin.md)) |
 | `saveSettings` | `settings` | — (use `usePluginSettings().save()`) | |
 | `updateProps` / `updateContext` | `newProps` / `contextProps` | — | SDK 2 declarative trees only; **silently ignored** elsewhere, never an error |
@@ -24,7 +24,7 @@ Contents: [The actions](#the-actions) · [Surfaces the portal draws](#surfaces-t
 
 `ToastType` — `success`, `error`, `warning`, `info`.
 
-An event handler (`EventListener`) is not limited by the host either — why to keep it to item updates anyway is on [event-listener-item.md](../items/event-listener-item.md#the-event-fires-when-the-dialog-opens). The three actions no class-side callback can use are `updateProps`, `updateContext` and `updateCreateDialogModal` (see the table row above). There is no action for opening the settings aside (`openInfoPanel` closes it).
+An event handler (`EventListener`) is not limited by the host either — why to keep it to item updates anyway is on [event-listener-item.md](../items/event-listener-item.md#the-event-fires-when-the-dialog-opens). Three actions work only from particular callers — `updateProps` and `updateContext` from an element of an SDK 2 tree, `updateCreateDialogModal` from the create dialog's own callbacks ([create-dialog.md](../components/create-dialog.md)) — and are ignored from anywhere else ([below](#which-actions-work-from-which-callback)). There is no action for opening the settings aside (`openInfoPanel` closes it).
 
 ## Surfaces the portal draws
 
@@ -73,11 +73,11 @@ updateArticleNavigationItems();
 
 ## Which actions work from which callback
 
-| Callback belongs to | `updateProps` / `updateContext` | `saveSettings` / `updateStatus` | everything else |
-|---|---|---|---|
-| A React component (`usePluginActions()`) | not offered — a component owns its state | not offered — `usePluginSettings().save()` stores the value and re-reads the status | all work |
-| A menu item, file click, `subMenu.onClick`, event handler, selector or create-dialog callback | **silently ignored** — the setter they need belongs to a mounted element | works | all work |
-| A button inside an SDK 2 declarative tree | works | works | `showMediaViewer`/`closeMediaViewer` are a silent no-op |
-| Any other element in a declarative tree | works | works | all work |
+| Callback belongs to | `updateProps` / `updateContext` | `updateCreateDialogModal` | `saveSettings` / `updateStatus` | everything else |
+|---|---|---|---|---|
+| A React component (`usePluginActions()`) | not offered — a component owns its state | not offered | not offered — `usePluginSettings().save()` stores the value and re-reads the status | all work |
+| A menu item, file click, `subMenu.onClick`, event handler, selector or PostMessage callback | **silently ignored** — the setter they need belongs to a mounted element | **silently ignored** | works | all work |
+| The create dialog's own `onSave`, `onError`, `onChange`, `onSelect` | **silently ignored** | works | works | all work |
+| An element of an SDK 2 declarative tree | works | **silently ignored** | works | all work |
 
 **Nothing here throws**, and that is the trap: the dispatcher calls every setter optionally (`setElementProps?.()`, `updatePropsContext?.()`), so an action that has no home is a no-op with no console line — the plugin looks correct and does nothing. Almost nothing in the plugin layer throws at all: the React API client on a rejected path, the runtime hooks outside a component, the import shim on a missing external, and a module bundle with no default export.
