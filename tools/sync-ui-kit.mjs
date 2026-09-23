@@ -23,7 +23,9 @@
  *   docs/components.md                   → README.md (the catalogue)
  *
  * Every page keeps a provenance header and a hash of its own body, so a hand edit here is
- * caught offline by --check rather than silently reverted by the next sync.
+ * caught offline by --check rather than silently reverted by the next sync. The revision the
+ * pages came from is recorded once, in the skill's sources.json, rather than in every header:
+ * a header carrying it would make every kit commit rewrite all 115 files.
  *
  * Exit: 0 ok · 1 drift, a hand-edited page, or a missing metadata block under --strict ·
  * 2 usage, or a source tree that cannot be read.
@@ -221,8 +223,11 @@ function renderPage({ upstream, page, text, map, version, commit, repoUrl, unmap
   const notice = `> Synced from the kit's own \`${upstream}\` at ${version}. Where this page and [SKILL.md](${toSkill}SKILL.md) disagree, the skill's rule wins until the kit is corrected.`;
   const body = `\n${notice}\n\n${rewritten.replace(/\n*$/, "\n")}`;
 
+  // The revision is deliberately not in here: it is the same for every page of a
+  // run, and repeating it would rewrite all 115 headers whenever the kit moves,
+  // burying the pages that really changed. `sources.json` records it once.
   const header = [
-    `<!-- synced-from: docspace-ui-kit-react ${version}${commit ? ` (${commit})` : ""} ${upstream} -->`,
+    `<!-- synced-from: docspace-ui-kit-react ${version} ${upstream} -->`,
     "<!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->",
     `${HASH_MARK}${hashOf(body)} -->`,
   ].join("\n");

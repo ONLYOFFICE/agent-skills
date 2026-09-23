@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/main-button-mobile/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/main-button-mobile/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 06150a5884aea5d7100db573fff2fc754390fce7fee26312044e6dd58694b95c -->
 

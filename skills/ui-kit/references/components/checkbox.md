@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/checkbox/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/checkbox/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: a50070a40c81d038dac94a2371a34d5dc9db79ae5e6ffd774440e0eb53009873 -->
 

@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/mcp-icon/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/mcp-icon/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 038124553b598d1f87b9dd6e09303e786e78f9b19771e03792528c97959cb13e -->
 

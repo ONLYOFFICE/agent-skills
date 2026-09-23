@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/date-time-picker/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/date-time-picker/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: afa3e90d645cf4af7cfd9d4bd680a614c0c54c1edf096dd67b3b8ce30da8024e -->
 

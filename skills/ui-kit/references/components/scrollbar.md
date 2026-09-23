@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/scrollbar/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/scrollbar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 6aea48126b9173bd0c1101c01ee0a0479276549719174ce92a4d41f8c5500c23 -->
 

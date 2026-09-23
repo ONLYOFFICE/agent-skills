@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/columnar-info-bar/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/columnar-info-bar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: a5b0a9a7f6b54a3576f7a86454135cccacfd6b6e909ff1016e1a3a7474b7d941 -->
 

@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/top-loading-indicator/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/top-loading-indicator/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: d9a6a0978ad827c29e88a2fe22985c521347f5458171c5bbc4e1c4da9e9356e3 -->
 

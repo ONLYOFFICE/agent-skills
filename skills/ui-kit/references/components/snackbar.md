@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/snackbar/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/snackbar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 9afa814d12505ecf26ad00744ac6324729a2e4fb56ae2553e750cd32589ee4e3 -->
 

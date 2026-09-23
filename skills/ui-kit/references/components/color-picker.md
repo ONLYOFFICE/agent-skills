@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/color-picker/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/color-picker/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: cc9197b0775b19e3576cd01526523255d2a07a20519fcfaa8895f08a77d545aa -->
 

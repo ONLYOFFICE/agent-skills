@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/room-logo-cover-dialog/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/room-logo-cover-dialog/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 0a7b545bd2a30e0fa286d507b82f29522368883918a0564473995b0a7b61b1ba -->
 

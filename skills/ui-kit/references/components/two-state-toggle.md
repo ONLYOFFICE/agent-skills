@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/two-state-toggle/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/two-state-toggle/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 1bb0f576fc184df959d2fd4f7de6494aa02ed34eb0a2a3e9ed1e3bbf1fdd677a -->
 

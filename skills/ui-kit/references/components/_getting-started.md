@@ -1,6 +1,6 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) docs/getting-started.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 docs/getting-started.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 967943a04605b043f69932b3be898106b3b860ef54e419ae867d7a81d5839358 -->
+<!-- body-sha256: 7d1773d93f4b2b9b54c734097f0fabdc185c36dc7750eb52c6afcfe5c13edf7c -->
 
 > Synced from the kit's own `docs/getting-started.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -125,10 +125,13 @@ class on `<body>`, `ltr` or `rtl` beside it, `data-theme` and `data-dir` on `<ht
   it: the provider listens for changes to that media query for as long as it is mounted.
 - `locale` — a language tag. It decides two things: the writing direction, from a list of
   thirteen right-to-left languages, and the font family.
-- **`colorTheme` — pass it, always.** Without it the provider calls the DocSpace REST API on mount
-  to ask a portal which accent colours to use. Outside a portal that request fails, the rejection
-  is not caught, and the provider never retries. `{ themes: [], selected: 0 }` is the way to say
-  "no portal, no accent override".
+- **`colorTheme` — the portal's accent palette; an application of its own leaves it out.** The
+  provider looks as though it asks a portal for the palette when the prop is absent, but the call
+  it makes is the API SDK's _parameter builder_: it returns `{ url, options }` and sends nothing,
+  the result is read as a response, and the branch quietly ends. No request, no rejection, no
+  retry — the kit's own accent is kept. That dead call is what puts the REST client and `axios`
+  into every application that mounts this provider; see
+  [`known-defects.md`](_known-defects.md).
 
 Do not mount `ThemeProviderComponent` from `components/theme-provider` yourself. It is the older
 layer this provider is built on; used directly it takes a full theme object rather than a name, and
@@ -262,4 +265,4 @@ width when the arrangement matters.
   and the prop that shows and hides it, with a table for choosing between the close calls.
 - Each component's own README, next to its source under `components/<name>/README.md`, and shipped
   in the package at the same path.
-- [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/fafb716c/docs/public-api.md) — the full public and portal-internal boundary.
+- [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/df87c36e/docs/public-api.md) — the full public and portal-internal boundary.

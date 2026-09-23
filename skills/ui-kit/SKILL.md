@@ -62,7 +62,7 @@ missing provider empties every label, and nothing is logged.
 
 | Question | Read |
 |---|---|
-| Install, providers, CSS, fonts, Vite/Next | [references/setup.md](references/setup.md) |
+| Install, providers, CSS, fonts | [references/components/\_getting-started.md](references/components/_getting-started.md), then [references/setup.md](references/setup.md) for the templates, Vite/Next and SSR |
 | Which component, and what is portal furniture | [references/choosing.md](references/choosing.md) |
 | A form: fields, spacing, validation, submit | [references/forms.md](references/forms.md) |
 | Dialogs, panels, menus, toasts | [references/overlays.md](references/overlays.md) |

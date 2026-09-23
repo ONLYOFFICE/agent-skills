@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/progress-bar/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/progress-bar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: d4b59d38e809a0b3b0be9b216be41843507e332ad562451f0a7eaca533d78c20 -->
 

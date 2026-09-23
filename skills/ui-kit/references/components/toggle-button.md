@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/toggle-button/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/toggle-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 0f49143bf5d2e71a4d677a3cca0d3119b8a55aeee41be4dbc61ae69e55fd5c46 -->
 

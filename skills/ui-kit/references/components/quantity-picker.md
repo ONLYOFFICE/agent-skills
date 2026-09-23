@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/quantity-picker/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/quantity-picker/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 8ced683c0cdde8ae413f917e3b2f056ecc9e5d76f025a2a61f4ec9a89ef95e01 -->
 

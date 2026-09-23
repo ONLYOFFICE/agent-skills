@@ -343,6 +343,8 @@ check("manifest: the barrel leak is recorded", MANIFEST.portalInternalBarrelName
 // --- the sync tools, offline ------------------------------------------------------------------
 
 for (const [what, argv] of [
+  // Offline, so no --strict: the metadata count is known only when a kit tree is
+  // open, which is the release check (`--from <kit> --check --strict`).
   ["no synced page was hand-edited", ["tools/sync-ui-kit.mjs", "--check"]],
   ["every link and version traces to sources.json", ["tools/sync-sources.mjs", "--skill", "ui-kit", "--check"]],
 ]) {

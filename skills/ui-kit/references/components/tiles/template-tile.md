@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/tiles/template-tile/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/tiles/template-tile/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 6797f2651dbbc050b34bb03b69099fc6657b4e1176b8e62777de6feddc6ea8ab -->
 

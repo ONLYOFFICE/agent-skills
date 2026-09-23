@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/password-input/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/password-input/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: ddd47b1daf2c78d910f81e6e43dd50e1840af58f0c5e8d9fee8e4ed253a63c75 -->
 

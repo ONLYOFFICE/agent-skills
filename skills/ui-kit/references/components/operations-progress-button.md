@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/operations-progress-button/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/operations-progress-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: d2824ff689cdf236604e3ea6b3dd033616dc1cec869665ff7691cd4950f6c5f2 -->
 

@@ -81,8 +81,10 @@ Before tagging a release:
 2a. `node tools/sync-sources.mjs --verify` passes: every link traces to a `sources.json`,
    every pinned version matches, every source URL answers. For `embed-sdk` also
    `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`; for `ui-kit`,
-   `node tools/sync-ui-kit.mjs --from <kit> --check` — the synced pages must match the
-   revision `sources.json` pins.
+   `node tools/sync-ui-kit.mjs --from <kit> --check --strict` — the synced pages must match
+   the revision `sources.json` pins, and `--strict` additionally fails when a component README
+   upstream has lost its metadata block, which would drop that component from the manifest.
+   The self-test runs the same tool offline, where it can only compare hashes.
 3. The skill(s) that changed have been through their evals
    ([embed-sdk](skills/embed-sdk/evals/README.md),
    [plugin-sdk](skills/plugin-sdk/evals/README.md),

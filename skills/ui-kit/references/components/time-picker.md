@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/time-picker/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/time-picker/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 670fba7c286757fb43192ca84b696de36e42da869d08066350d3866f1d404664 -->
 

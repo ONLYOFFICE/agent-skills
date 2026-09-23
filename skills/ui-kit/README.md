@@ -88,6 +88,20 @@ so it has a hard budget of 150 lines. A new trap goes on the component's page up
 into a reference; it moves into `SKILL.md` only with an eval assertion behind it, and it
 moves back out when the assertion passes without it.
 
+**Rules the kit's own pages now state as well.** After the last sync, most of the sixteen are
+said somewhere under `references/components/` too — rules 1, 2, 5 and 6 in
+`_getting-started.md`, rule 4 in the catalogue's *prop that shows and hides it* table, and
+rules 7 to 15 on the page of the component each is about. That makes them candidates for
+deletion, not deletions: a rule in `SKILL.md` is read on every trigger, a page only when
+something sends the agent to it, so the question is whether the eval assertion behind the rule
+still passes once it is gone. Nothing is cut before that run.
+
+Two are not candidates at all. **Rule 16 cannot move upstream**: the kit's own validator
+forbids the string `PUBLIC_DIR` in any README, even in a sentence telling the reader not to use
+it, so the kit is structurally unable to warn about the alias its own client defines. And
+**rule 3** is only half-said upstream — `providers/README.md` explains what the composed
+`Providers` is, but that page is not one this skill copies.
+
 ## What is not here yet
 
 Everything the skill consists of is written; what is missing is the evidence. The scenarios in

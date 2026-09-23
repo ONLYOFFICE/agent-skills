@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/collapsible-card/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/collapsible-card/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 8ea8e41764f844fd8dd6f495889caa9f4b3e6ca542c982c432917e1e7a473a42 -->
 

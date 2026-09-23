@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/backdrop/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/backdrop/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 915a45edc00b076bfdea1a30c098f6959d1c96835ba1b8fce180bd295d4930e2 -->
 

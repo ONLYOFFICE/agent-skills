@@ -1,4 +1,4 @@
-<!-- synced-from: docspace-ui-kit-react 4.0.0 (fafb716c) components/radio-button-group/README.md -->
+<!-- synced-from: docspace-ui-kit-react 4.0.0 components/radio-button-group/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
 <!-- body-sha256: 4800d81a5ca3f03794a49f88c8eaa405cf66752d3ca765b6388482ee91105d34 -->
 
