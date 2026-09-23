@@ -17,7 +17,7 @@
 /*
  * Everything in a scaffolded project that is not TypeScript - manifest, placeholder icons,
  * markdown. The version pins are verified by generating a project and building it, never in
- * this repository; see references/scopes.md.
+ * this repository; see references/plugins/scopes.md.
  */
 
 import { MODULE_RUNTIME, SDK_PACKAGE, UI_KIT_PACKAGE } from "../contract.mjs";

@@ -33,13 +33,18 @@ The **self-test** runs the validator against deliberately broken projects with h
 
 ## What it targets
 
-SDK `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** and ONLYOFFICE Apps **4.0**; generated plugins are TypeScript + React 19, built with Vite and packed by the SDK's own `build-docspace-plugin`, matching the SDK's template. SDK 2 plugins (webpack, `window.Plugins`, declarative `IBox` trees) still run on the portal but are outside what the validator checks. See [references/scopes.md](references/scopes.md).
+SDK `@onlyoffice/docspace-plugin-sdk` **`^3.0.0`** and ONLYOFFICE Apps **4.0**; generated plugins are TypeScript + React 19, built with Vite and packed by the SDK's own `build-docspace-plugin`, matching the SDK's template. SDK 2 plugins (webpack, `window.Plugins`, declarative `IBox` trees) still run on the portal but are outside what the validator checks. See [references/plugins/scopes.md](references/plugins/scopes.md).
 
 ## Layout
 
 ```
 SKILL.md      the skill: the router, the scope table, the Explain job and the checklist of rules
-references/   the Build and Audit workflows; SDK target, class contract, item shapes, React runtime, host-drawn components, UI kit, styling, host behaviour, REST API, dependencies, reading SDK 2 plugins
+references/   the knowledge base
+  plugins/      the scope catalogue and the SDK target, the plugin class, and a page each for API, Settings and PostMessage
+  items/        a page per item type, and the fields every item shares
+  components/   a page per surface the portal draws: modal, selector, create-file dialog, media viewer, progress button
+  react/        how a component renders, the hooks, the actions, the API client
+  *.md          the Build and Audit workflows, bundling, host behaviour, styling, the UI kit, the REST API, dependencies, reading SDK 2 plugins
 scripts/      generate, validate, preview in a browser, self-test, and contract.mjs (the portal contract as data)
   generator/  validator/  validator-tests/  preview/
 templates/    build config for generated projects (inert filenames so editors ignore them)
@@ -48,6 +53,8 @@ evals/        graded scenarios, the fixture plugin one of them starts from, and 
 ```
 
 ## Maintaining it
+
+**Where a fact is written.** Once, on the page of the SDK type it belongs to — under `plugins/`, `items/`, `components/` or `react/`, each page named after its type without the `I`, in kebab-case (`IInfoPanelItem` → `references/items/info-panel-item.md`). The topical files at the root hold what belongs to no single type — loading, styling, the REST API, the workflows — and link to those pages rather than restating them; a symptom row in `portal.md` or a rule in `SKILL.md` is one line and a link. `SKILL.md` links every page directly, so none is reachable only through another page.
 
 **Why the scaffolder is ours.** `npx create-docspace-plugin` is built on an interactive prompt (`inquirer`), so it blocks a tool call; it emits an empty `onLoadCallback`; it derives `pluginName` itself (`my-plugin` → `Myplugin`); and it knows nothing of the UI kit. Packaging, by contrast, comes from the SDK untouched: generated projects run `vite build && npx build-docspace-plugin`, and the build configs mirror the SDK's `template/`.
 
@@ -66,6 +73,6 @@ A missing `dist/plugin.zip` means the toolchain disagrees with itself, and `type
 
 Everything describing what a portal accepts — scopes, item shapes, filter values, actions and payloads, host-provided packages — is in [`scripts/contract.mjs`](scripts/contract.mjs), imported by both the generator and the validator. What a scope *emits* is `SCOPE_SPECS` in [`scripts/generator/scopes.mjs`](scripts/generator/scopes.mjs); interfaces, member names and required fields come from the contract, because a name in two places will disagree with itself.
 
-When a new SDK reaches npm **and** a portal release handles what it adds, update `contract.mjs` and the version pair in [references/scopes.md](references/scopes.md). You should not have to notice it yourself: the validator's `checkSdkDrift()` compares the contract against the SDK the audited project installed and warns when they diverge. The tables are deliberately not generated from the SDK — the SDK says what compiles, the references say what runs.
+When a new SDK reaches npm **and** a portal release handles what it adds, update `contract.mjs` and the version pair in [references/plugins/scopes.md](references/plugins/scopes.md). You should not have to notice it yourself: the validator's `checkSdkDrift()` compares the contract against the SDK the audited project installed and warns when they diverge. The tables are deliberately not generated from the SDK — the SDK says what compiles, the references say what runs.
 
 Run [the evals](evals/README.md) after a change to `SKILL.md` or a reference, before shipping.

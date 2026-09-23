@@ -43,7 +43,7 @@ Both passes are blind to intent, to what happens on a real request and to anythi
 
 ## 5. Check for drift
 
-The validator reports `sdk-drift` when the installed SDK is not the major it knows. SDK **2.x** means an SDK 2 plugin — a reading job against [sdk-2-plugins.md](sdk-2-plugins.md), and the recommendation is migration. An SDK ahead of the portal compiles scopes and actions that do nothing ([scopes.md](scopes.md)). Deprecated members and the dead webpack build script are listed in [sdk-contract.md](sdk-contract.md#deprecated--do-not-use-in-new-code); `window.Plugins.X = plugin` in a module plugin is harmless dead code.
+The validator reports `sdk-drift` when the installed SDK is not the major it knows. SDK **2.x** means an SDK 2 plugin — a reading job against [sdk-2-plugins.md](sdk-2-plugins.md), and the recommendation is migration. An SDK ahead of the portal compiles scopes and actions that do nothing ([scopes.md](plugins/scopes.md)). Deprecated members and the dead webpack build script are listed in [plugin.md](plugins/plugin.md#deprecated--do-not-use-in-new-code); `window.Plugins.X = plugin` in a module plugin is harmless dead code.
 
 ## 6. Report
 
