@@ -35,7 +35,7 @@ $SKILL/references/                   the knowledge base — read these instead o
 | Fields of each item type, which filter field the host reads, where each item renders | [items.md](references/items.md) |
 | Where a component renders and what it can reach: hooks, what `useCurrentFile` returns where, actions, the API and settings clients, errors and loading, the five specifiers | [react.md](references/react.md) |
 | Any surface the **host** draws — a modal or aside, a file/room/people picker and how to sequence one against a modal, the create-file dialog, the media viewer, the progress button, work that takes longer than a second | [components.md](references/components.md) |
-| Kit conventions, the layout mechanics of its wrappers, the behavioural traps its types do not state, icons | [ui-kit.md](references/ui-kit.md) |
+| Kit conventions for a plugin — barrel-only imports, no providers, the `ButtonSize` collision, the layout mechanics of its wrappers and the traps its types do not state; the per-component pages are in the `ui-kit` skill | [ui-kit.md](references/ui-kit.md) |
 | Anything visual that is not a kit prop: theme variables, the type scale and spacing, scoping a stylesheet, which rules win | [styles.md](references/styles.md) |
 | Whether to take a third-party package, which one, and what it leaves unhandled | [dependencies.md](references/dependencies.md) |
 | Load order, the silent-failure tables, what breaks the portal, limits | [portal.md](references/portal.md) |
