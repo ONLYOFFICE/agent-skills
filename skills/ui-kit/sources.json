@@ -1,11 +1,12 @@
 {
   "version": "4.0.0",
-  "syncedCommit": "58312590",
+  "syncedCommit": "fafb716c",
   "syncedBranch": "feature/component-readme-template",
   "sources": {
     "repo": {"host": "github", "path": "/docspace-ui-kit-react", "verify": true}
   },
   "placeholderHosts": ["localhost", "your-app.example", "portal.example.com"],
+  "skipDirs": ["references/components"],
   "versionPatterns": [
     {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
     {"file": "SKILL.md", "pattern": "apps-ui-kit` \\*\\*{v}\\*\\*"},

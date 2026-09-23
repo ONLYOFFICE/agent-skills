@@ -95,6 +95,7 @@ alike — the one directory to use when a project mixes agents.
 sources.json             the external hosts (docs site, GitHub, raw files, demo) named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at a staging or local docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
+                         sync-ui-kit.mjs: copies the UI kit's own component READMEs into skills/ui-kit and derives its manifest
 skills/embed-sdk/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
 ├── sources.json         SDK version, which hosts it links to and at which paths, placeholder hosts
@@ -117,16 +118,20 @@ skills/plugin-sdk/
 ├── templates/           Vite/TS config for generated projects
 ├── vendor/              packed @onlyoffice/apps-ui-kit and SDK, copied into every generated project
 └── evals/               graded scenarios, the fixture plugin one of them starts from, trigger tests
-skills/ui-kit/           being built; the directories below appear as their phase lands
+skills/ui-kit/           being built; the hand-written references, scripts and evals follow
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
-└── sources.json         kit version, the commit the synced pages came from, hosts it links to
+├── sources.json         kit version, the commit the synced pages came from, hosts it links to
+├── references/
+│   └── components/      115 pages synced from docspace-ui-kit-react — regenerate, never edit
+└── scripts/data/        kit-manifest.json: subpaths, barrel names, visibility props, derived by the sync
 ```
 
 ## Development
 
 - What a skill directory must contain and how changes are judged: [CONTRIBUTING.md](CONTRIBUTING.md).
 - Validate the plugin before pushing: `claude plugin validate . --strict`; run
-  `node skills/<name>/scripts/test-validator.mjs` for every skill that has a validator.
+  `node skills/<name>/scripts/test-validator.mjs` for every skill that has a validator, and
+  `node tools/sync-ui-kit.mjs --check` to confirm no synced page was edited here.
 - Quality gate: run a skill's evals after substantial content changes
   ([embed-sdk](skills/embed-sdk/evals/README.md),
   [plugin-sdk](skills/plugin-sdk/evals/README.md)).

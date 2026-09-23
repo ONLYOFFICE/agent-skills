@@ -24,6 +24,9 @@
  *   sources            name → { host, path?, verify? }; the link base is hosts[host] + path,
  *                      and path may contain {version}
  *   placeholderHosts   hosts that are examples, not sources (portal.example.com, localhost)
+ *   skipDirs           directories of the skill, relative to it, that this script does not
+ *                      scan: pages copied from another repository by a tools/sync-*.mjs,
+ *                      whose links belong upstream and are checked by that tool instead
  *   versionPatterns    { file, pattern } — regex with {v} for the version, one match each
  *
  * Scanned: SKILL.md, README.md, references/**, scripts/**, evals/** of the skill, plus the
@@ -64,13 +67,14 @@ function skillDirs() {
     .filter((d) => !onlySkill || path.basename(d) === onlySkill);
 }
 
-function walk(dir, out = []) {
+function walk(dir, out = [], skip = []) {
   if (!existsSync(dir)) return out;
+  if (skip.includes(dir)) return out;
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) {
       if (["node_modules", "vendor", "fixtures"].includes(e.name)) continue;
-      walk(p, out);
+      walk(p, out, skip);
     } else if (/\.(md|mjs|json|txt)$/.test(e.name)) {
       out.push(p);
     }
@@ -78,9 +82,14 @@ function walk(dir, out = []) {
   return out;
 }
 
-function skillFiles(dir) {
+function skillFiles(dir, skipDirs = []) {
   const files = ["SKILL.md", "README.md"].map((f) => path.join(dir, f)).filter(existsSync);
-  for (const sub of ["references", "scripts", "evals"]) walk(path.join(dir, sub), files);
+  // A directory listed in `skipDirs` holds pages copied from another repository
+  // by a `tools/sync-*.mjs`. Their links belong to that repository and cannot be
+  // fixed here, so scanning them would report prose nobody in this repository
+  // may edit. The sync tool's own --check covers those files instead.
+  const skip = skipDirs.map((rel) => path.join(dir, ...rel.split("/")));
+  for (const sub of ["references", "scripts", "evals"]) walk(path.join(dir, sub), files, skip);
   return files.filter((f) => path.basename(f) !== "sources.json");
 }
 
@@ -97,7 +106,7 @@ function readManifest(dir) {
   const m = readJson(file);
   m.__file = file;
   m.__dir = dir;
-  m.__files = skillFiles(dir);
+  m.__files = skillFiles(dir, m.skipDirs ?? []);
   m.__name = path.basename(dir);
   for (const [name, src] of Object.entries(m.sources)) {
     if (!src.host) fail(`${rel(file)}: source "${name}" has no host — name one from ${rel(ROOT_MANIFEST)}`);

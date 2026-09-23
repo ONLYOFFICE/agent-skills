@@ -28,7 +28,7 @@ switch them to the GitHub path as part of that release.
 |---|---|---|---|
 | Marketplace | `onlyoffice-skills` | `marketplace.json` → `name` | Goes after `@` in `/plugin install`. Kebab-case. **Do not rename to `agent-skills`** — it is on Claude Code's reserved list (with `claude-*`, `anthropic-*`, `agent-skills`, `anthropic-agent-skills`, …); the client rejects such marketplaces at `marketplace add`, and `claude plugin validate` does not catch it. |
 | Plugin | `onlyoffice` | `plugin.json` → `name`, and the entry in `marketplace.json` → `plugins[].name` | The two must match. This is the namespace prefix every skill is shown under (`onlyoffice:embed-sdk`). One plugin covers every ONLYOFFICE SDK and tool; new SDKs become new skills, not new plugins. |
-| Skills | `embed-sdk`, `plugin-sdk` | `skills/<name>/SKILL.md` → `name` | Must equal the directory name. |
+| Skills | `embed-sdk`, `plugin-sdk`, `ui-kit` | `skills/<name>/SKILL.md` → `name` | Must equal the directory name. |
 
 Installation reads `/plugin install onlyoffice@onlyoffice-skills`.
 
@@ -61,6 +61,14 @@ is also stated in `skills/plugin-sdk/references/scopes.md`. When an SDK is relea
   kit changed (`docspace-ui-kit-react`, `pnpm build && pnpm pack` on the branch the portal builds against), replace the tarball in `vendor/` and update
   `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
   validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.
+- `ui-kit`: the target is a release of the kit itself. Pull `docspace-ui-kit-react` to the
+  revision being described and run `node tools/sync-ui-kit.mjs --from <kit> --write`, which
+  copies its READMEs into `references/components/`, rebuilds
+  `scripts/data/kit-manifest.json` and records the commit in `sources.json`. If the kit's
+  `package.json` version moved, the run prints the `--set-version` command to follow it with.
+  Then read the critical rules in `SKILL.md` against the new pages and drop the ones the kit
+  now states itself — only where the eval assertion behind the rule still passes without it.
+  See `.claude/skills/sync-ui-kit/SKILL.md`.
 
 ## Checklist
 
@@ -71,7 +79,9 @@ Before tagging a release:
    `node skills/plugin-sdk/scripts/test-validator.mjs` pass.
 2a. `node tools/sync-sources.mjs --verify` passes: every link traces to a `sources.json`,
    every pinned version matches, every source URL answers. For `embed-sdk` also
-   `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`.
+   `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`; for `ui-kit`,
+   `node tools/sync-ui-kit.mjs --from <kit> --check` — the synced pages must match the
+   revision `sources.json` pins.
 3. The skill(s) that changed have been through their evals
    ([embed-sdk](skills/embed-sdk/evals/README.md),
    [plugin-sdk](skills/plugin-sdk/evals/README.md)) — once, after the last content

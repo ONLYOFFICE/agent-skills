@@ -66,8 +66,8 @@ moves back out when the assertion passes without it.
 ## What is not here yet
 
 This skill is being built in the order its phases were planned, and the directories above
-appear as their phase lands. Present today: the pinned facts and the discovery step. Still
-to come: the synchroniser and the synced component pages, the hand-written references and
-the routing table, `scripts/check-usage.mjs` with its self-test, and the evals. The plugin
-version is bumped when the skill is complete, not before — an installed copy that sees
-0.2.0 should get all of it.
+appear as their phase lands. Present today: the pinned facts, the discovery step, the 115
+synced pages and the manifest derived from them. Still to come: the hand-written references
+and the routing table into them, `scripts/check-usage.mjs` with its self-test, the templates
+and the evals. The plugin version is bumped when the skill is complete, not before — an
+installed copy that sees 0.2.0 should get all of it.
