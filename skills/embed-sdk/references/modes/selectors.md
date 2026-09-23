@@ -24,7 +24,7 @@ const instance = sdk.initRoomSelector({          // or initFileSelector
   `payload[0].id`, `payload[0].label` (title), `payload[0].icon`,
   `payload[0].requestTokens[0].requestToken` (ready for `public-room` mode).
 - **file-selector** fires with an **object**:
-  `payload.id`, `payload.title`, `payload.icon`, `payload.documentType`.
+  `payload.id`, `payload.title`, `payload.fileExst`, `payload.documentType` — no `icon`.
 
 ## Options
 

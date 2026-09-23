@@ -29,8 +29,8 @@ Key points:
 - `editorGoBack`: `true` shows "Open file location"; `false` hides it; `"event"` fires
   `onEditorCloseCallback` instead of navigating.
 - `editorCustomization` — full field table in
-  [config-reference.md](../config-reference.md#editorcustomization-teditorcustomization).
-  Do not invent keys; unknown ones are ignored.
+  [config-reference.md](../config-reference.md#editor--viewer).
+  Do not invent keys: the portal hands unknown ones to Document Server unchecked.
 - `downloadToEvent: true` + `onDownload(url)` intercepts downloads.
 - Keep editor state across tab switches by hiding the frame with CSS, not unmounting.
 - One frame per document; reuse `frameId` only via destroy → init.

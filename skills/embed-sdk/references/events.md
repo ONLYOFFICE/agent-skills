@@ -7,9 +7,9 @@ the iframe to the host. Payload shapes below are what real integrations rely on.
 
 | Event | Fires when | Payload |
 |---|---|---|
-| `onAppReady` | frame app fully initialized — **methods may be called from here** | `{ frameId }` |
+| `onAppReady` | frame app fully initialized — **methods may be called from here**. Manager and System pages fire it again after every `setConfig` (the reference says "once"), so a handler that calls `setConfig` needs a guard | `{ frameId }` |
 | `onContentReady` | frame content is visible — reveal the iframe, drop your spinner | — |
-| `onAppError` | init or runtime error (including CSP failure on SDK < 2.2) | `message: string` |
+| `onAppError` | init or runtime error, the CSP failure included — only the message arrives; the `SDKError` with its code goes to the console | `message: string` |
 
 Pattern from production: keep the iframe hidden (CSS) with your own spinner until
 `onContentReady`, and gate all instance-method calls on `onAppReady`.
@@ -18,7 +18,7 @@ Pattern from production: keep the iframe hidden (CSS) with your own spinner unti
 
 | Event | Payload |
 |---|---|
-| `onSelectCallback` | **room-selector: an array** — `items[0].id`, `.label`, `.icon`, `.requestTokens[0].requestToken`; **file-selector: an object** — `item.id`, `.title`, `.icon`, `.documentType` |
+| `onSelectCallback` | **room-selector: an array** — `items[0].id`, `.label`, `.icon`, `.requestTokens[0].requestToken`; **file-selector: an object** — `item.id`, `.title`, `.fileExst`, `.documentType`; it has no `.icon` (the portal does not send one) |
 | `onCloseCallback` | dialog closed/cancelled — no payload |
 
 The `requestTokens[0].requestToken` from a selected room is exactly what `public-room`
@@ -36,7 +36,7 @@ mode needs.
 
 | Event | Fires when | Production reaction |
 |---|---|---|
-| `onNoAccess` | navigating to an inaccessible room/folder | show a "request access" flow |
+| `onNoAccess` | navigating to an inaccessible room/folder; the Chat page fires it when the frame's user may not use AI (a guest, or nobody signed in) | show a "request access" flow, or sign the user in |
 | `onNotFound` | room/folder does not exist (404) | the entity was deleted on the portal — drop your stored mapping, offer to create a new one |
 | `onNavigate` | Forms/Personal section change | `{ section }` |
 
@@ -55,7 +55,9 @@ Both manager events fire only when the handler is present in `config.events`; le
 SDK 2.2.0 types these payloads: `onSelectCallback` receives `TSelectedRoom[] | TSelectedFile`
 (with `TRequestTokenInfo[]` under `requestTokens`), `onEditorOpen` a `TEditorOpenPayload`
 (`TFileInfo` plus `share` and `action: TEditorAction`), `onFileManagerClick` a `TFileInfo`.
-Import them from `@onlyoffice/docspace-sdk-js` instead of declaring your own shapes.
+Import them from `@onlyoffice/docspace-sdk-js` instead of declaring your own shapes; the generated reference has
+each one: [TFrameEvents](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameEvents.md), [TSelectedRoom](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TSelectedRoom.md),
+[TSelectedFile](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TSelectedFile.md), [TEditorOpenPayload](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TEditorOpenPayload.md).
 
 ## Uploads (Uploader + Forms modes)
 

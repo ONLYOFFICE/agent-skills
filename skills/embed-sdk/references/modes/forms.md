@@ -1,7 +1,9 @@
 # Forms mode
 
-Forms gallery for the room given by `id`. The docs site has a guide (`embedding-modes/forms-mode/`);
-this file adds what it does not say. Requires a portal on SDK >= 2.2.
+Forms gallery for the room given by `id`. The docs site has no Forms guide: [SDK](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/classes/SDK.md)
+documents `initForms`, [TFormsSection](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFormsSection.md) the sections and
+[TCustomActionsConfig](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TCustomActionsConfig.md) the custom actions; this file adds what
+they do not say. Requires a portal on SDK >= 2.2.
 
 ```js
 const instance = sdk.initForms({

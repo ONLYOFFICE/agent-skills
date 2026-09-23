@@ -10,8 +10,8 @@ auto-login · 5 API keys · 6 the cross-origin cookie wall · 7 two-factor authe
 
 | Thing | Lives | Grants | SDK entry | Cannot |
 |---|---|---|---|---|
-| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult` | finish when 2FA is on unless the portal reads `login`'s `code` argument (client 4.0.0 does not); survive third-party-cookie blocking |
-| Session cookie `asc_auth_key` | browser, portal origin | every request the iframe makes | nothing to pass | be sent from a cross-origin iframe when the browser blocks third-party cookies → `401` despite a live session |
+| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult` | finish when 2FA is on — client 4.0.0's System page ignores `login`'s `code` argument (§7); cross-site, the session it creates follows §6 |
+| Session cookie `asc_auth_key` | browser, portal origin | every request the iframe makes | nothing to pass | reach a cross-site frame from a portal tab (third-party cookie blocking, partitioned cookies) → `401` despite a live session |
 | `requestToken` (share key) | room share link, or `items[0].requestTokens[0].requestToken` from a room-selector | anonymous access to one room and its files | `public-room` (`id` + `requestToken`); manager with `rootPath: "/rooms/share"`; editor/viewer (`share=` on `/doceditor`) | anything outside that room; must never be committed |
 | OAuth access token | your backend (refresh token stays there) | API calls as the user, sent as `Bearer` — no cookie involved | `getToken` (preferred) or `accessToken`, SDK >= 2.2 | outlive expiry unless `getToken` re-fetches |
 | API key | your backend | REST as the key owner, `Bearer`, scopes = key permissions | REST; in a frame the SDK forwards whatever `getToken` returns — plausible but **unverified**, confirm with `getUserInfo()` | be refreshed or revoked per session |
@@ -59,13 +59,15 @@ onAppReady: async () => {
 ```
 
 Notes:
-- `login()` resolves on failure — always check `status`.
+- `login()` resolves on failure — always check `status`. The docs' Login and Authorization samples skip
+  both that check and the `getUserInfo()` probe; keep them.
 - The portal's handler reads only `email` and `passwordHash` (client 4.0.0). The `password` and
   `session` arguments are transmitted and ignored; the session is always persistent.
 - Accounts with **2FA enabled cannot log in this way** — see §7 before promising this flow.
-- The resulting session is a cookie on the portal origin, so this flow inherits the
-  cross-origin cookie wall of §6: it works when the host page and the portal share a site, or
-  when the browser still sends third-party cookies.
+- The resulting session is a cookie on the portal origin, set inside a frame on your page. Same-site it
+  is first-party; cross-site it depends on §6 — on an HTTPS portal with an allow-list the cookie is
+  partitioned to your site rather than dropped. Confirm with `getUserInfo()` in the next frame instead
+  of assuming either way.
 - Add your own overall timeout around the flow if you must support SDK < 2.2
   (no `methodTimeout` there).
 - Weakness of this flow: the hash must round-trip to the browser on every visit. Encrypt
@@ -174,8 +176,22 @@ no expiry and no per-session revocation. Prefer a real OAuth app for anything us
 
 The frame authenticates with the portal's session cookie (`asc_auth_key`). When the host page
 is on a different site than the portal, that cookie is a **third-party cookie** inside the
-iframe. Safari blocks it by default; Chrome does when third-party cookies are disabled or
-partitioned. `document.hasStorageAccess()` returning `true` does not mean the cookie was sent.
+iframe. Safari blocks unpartitioned third-party cookies by default; Chrome does when third-party
+cookies are disabled. `document.hasStorageAccess()` returning `true` does not mean the cookie was sent.
+
+How the portal sets that cookie (server `CookiesManager`, release/v4.0.0): on HTTPS it is
+`SameSite=None; Secure; Partitioned` whenever the Embed SDK allow-list is not empty and the server
+setting `web:samesite` is unset; otherwise it is `SameSite=Strict`, so an HTTP portal never has a
+cross-site session. A partitioned cookie (CHIPS) is kept per top-level site, which is expected to mean
+— not yet checked in each browser on a live portal:
+
+- a session from a portal tab lives in the portal's own partition and never reaches a frame on your
+  site — the 401 below;
+- a session created **inside** a frame on your site (the user signs in there, or recipe 1) lands in
+  your site's partition and is sent by the other frames on that site.
+
+`SameSite` entries in `appsettings.json` do not change this: the server reads only `web:samesite`, and
+the `CookieSettings` block the docs suggest is not read for it at all.
 
 Symptom: the frame loads, `onAppReady` fires, then API calls from inside the frame return
 `401` while the same user is signed in to the portal in another tab. Nothing about CSP,
@@ -188,7 +204,9 @@ Fixes, in order of preference:
    registrable domain), so the cookie is first-party.
 3. `public-room` + `requestToken` for anonymous content — no session needed.
 
-The credential-replay flow (recipe 1) creates the same cookie and hits the same wall.
+The credential-replay flow (recipe 1) creates its cookie inside a frame on your site, so it is subject to
+the partition rule above rather than to the portal tab's session — verify it on the target portal before
+promising it cross-site.
 
 ## 7. Two-factor authentication
 
@@ -201,14 +219,18 @@ you learn that a second factor is pending (client 4.0.0).
 
 Whether the second step is reachable depends on the portal:
 
-- **Client 4.0.0**: the SDK dispatcher runs `login(email, passwordHash)` and ignores everything
-  else, so the code never reaches the portal and the account stays signed out — even though the
-  store already has a `loginWithCode(userName, passwordHash, code)` the dispatcher never calls.
-  Adding a "code" field to your form does not help there, so do not ship one as the fix: the
-  deliverable for such a portal is the OAuth route below, stated as such.
-- **A portal whose dispatcher reads `code`**: call `login(email, hash, undefined, undefined,
+- **Client 4.0.0**: the System page — where the hash flow runs — calls `login(email, passwordHash)`
+  and ignores everything else, so the code never reaches the portal and the account stays signed out.
+  The Manager page does read `code` and calls `loginWithCode` (since 2026-09-10), but it is a private
+  route: it opens only for a user who already has a session, so it cannot complete a sign-in either.
+  Adding a "code" field to your form does not help, so do not ship one as the fix: the deliverable
+  for such a portal is the OAuth route below, stated as such.
+- **A portal whose System page reads `code`**: call `login(email, hash, undefined, undefined,
   code)` (SDK 2.2.0) after the `/confirm/…` answer, then check `status`. Probe the portal version
   first and do not promise the flow on 4.0.0.
+
+The docs' "Two-factor authentication" advanced sample is a host-side mock — a code from
+`Math.random()` shown in `alert()` before `initManager` — not the portal's second factor.
 
 Options for hosts whose users have 2FA on a portal that ignores `code`:
 
@@ -223,7 +245,8 @@ Say plainly in the deliverable that 2FA accounts cannot use the hash-login flow.
 ## 8. Multi-frame pages
 
 Only one frame should perform authentication. Init the first frame normally; park the
-rest with `waiting: true` (they render the loader without loading content), and once
-login completes, re-init all parked frames with their real configs. Frames whose mode
+rest with `waiting: true` (no iframe is added, only the loader where the mode has one), and once
+login completes, re-init all parked frames with their real configs or release each with
+`setConfig({ waiting: false }, true)` — a plain `setConfig` on a parked frame rejects with `DISCONNECTED`. Frames whose mode
 carries its own token (`public-room` + `requestToken`) can be initialized immediately,
 before authentication finishes.
