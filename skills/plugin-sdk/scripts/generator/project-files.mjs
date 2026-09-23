@@ -131,7 +131,7 @@ re-upload, otherwise the portal keeps serving the cached bundle and icons.
 ## The UI kit
 
 \`${UI_KIT_PACKAGE}\` is not published to npm, so it is installed from \`${uiKitTarball}\`, a
-packed copy of the kit from a DocSpace client checkout (\`libs/ui-kit\`: \`pnpm build &&
+packed copy of the kit from an ONLYOFFICE Apps client checkout (\`libs/ui-kit\`: \`pnpm build &&
 pnpm pack\`). It is a build-time dependency only: the bundle keeps the kit external and
 the portal supplies its own copy at load time. The kit depends on tarballs of its own
 (\`file:\` entries in its \`package.json\`), which is why they sit next to this file too -

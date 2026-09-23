@@ -1,6 +1,6 @@
 # The React runtime
 
-How a plugin component is rendered and what it can reach. Verified against the DocSpace client this skill targets; where the SDK's types and the host's behaviour differ, both are stated.
+How a plugin component is rendered and what it can reach. Verified against the ONLYOFFICE Apps client this skill targets; where the SDK's types and the host's behaviour differ, both are stated.
 
 Contents: [Where components render](#where-components-render) · [Hooks](#the-hooks) · [What `useCurrentFile` returns where](#what-usecurrentfile-returns-where) · [Actions](#actions) · [API client](#the-api-client) · [Settings client](#the-settings-client) · [Errors, loading, language, styling](#errors-loading-language-styling) · [Bundling](#bundling)
 
