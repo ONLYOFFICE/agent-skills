@@ -118,13 +118,14 @@ skills/plugin-sdk/
 ├── templates/           Vite/TS config for generated projects
 ├── vendor/              packed @onlyoffice/apps-ui-kit and SDK, copied into every generated project
 └── evals/               graded scenarios, the fixture plugin one of them starts from, trigger tests
-skills/ui-kit/           being built; the evals follow
+skills/ui-kit/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
 ├── sources.json         kit version, the commit the synced pages came from, hosts it links to
 ├── references/          setup, choosing, forms, overlays, lists, theming, i18n, testing, public API, troubleshooting
 │   └── components/      115 pages synced from docspace-ui-kit-react — regenerate, never edit
 ├── scripts/             check-usage.mjs + its self-test, and data/kit-manifest.json derived by the sync
-└── templates/           the entry point and the provider composition, copied into a project
+├── templates/           the entry point and the provider composition, copied into a project
+└── evals/               graded scenarios, the bare Vite app they build on, trigger tests
 ```
 
 ## Development
@@ -135,7 +136,8 @@ skills/ui-kit/           being built; the evals follow
   `node tools/sync-ui-kit.mjs --check` to confirm no synced page was edited here.
 - Quality gate: run a skill's evals after substantial content changes
   ([embed-sdk](skills/embed-sdk/evals/README.md),
-  [plugin-sdk](skills/plugin-sdk/evals/README.md)).
+  [plugin-sdk](skills/plugin-sdk/evals/README.md),
+  [ui-kit](skills/ui-kit/evals/README.md)).
 - Versions, names, what counts as publishing and the release checklist:
   [RELEASING.md](RELEASING.md).
 

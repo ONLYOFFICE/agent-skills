@@ -90,9 +90,9 @@ moves back out when the assertion passes without it.
 
 ## What is not here yet
 
-This skill is being built in the order its phases were planned. Present today: the router with
-its rules, ten hand-written references, the 115 synced component pages with the manifest
-derived from them, the provider templates, the usage check and its self-test. Still to come:
-`evals/` — the graded scenarios that decide whether a rule in `SKILL.md` is doing any work,
-and the trigger tests for the description. The plugin version is bumped when the skill is
-complete, not before: an installed copy that sees 0.2.0 should get all of it.
+Everything the skill consists of is written; what is missing is the evidence. The scenarios in
+[`evals/`](evals/README.md) and the trigger tests have not been run, so no rule in `SKILL.md`
+has yet been shown to change an outcome, and the description has not been checked for
+triggering on its neighbours. Both tables carry a *not yet run* row. Until they are run and the
+rules that survive are kept, the plugin version stays where it is: an installed copy that sees
+0.2.0 should get a skill that has been measured.

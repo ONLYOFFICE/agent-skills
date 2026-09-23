@@ -85,7 +85,8 @@ Before tagging a release:
    revision `sources.json` pins.
 3. The skill(s) that changed have been through their evals
    ([embed-sdk](skills/embed-sdk/evals/README.md),
-   [plugin-sdk](skills/plugin-sdk/evals/README.md)) — once, after the last content
+   [plugin-sdk](skills/plugin-sdk/evals/README.md),
+   [ui-kit](skills/ui-kit/evals/README.md)) — once, after the last content
    change, not in a loop.
 4. `version` in `plugin.json` and `metadata.version` in `marketplace.json` are bumped
    and equal.
