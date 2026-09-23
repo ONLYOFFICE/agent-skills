@@ -4,7 +4,7 @@ To react to something happening.
 
 | | |
 |---|---|
-| Types | `IEventListenerItem`, `IEventListenerPlugin` |
+| Types | [`IEventListenerItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IEventListenerItem.md), [`IEventListenerPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IEventListenerPlugin.md) |
 | The loader reads | `getEventListenerItems()`, keyed by `key` |
 | Role filter | `usersTypes` — [the filter field trap](common-fields.md#the-filter-field-trap) |
 | Surface | none |
@@ -12,15 +12,9 @@ To react to something happening.
 
 ## Fields
 
-| Field | Required | Notes |
-|---|---|---|
-| `key` | ✔ | |
-| `eventType` | ✔ | `Events`: `CREATE`, `RENAME`, `ROOM_CREATE`, `ROOM_EDIT`, `CHANGE_COLUMN`, `CHANGE_USER_TYPE`, `CREATE_PLUGIN_FILE` |
-| `eventHandler` | ✔ | the SDK declares **no parameters** and nothing about a payload is contracted: treat it as "the user started doing something" and read the details yourself |
-| `usersTypes` | | |
-| `devices` | | |
+Each field, with its type and a line, is on [`IEventListenerItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IEventListenerItem.md), the event names on [`Events`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Events.md).
 
-Subscribed as plain `window` listeners. No `updateEventListenerItem`: re-add to replace. The returned message is not restricted to toasts — see [the note below](#the-event-fires-when-the-dialog-opens).
+Subscribed as plain `window` listeners. `eventHandler` is declared with **no parameters** and nothing about a payload is contracted: treat it as "the user started doing something" and read the details yourself. No `updateEventListenerItem`: re-add to replace.
 
 ## The event fires when the dialog opens
 
@@ -33,4 +27,4 @@ So an event handler that reports (`"Room created"`) is wrong at least as often a
 eventHandler: async () => ({ actions: [Actions.updateArticleNavigationItems] })
 ```
 
-**The returned message is not restricted.** The SDK's own doc says only toasts and item updates are honoured; the host does not check — the message goes through the same dispatcher as any class-side callback, and `showModal` really opens (the panels are mounted globally, not per surface). Keep to item updates by choice: the event fires on the portal's schedule, over a dialog the portal has just opened, so a modal or a `navigate` from here lands on top of what the user was in the middle of.
+**The returned message is not restricted.** It goes through the same dispatcher as any class-side callback, and `showModal` really opens (the panels are mounted globally, not per surface). Keep to item updates by choice: the event fires on the portal's schedule, over a dialog the portal has just opened, so a modal or a `navigate` from here lands on top of what the user was in the middle of.

@@ -4,7 +4,7 @@ What the loader actually does with a plugin — not what the types allow — and
 
 ## Before anything loads: the switches
 
-- **`plugins.enabled`** (server setting, **off by default**). When false the portal never initialises plugins: no bundle fetched, no items, no routes, nothing in the console. Every surface re-checks it. Ask about this before auditing code.
+- **`plugins.enabled`** (server setting, **off by default**). When false the portal never initialises plugins: no bundle fetched, no items, no routes, nothing in the console. Every surface re-checks it. Ask about this before auditing code. Where the switches and the upload control are in the UI: [Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md).
 - **`pluginOptions.upload` / `pluginOptions.delete`** — a second, narrower switch *behind* the first, not beside it: the Integration → Plugins tab exists only when `plugins.enabled`, and these are read only on that tab. With `upload` off it offers no upload control, however correct the archive.
 - The plugin system is skipped when the portal's **paid period has expired**, and plugin surfaces are suppressed inside the **AI-agent/chat views**.
 
@@ -42,6 +42,8 @@ Switching the interface language does not notify the plugin — it **drops and r
 - **Module-scope side effects double.** The old instance is discarded without a teardown — the SDK has no `onUnload` and the portal calls none — so a `setInterval` or a `window` listener started at module scope or in `onLoadCallback` keeps running, and the new copy starts another beside it. Every language switch and every visit to the Integration tab adds one more. Module-scope *state* meanwhile resets, and a still-mounted surface may be closing over the previous module's copy of it.
 
 ### Manifest fields the portal reads for itself
+
+The packed `config.json` and how `package.json` maps onto it are in [Config](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/config.md); the fields with behaviour worth knowing:
 
 - `runtime` — only `"module"` is known.
 - `minDocSpaceVersion` — written into `config.json` by the packer from the **installed SDK's** `package.json`; setting it in your own `package.json` does nothing. It only produces a compatibility warning, never blocks loading.
@@ -133,7 +135,7 @@ A module plugin runs in the portal's own window — its DOM, cookies and `localS
 
 ## Limits
 
-Enforced server-side; exceeding one rejects the upload.
+Enforced server-side; exceeding one rejects the upload. The archive and asset limits are also stated in [Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md) and [Plugin structure → assets](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/plugin-structure.md#assets); the rest is observed.
 
 | Limit | Value |
 |---|---|
@@ -143,6 +145,6 @@ Enforced server-side; exceeding one rejects the upload.
 | Upload format | `.zip` containing `plugin.js` and `config.json` |
 | Stored settings (`save()` / `saveSettings`) | one string of 255 characters; longer is refused with a 400, not truncated |
 
-Limits of one scope — context menu nesting, the five sidebar buttons — are on that scope's page ([scopes.md](plugins/scopes.md)).
+Limits of one scope — context menu nesting, the five sidebar buttons — are with that scope: on its page here or on the docs page it links ([scopes.md](plugins/scopes.md)).
 
-Icons are referenced by **file name only** (`"icon-16.svg"`). The logo is 48×48; the size each item's icon wants is in its scope's fields table.
+Icons are referenced by **file name only** (`"icon-16.svg"`). The logo is 48×48; the size each item's icon wants is on its interface's docs page and in [Plugin structure → assets](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/plugin-structure.md#assets), and what the portal does with a `File` item's two icons beyond that is in [file-item.md](items/file-item.md).

@@ -1,8 +1,8 @@
 # Fields every item shares
 
-Each item scope has a page of its own — [ContextMenu](context-menu-item.md), [MainButton](main-button-item.md), [ProfileMenu](profile-menu-item.md), [InfoPanel](info-panel-item.md), [EventListener](event-listener-item.md), [File](file-item.md), [ArticleButton](article-button-item.md), [ArticleNavigation](article-navigation-item.md) — recording what goes into that scope's map and what the portal does with it: where the item renders, what the callback receives, which fields are read when. Field types are in the SDK's `.d.ts`; those pages record the host's behaviour. This one holds what they share: the key, the role and device filters, and what the role values mean.
+Each item scope has a page of its own — [ContextMenu](context-menu-item.md), [MainButton](main-button-item.md), [ProfileMenu](profile-menu-item.md), [InfoPanel](info-panel-item.md), [EventListener](event-listener-item.md), [File](file-item.md), [ArticleButton](article-button-item.md), [ArticleNavigation](article-navigation-item.md) — recording what the portal does with that scope's items: where they render, what the callback receives, which fields are read when. The fields themselves, with types and a line each, are documented per interface under [Plugin items](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items.md); each page here links its interface and records only what that page does not say. This one holds what they share: the key, the role and device filters, and what the role values mean.
 
-Where an item has a visible surface it is a React component passed as `component` ([rendering.md](../react/rendering.md)); the SDK 2 `body`/`onLoad` pairs still render, marked deprecated.
+Where an item has a visible surface it is a React component passed as `component` ([rendering.md](../react/rendering.md)); the SDK 2 `body`/`onLoad` pairs still render, marked deprecated. Icons are asset file names; the size each one wants is on its interface's page and in [portal.md → Limits](../portal.md#limits).
 
 ## The filter field trap
 
@@ -19,20 +19,10 @@ The host reads a **different field name per scope**; the wrong one is silently s
 
 The maps are flat and shared across every installed plugin: two plugins using key `settings` evict one another. Prefix keys with the manifest's `name` **verbatim, hyphens included** (`room-activity-…`, not `roomactivity-…`; `pluginName` is the wrong field). For `File` the key is the `extension`, so two plugins claiming `.md` collide — the last loaded wins. For `ArticleNavigation` the key is also a URL segment.
 
-## Enum values worth having at hand
+## Enums
 
-`Devices` — `mobile`, `tablet`, `desktop`. `FilesExst` covers the extensions ONLYOFFICE Apps knows; a plain string works for your own.
+Every enum, with its members and values, is under [Enums](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums.md). Two things worth knowing beyond the values: `FilesExst` covers the extensions ONLYOFFICE Apps knows, and a plain string works for your own; and every enum-valued string comes from the enum, because a near-miss compiles and is never matched ([plugin.md → Localisation](../plugins/plugin.md#localisation)).
 
 ### `UsersType` does not name the roles the portal shows
 
-Keys are camelCase, values PascalCase — `owner: "Owner"`, `docSpaceAdmin: "DocSpaceAdmin"`, `roomAdmin: "RoomAdmin"`, `collaborator: "Collaborator"`, `user: "User"` — and **two of them mean the opposite of what they read like**, because the product renamed the roles and the enum did not:
-
-| `UsersType` member | The role as the portal labels it today |
-|---|---|
-| `owner` | Owner |
-| `docSpaceAdmin` | ONLYOFFICE Apps admin |
-| `roomAdmin` | Room admin — also everyone the other four do not match |
-| `collaborator` | **User** |
-| `user` | **Guest** |
-
-So `usersTypes: [UsersType.user]` is "guests only", not "signed-in users", and the internal-staff filter most features want is `[UsersType.owner, UsersType.docSpaceAdmin, UsersType.roomAdmin, UsersType.collaborator]`. Getting this backwards shows a feature to exactly the audience it was meant to be hidden from, and nothing reports it.
+The product renamed the roles and the enum did not, so **two members mean the opposite of what they read like**: [`UsersType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/UsersType.md) states beside each member how the portal labels it today — `collaborator` is shown as **User**, `user` as **Guest**, `docSpaceAdmin` as **Full admin**, and `roomAdmin` also covers everyone the other four do not match. So `usersTypes: [UsersType.user]` is "guests only", not "signed-in users", and the internal-staff filter most features want is `[UsersType.owner, UsersType.docSpaceAdmin, UsersType.roomAdmin, UsersType.collaborator]`. Getting this backwards shows a feature to exactly the audience it was meant to be hidden from, and nothing reports it.

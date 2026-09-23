@@ -1,6 +1,6 @@
 # Reading an SDK 2 plugin (declarative UI, deprecated)
 
-Before SDK 3 a plugin never rendered anything itself: it returned a **description** of a UI — an `IBox` tree of `{ component: Components.x, props }` nodes — and the portal rendered it with its own components. The portal still renders those trees, so this file exists for **auditing and migrating** plugins written that way. Do not write new UI this way; the validator warns on every deprecated form ([plugin.md → Deprecated](plugins/plugin.md#deprecated--do-not-use-in-new-code)).
+Before SDK 3 a plugin never rendered anything itself: it returned a **description** of a UI — an [`IBox`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/IBox.md) tree of `{ component: Components.x, props }` nodes (the node shapes are the `*Group` types on [Component](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Component.md), the names on [`Components`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Components.md)) — and the portal rendered it with its own components. The portal still renders those trees, so this file exists for **auditing and migrating** plugins written that way. Do not write new UI this way; the validator warns on every deprecated form ([plugin.md → Deprecated](plugins/plugin.md#deprecated--do-not-use-in-new-code)).
 
 ## Recognising one
 

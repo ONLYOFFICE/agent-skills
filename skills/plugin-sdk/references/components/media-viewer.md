@@ -4,7 +4,7 @@ The portal's media viewer, with a React component of the plugin's as its content
 
 | | |
 |---|---|
-| Types | `IMediaViewer` |
+| Types | [`IMediaViewer`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/IMediaViewer.md) |
 | Class side | `Actions.showMediaViewer` / `updateMediaViewer` / `closeMediaViewer` with `mediaViewerProps` (carrying `component`) |
 | From a component | the same names on `usePluginActions()` |
 | Surface | the whole viewport, behind the viewer's chrome |

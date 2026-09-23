@@ -4,7 +4,7 @@ The portal's progress button (downloads, conversions) accepts plugin entries —
 
 | | |
 |---|---|
-| Types | `IFloatingOperationsButton` (`FloatingOperationType`) |
+| Types | [`IFloatingOperationsButton`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/IFloatingOperationsButton.md) — the operation row and the `FloatingOperationType` values on the same page |
 | Class side | `Actions.addFloatingOperationsButton` / `updateFloatingOperationsButton` with `floatingOperationsButtonProps`; `Actions.removeFloatingOperationsButton` with `floatingOperationsButtonPropsId`, a bare string |
 | From a component | the same names on `usePluginActions()` |
 
@@ -29,7 +29,6 @@ updateFloatingOperationsButton(op(100, true));   // sets operationsCompleted - t
 - **Give the button an id nobody else will use** — prefix it with the manifest `name`, as with item keys. The host tracks entries by the bare `id`, so two plugins that both call theirs `export` write over each other's progress.
 - `remove` takes the button `id` as a bare string (`floatingOperationsButtonPropsId` class-side). The normal end of a job needs no `remove` — reach for it to drop the button *early*, or from a cleanup when the surface goes away with the work still unfinished.
 - Operation ids are prefixed by the host with the plugin name; `onCancelOperationFromList(operationId)` hands back your unprefixed id. `cancelOperation` fires for "cancel all". Dismissing the button drops all your operations.
-- `FloatingOperationType`: `Download`, `Convert`, `Copy`, `Upload`, `Backup`, … or `Other`.
 
 ## Work that takes a while
 

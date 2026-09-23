@@ -22,7 +22,7 @@ That table is the whole list. If the feature has no scope in it, say so and offe
 
 If the target directory already holds a plugin project (`package.json` with `pluginName` and `scopes`), skip the scaffolder — see *Extending* below.
 
-Never run `npx create-docspace-plugin`: it waits on an interactive prompt and hangs the tool call. Use the scaffolder:
+Never run `npx create-docspace-plugin`: it waits on an interactive prompt and hangs the tool call. The manifest fields it would have asked for, and the scopes it offers, are described in [Creating plugin template](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/creating-plugin-template.md); the scaffolder writes the same ones from its flags:
 
 ```sh
 node "$SKILL/scripts/generate-plugin.mjs" --name my-plugin --plugin-name MyPlugin \
@@ -114,7 +114,7 @@ Fix what it reports and run it again. Then **look at the screenshots** it writes
 - anything left as a placeholder — icons especially;
 - every third-party package the plugin now bundles, one line each: what it does, why it was the one to take, **and what it does not handle** — a library's known blind spot ([dependencies.md](dependencies.md)) becomes the plugin's silent bug, so it is part of the decision, not a footnote;
 - what could not be checked offline: a request whose shape only the portal answers, anything behind a real upload, an untested edge in someone else's format, a render path no fixture was pushed through;
-- install: upload the zip in Settings → Integration → Plugins, then **fully reload the page**. No Plugins tab, or no upload control on it → the portal has plugins, or their upload, switched off ([portal.md](portal.md#before-anything-loads-the-switches)); installed, reloaded and still nothing → the [silent-failure table](portal.md#silent-failures); a *Failed to load* or *Failed to initialize* toast after the upload carries the reason ([portal.md → When loading fails](portal.md#when-loading-fails)) — fix it and upload again under a new `version`;
-- bump `version` before every re-upload — the portal caches the bundle and the icons by version.
+- install: upload the zip in Settings → Integration → Plugins ([Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md)), then **fully reload the page**. No Plugins tab, or no upload control on it → the portal has plugins, or their upload, switched off ([portal.md](portal.md#before-anything-loads-the-switches)); installed, reloaded and still nothing → the [silent-failure table](portal.md#silent-failures); a *Failed to load* or *Failed to initialize* toast after the upload carries the reason ([portal.md → When loading fails](portal.md#when-loading-fails)) — fix it and upload again under a new `version`;
+- bump `version` before every re-upload — the portal caches the bundle and the icons by version, and refuses a re-upload of the same one ([the docs' note](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/creating-plugin-template.md)).
 
 If they asked for something the portal cannot do, say so here rather than burying it — but **a limitation needs positive evidence, not an exhausted search.** "No `Actions` member refreshes the file list" is a fact about `Actions`; "the plugin cannot refresh the file list" is a claim about the portal, and it is usually the endpoint that was wrong. Until you have tried the thing that would disprove it, keep it out of the README, the CHANGELOG and the code comments, where a false explanation reads as settled to everyone who comes after.

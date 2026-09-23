@@ -4,7 +4,7 @@ A whole screen of the plugin's own — a dashboard, a list, a workspace.
 
 | | |
 |---|---|
-| Types | `IArticleNavigationItem`, `IArticleNavigationPlugin` |
+| Types | [`IArticleNavigationItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IArticleNavigationItem.md), [`IArticleNavigationPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IArticleNavigationPlugin.md) |
 | The loader reads | `getArticleNavigationItems()`, keyed by `key`, which is also the URL segment |
 | Role filter | `usersTypes` — [the filter field trap](common-fields.md#the-filter-field-trap) |
 | Surface | a full page at `/p/<key>` (under the section's path), `component` |
@@ -13,15 +13,12 @@ A whole screen of the plugin's own — a dashboard, a list, a workspace.
 
 ## Fields
 
-| Field | Required | Notes |
-|---|---|---|
-| `key` | ✔ | the last URL segment — `/p/<key>`, `/accounts/p/<key>` or `/portal-settings/p/<key>` — so unique across **every installed plugin** |
-| `label` | ✔ | sidebar text; a rename needs `updateArticleNavigationItem` + `updateArticleNavigationItems()` |
-| `icon` | ✔ | file name in `assets/`, 20×20 |
-| `component` | ✔ | the whole page. `useCurrentFile()` is `null`; work from `useCurrentUser()` and `usePluginAPI()` |
-| `appears` | | `Section[]` — `Files`, `Accounts`, `Settings`; the entry shows only in those sidebars and the page is reachable only under their paths. Omit → every section |
-| `usersTypes` | | |
-| `devices` | | |
+Each field, with its type and a line, is on [`IArticleNavigationItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IArticleNavigationItem.md), the sections on [`Section`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Section.md); what the portal does beyond it:
+
+- `key` is the last URL segment — `/p/<key>`, `/accounts/p/<key>` or `/portal-settings/p/<key>`.
+- A rename needs `updateArticleNavigationItem` + `updateArticleNavigationItems()`.
+- `component` is the whole page. `useCurrentFile()` is `null`; work from `useCurrentUser()` and `usePluginAPI()`.
+- `appears` restricts the entry to those sidebars **and** the page to their paths.
 
 A first-class entry beside Rooms and Documents; the page is a full section — own route, deep-linkable, the portal's header and sidebar around it, no folder context. An unknown key or a section not in `appears` redirects to the root. The scope for anything that is a **screen**: dashboards, lists, a plugin's own workspace.
 

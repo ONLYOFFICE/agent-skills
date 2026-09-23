@@ -69,6 +69,20 @@ cd ../smoke && npm install && npm run build && npm run typecheck && node ../agen
 
 A missing `dist/plugin.zip` means the toolchain disagrees with itself, and `typecheck` is the only thing that reads the generated types at all — `vite build` strips them, so a broken `locales.ts` or `css-modules.d.ts` builds cleanly. Pass `--locales`, or the extra-language tables are never generated in a smoke run. Use all eleven scopes — a renamed SDK export only surfaces when every scope's imports are emitted. If you swap the vendored SDK for a checkout, `npm pack` it rather than linking the directory, or the SDK's `react` peer resolves outside the project and the validator cannot import the bundle.
 
+### Where the documentation links point
+
+The references do not restate the SDK's documentation — signatures, props, enum values and method lists are linked, one docs page per interface, hook and enum, and the references keep only what the portal does with them. Every such link is built on a source in [`sources.json`](sources.json): `docs` for the Plugins SDK pages under `https://api.onlyoffice.com/docspace/plugins-sdk` and `restDocs` for the REST API reference under `https://api.onlyoffice.com/docspace/api-backend`, both on the `apiSite` host declared once in the repository's root `sources.json`. Pages are linked in their `.md` form, which the docs site serves as plain Markdown — its `llms.txt` states the rule: replace the trailing slash of any page URL with `.md`.
+
+The committed text always carries the production URLs. To work against a staging site or a local build of the docs, move the whole plugin there and back again before committing:
+
+```sh
+node tools/sync-sources.mjs --host apiSite=<origin of the staging site or local build>   # every link of every skill moves there
+node tools/sync-sources.mjs --skill plugin-sdk --verify                                  # one request per link
+node tools/sync-sources.mjs --host apiSite=<production origin>                           # back, so git status shows no change to sources.json
+```
+
+`localhost` is a placeholder host for the checker — links to it are neither checked nor verified — so a local build is addressed as `127.0.0.1` with its port. A new link enters a reference only if it is built on one of those two sources (or the SDK repository); `node tools/sync-sources.mjs --check` fails otherwise. Until the SDK 3.0 pages are published, `--verify` against production reports the pages the site does not have yet as `DEAD`.
+
 ### Keeping it current
 
 Everything describing what a portal accepts — scopes, item shapes, filter values, actions and payloads, host-provided packages — is in [`scripts/contract.mjs`](scripts/contract.mjs), imported by both the generator and the validator. What a scope *emits* is `SCOPE_SPECS` in [`scripts/generator/scopes.mjs`](scripts/generator/scopes.mjs); interfaces, member names and required fields come from the contract, because a name in two places will disagree with itself.

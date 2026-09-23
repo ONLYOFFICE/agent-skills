@@ -4,7 +4,7 @@ The portal's own picker — files, rooms, people, groups, or a list of the plugi
 
 | | |
 |---|---|
-| Types | `TSelector` — `TFilesSelector`, `TRoomSelector`, `TPeopleSelector`, `TGroupsSelector`, `TBaseSelector` (`SelectorType`) |
+| Types | [`TSelector`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Selector.md) — one type per `SelectorType`, all on that page |
 | Class side | `Actions.showSelector` / `updateSelector` / `closeSelector` with `selectorProps` |
 | From a component | the same names on `usePluginActions()` |
 
@@ -12,20 +12,20 @@ Contents: [The five types](#the-five-types) · [The Files selector: folder vs fi
 
 ## The five types
 
-`showSelector({ type: SelectorType.x, props })` opens the portal's picker as an aside; the shape is the same from a component and from a class-side `IMessage`. Five types — what each hands back, and who enables Submit, is where the mistakes are:
+`showSelector({ type: SelectorType.x, props })` opens the portal's picker as an aside; the shape is the same from a component and from a class-side `IMessage`, and the props of each type are on [Selector](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Selector.md). Five types — what each hands back, and who enables Submit, is where the mistakes are:
 
 | `SelectorType` | Props | `onSubmit` receives | Submit enabled by |
 |---|---|---|---|
-| `Files` | `TFilesSelector` | `{ selectedItemId, folderTitle, fileName, selectedFileInfo, breadCrumbs, isChecked }` — **`selectedItemId` is the folder being browsed, `selectedFileInfo` the clicked file** ([below](#the-files-selector-folder-vs-file)) | your **required** `getIsDisabled` |
-| `Room` | `TRoomSelector` | `(selectedIds: (string \| number)[])` — an array even for one room; `isMultiSelect` works. A room id is its folder id | the kit, once a room is selected (multi-select: once the selection changed) |
-| `People` | `TPeopleSelector` | `{ selectedIds, fileName, isFooterCheckboxChecked }` — user GUIDs, group GUIDs too under `withGroups`; the other two fields stay empty | the kit once someone is selected, and your `disabledSubmitButton` |
-| `Groups` | `TGroupsSelector` | `{ selectedIds }` — one group GUID; single-select only | the kit, once a group is selected |
-| `Base` | `TBaseSelector` — your own `items: { id, label, icon? }[]` | `{ selectedIds, fileName, isFooterCheckboxChecked }` — your ids | **only** your `disabledSubmitButton`; the kit never disables it, so refuse an empty `selectedIds` in `onSubmit` |
+| `Files` | [`TFilesSelector`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Selector.md#tfilesselector) | `{ selectedItemId, folderTitle, fileName, selectedFileInfo, breadCrumbs, isChecked }` — **`selectedItemId` is the folder being browsed, `selectedFileInfo` the clicked file** ([below](#the-files-selector-folder-vs-file)) | your **required** `getIsDisabled` |
+| `Room` | [`TRoomSelector`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Selector.md#troomselector) | `(selectedIds: (string \| number)[])` — an array even for one room; `isMultiSelect` works. A room id is its folder id | the kit, once a room is selected (multi-select: once the selection changed) |
+| `People` | [`TPeopleSelector`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Selector.md#tpeopleselector) | `{ selectedIds, fileName, isFooterCheckboxChecked }` — user GUIDs, group GUIDs too under `withGroups`; the other two fields stay empty | the kit once someone is selected, and your `disabledSubmitButton` |
+| `Groups` | [`TGroupsSelector`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Selector.md#tgroupsselector) | `{ selectedIds }` — one group GUID; single-select only | the kit, once a group is selected |
+| `Base` | [`TBaseSelector`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Selector.md#tbaseselector) — your own `items: { id, label, icon? }[]` | `{ selectedIds, fileName, isFooterCheckboxChecked }` — your ids | **only** your `disabledSubmitButton`; the kit never disables it, so refuse an empty `selectedIds` in `onSubmit` |
 
 - **A header needs `withHeader: true`**, not just `headerProps`; without it there is no title and no close cross.
 - **Nothing closes itself.** Call `closeSelector()` from `onSubmit` and from both ways out: `onCancel` is the cancel button (and the `Files` header cross), `headerProps.onCloseClick` the header cross of the other types; supply both and every type closes. An `onSubmit` that refuses its input returns nothing (plus a toast) and the selector stays open.
 - **One portal surface at a time.** A selector opened over your modal sits behind its backdrop, visible and dead: `closeModal()`, open the selector, reopen the modal from `onSubmit` *and* from the cancel path, with the form's values in module scope ([below](#from-a-dialog-one-surface-at-a-time)). From a page nothing needs sequencing, so a picker can simply be awaited.
-- **Only the props the type declares reach the host.** `Room`: `roomType`, `searchArea`, `excludeItems`, `withSearch`, `withCreate` with `createDefineRoomLabel`/`createDefineRoomType`. `People`: `roomId` + `onlyRoomMembers`, `withGroups`/`isGroupsOnly`, `withGuests`/`isGuestsOnly`, `excludeItems`, `currentUserId`, `disableDisabledUsers`, `disableInvitedUsers`, `alwaysShowFooter`. `Groups`: the header and nothing else — no cancel button, no search. `Base`: paging (`totalItems`, `hasNextPage`, `onLoadNextPage`), `isMultiSelect`, `maxSelectedItems`, `selectedItems`, breadcrumbs, `onSelect({ selectedId, isDoubleClick })`, an inline input row (`isInputItem`) and a "create new" row (`isCreateNewItem`), `icon` as an asset file name resolved like item icons — and no search.
+- **Only the props the type declares reach the host** — the per-type lists are on the Selector page. Two absences worth knowing: `Groups` has the header and nothing else — no cancel button, no search — and `Base` has no search either; a `Base` item's `icon` is an asset file name, resolved like item icons.
 - **Ids come back `string | number`; keep them so** ([rest-api.md → Identifiers](../rest-api.md#identifiers)).
 - **A helper that builds one needs its return type written out.** `TSelector` discriminates on `type`, and `SelectorType.Files` in an unannotated literal widens to plain `SelectorType`, which matches no branch: `const pick = () => ({ type: SelectorType.Files, props })` will not assign. Inline it compiles; behind a helper write `(): IMessage =>`, or `(): TSelector =>` for the props alone.
 
@@ -34,7 +34,7 @@ Contents: [The five types](#the-five-types) · [The Files selector: folder vs fi
 Entering a folder sets `selectedItemId` to it (and `selectedItemType` to `"rooms"` on the rooms list, `"files"` inside); clicking a file leaves `selectedItemId` on the folder and fills `selectedFileInfo` (`{ id, title, fileExst }`). Both are current in `onSubmit`.
 
 - **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, and on portals before January 2026 never — a Select gated on it is dead there. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
-- `filterParam` filters what is *listed*, not what can be submitted; it takes `FilterType` from the SDK root (`FilterType.DocumentsOnly`).
+- `filterParam` filters what is *listed*, not what can be submitted; it takes [`FilterType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Utility.md) from the SDK root (`FilterType.DocumentsOnly`).
 - `selectedFileInfo` is `{ id, title, fileExst }` and `@inline` in the SDK — declare your own type where you store it; anything more is `GET /files/file/{id}`.
 
 **Pick a document, pick a destination, copy, open**, from a page — awaited, one selector at a time, every exit resolving once:
