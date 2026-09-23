@@ -137,8 +137,9 @@ the rule wins and the kit's page is what should be corrected.
   page.
 - Render once in the dark theme: skeletons are fixed-colour and literal colours of your own do
   not switch.
-- Re-read the work against rules 4, 7, 8 and 9 — the four that are silent when broken: the
-  visibility prop, `labelVisible`, the doubled spacing, and `tabIndex`.
+- Run `node $SKILL/scripts/check-usage.mjs <project>` and leave no errors. It reads the
+  project as text and knows the kit from the synced manifest: wrong visibility props,
+  portal-internal imports, a missing provider, the silent form traps.
 
 ## Not covered
 

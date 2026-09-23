@@ -20,6 +20,31 @@ README. On its own: copy or symlink this directory to where your agent scans for
 (for example `~/.claude/skills/ui-kit/`), or hand it `SKILL.md`. `$SKILL` in the skill body
 means this directory, resolved to an absolute path.
 
+## Tools
+
+```sh
+node skills/ui-kit/scripts/check-usage.mjs ./my-app          # findings as text
+node skills/ui-kit/scripts/check-usage.mjs ./my-app --json
+node skills/ui-kit/scripts/test-validator.mjs                # the self-test
+node tools/sync-ui-kit.mjs --from ../docspace-ui-kit-react --write
+```
+
+**`check-usage.mjs`** reads a project as text — no build, no network, nothing executed — and
+reports what the kit itself never does. It knows the kit from
+`scripts/data/kit-manifest.json`, which the sync derives from the kit's own sources, so the
+visibility prop it expects for a component, the list of portal-internal modules and the nine
+components that are default exports are all facts rather than a hand-kept list. Errors are
+things that are already broken: a visibility prop the component ignores, a portal-internal
+import, `Providers`, a path into `dist/`, `PUBLIC_DIR`, a missing provider, a `SearchInput`
+handler reading `.target.value` off a string. Warnings are the silent traps: a field with no
+visible label, a column whose `gap` doubles the spacing, an input outside the tab order, a
+`Loader` with no type, the whole-library stylesheet.
+
+**`test-validator.mjs`** builds fourteen throwaway projects in the temp directory and asserts
+both what each must report and what it must not, then checks the manifest for internal sense
+and runs the two sync tools offline. 374 expectations; breaking one branch of the validator
+fails it.
+
 ## What it targets
 
 `@onlyoffice/apps-ui-kit` **4.0.0** — the public name of the library the portal ships as
@@ -67,7 +92,7 @@ moves back out when the assertion passes without it.
 
 This skill is being built in the order its phases were planned. Present today: the router with
 its rules, ten hand-written references, the 115 synced component pages with the manifest
-derived from them, and the provider templates. Still to come: `scripts/check-usage.mjs` with
-its self-test — which the router will then tell an agent to run before handing work over — and
-the evals. The plugin version is bumped when the skill is complete, not before: an installed
-copy that sees 0.2.0 should get all of it.
+derived from them, the provider templates, the usage check and its self-test. Still to come:
+`evals/` — the graded scenarios that decide whether a rule in `SKILL.md` is doing any work,
+and the trigger tests for the description. The plugin version is bumped when the skill is
+complete, not before: an installed copy that sees 0.2.0 should get all of it.

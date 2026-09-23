@@ -76,5 +76,5 @@ conventions:
 The kit's stylesheets are real CSS files imported by the components, so jsdom loads none of
 their rules: widths, the absolutely positioned `ToggleButton` and the doubled spacing of a
 `FieldContainer` in a gapped column are all invisible to a unit test. Those are caught by
-looking at the screen, or by reading the code against
-[`troubleshooting.md`](troubleshooting.md).
+looking at the screen, or by `node $SKILL/scripts/check-usage.mjs <project>`, which reads the
+code rather than running it.

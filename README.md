@@ -118,12 +118,13 @@ skills/plugin-sdk/
 ├── templates/           Vite/TS config for generated projects
 ├── vendor/              packed @onlyoffice/apps-ui-kit and SDK, copied into every generated project
 └── evals/               graded scenarios, the fixture plugin one of them starts from, trigger tests
-skills/ui-kit/           being built; the hand-written references, scripts and evals follow
+skills/ui-kit/           being built; the evals follow
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
 ├── sources.json         kit version, the commit the synced pages came from, hosts it links to
-├── references/
+├── references/          setup, choosing, forms, overlays, lists, theming, i18n, testing, public API, troubleshooting
 │   └── components/      115 pages synced from docspace-ui-kit-react — regenerate, never edit
-└── scripts/data/        kit-manifest.json: subpaths, barrel names, visibility props, derived by the sync
+├── scripts/             check-usage.mjs + its self-test, and data/kit-manifest.json derived by the sync
+└── templates/           the entry point and the provider composition, copied into a project
 ```
 
 ## Development

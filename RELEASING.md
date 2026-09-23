@@ -75,8 +75,9 @@ is also stated in `skills/plugin-sdk/references/scopes.md`. When an SDK is relea
 Before tagging a release:
 
 1. `claude plugin validate . --strict` passes.
-2. `node skills/embed-sdk/scripts/test-validator.mjs` and
-   `node skills/plugin-sdk/scripts/test-validator.mjs` pass.
+2. `node skills/embed-sdk/scripts/test-validator.mjs`,
+   `node skills/plugin-sdk/scripts/test-validator.mjs` and
+   `node skills/ui-kit/scripts/test-validator.mjs` pass.
 2a. `node tools/sync-sources.mjs --verify` passes: every link traces to a `sources.json`,
    every pinned version matches, every source URL answers. For `embed-sdk` also
    `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`; for `ui-kit`,
