@@ -7,12 +7,14 @@
     "npmApi": "https://api.npmjs.org",
     "agentSkills": "https://agentskills.io",
     "onlyoffice": "https://www.onlyoffice.com",
-    "gitea": "https://git.onlyoffice.com/ONLYOFFICE"
+    "gitea": "https://git.onlyoffice.com/ONLYOFFICE",
+    "mcp": "https://mcp.onlyoffice.com"
   },
   "sources": {
     "agentSkillsSpec": {"host": "agentSkills"},
     "onlyoffice": {"host": "onlyoffice"},
     "apiSite": {"host": "apiSite"},
-    "gitea": {"host": "gitea", "verify": false}
+    "gitea": {"host": "gitea", "verify": false},
+    "mcp": {"host": "mcp", "verify": false}
   }
 }
