@@ -1,0 +1,89 @@
+{
+  "skill_name": "web-converter",
+  "evals": [
+    {
+      "id": 0,
+      "name": "conversion-progress",
+      "mode": "build",
+      "prompt": "need something in our node backend that takes the xlsx files customers upload and gives us a pdf, using the onlyoffice server we already run at http://docs.internal:8080 (jwt's on, secret in the env). some of these are 50mb monsters so it can't sit there holding the request thread - the frontend wants to put a progress bar on it. and when it's a file we just can't do anything with, it should say so in a way support can act on instead of 'conversion failed'.",
+      "expected_output": "A converter that posts filetype/key/outputtype/url with the types lowercased and a token signed into the request body, sends Accept: application/json, and sets async so the call returns immediately. Progress comes from re-sending the identical request under the same key and reading the response's own percent, with endConvert deciding completion and fileUrl read only once it is true. The error key is checked before fileUrl, and the negative codes are mapped individually - -7 as an input error (the closest documented code for an illegal pair), -8 as a token-signature problem that must not be retried, -2 and -4 as distinct operational faults - so support gets a cause rather than a category. Whether the pair is convertible at all is answered from the format table before the request goes out, and the polling loop is bounded.",
+      "files": [],
+      "assertions": [
+        "the request sends Accept: application/json - the service answers this endpoint in XML by default, so without the header the client's json parse fails with an error that says nothing about the actual request",
+        "filetype, key, outputtype and url are all sent, and the two type values are lowercase",
+        "url is an absolute address the document server itself can reach, not a local filesystem path and not a localhost url that only resolves inside the calling process",
+        "the token is signed into the JSON body rather than sent only as an Authorization header, since the body is the vector this service reads",
+        "async is set and the initial call returns without blocking on the conversion, which is what the 50mb requirement is actually about",
+        "polling re-sends the identical request under the same key rather than generating a new key per attempt, because the key is what the service keys the in-flight job by and a fresh one starts the conversion over from zero",
+        "completion is decided by endConvert, and fileUrl is read only once endConvert is true rather than on the first response that happens to carry it",
+        "the progress handed to the frontend is the response's own percent field, not a synthetic timer or an interpolation, since the real number is already there",
+        "the response is checked for an error key before fileUrl is read, since an error response has no file to fetch",
+        "the negative codes are mapped to distinct causes rather than one message, with -7 (input error) reported for a rejected request - a permanent answer for that request shape, not a transient failure",
+        "-8 is surfaced as a token signature/invalid-token problem and is not retried, because a mis-signed request will fail identically every time",
+        "whether xlsx to pdf is convertible is settled against the format table rather than assumed or hardcoded, so an unsupported pair is caught before the request is sent instead of coming back as -7",
+        "the polling loop is bounded by a timeout or an attempt cap, so a job the server has given up on does not hold a worker forever"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "legacy-doc-migration-batch",
+      "mode": "build",
+      "prompt": "we've got a shared drive full of old customer .doc files, couple thousand of them, need modern .docx copies before we migrate off the old file server. some of them have passwords on them that we've already got recorded per file. document server's at https://docs.ourcompany.internal with jwt on, secret's DOCS_CONVERT_SECRET. these are tiny files, nothing async or fancy needed, just loop through the list. and actually check that .doc to docx is something the server will do before we kick off the whole batch - last time someone shipped a convert button for a pair that quietly wasn't supported and we only found out from angry emails.",
+      "expected_output": "Before the batch runs, doc -> docx is checked against the vendored ONLYOFFICE/document-formats table rather than assumed. For each file the script sends a single blocking request (no async flag, no polling loop) with filetype/outputtype lowercased, key, an absolute url the document server can reach, options.password included for the files that need one from the caller's own per-file record, a body token signed HS256 from DOCS_CONVERT_SECRET read from the environment, and an Accept: application/json header. The response's error key is checked before fileUrl, and each file's outcome (success, or the specific negative code - -5 for a wrong/missing password, -7 for an actually-unsupported pair, others) is reported per file rather than the batch succeeding or failing as one unit.",
+      "files": [],
+      "assertions": [
+        "doc to docx is checked against the vendored document-formats table before the batch starts, not assumed convertible or discovered only through per-file failures",
+        "that check reads the vendored submodule/JSON rather than a hardcoded list of supported extensions written into the script",
+        "filetype and outputtype are lowercased",
+        "Accept: application/json is sent on every request, since the service answers in XML by default without it",
+        "the token is signed into the JSON body (not sent only as an Authorization header) using HS256 with the secret read from DOCS_CONVERT_SECRET in the environment, never hardcoded as a fallback",
+        "options.password is attached for the files that need one, sourced from the caller's own per-file record rather than one shared password guessed for all of them",
+        "no async flag or polling loop is introduced for what the user explicitly described as small, synchronous conversions - a single blocking request per file is enough and matches what was asked for",
+        "the response's error key is checked before fileUrl is read",
+        "-5 (incorrect password) and -7 (input error / unsupported pair) are reported as distinct outcomes rather than folded into one generic failure message",
+        "each file's outcome is tracked individually so the batch reports which specific files failed and why, rather than the whole run succeeding or failing as a single unit"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "converter-misdiagnosed-auth-failure",
+      "mode": "build",
+      "prompt": "our doc-to-pdf export keeps coming back with what our logs just call 'conversion error', we've been retrying up to three times and it never once helps - and it's always the exact same handful of files that fail this way, every single time, never a new one. everything else exports fine on the first try. document server's got jwt on, we're calling it from python. someone floated just turning jwt off to see if that makes it go away, which... let's not, if we can help it. can you actually work out what's happening before we do something dumb.",
+      "expected_output": "The response's error field was never distinguished - every negative code got logged as the same generic 'conversion error' and blindly retried. The handful of files that always fail the same way are password-protected; the request never sends options.password for them, so the service answers -5 (incorrect password) every time, which is deterministic per request and can't be fixed by retrying the identical request three times. JWT is not the problem - a real signing/auth failure would come back as -8, not -5, and disabling JWT would not touch this bug at all. The fix checks error before fileUrl, maps -5 to 'needs options.password' specifically (distinct from -8's 'invalid token, don't retry'), and only retries error classes that are actually transient.",
+      "files": [],
+      "assertions": [
+        "the recurring failure is traced to a missing options.password on the request, not to jwt or authentication, since the files that always fail are exactly the password-protected ones",
+        "error -5 (incorrect password) is named as the specific code being returned, and is explicitly distinguished from -8 (invalid token), which is what an actual signing/auth problem would produce instead",
+        "the fix passes options.password on the request for files that need one, sourced from wherever the caller already tracks per-file passwords",
+        "the answer explicitly recommends keeping jwt enabled and states that disabling it would not fix this failure, rather than leaving the disable-it-to-see suggestion unaddressed",
+        "the blind retry-three-times behavior is flagged as pointless for this class of failure, since -5 is deterministic per identical request and nothing about a retry changes the outcome",
+        "negative error codes are mapped to individual causes/messages rather than being logged as one generic 'conversion error' string, which is what let this go undiagnosed for as long as it did",
+        "the response's error field is checked before any code path reads fileUrl",
+        "the answer states the underlying rule (some negative codes are permanent per-request failures, not transient ones, so blanket retry logic can't fix them) rather than only handing over a patch with no explanation"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "audit-broken-converter",
+      "mode": "audit",
+      "prompt": "this is the conversion worker a contractor built for us last year, turns whatever people upload into pdfs before we index them for search. mostly does the job. couple things though: every so often - not often, maybe five times this quarter - a conversion just never comes back and we end up having to kill and restart the whole worker to get unstuck. also we added support for .odt files last sprint since a client kept sending them, and as far as we can tell it just does nothing, no error in the logs, nothing, like the code doesn't even know the format exists. and support keeps closing tickets as 'user error' because all they ever see on our end is a message that just says conversion failed, no detail, so they can't tell if it's the customer's file or us. document server's the usual onlyoffice one, jwt should be on for it per our security policy. go through it and tell me what's actually wrong, i don't need it rewritten, just a list we can work from.",
+      "expected_output": "The 'never comes back' symptom traces to three compounding issues in the polling loop: a fresh key generated on every attempt, so the service treats each poll as an unrelated job and a conversion needing more than one poll never accumulates progress; the response's error field is never checked, so a genuine error response (which has no endConvert: true) reads exactly like 'still converting' and gets retried instead of surfacing; and the loop has no timeout or attempt cap, so a stuck or erroring job holds the worker forever instead of failing loudly. The .odt failure traces to the hardcoded SUPPORTED_FORMATS list never having been updated when odt support was added, and an unsupported format silently returns null with no log or error, which is why nothing pointed at the cause. The vague 'conversion failed' ticket text traces to the catch block collapsing every kind of failure - a bad HTTP status, a network error, an actual conversion error code - into one generic string with no detail preserved. Found on inspection, not reported: the token is attached only via an Authorization header, but the Conversion API reads its token from inside the JSON body, so if JWT enforcement is genuinely active on this Document Server as the security policy claims, every request from this worker is unauthenticated from the service's point of view - a failure the code's own error handling would currently hide. filetype/outputtype lowercasing is implemented correctly and is not reported as a fault.",
+      "files": [
+        "fixtures/broken-converter/"
+      ],
+      "assertions": [
+        "the 'job never comes back' symptom is traced to the polling loop generating a new key on every attempt rather than reusing one, since the service treats each poll as an unrelated job and a conversion needing more than one poll never accumulates progress",
+        "the same symptom is also traced to the response's error field never being checked - only endConvert is read, so a genuine error response reads exactly like 'still converting' and gets retried instead of surfacing",
+        "the polling loop having no timeout or attempt cap is named as its own distinct cause - why the worker hangs instead of failing loudly once stuck - not merged into the two causes above as if it were the same finding",
+        "the .odt failure is traced to the hardcoded SUPPORTED_FORMATS list never having been updated, not to anything wrong with the conversion request itself",
+        "an unsupported format silently returning null with no log or error is flagged as its own problem separate from the missing .odt entry, since it's why nothing showed up anywhere to point at",
+        "the generic 'conversion failed' message is traced to the catch block collapsing every kind of failure into one string, and the fix given maps distinct failure classes to distinct messages rather than one bucket",
+        "the token being sent only as an Authorization header is flagged as a real finding on its own merits from reading the code - not merely repeating one of the reported symptoms - since the Conversion API's documented vector for the token is inside the JSON body",
+        "that finding notes this would make every request fail signature verification once JWT enforcement is actually active on the document server, and that the code's own error handling would currently hide such a failure rather than surface it",
+        "filetype/outputtype lowercasing is confirmed correct and is not reported as a fault - a review padding its list with something that already works costs the reader's attention",
+        "the deliverable is a list of findings with causes, not a rewritten worker, matching what was asked for",
+        "no finding invents a symptom that wasn't reported or discoverable from the code - for example nothing is said about sync vs. async usage, which this worker uses appropriately"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+# Generic Makefile skeleton — the six required targets
+# (infrastructure/makefile.md). Fill in {{PLACEHOLDER}} commands, keep the
+# .PHONY / tab-indented-recipe / blank-line-between-targets formatting.
+
+.PHONY: help
+help:
+	@echo 'Targets: help, run, build, docker, lint, test'
+
+.PHONY: run
+run:
+	{{DEV_RUN_COMMAND}}
+
+.PHONY: build
+build:
+	{{PRODUCTION_BUILD_COMMAND}}
+
+.PHONY: docker
+docker:
+	docker build -t {{IMAGE_NAME}}:{{TAG}} .
+
+.PHONY: lint
+lint:
+	{{LINT_COMMAND}}
+
+.PHONY: test
+test:
+	{{TEST_COMMAND}}

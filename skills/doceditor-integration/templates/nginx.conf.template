@@ -1,0 +1,69 @@
+# Generic reverse-proxy skeleton — fill in {{PLACEHOLDERS}}. Read
+# infrastructure/nginx.md before changing the CORS map or the CSP header;
+# both have documented failure modes (unconditional origin reflection,
+# frame-src blocking the editor iframe) that are invisible until exploited
+# or until the editor actually tries to render mid-session.
+
+map $http_origin $cors_origin {
+    default "";
+    "~^{{ALLOWED_ORIGIN_REGEX}}$" $http_origin;
+}
+
+server {
+    listen 80;
+    server_name {{SERVER_NAME}};
+
+    # Default (1MB) rejects realistic office documents with a 413 before
+    # the request reaches the app — size above the largest expected file.
+    client_max_body_size {{MAX_UPLOAD_SIZE}};
+
+    # connect-src needs the wss:// form too (or ws:// in local dev) — the
+    # editor's co-authoring channel is a WebSocket to the same origin, and
+    # omitting it only fails once two users try to co-edit, not on load.
+    add_header Content-Security-Policy "default-src 'self'; frame-src 'self' {{DOCUMENTSERVER_PUBLIC_ORIGIN}}; script-src 'self' {{DOCUMENTSERVER_PUBLIC_ORIGIN}}; connect-src 'self' {{DOCUMENTSERVER_PUBLIC_ORIGIN}} {{DOCUMENTSERVER_PUBLIC_WS_ORIGIN}};" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy same-origin always;
+    # Uncomment once TLS actually terminates somewhere in this stack —
+    # never before, and never mark a cookie Secure until it does either.
+    # add_header Strict-Transport-Security "max-age=63072000" always;
+
+    location /api/ {
+        # Validate against the allowlist above — never
+        # Access-Control-Allow-Origin: $http_origin unconditionally,
+        # especially alongside Allow-Credentials: true.
+        add_header Access-Control-Allow-Origin $cors_origin always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        proxy_pass http://backend:{{BACKEND_PORT}}/;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Above the slowest real operation behind this proxy (a large
+        # conversion), not just a typical API call.
+        proxy_read_timeout {{SLOW_OP_TIMEOUT_SECONDS}}s;
+        proxy_send_timeout {{SLOW_OP_TIMEOUT_SECONDS}}s;
+    }
+
+    location / {
+        proxy_pass http://backend:{{BACKEND_PORT}};
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Document Server gets its own server block, proxied at root — never a
+# sub-path mount unless nginx.md's "Proxying the ONLYOFFICE Document
+# Server" section's caveats are explicitly accepted. A sub-path mount
+# silently breaks Document-Server-issued self-referential links (the
+# co-editing changes-log cache link, confirmed on version history's diff
+# view) the first time a feature exercises one — not on initial load.
+server {
+    listen {{DOCUMENTSERVER_PUBLISHED_PORT}};
+    location / {
+        proxy_pass http://documentserver;
+        proxy_set_header Host $http_host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_http_version 1.1;
+    }
+}

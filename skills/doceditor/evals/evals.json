@@ -1,0 +1,54 @@
+{
+  "skill_name": "doceditor",
+  "evals": [
+    {
+      "id": 0,
+      "name": "callback-retry-loop",
+      "mode": "build",
+      "prompt": "something's off with our /track endpoint. a doc saves fine the first time but then the document server just keeps POSTing us the same thing every few seconds, same key, forever - the log is 40k lines of it overnight and it only stops when we bounce the container. separately our security guy went through it and says as it stands anyone who can reach that url can make our box download a file from anywhere they like. it's express, files go in ./storage, jwt is enabled on the docs side and the secret is in ONLYOFFICE_JWT_SECRET. can you just rewrite the handler properly and tell me what was going on.",
+      "expected_output": "An Express handler that verifies the body token against the secret and compares the decoded claims to the sibling root fields before touching url, rejects an absent or invalid token without acknowledging it, branches every status in the table (1, 2, 3, 4, 6, 7) explicitly, downloads and persists on 2 and 6 with 6 leaving the session open, guards the storage path against a key that tries to escape it, and answers exactly {\"error\": 0} on every path it handled - including the statuses it only logs. A genuine internal failure answers non-zero so the retry it triggers is the correct behaviour rather than a silently lost save. The explanation states that the retry loop is the editing service reading any response other than {\"error\": 0} as a failed delivery, which is why the first save appeared to work and the callbacks never stopped.",
+      "files": [],
+      "assertions": [
+        "the successful path responds with exactly {\"error\": 0} - a JSON object with that one key - and not a bare ok, an empty 200 or a 204, because anything else reads to the editing service as a delivery that failed and it retries until it succeeds, which is the whole reported symptom",
+        "that acknowledgement is also sent for the statuses the handler only logs (1 and 4), since an unacknowledged callback is retried exactly like a rejected one",
+        "status 2 and status 6 both download from url and write to storage, and 6 does not release the lock or tear down the session, because the tab is still open when a force-save snapshot arrives",
+        "statuses 1, 3, 4 and 7 are each handled on purpose rather than swept into a default branch, since each one is the editing service telling the backend something different about the session",
+        "the token is verified before anything is fetched from url - verifying after the download is what leaves the hole the security reviewer described, because by then the request has already been made",
+        "a request arriving with no token at all is rejected rather than processed, since the whole point of enabling jwt is that an unsigned caller is not the editing service",
+        "the decoded claims are compared against the sibling root fields (status, url, key) rather than the signature being trusted on its own, which is what stops a valid token from being spliced onto a substituted url",
+        "a rejected request is not answered with {\"error\": 0}, since acknowledging a forgery tells the sender it worked",
+        "the write path is derived from the key or the stored file identity in a way that cannot be steered outside the storage directory by the value that arrives in the body",
+        "url is not assumed present - it is absent for statuses 1 and 4, and reading it unguarded there throws inside the handler and turns a routine callback into a retry",
+        "a real internal failure (download failed, disk write failed) answers non-zero rather than being swallowed into {\"error\": 0}, because there the retry is the correct behaviour and a false acknowledgement loses the user's save silently",
+        "the answer states the rule behind the symptom - the editing service retries anything that is not {\"error\": 0} - rather than only handing over corrected code, since the user asked what was going on"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "audit-broken-embed",
+      "mode": "audit",
+      "prompt": "this is the little portal our intern wired up a few months back, attached. it works, sort of. people open a doc, edit it, close it, and when they come back half the time they get what it looked like the day before - and one guy ended up with a version where the formatting was scrambled and we had to restore from backup. also every so often the editor comes up as a thin strip at the top instead of filling the page, usually when someone's picked a different file from the dropdown. can you go through it and tell me what's actually wrong and why. don't rewrite the app on me, i want a list i can hand to the team.",
+      "expected_output": "A review, not a rewrite. The stale-content and scrambled-formatting reports are traced to one cause: document.key is the filename, so it never changes across a save and the service keeps serving its cached revision of that key - the fix is a key that changes whenever the stored file does, which also means /track recording a new revision when it writes. The thin strip is traced to init replacing the placeholder element, which drops both the #placeholder CSS and the style.height assignment made after the constructor returns, and to the dropdown constructing a second editor on the same id without destroyEditor(); sizing belongs on a wrapper. The config is flat - callbackUrl, lang, user and the two handlers sit at the root instead of under editorConfig and events, where they are read - and documentType is \"text\", which is not one of word/cell/slide/pdf. The token is signed in the page with a secret /api/session hands to the browser, so the secret is in reach of every visitor; signing moves to the server. user.id is a plaintext email. /download serves any named file with no token check. The callback handler itself is sound and is not reported as a fault.",
+      "files": [
+        "fixtures/broken-embed/"
+      ],
+      "assertions": [
+        "the reopened-yesterday symptom is traced to document.key being the filename and therefore never changing across a save, so the service serves the cached revision it already holds for that key rather than the file that was just written",
+        "the scrambled formatting is attributed to that same reused key rather than being written up as a separate unexplained fault",
+        "the fix given is a key that changes whenever the stored content changes - a revision counter, mtime or content hash - and it names the server side too, since /track overwrites the file without recording a new revision for the next config to pick up",
+        "documentType: \"text\" is flagged as not one of the four accepted values, with word given as what a docx needs",
+        "callbackUrl at the config root is flagged as being outside editorConfig, where the editor actually reads it",
+        "lang at the root is flagged the same way",
+        "onDocumentReady and onDocumentStateChange at the root are flagged as belonging under events, and the report says they are simply never called there rather than raising anything - which is why nobody noticed",
+        "the token being signed in editor.js is flagged, and the finding is that /api/session hands the signing secret to the browser, so every visitor already has it - not merely that the signing is in the wrong layer",
+        "the remedy given is that the server assembles and signs the config and the page receives it already signed, rather than the page being handed a secret it is trusted not to misuse",
+        "the plaintext email used as user.id is flagged and an anonymized session identifier is asked for",
+        "the thin strip is explained as init replacing the placeholder element - which drops the #placeholder CSS rule and makes the style.height assignment after the constructor land on a detached node - with the sizing moving to a wrapper around it",
+        "the dropdown path is flagged for constructing a second DocsAPI.DocEditor on the same id without destroyEditor() first, which is why the symptom follows switching files",
+        "/download is flagged for serving any file named in the query string with no token verification, which is a separate hole from the ones the user reported",
+        "the callback handler is not written up as defective - it already verifies the token before fetching, handles 2 and 6, and answers {\"error\": 0} - since a review padded with a finding that is not there costs the reader the attention the real ones need",
+        "the deliverable is a list of findings with causes and the change each needs, not a rewritten application, which is what was asked for"
+      ]
+    }
+  ]
+}

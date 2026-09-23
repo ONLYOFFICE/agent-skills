@@ -1,0 +1,36 @@
+# Generic multi-stage Dockerfile skeleton — fill in {{PLACEHOLDERS}}, delete
+# these comments, then check the result against infrastructure/docker.md's
+# checklist and base-image decision tree before calling it done.
+
+# ---- build stage ----
+FROM {{BUILD_BASE_IMAGE}} AS builder
+WORKDIR /app
+# Dependency manifests copied BEFORE source, so this layer only re-runs
+# when dependencies change (docker.md's Build Cache section).
+COPY {{DEPENDENCY_MANIFESTS}} ./
+RUN {{INSTALL_DEPENDENCIES_COMMAND}}
+COPY . .
+RUN {{BUILD_COMMAND}}
+# If the app needs a writable directory at runtime (uploads, a local
+# cache) and the runtime stage below is distroless/scratch (no shell to
+# mkdir/chown in later), create and chown it HERE instead — see docker.md's
+# "persistent writable directory" pattern for why this can't be done in
+# the final stage.
+# RUN mkdir -p /app/data && chown -R {{RUNTIME_UID}}:{{RUNTIME_GID}} /app/data
+
+# ---- runtime stage ----
+FROM {{RUNTIME_BASE_IMAGE}}
+WORKDIR /app
+# Non-distroless bases: create the non-root user here instead of relying
+# on a pre-chowned directory copied from the builder.
+# RUN {{CREATE_NONROOT_USER_COMMAND}}
+COPY --from=builder {{BUILD_ARTIFACT_PATH}} {{RUNTIME_ARTIFACT_PATH}}
+# COPY --from=builder --chown={{RUNTIME_UID}}:{{RUNTIME_GID}} /app/data /data
+USER {{RUNTIME_USER}}
+EXPOSE {{PORT}}
+# Dockerfile HEALTHCHECK's CMD is part of the instruction itself — no
+# separate "CMD" element in the array (that's only required in compose's
+# healthcheck.test — see infrastructure/compose.md).
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD {{HEALTHCHECK_COMMAND}}
+ENTRYPOINT [{{ENTRYPOINT_ARGS}}]

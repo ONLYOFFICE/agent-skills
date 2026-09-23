@@ -1,0 +1,92 @@
+# Generic docker-compose skeleton — fill in {{PLACEHOLDERS}}. Check the
+# result against infrastructure/compose.md's checklist and Security Audit
+# table (healthchecks, resource limits, non-root, read_only, cap_drop)
+# before calling it done.
+
+networks:
+  frontend:
+  backend:
+    internal: true
+
+volumes:
+  {{STORAGE_VOLUME_NAME}}:
+  documentserver-data:
+
+services:
+  backend:
+    build:
+      context: {{BACKEND_BUILD_CONTEXT}}
+    image: {{BACKEND_IMAGE_NAME}}:{{TAG}}
+    env_file: .env
+    environment:
+      # Internal address: this service reaches Document Server by its
+      # compose service name. The BROWSER needs a different, public
+      # address instead (see nginx's DOCUMENTSERVER_PUBLIC_ORIGIN below) —
+      # compose.md's "WHEN A SERVICE'S ADDRESS IS USED BOTH SERVER-SIDE AND
+      # FROM THE BROWSER" section explains why these must never be
+      # conflated, and why your callback handler needs its own rewrite
+      # step when a Document-Server-issued URL's origin matches the public
+      # one (see callback/handler.md's WithPublicOrigin pattern).
+      DOCUMENT_SERVER_URL: http://documentserver
+    depends_on:
+      documentserver:
+        condition: service_healthy
+    networks: [frontend, backend]
+    volumes:
+      - {{STORAGE_VOLUME_NAME}}:/data
+    read_only: true
+    cap_drop: [ALL]
+    mem_limit: {{BACKEND_MEM_LIMIT}}
+    healthcheck:
+      # compose's healthcheck.test needs the leading "CMD"/"CMD-SHELL"
+      # element — a Dockerfile HEALTHCHECK's array copied straight in is
+      # missing it and gets rejected. See infrastructure/compose.md.
+      test: ["CMD", "{{BACKEND_HEALTHCHECK_BINARY}}", "{{HEALTHCHECK_FLAG}}"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  documentserver:
+    image: onlyoffice/documentserver:{{DOCUMENTSERVER_TAG}}
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+    networks: [frontend, backend]
+    volumes:
+      - documentserver-data:/var/www/onlyoffice/Data
+    # Floor this at 4g regardless of how small every other service's limit
+    # is - Document Server OOM-kills silently under real edit/conversion
+    # load at lower limits, not at startup, which surfaces later as "the
+    # editor randomly stops loading." See infrastructure/compose.md's
+    # "Sizing Document Server's mem_limit".
+    mem_limit: {{DOCUMENTSERVER_MEM_LIMIT}}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/healthcheck || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # The only publicly published service — see infrastructure/nginx.md for
+  # the CSP frame-src/connect-src rules and the Document-Server proxying
+  # gotchas (own server block, no sub-path mount) that nginx.conf.template
+  # already encodes.
+  proxy:
+    image: nginx:{{NGINX_TAG}}
+    ports:
+      - "{{PUBLISHED_PORT}}:80"
+      - "{{DOCUMENTSERVER_PUBLISHED_PORT}}:{{DOCUMENTSERVER_PUBLISHED_PORT}}"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      documentserver:
+        condition: service_healthy
+    networks: [frontend]
+    read_only: true
+    # nginx needs somewhere writable for its cache/pid even with
+    # read_only: true — a bare tmpfs entry mounts root-owned on every
+    # start regardless of any build-time chown; add uid/gid if this
+    # image's nginx doesn't already run as root internally.
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run

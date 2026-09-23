@@ -1,0 +1,29 @@
+# Six base categories every generated project needs
+# (infrastructure/gitignore.md). Append a target-language section below
+# using that ecosystem's own community-standard patterns
+# (node_modules/, target/, __pycache__/, vendor/, …) rather than leaving
+# {{PLACEHOLDERS}} unfilled.
+
+# Operating Systems
+.DS_Store
+Thumbs.db
+
+# IDE / Editors
+.vscode/
+.idea/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies
+{{DEPENDENCY_DIR_PATTERNS}}
+
+# Build Outputs
+{{BUILD_OUTPUT_PATTERNS}}
+
+# Logs & Diagnostics
+*.log

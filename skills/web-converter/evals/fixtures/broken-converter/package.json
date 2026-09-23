@@ -1,0 +1,9 @@
+{
+  "name": "ingest-converter-worker",
+  "version": "1.0.0",
+  "description": "Converts uploaded files to PDF via the ONLYOFFICE Conversion API before indexing.",
+  "main": "converter.js",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
+  }
+}
