@@ -213,7 +213,7 @@ const boot = async () => {
         if (dialog?.dialogBodyComponent) {
           // A dialog opened from a click has no current file; its box is the display type's -
           // except that autoMaxWidth and fullScreen hand sizing to the body, which is how a
-          // large dialog is built (components.md). Measuring one inside the 400px box those
+          // large dialog is built (components/modal-dialog.md). Measuring one inside the 400px box those
           // flags exist to escape reports an overflow the portal never draws, so it is given
           // the width it asks for. The height is not reproduced for any dialog: the modal's
           // 280px cap and an aside's full height are both absent, so nothing here can show a

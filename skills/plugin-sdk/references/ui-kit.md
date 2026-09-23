@@ -8,7 +8,7 @@ The portal's own component library: it reads theme, accent and direction from co
 
 ## Imports and enums
 
-Import from the barrel only — `@docspace/ui-kit/components/button` is refused by the portal at load. Never bundle the kit ([react.md → Bundling](react.md#bundling)).
+Import from the barrel only — `@docspace/ui-kit/components/button` is refused by the portal at load. Never bundle the kit ([bundling.md](bundling.md)).
 
 `ButtonSize` exists in **both** the kit and the SDK: the kit's is for the kit's `Button`, the SDK's for the `ButtonGroup` passed to `setSaveButton`. Alias one when both appear in a file (`import { ButtonSize as SdkButtonSize } from "@onlyoffice/docspace-plugin-sdk"`).
 
@@ -46,4 +46,4 @@ Defaults and layout facts the `.d.ts` does not state:
 
 ## Icons and assets
 
-Two mechanisms: **item icons** (`icon`, `fileRowIcon`) are asset **file names** — `"icon-16.svg"` — resolved against the plugin's `assets/` and recolored for menus, but only shapes with an explicit `fill`/`stroke` **attribute** are repainted, so ship monochrome SVGs with `fill` on every shape. **Inside a component** nothing is resolved: use an inline SVG, or the plugin's base URL, which the portal sets on the exported object after load — `${plugin.iconUrl}/assets/logo.svg` (not declared by the SDK; read through a cast). Sizes are in [portal.md → Limits](portal.md#limits).
+Two mechanisms: **item icons** (`icon`, `fileRowIcon`) are asset **file names** — `"icon-16.svg"` — resolved against the plugin's `assets/` and recolored for menus, but only shapes with an explicit `fill`/`stroke` **attribute** are repainted, so ship monochrome SVGs with `fill` on every shape. **Inside a component** nothing is resolved: use an inline SVG, or the plugin's base URL, which the portal sets on the exported object after load — `${plugin.iconUrl}/assets/logo.svg` (not declared by the SDK; read through a cast). The logo's size is in [portal.md → Limits](portal.md#limits), each item icon's in its scope's fields table ([scopes.md](plugins/scopes.md)).
