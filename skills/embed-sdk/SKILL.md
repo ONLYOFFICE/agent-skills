@@ -48,13 +48,15 @@ When sources disagree, the higher one wins — say so to the user instead of swi
    `embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|forms|frame}-mode/`,
    `customization/{theming|locale|ui-elements}/`, `events-and-callbacks/`, the generated reference by kind under
    `usage-sdk/{classes|type-aliases|enumerations|variables}/` (`classes/SDKInstance/`, `classes/SDKError/`,
-   `type-aliases/TFrameConfig/`, `type-aliases/TLoginResult/`, `enumerations/SDKErrorCode/`, …), samples such as
-   `samples/basic-samples/init-manager/`, and the live demo `https://demo-embed.onlyoffice.com/`. **Read pages as
-   Markdown**: replace the trailing slash of any page URL with `.md` (`…/embedding-modes/manager-mode.md`,
-   `…/usage-sdk/type-aliases/TFrameConfig.md`). The index of every page with a one-line summary each is
-   `https://api.onlyoffice.com/llms.txt`, section "ONLYOFFICE DocSpace: Embed SDK".
+   `type-aliases/TFrameConfig/`, `type-aliases/TLoginResult/`, `enumerations/SDKErrorCode/`, …), and samples such as
+   `samples/basic-samples/init-manager/`. **A page exists at its trailing slash and nowhere else.** The `.md` twin
+   every URL used to have, the site-wide `llms.txt` index and the live demo host have all been withdrawn and now
+   answer 404 or fail to resolve, so fetch the page itself and expect HTML — a `.md` URL that 404s is the site
+   having changed, not the page having moved.
 3. **The SDK sources** at the matching tag: `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/v2.2.0/src/types/index.ts`,
-   `…/src/enums/index.ts`, `…/src/constants/index.ts`.
+   `…/src/enums/index.ts`, `…/src/constants/index.ts`. **That tag is not cut yet**: the skill describes 2.2.0
+   because the behaviour it documents is 2.2.0's, but `v2.1.0` is the newest tag GitHub resolves, so those three
+   URLs answer 404 until the release lands. Read the installed package's own sources in the meantime.
 4. **This skill** — the process, the traps and the portal behaviours the types cannot express. Facts marked
    "client 4.0.0" were verified against that portal release.
 

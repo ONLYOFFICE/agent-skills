@@ -56,6 +56,16 @@ is also stated in `skills/plugin-sdk/references/plugins/scopes.md`. When an SDK 
   dictionaries from the types), then read the SDK changelog and revise the references that
   describe behaviour (`config-reference.md` traps, `methods.md`, `events.md`, mode files).
   Finish with `--verify` on the links and the README table.
+
+  **The `raw` source is `"verify": false` and is waiting for one thing: the `v2.2.0` tag.**
+  The skill describes 2.2.0 — the named `SDK` export, the fifth `code` argument to `login()` —
+  and the newest tag GitHub resolves is `v2.1.0`, so every `raw` link 404s and `--verify` would
+  report five dead links that are all the same fact. Lowering the pin to 2.1.0 would trade
+  correct prose for a green tick and is not the answer. **The moment `v2.2.0` is tagged**: set
+  `"verify": true` on `raw` in `skills/embed-sdk/sources.json`, delete the "that tag is not cut
+  yet" note from step 3 of "Sources, and which one wins" in its `SKILL.md`, and run `--verify`
+  to confirm the three URLs answer. Until then the flag is what keeps that check able to report
+  a *new* breakage instead of drowning it in a known one.
 - `plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
   generator and validator) and the version pair in `references/plugins/scopes.md`; if the
   kit changed (`docspace-ui-kit-react`, `pnpm build && pnpm pack` on the branch the portal builds against), replace the tarball in `vendor/` and update
