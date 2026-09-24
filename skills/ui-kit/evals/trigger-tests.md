@@ -53,4 +53,33 @@ message is not in English. Do not "fix" either.
 
 | Date | Model | Should (10) | Should not (10) | Notes |
 |---|---|---|---|---|
-| — | — | not yet run | — | — |
+| 2026-09-24 | Opus 5 | 10/10 | 10/10 | Three runs, routing-judgement method (below); 30/30 and 0/30 across them |
+
+**Method, and how it differs from the protocol above.** The protocol asks for twenty fresh
+sessions with the plugin installed. This run could not install the plugin into fresh sessions,
+so it measured the thing the `description` actually controls: three independent judges were
+given the verbatim `description` of all three ONLYOFFICE skills and the twenty messages in three
+different interleaved orders, with no labels, no stated split between them and no mention that
+this was a test, and asked which skill — if any — they would load before answering. Every judge
+routed all ten "should" messages to `ui-kit` and none of the ten "should not" ones to it.
+
+This is weaker evidence than the protocol in one specific way: it tests the description against
+a model reading it deliberately, not against the harness's own selection under load. It is
+stronger in another: the orders differed, so the result is not an artefact of the list's shape.
+Re-run the real protocol before a release that changes the description.
+
+Two things the judges surfaced that the pass/fail table hides:
+
+- The three messages that name no product at all — the unstyled kit, the overlapping toggle with
+  doubled spacing, and `isVisible` on a panel that never opens — triggered on the symptom, and
+  all three judges said so unprompted, naming the symptom pair as what decided it. That clause
+  of the description is carrying real weight.
+- "Which ONLYOFFICE Apps component do I use…" and "a settings form in the DocSpace style" were
+  each called close calls against `plugin-sdk`, which claims "an admin settings form" and owns
+  everything inside the portal. Both resolved to `ui-kit` on the same distinction — imitating
+  the look from outside versus building inside the portal — which is the boundary the two
+  descriptions were written to draw.
+
+One disagreement, and it is not `ui-kit`'s: "Install the DocSpace plugin system on our
+self-hosted portal" went to `none` twice and `plugin-sdk` once. That is a `plugin-sdk` boundary
+question — whether operating the portal belongs to a skill about authoring plugins.
