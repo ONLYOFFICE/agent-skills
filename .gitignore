@@ -5,3 +5,6 @@ node_modules/
 # eval workspaces: generated plugin projects, not sources
 skills/*-workspace/
 .plugin-preview/
+
+# eval fixture installs: the kit arrives as a tarball whose path is the operator's own
+skills/ui-kit/evals/fixtures/consumer-app/package-lock.json

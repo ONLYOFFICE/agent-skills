@@ -300,6 +300,46 @@ export const button = Button;
   { code: 0, has: ["W-docspace-ui-kit"] },
 );
 
+// A file that explains itself was being reported for the thing it explains: the raw-control
+// check read `<button>` out of a JSDoc line. Found by an eval run, not by this suite.
+expect(
+  "controls-named-in-comments",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Commented.tsx": `import { Button, ButtonSize } from "@onlyoffice/apps-ui-kit/components/button";
+
+/**
+ * Uses the kit's Button rather than a bare <button>: the kit's one carries the theme,
+ * and <input> would be the same story in a form.
+ */
+export function Commented() {
+  // a plain <select> here would not be themed either
+  return <Button primary size={ButtonSize.normal} label="Save" onClick={() => {}} />;
+}
+`,
+  },
+  { code: 0, lacks: ["W-raw-controls"] },
+);
+
+expect(
+  "raw-control-in-code",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Raw.tsx": `import { Text } from "@onlyoffice/apps-ui-kit/components/text";
+
+export function Raw() {
+  return (
+    <form>
+      <Text>Name</Text>
+      <input name="name" />
+    </form>
+  );
+}
+`,
+  },
+  { code: 0, has: ["W-raw-controls"] },
+);
+
 // A handler with a `>` in it used to truncate the attribute scan and hide every later prop.
 expect(
   "arrow-in-attributes",
@@ -318,6 +358,67 @@ export function Arrow({ set }: { set: (value: string) => void }) {
 `,
   },
   { code: 0, lacks: ["W-fieldcontainer-label", "W-textinput-required", "W-tabindex"] },
+);
+
+/**
+ * A size given in a stylesheet is a size. Both of these checks used to read only what was
+ * written inline, so a correct wrapper with its height in `app.css` was reported as missing
+ * one — found by an eval grader, which is the expensive way to find it.
+ */
+expect(
+  "size-declared-in-a-stylesheet",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Sized.css": `.toggle-row {
+  display: flex;
+  height: 20px;
+}
+.description-field {
+  width: 100%;
+  flex: 1 1 auto;
+}
+`,
+    "src/Sized.tsx": `import { Textarea } from "@onlyoffice/apps-ui-kit/components/textarea";
+import { ToggleButton } from "@onlyoffice/apps-ui-kit/components/toggle-button";
+
+import "./Sized.css";
+
+export function Sized({ on, set }: { on: boolean; set: (value: string) => void }) {
+  return (
+    <div>
+      <Textarea wrapperClassName="description-field" value="" onChange={(event) => set(event.target.value)} />
+      <div className="toggle-row">
+        <ToggleButton isChecked={on} onChange={() => {}} label="Notify me" />
+      </div>
+    </div>
+  );
+}
+`,
+  },
+  { code: 0, lacks: ["W-toggle-wrapper", "W-textarea-width"] },
+);
+
+// The same two, unsized, still report — a fix must not be bought by going blind.
+expect(
+  "size-declared-nowhere",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Unsized.tsx": `import { Textarea } from "@onlyoffice/apps-ui-kit/components/textarea";
+import { ToggleButton } from "@onlyoffice/apps-ui-kit/components/toggle-button";
+
+export function Unsized({ on, set }: { on: boolean; set: (value: string) => void }) {
+  return (
+    <div>
+      <Textarea style={{ width: "100%" }} value="" onChange={(event) => set(event.target.value)} />
+      <div>
+        <ToggleButton isChecked={on} onChange={() => {}} label="Notify me" />
+      </div>
+    </div>
+  );
+}
+`,
+  },
+  { code: 0, has: ["W-toggle-wrapper", "W-textarea-width"] },
 );
 
 // --- the manifest the validator reads --------------------------------------------------------

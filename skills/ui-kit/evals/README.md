@@ -26,6 +26,17 @@ file.
 Three separate build scenarios rather than one: a build failure darkens every check in a
 scenario at once, and three keep three independent signals.
 
+**What the assertions aim at, after iteration 0.** The fixture installs the real package, and
+the package ships the kit's own READMEs and hand-annotated `.d.ts` — so a baseline that opens
+`node_modules` answers every check that restates one component's page. That is the fixture
+working as intended, not a flaw to strip out: it is the situation a real reader is in. It does
+mean a check phrased as "knows what `labelVisible` defaults to" measures reading, not the
+skill. The checks that separate the two arms are the ones no single page can answer: what
+happens when components are composed, what the kit gets wrong and how to work around it, what
+a prop is *for* rather than what it is called, and whether the thing runs. Each build scenario
+therefore ends with a real `tsc --noEmit` and `vite build`, and with `check-usage.mjs` clean of
+**warnings** as well as errors — the warning tier is where the difference showed.
+
 Prompts are written the way someone would ask — lowercase, mid-thought, wrong vocabulary — and
 **never say component, provider, prop or UI kit**. Recognising the mechanism is the job. They
 also never name a component: a prompt that says "use Aside" tests nothing.
@@ -46,6 +57,13 @@ ways at once. `node ../../scripts/check-usage.mjs fixtures/audit-snippet` finds 
 which is how the fixture is kept honest — but the scenario is graded on the *answer*, not on
 the validator's output, and an answer that only pastes the validator's findings has not read
 the file.
+
+**Every scenario gets the consumer app**, including `explain` and `audit`: the snippet is
+dropped into a copy of it at `fixtures/audit-snippet/Panel.tsx`, and the `explain` question is
+asked against a project that has the kit installed. Iteration 0 ran those two without one, so
+the baseline had no package to read while the build scenarios' baseline did — the scores were
+right but they were not measuring the same thing. With the package present in all five, a
+check that still fails in the baseline is one the package's own pages do not answer.
 
 ## Running them
 
@@ -90,7 +108,40 @@ transcript for reads outside the project before trusting a result.
 
 | Iteration | Date | Model | Scenario | With skill | Baseline |
 |---|---|---|---|---|---|
-| — | — | — | — | not yet run | — |
+| 0 | 2026-09-23 | Opus 5 | `settings-form` | 13/14 | 11/14 |
+| 0 | 2026-09-23 | Opus 5 | `confirm-dialog` | 11/11 | 11/11 |
+| 0 | 2026-09-23 | Opus 5 | `side-panel-list` | 13/13 | 13/13 |
+| 0 | 2026-09-23 | Opus 5 | `explain-empty-labels` | 7/7 | 2/7 |
+| 0 | 2026-09-23 | Opus 5 | `audit-snippet` | 9/9 | 4/9 |
+
+| 1 | 2026-09-24 | Opus 5 | `settings-form` | 16/18 | 14/18 |
+| 1 | 2026-09-24 | Opus 5 | `confirm-dialog` | 14/14 | 12/14 |
+| 1 | 2026-09-24 | Opus 5 | `side-panel-list` | 15/15 | 14/15 |
+| 1 | 2026-09-24 | Opus 5 | `explain-empty-labels` | 9/10 | **10/10** |
+| 1 | 2026-09-24 | Opus 5 | `audit-snippet` | 13/13 | 10/13 |
+
+Iteration 0 totalled 53/54 against 41/54, at 1.5× the wall clock and 1.3× the tokens. Read it
+with the two ties in mind: their checks were answerable from the package's own documentation,
+and the graders showed both arms citing it by name. The run earned three things regardless —
+the `explain` and `audit` scenarios, where there is no project to read from; zero invented
+findings against the baseline's five; and two real defects in the kit
+(`docs/known-defects.md`) plus one in `check-usage.mjs`. The assertions were rewritten
+afterwards to aim at composition, workarounds and a real build.
+
+Iteration 1 totalled 67/70 against 60/70 — a smaller margin than iteration 0's, and the
+truer one: the baseline now has the package in all five scenarios, and the package's own
+pages answer most of what a single component does. **The baseline won `explain-empty-labels`,
+10/10 to 9/10.** What the skill still earns is composition and discipline — the failure path
+of a dialog, colours declared for both themes, a panel laid out so its last row is reachable,
+a review that stays inside the file it was given and says what it checked against. Five runs
+were made rather than ten; `PROVENANCE.md` in the workspace says which and why.
+
+The run's real yield was three corrections it forced, each verified against the kit's source
+rather than argued: `Textarea` cannot be widened through `style` (it lands on the inner
+scroller; `wrapperClassName` is the only way in); an empty toast title renders **no element**,
+so there is no gap to see; and `Dropzone` translates nothing — eleven components do, and it is
+not one of them. All three were wrong in the skill *and* in the kit's own pages, which is the
+argument for running this at all.
 
 ## Adding one
 

@@ -6,23 +6,27 @@
       "name": "settings-form",
       "mode": "build",
       "prompt": "in the app in this folder add a settings screen for a room: its name, a longer description under it, who can get in (private, anyone with the link, everyone on the portal) and a switch for email notifications. the name can't be empty - say so under the field if it is. while it saves, nothing should be editable and the save button should look busy. half of us run dark so it has to be right there too, and it should look like it came out of docspace.",
-      "expected_output": "The fixture app gains a settings screen. Fields are FieldContainer with labelVisible and isVertical, holding TextInput (with type and value), Textarea and ComboBox; the switch is ToggleButton inside an element with a height. Validation is the app's own state driving hasError plus errorMessage on the container, on a form with noValidate. Every control carries tabIndex={0} and an aria-label, and the fields are stacked without a gap. The tree is wrapped in ThemeProvider from providers/theme and TranslationProvider from providers/translation with a Map built from locales/en/Common.json; no stylesheet is imported. One primary Button, disabled or isLoading while saving, with every control isReadOnly. check-usage.mjs reports zero errors.",
+      "expected_output": "The fixture app gains a settings screen. Fields are FieldContainer with labelVisible and isVertical, holding TextInput (with type and value), Textarea given a width, and one controlled choice component whose selection lives in the app's state. The switch is ToggleButton inside an element with a height. Validation is the app's own state driving hasError plus errorMessage, on a form with noValidate. The reachable controls carry tabIndex={0} and an aria-label, and the fields are stacked without a gap. The tree is wrapped in ThemeProvider from providers/theme (no colorTheme) and TranslationProvider from providers/translation with a Map built from locales/en/Common.json; no stylesheet is imported. Saving puts every control into isReadOnly or isDisabled and the one primary Button into isLoading. The project typechecks and builds, and check-usage.mjs reports nothing.",
       "files": ["fixtures/consumer-app/"],
       "assertions": [
         "each field is a FieldContainer carrying `labelVisible` — the default is false, so a container given only `labelText` renders no label at all and reports nothing",
         "the fields are stacked without a `gap` between them, or every container is given `removeMargin`, because FieldContainer's own 16px bottom margin adds to a parent's gap rather than being replaced by it",
         "every TextInput has both `type` and `value`, and its onChange is treated as a ChangeEvent",
         "the multi-line field is a Textarea given a width (style width 100% or equivalent) — it has a max-width and no width of its own, so it does not fill its field",
-        "the access choice is a ComboBox whose `selectedOption` is held in the app's own state and updated from `onSelect`; the component selects nothing by itself",
+        "the access choice is one controlled component whose selection lives in the app's own state — a ComboBox with `selectedOption` updated from `onSelect`, or a RadioButtonGroup with `selected` updated from `onClick`; neither holds a selection of its own, so a component left to itself shows nothing chosen",
         "the notification switch is a ToggleButton inside an element with an explicit height of at least 16px, since it is absolutely positioned and otherwise overlaps the row below it",
-        "every input and checkbox is given `tabIndex={0}` — both default to -1, so the form cannot be filled in from the keyboard",
+        "the controls whose props accept it — TextInput and Textarea — are given `tabIndex={0}`, because both default to -1 and the form cannot otherwise be filled in from the keyboard; where a control's props take no `tabIndex` at all the answer says so rather than passing one that is dropped",
         "each control carries an `aria-label` (or the answer says why the Textarea cannot), because FieldContainer renders its label with an empty htmlFor and associates it with nothing",
         "the invalid name shows a message through `hasError` **and** `errorMessage` on the FieldContainer; one without the other renders nothing",
         "native validation is kept out of the way (noValidate on the form, or no `required` attribute), or the submit handler still runs — otherwise the browser blocks submit before the error state is set",
+        "while the save is in flight the controls are genuinely not editable — `isReadOnly` or `isDisabled` reaches every one of them — rather than only being dimmed or covered",
+        "the save button carries `isLoading` while the request is in flight, rather than a label swapped to 'Saving…' or a spinner of the author's own",
         "the tree is wrapped in ThemeProvider from providers/theme and TranslationProvider from providers/translation with a translations Map built from locales/en/Common.json — not in Providers, which needs a portal url and api key",
+        "`colorTheme` is not passed to ThemeProvider, and no value is invented for it: it is the portal's accent palette, and an application of its own leaves it out",
         "the whole-library @onlyoffice/apps-ui-kit/styles.css is not imported: each component's CSS arrives with the component, and pulling the bundle ships 727 KB of styles the app does not use",
-        "no hardcoded hex colours; the kit's own components or CSS variables carry the dark theme",
-        "node skills/ui-kit/scripts/check-usage.mjs on the project reports zero errors"
+        "the application's own colours are declared as a light/dark pair under the `.light` and `.dark` classes ThemeProvider writes on `<body>`, or taken from the kit's own components — no colour of the application's is left unpaired, because the kit publishes no global palette variable to reach for",
+        "the project typechecks and builds as left: `tsc --noEmit` and `vite build` both succeed",
+        "node skills/ui-kit/scripts/check-usage.mjs on the project reports zero errors and zero warnings, or the answer names each remaining warning and says why it stands"
       ]
     },
     {
@@ -30,20 +34,23 @@
       "name": "confirm-dialog",
       "mode": "build",
       "prompt": "in the app in this folder: when someone deletes a room we want the usual 'are you sure' box over the page - a title, one line saying it can't be undone, and two buttons of the same width where delete is the loud red one. while the delete is running the box must not be closeable, not by the cross, not by escape, not by clicking outside, and the buttons shouldn't fire twice. it needs to look like docspace.",
-      "expected_output": "A dialog component built on ModalDialog with displayType modal. It is rendered conditionally and given `visible`; Header, Body and Footer are direct children. Both footer buttons carry `scale`; the destructive one is `primary` with `--accent-button` set through its own `style`, with no wrapper element. Closing goes through `onClose`, and `isCloseable={false}` while the request is in flight; the confirm button uses `isLoading` and the cancel button `isDisabled`. Providers are mounted. check-usage.mjs reports zero errors.",
+      "expected_output": "A dialog component built on ModalDialog. It is rendered conditionally and given `visible`; Header, Body and Footer are direct children. Both footer buttons carry `scale`; the destructive one is `primary` with `--accent-button` set through its own `style`, with no wrapper element. Closing goes through `onClose`, and `isCloseable={false}` while the request is in flight; the confirm button uses `isLoading` and the cancel button `isDisabled`, with a synchronous guard closing the same-tick window. A failed delete leaves the dialog open and says what failed. Providers are mounted, the project builds, and check-usage.mjs reports nothing.",
       "files": ["fixtures/consumer-app/"],
       "assertions": [
-        "the dialog is ModalDialog with displayType modal, and its visibility is passed as `visible` — not isVisible, isOpen or open, which the component ignores without an error",
+        "the dialog's visibility is passed as `visible` — not isVisible, isOpen or open, which the component ignores without an error",
         "the dialog is also rendered conditionally rather than always mounted, because `visible` toggles CSS classes and mounts nothing: the body and its effects run while it is invisible",
         "ModalDialog.Header, .Body and .Footer are direct children of ModalDialog — a slot wrapped in a fragment or a component of the author's own renders nothing and reports nothing",
         "both footer buttons carry `scale` so they share the row evenly, and neither is wrapped in an element of the author's own, which would take it out of the flex row and size it to its content",
         "the red is produced by overriding `--accent-button` on the destructive Button itself, through its `style` — there is no destructive variant, and setting the variable on the dialog would recolour the close cross too",
-        "the destructive button is `primary` and it is the only primary button in the dialog",
         "closing goes through `onClose`; while the request is in flight the dialog is made uncloseable with `isCloseable={false}` rather than by removing the handler",
-        "the in-flight state is expressed with `isLoading` on the confirm button and `isDisabled` on cancel, so neither can fire twice",
+        "the in-flight state is expressed with `isLoading` on the confirm button and `isDisabled` on cancel",
+        "the same-tick double fire is closed as well: the handler returns early on a flag it sets synchronously (a ref, or a guard before the first await), not on `isLoading` alone, which only takes effect after React has re-rendered",
+        "a delete that fails leaves the dialog open and tells the reader what failed, rather than closing as though it had succeeded",
+        "the red reads on the dark theme too — either it is one colour stated to hold against both backgrounds, or it is declared per theme under the class ThemeProvider writes on `<body>`",
         "the tree is wrapped in ThemeProvider from providers/theme and TranslationProvider from providers/translation; no composite Providers, no components/theme-provider",
         "the whole-library styles.css is not imported",
-        "node skills/ui-kit/scripts/check-usage.mjs on the project reports zero errors"
+        "the project typechecks and builds as left: `tsc --noEmit` and `vite build` both succeed",
+        "node skills/ui-kit/scripts/check-usage.mjs on the project reports zero errors and zero warnings, or the answer names each remaining warning and says why it stands"
       ]
     },
     {
@@ -51,22 +58,24 @@
       "name": "side-panel-list",
       "mode": "build",
       "prompt": "in our vite app (the one in this folder, the onlyoffice bits are installed) add a 'members' button to the page. clicking it slides a panel in from the right listing the people from src/data/members.json with name, email and role, a search box at the top that filters as you type, and a close cross. while the list 'loads' (fake a second of delay) show placeholders, and if the search finds nobody say so nicely. it has to look like docspace in both light and dark",
-      "expected_output": "The fixture app is extended in place. The panel is Aside (or ModalDialog with displayType aside) controlled by a boolean in state passed as `visible`, closed through `onClose`. The list is not Rows/RowContainer/RowContent but plain rows built from kit primitives or a Table from components/table. The search is SearchInput whose onChange receives the string. RectangleSkeleton rows during the delay, EmptyView when nothing matches. Both providers wrap the tree; the whole-library stylesheet is not imported; nothing is imported from selectors/, billing or uploader. check-usage.mjs reports zero errors.",
+      "expected_output": "The fixture app is extended in place. The panel is Aside (or ModalDialog with displayType aside) controlled by a boolean in state passed as `visible`, closed through `onClose`, and laid out so its last rows can be reached. The list is not Rows/RowContainer/RowContent but plain rows built from kit primitives or a Table from components/table. The search is SearchInput whose onChange receives the string. RectangleSkeleton rows during the delay, EmptyView when nothing matches, and both reset when the panel is reopened. Both providers wrap the tree; the whole-library stylesheet is not imported; nothing is imported from selectors/, billing or uploader. The project builds and check-usage.mjs reports nothing.",
       "files": ["fixtures/consumer-app/"],
       "assertions": [
         "the panel is the kit's Aside or ModalDialog with displayType aside, and its visibility is passed as `visible` — not isVisible, isOpen or open, which the component ignores without an error",
         "closing goes through onClose and the header cross that calls it, not by unmounting the panel with a conditional render alone",
+        "the last rows of a long list can be reached: the panel is made a flex column (through `className`, or `withoutBodyScroll` with a scroller of the app's own) so the body takes the space left under the header — rather than the kit scroller's own inline height being overridden with `!important`, which reaches the same pixels and breaks the next time that element changes",
         "the list is built from plain rows of kit primitives or from components/table, not from Row/RowContent/RowContainer, which read children by index and measure a literal element id",
         "the search box is the kit's SearchInput and its onChange is treated as the string it receives, unlike every other kit input",
         "the search filters without a visible delay, or `refreshTimeout` is lowered — the default debounce is a whole second",
         "RectangleSkeleton (or Loader with an explicit type) renders during the delay; a bare Loader, which shows its label as text and no spinner, is not used",
         "an empty result renders EmptyView or an explicit line of text, not a blank body",
+        "reopening the panel starts it clean — the fake delay runs again and the search box no longer holds the previous term",
         "the tree is wrapped in ThemeProvider from providers/theme and TranslationProvider from providers/translation with a translations Map built from locales/en/Common.json — not in Providers, which needs a portal url and api key",
         "the whole-library @onlyoffice/apps-ui-kit/styles.css is not imported — each component's CSS arrives with the component",
         "no import specifier contains PUBLIC_DIR, /dist/, selectors/, billing, uploader or ai-agent",
-        "a component that is subpath-only is imported from @onlyoffice/apps-ui-kit/components/<name> rather than expected by name from the barrel",
-        "no hardcoded hex colours; theme variables or kit props instead, so the dark theme holds",
-        "node skills/ui-kit/scripts/check-usage.mjs on the project reports zero errors"
+        "the application's own colours — the panel's rows, its empty state, its skeleton backgrounds — are declared as a light/dark pair under the `.light` and `.dark` classes ThemeProvider writes on `<body>`, with none left unpaired, because the kit publishes no global palette variable to reach for",
+        "the project typechecks and builds as left: `tsc --noEmit` and `vite build` both succeed",
+        "node skills/ui-kit/scripts/check-usage.mjs on the project reports zero errors and zero warnings, or the answer names each remaining warning and says why it stands"
       ]
     },
     {
@@ -74,16 +83,19 @@
       "name": "explain-empty-labels",
       "mode": "explain",
       "prompt": "we pulled the onlyoffice components into our app and some of the text is just gone. the toast we show after saving has no title, just a gap where it should be, and the three-dot menus on the cards are blank too. console says something about i18next and a missing key. the buttons we label ourselves are fine. what did we miss?",
-      "expected_output": "The answer names TranslationProvider from @onlyoffice/apps-ui-kit/providers/translation as the missing piece, and the shape of what it needs: a Map of language to a Map of namespace to the flat table, built from @onlyoffice/apps-ui-kit/locales/en/Common.json. It explains why only some text is missing — text passed as props is the caller's, while the toast titles and the tile menus are looked up in the Common namespace — and why the result is empty rather than the raw key: the kit's lookup returns an empty string when it can find no instance, and logs one line per key. It should also note that a provider given no translations renders its children and installs no context at all, so mounting it is not enough by itself.",
-      "files": [],
+      "expected_output": "The answer names TranslationProvider from @onlyoffice/apps-ui-kit/providers/translation as the missing piece, and the shape of what it needs: a Map of language to a Map of namespace to the flat table, built from @onlyoffice/apps-ui-kit/locales/en/Common.json. It explains why only some text is missing — text passed as props is the caller's, while the toast titles and the tile menus are looked up in the Common namespace — and why the result is empty rather than the raw key: the kit's lookup returns an empty string when it can find no instance, and logs one line per key. It says that a provider given no translations installs no context at all, so mounting the element is not the fix; that the provider builds an i18next instance of its own, so the usual I18nextProvider / addResourceBundle advice does not reach the kit's labels; and that the package ships English only, in three namespaces.",
+      "files": ["fixtures/consumer-app/"],
       "assertions": [
         "names TranslationProvider from @onlyoffice/apps-ui-kit/providers/translation as what is missing",
         "gives the shape of `translations`: a Map of language to a Map of namespace to the key/value table, not a plain object",
         "points at @onlyoffice/apps-ui-kit/locales/en/Common.json as the table the kit's own labels come from, rather than telling the reader to write the strings themselves",
+        "says that mounting the provider is not by itself the fix: given no `translations` it installs no context at all and renders only its children, so the Map is the working part",
+        "says the provider builds an i18next instance of its own, so the usual advice — an `I18nextProvider`, or `addResourceBundle` on the application's own singleton — does not reach the kit's labels",
         "explains why only some text is affected: labels passed as props are the caller's, while toast titles and the tile menus are looked up in the Common namespace at call time",
         "explains that the text comes out empty rather than as the raw key because the kit's lookup returns an empty string when there is no instance",
-        "does not blame the theme provider, a missing stylesheet or a bundler configuration",
-        "does not invent a prop, a hook or an i18next option that the kit does not have"
+        "says the package ships English only, in three namespaces, and does not name locale files it does not have",
+        "does not offer the theme provider, a missing stylesheet or a bundler setting as the cause; naming one in order to rule it out is fine",
+        "every API it names exists — the provider, its `translations` and `locale` props, and the `locales/en/Common.json` table — with no invented prop, hook or i18next option"
       ]
     },
     {
@@ -91,18 +103,22 @@
       "name": "audit-snippet",
       "mode": "audit",
       "prompt": "someone left this file behind on a branch - fixtures/audit-snippet/Panel.tsx. the panel never opens and I don't trust the rest of it either. what's wrong with it?",
-      "expected_output": "A review naming, at minimum: `isVisible` on Aside, which the component does not read (its prop is `visible`), as the reason the panel never opens; the import from selectors/People, which is portal-internal and fetches through the DocSpace REST client; the PUBLIC_DIR specifier, which is a DocSpace client webpack alias that resolves nowhere else; and the whole-library styles.css import, which is unnecessary because each component imports its own CSS and costs 727 KB. Better answers also catch the FieldContainer without labelVisible, the TextInput without tabIndex, the column gap doubling the field spacing, and the SearchInput handler reading .target.value off a string.",
-      "files": ["fixtures/audit-snippet/"],
+      "expected_output": "A review naming, at minimum: `isVisible` on Aside, which the component does not read (its prop is `visible`), as the reason the panel never opens; the import from selectors/People, which is portal-internal and fetches through the DocSpace REST client, with the generic Selector named as the consumer's replacement; the PUBLIC_DIR specifier, which is a DocSpace client webpack alias that resolves nowhere else; and the whole-library styles.css import, which is unnecessary because each component imports its own CSS and costs 727 KB. It also catches the FieldContainer without labelVisible, the TextInput without tabIndex and without its required type, the column gap doubling the field spacing, and the SearchInput handler reading .target.value off a string — and it says what it checked against.",
+      "files": ["fixtures/consumer-app/", "fixtures/audit-snippet/"],
       "assertions": [
         "names `isVisible` on Aside as the reason the panel never opens, and gives `visible` as the prop the component actually reads",
-        "names the import from selectors/ as portal-internal — it fetches through the DocSpace REST client and a portal store, so it cannot work outside the portal",
+        "states plainly that the import from selectors/ is portal-internal — it fetches through the DocSpace REST client and a portal store, so it cannot work outside the portal — without handing the check back to the reader, and names the generic `Selector` as what a consumer uses instead",
         "names PUBLIC_DIR as a DocSpace client webpack alias that does not resolve for a consumer of the package",
-        "names the whole-library styles.css import as unnecessary, because each component imports its own CSS, and expensive at 727 KB",
+        "names the whole-library styles.css import as unnecessary, and gives the reason: each component imports its own CSS, so the import adds nothing the components do not already bring",
+        "gives the cost of that import as the whole library's stylesheet, around 727 KB the application does not use",
         "names the SearchInput onChange handler reading `.target.value`, since that callback receives the string itself",
         "names the FieldContainer without `labelVisible`, whose default is false, so the label is not rendered",
         "names the missing `tabIndex={0}` on the text input, which defaults to -1 and leaves the field out of the tab order",
-        "does not report the absence of a stylesheet import as a fault, and does not recommend adding styles.css",
-        "does not invent faults: every finding can be pointed at a line of the file"
+        "names the TextInput missing its required `type`",
+        "names the column `gap` doubling the spacing against FieldContainer's own 16px bottom margin, which adds to a gap rather than collapsing into it",
+        "does not treat the styles.css import as necessary: it is not defended, kept or repaired, and no stylesheet import is recommended in its place",
+        "at most one finding cannot be pointed at a line of the file, and the review does not frame the file as a DocSpace plugin — nothing in the prompt says it is one, and the advice differs",
+        "says what it checked the file against — the kit version it read, and what it could not read — rather than presenting library facts with no source"
       ]
     }
   ]

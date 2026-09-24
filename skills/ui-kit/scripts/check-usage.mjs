@@ -99,6 +99,47 @@ function sourceFiles(dir, out = []) {
 const lineOf = (text, index) => text.slice(0, index).split("\n").length;
 
 /**
+ * Class names the project's own stylesheets declare something for, mapped to the declarations.
+ *
+ * Two of the checks below ask whether an element has been given a size, and the answer lives in
+ * a stylesheet as often as in an inline `style`. A wrapper written `<div className="toggle-row">`
+ * with `height: 20px` in `app.css` is correct, and an eval grader caught this reporting it — the
+ * reader is sent to fix something that is not broken, which is worse than saying nothing.
+ */
+function styleRules(dir, out = new Map()) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const at = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (!SKIP_DIRS.has(entry.name)) styleRules(at, out);
+    } else if (/\.(css|scss|sass|less)$/.test(entry.name)) {
+      const sheet = readFileSync(at, "utf8");
+      for (const [, selector, body] of sheet.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        for (const [, name] of selector.matchAll(/\.([A-Za-z_][\w-]*)/g)) {
+          out.set(name, `${out.get(name) ?? ""};${body}`);
+        }
+      }
+    }
+  }
+  return out;
+}
+
+const cssRules = styleRules(projectDir);
+
+/** Every identifier appearing in a `className` inside the fragment — CSS modules included. */
+const classesIn = (fragment) => {
+  const names = [];
+  for (const match of fragment.matchAll(/(?:wrapperClassName|className)=(?:"([^"]*)"|'([^']*)'|\{([^}]*)\})/g)) {
+    for (const token of (match[1] ?? match[2] ?? match[3] ?? "").match(/[A-Za-z_][\w-]*/g) ?? []) {
+      names.push(token);
+    }
+  }
+  return names;
+};
+
+const declaresIn = (fragment, property) =>
+  classesIn(fragment).some((name) => property.test(cssRules.get(name) ?? ""));
+
+/**
  * The attributes of a JSX tag, from the character after its name to the `>` that closes it.
  * Walked rather than matched: `onChange={(e) => …}` puts a `>` inside the attributes, and a
  * regex that stops at the first one truncates every handler in the file.
@@ -237,14 +278,18 @@ function checkTag(file, text, name, index, component) {
   if ((name === "TextInput" || name === "Checkbox") && !has("tabIndex")) {
     add("warning", "W-tabindex", file, line, `<${name}> without \`tabIndex\``, "it defaults to -1, so the field cannot be reached from the keyboard");
   }
-  if (name === "Textarea" && !/width/.test(attributes)) {
-    add("warning", "W-textarea-width", file, line, "<Textarea> with no width", "it has a max-width and no width, so it does not fill its field; style={{ width: \"100%\" }}");
+  if (name === "Textarea" && !declaresIn(attributes, /(^|[\s;{])(width|flex)\s*:/)) {
+    add("warning", "W-textarea-width", file, line, "<Textarea> whose wrapper is given no width", "it has a max-width and no width of its own, and only `wrapperClassName` reaches the element that carries it — a `style` is spread onto the inner scroller, which is already full width, so it reads as though it worked and changes nothing");
   }
   if (name === "SearchInput" && /\.target\.value/.test(attributes)) {
     add("error", "E-searchinput-event", file, line, "<SearchInput> handler reads `.target.value`", "its onChange receives the string itself, unlike every other input in the kit, so this is undefined");
   }
-  if (name === "ToggleButton" && !/height/.test(text.slice(Math.max(0, index - 200), index))) {
-    add("warning", "W-toggle-wrapper", file, line, "<ToggleButton> with no sized wrapper above it", "it occupies no space of its own and overlaps whatever follows; wrap it in an element at least 16px tall");
+  if (name === "ToggleButton") {
+    const above = text.slice(Math.max(0, index - 300), index);
+    const sized = /height/.test(above) || declaresIn(above, /(^|[\s;{])(min-)?height\s*:/);
+    if (!sized) {
+      add("warning", "W-toggle-wrapper", file, line, "<ToggleButton> with no sized wrapper above it", "it occupies no space of its own and overlaps whatever follows; wrap it in an element at least 16px tall");
+    }
   }
 }
 
@@ -257,8 +302,20 @@ const usedComponents = new Set();
 let usesKit = false;
 const mounted = new Set();
 
+/**
+ * Comments blanked out, newlines kept so every line number still lands. A file that
+ * documents what it does — `<button>` in a JSDoc line explaining why the kit's Button is
+ * used instead — was being reported for the thing it was explaining.
+ */
+function withoutComments(text) {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, " "))
+    .replace(/(^|[^:])\/\/[^\n]*/g, (line, before) => before + " ".repeat(line.length - before.length));
+}
+
 for (const file of files) {
-  const text = readFileSync(file, "utf8");
+  const source = readFileSync(file, "utf8");
+  const text = withoutComments(source);
   const shown = path.relative(projectDir, file).split(path.sep).join("/");
   const local = new Map();
 
@@ -287,8 +344,11 @@ for (const file of files) {
     }
   }
 
-  if (local.size && /<(?:button|input|select|textarea)\b/.test(text)) {
-    add("warning", "W-raw-controls", shown, 1, "a bare HTML control in a file that uses the kit", "the kit's own Button, TextInput and Checkbox carry the theme; a bare one does not");
+  if (local.size) {
+    const raw = /<(?:button|input|select|textarea)\b/.exec(text);
+    if (raw) {
+      add("warning", "W-raw-controls", shown, lineOf(text, raw.index), `a bare <${raw[0].slice(1)}> in a file that uses the kit`, "the kit's own Button, TextInput and Checkbox carry the theme; a bare one does not");
+    }
   }
 
   if (/<FieldContainer/.test(text)) {
