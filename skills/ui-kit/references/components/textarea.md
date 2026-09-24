@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/textarea/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 3d55a5191c89c8a473957676d50d09e55e66b6d56f41b64dbd8ee5196b2e3d7f -->
+<!-- body-sha256: 97139754a050f8f504c59feba1a48e42839366e74517ded3b5e04d6ecf1ad4b0 -->
 
 > Synced from the kit's own `components/textarea/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -184,8 +184,11 @@ export function WebhookPayload() {
 - **It has a maximum width but no width.** The field caps at `--textarea-width` (1200px) and
   otherwise takes whatever width the layout gives it — which, as a flex or grid item, is the
   width of its content, not of the free space. In a flex row it collapses to a sliver that is
-  still focusable and still accepts text. Give it `width: 100%` or `flex: 1 1 auto` with
-  `min-width: 0` where the parent is a flex container.
+  still focusable and still accepts text. Give it `width: 100%` — or `flex: 1 1 auto` with
+  `min-width: 0` where the parent is a flex container — through `wrapperClassName`, which is
+  the only prop that reaches the element carrying the max-width. `style` does not: it is
+  spread onto the inner `Scrollbar`, whose own rule is already `width: 100% !important`, so a
+  width passed that way reads as though it had worked and changes nothing.
 - **It is out of the tab order by default.** `tabIndex` defaults to `-1`; pass `0` for a field
   the user is meant to reach with the keyboard. Every example above does.
 - **`isJSONField` overrides `hasError`.** In that mode the error state is recomputed from

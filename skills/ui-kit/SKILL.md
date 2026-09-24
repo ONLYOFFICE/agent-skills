@@ -116,8 +116,10 @@ the rule wins and the kit's page is what should be corrected.
 11. **`ComboBox` selects nothing by itself**: `onSelect` reports, `selectedOption` is yours.
     It matches by label rather than key, and its list is 200px wide without `scaledOptions`.
 12. **Three controls have no size of their own.** `ToggleButton` needs a wrapper with a height
-    (it is absolutely positioned and overlaps the next row), `Textarea` needs
-    `width: 100%`, and `Loader` needs an explicit `type` or it renders its label as text.
+    (it is absolutely positioned and overlaps the next row), `Textarea` needs `width: 100%`
+    through `wrapperClassName` — a `style` you pass lands on its inner scroller, which is
+    already full width, and never on the element that carries the max-width — and `Loader`
+    needs an explicit `type` or it renders its label as text.
 13. **`ModalDialog`: `visible` mounts nothing** — the body and its effects run while it is
     invisible, so render the dialog conditionally too. `Header`/`Body`/`Footer` must be direct
     children or they vanish. The footer is a flex row: give both buttons `scale` and wrap

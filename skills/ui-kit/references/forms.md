@@ -90,7 +90,7 @@ confusions. What it cannot show:
 | The field is | Use | Because |
 |---|---|---|
 | One line of text | `TextInput` inside `FieldContainer` | `type` and `value` are required; 173px wide unless `scale` |
-| Several lines | `Textarea` with `style={{ width: "100%" }}` | It has a max-width and no width, so it does not fill its field |
+| Several lines | `Textarea` with `wrapperClassName` giving `width: 100%` | It has a max-width and no width, so it does not fill its field |
 | A choice from a short list | `ComboBox` | Not a native `<select>`: it renders a button and a drop-down |
 | A search box over a list | `SearchInput` | Its `onChange` receives the **string**, unlike every other input here |
 | On or off, one setting | `ToggleButton` in a wrapper with a height | It occupies no space of its own and overlaps what follows |
@@ -103,8 +103,11 @@ confusions. What it cannot show:
 **`TextInput`** — `onChange` receives the `ChangeEvent`. Without `scale` it is 173px whatever
 its container is. `maxLength` defaults to 255.
 
-**`Textarea`** — no width of its own, a max-width of 1200px. In a flex row add
-`flex: 1 1 auto; min-width: 0` as well, or it refuses to shrink.
+**`Textarea`** — no width of its own, a max-width of 1200px. The width goes on the outer
+wrapper and `wrapperClassName` is the only way to it: the `style` you pass is spread onto the
+inner `Scrollbar`, whose own rule is already `width: 100% !important`, so a `style` reads as
+though it worked and changes nothing. In a flex row put `flex: 1 1 auto; min-width: 0` in the
+same class, or it refuses to shrink.
 
 **`ComboBox`** — selects nothing by itself: `onSelect` hands you the option, `selectedOption`
 is yours to store and pass back. The match is by **label**, not key, so two options reading

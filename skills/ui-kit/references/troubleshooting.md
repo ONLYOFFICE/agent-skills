@@ -20,7 +20,7 @@ console unless it says so.
 | Buttons or toasts with empty labels, `[i18n] Missing translation for key …` in the console | No `TranslationProvider`, or it was given no `translations` — the helper returns `""` when it finds no instance | Pass the Map — [`i18n.md`](i18n.md) |
 | A field has no label although `labelText` is set | `FieldContainer`'s `labelVisible` defaults to `false` and the whole label block is behind it | Pass `labelVisible` |
 | No error message under an invalid field | It needs `hasError` **and** `errorMessage` | Pass both |
-| A toast with a gap where its title would be | The default title is translated at call time and came back empty | Mount the provider, or pass `null` to drop the title |
+| A toast with no title line | The default title is translated at call time, came back empty, and an empty title renders nothing | Mount the provider; passing `null` deliberately looks identical |
 
 ## It does not open, or does not close
 

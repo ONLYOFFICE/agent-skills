@@ -82,6 +82,30 @@ matters; layering is `zIndex`, 310 by default.
 click-to-close element, and an `aria-label` you pass is spread onto the internal header — and
 only when a header is rendered. This is a defect, not a technique to work around; say so.
 
+**The bottom of a long `Aside` body cannot be reached.** The panel is `position: fixed;
+height: 100%` and block-level, and the `Scrollbar` inside it is given no height of its own — so
+it sizes to the whole panel rather than to what is left under the header, and its last ~53px
+sit below the panel's bottom edge. Take the layout over: `className` makes the panel a flex
+column, `withoutBodyScroll` renders the children directly, and a scroller of yours takes the
+remaining space.
+
+```css
+.members-panel {
+  display: flex;
+  flex-direction: column;
+}
+.members-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+```
+
+Overriding the kit scroller's own inline height with `!important` reaches the same pixels and
+breaks the next time that element changes. `style` is not a way in either: `Aside` writes
+`style={{ zIndex }}` before spreading the rest of its props, so a `style` of yours replaces it
+and lands on the header as well.
+
 ## Menus
 
 `DropDown` with `DropDownItem` is a menu anchored under a control. `ContextMenu` is the
@@ -132,8 +156,10 @@ export const saved = () => toastr.success("Room settings saved");
   means never, and **anything below 750 is silently replaced with 5000**.
 - **A toast closes on click unless `withCross` is set** — the two are exclusive.
 - **The default title is translated at call time** from the `Common` namespace. Without
-  `TranslationProvider` it is an empty string and the toast is drawn with a gap where it
-  would be. Pass `null` to drop it deliberately.
+  `TranslationProvider` it comes back as an empty string, and the title is rendered only when
+  it is truthy — so the toast arrives with no title line at all, not with a blank one. Passing
+  `null` deliberately reaches the same result, which is what makes a missing provider read as
+  a design decision.
 - **The container renders into `#root`**, falling back to `document.body`. An application
   whose root element has another id gets its toasts on the body — outside the element the
   theme class is written on, so the colours go with it.

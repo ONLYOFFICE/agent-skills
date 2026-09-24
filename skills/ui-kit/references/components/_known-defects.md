@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 docs/known-defects.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: bbab814fce779f578f112997c27eb37d8bf1d075cc3af875e244a746d58a31be -->
+<!-- body-sha256: bb629efa1e129819363838f118830585e95404abeac73b231794cad216b897b1 -->
 
 > Synced from the kit's own `docs/known-defects.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -101,3 +101,11 @@ here.
   and are dropped, so the header sizes to its content instead of the intended 69/61/53px, and the
   section's background resolves to nothing. The nesting wants inverting, as every other file in the
   kit writes it.
+- **The bottom of a long `Aside` body cannot be scrolled to.** `components/aside/Aside.module.scss:45`
+  makes the panel `position: fixed; height: 100%` and leaves it block-level, and `index.tsx:44`
+  renders `AsideHeader` and then `<Scrollbar>{children}</Scrollbar>` with no height of its own — so
+  the scrolling holder sizes itself to the whole panel rather than to what is left under the header,
+  and its last ~53px sit below the panel's bottom edge. A list long enough to scroll ends with items
+  the reader cannot reach. Making `.aside` a flex column and letting the scroller take the remaining
+  space fixes it for every consumer at once; today each application patches the scroller's inline
+  height itself. Found by the `ui-kit` skill's eval run, building a members panel from the READMEs.

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 docs/getting-started.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 7d1773d93f4b2b9b54c734097f0fabdc185c36dc7750eb52c6afcfe5c13edf7c -->
+<!-- body-sha256: 932c39c60e5adf58609862453ee8665d923e0b18237c42813051d4671c58cf07 -->
 
 > Synced from the kit's own `docs/getting-started.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -90,11 +90,7 @@ const translations: TTranslations = new Map([
 
 export function App() {
   return (
-    <ThemeProvider
-      initialTheme={ThemeKeys.BaseStr}
-      locale="en"
-      colorTheme={{ themes: [], selected: 0 }}
-    >
+    <ThemeProvider initialTheme={ThemeKeys.BaseStr} locale="en">
       <TranslationProvider locale="en" translations={translations}>
         <Button primary label="Save" onClick={() => {}} />
       </TranslationProvider>
@@ -140,8 +136,11 @@ it is easy to hand it one whose CSS and JavaScript sides disagree.
 ### TranslationProvider
 
 From `@onlyoffice/apps-ui-kit/providers/translation`. Several components have labels that are not
-props — the file-drop prompt, the "clear all" link in the filter bar, the collapse handle in the
-side panel, the operations progress button — and they read them from a shared i18next instance.
+props — the file picker's button label, the "clear all" link in the filter bar, the collapse
+handle in the side panel, the operations progress button — and they read them from a shared
+i18next instance. Eleven components do it: `article`, `color-picker`, `drop-down-item`,
+`file-input`, `filter`, `operations-progress-button`, `room-type`, `selector`, `table`, `tiles`
+and `toast`. `Dropzone` is **not** among them; its prompt is a prop like any other.
 
 **Without this provider those labels are empty strings.** Not missing-key placeholders: empty. A
 button renders at its full size with nothing written on it.
