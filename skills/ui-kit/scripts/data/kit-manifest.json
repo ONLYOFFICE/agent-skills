@@ -1,8 +1,8 @@
 {
   "package": "@onlyoffice/apps-ui-kit",
   "kitVersion": "4.0.0",
-  "syncedCommit": "b434e363",
-  "syncedBranch": "feature/component-readme-template",
+  "syncedCommit": "2d1f8fe6",
+  "syncedBranch": "feature/ui-kit-separation",
   "syncedFrom": "checkout",
   "repo": "https://github.com/ONLYOFFICE/docspace-ui-kit-react",
   "publicSubpaths": [

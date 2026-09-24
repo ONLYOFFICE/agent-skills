@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 docs/components.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: f77e606a4b051efb93d5c718baaf274f8351dd6d9b1ef913009d6142878cde40 -->
+<!-- body-sha256: 36f8119bc9b1b2d4b8e592c3c147813895da1a04dc58046868bf7defd85aca91 -->
 
 > Synced from the kit's own `docs/components.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -22,7 +22,7 @@ Two things to read before picking one:
   through their parent.
 - **Public versus portal-internal.** A portal-internal component needs DocSpace context — a
   translation function, a portal store, a device type it is told about — and will not work in a
-  standalone app. [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/b434e363/docs/public-api.md) is the full account.
+  standalone app. [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/2d1f8fe6/docs/public-api.md) is the full account.
 
 New to the package? [`getting-started.md`](_getting-started.md) covers the two providers, the CSS
 model and the two layout rules first.

@@ -1,7 +1,7 @@
 {
   "version": "4.0.0",
-  "syncedCommit": "b434e363",
-  "syncedBranch": "feature/component-readme-template",
+  "syncedCommit": "2d1f8fe6",
+  "syncedBranch": "feature/ui-kit-separation",
   "sources": {
     "repo": {"host": "github", "path": "/docspace-ui-kit-react", "verify": true}
   },
