@@ -28,7 +28,7 @@
  * variables in Chromium, at the width each surface actually gets, in both themes, and reports
  * what it measured. Exit code 1 when there is at least one ERROR.
  *
- * It is not the portal: the kit's stylesheets are here, the DocSpace client's own are not.
+ * It is not the portal: the kit's stylesheets are here, the ONLYOFFICE Apps client's own are not.
  * So it can prove a rule of yours escapes into portal-shaped markup, and it cannot prove the
  * reverse - that a portal rule beats one of yours. One upload still settles that.
  */
@@ -241,7 +241,7 @@ const reportBoot = (findings, boot) => {
   if (!boot) return;
   findings.error(
     "preview-load",
-    `onLoadCallback() threw in the browser: ${boot}. On the portal this aborts installation - no items, no CSS, nothing in the UI`,
+    `onLoadCallback() threw in the browser: ${boot}. On the portal this aborts installation - no items, no CSS, nothing for users, and "Failed to initialize" on the administrator's plugin card`,
   );
 };
 

@@ -187,11 +187,11 @@ export class RuntimeChecks extends Check {
     else
       this.error(
         "runtime",
-        `the bundle threw while loading: ${e.message}. Top-level code runs as soon as the portal loads the bundle, so nothing after that point is ever registered`,
+        `the bundle threw while loading: ${e.message}. Top-level code runs as soon as the portal loads the bundle, so nothing after that point is ever registered - the administrator's plugin card reads "Failed to load" with this message, users see nothing`,
       );
   }
 
-  /** The portal awaits this during installation, so a throw aborts the plugin silently. */
+  /** The portal awaits this during installation, so a throw aborts the plugin; only the administrator's plugin card shows it. */
   async #runOnLoadCallback(plugin) {
     try {
       await withTimeout(plugin.onLoadCallback?.(), CALLBACK_TIMEOUT_MS, "onLoadCallback");
@@ -205,7 +205,7 @@ export class RuntimeChecks extends Check {
       else
         this.error(
           "runtime",
-          `onLoadCallback threw: ${e.message}. The portal awaits it during installation, so a throw there aborts the plugin with no CSS, no items and one console line: "[Plugin: <name>] Failed to load module plugin"`,
+          `onLoadCallback threw: ${e.message}. The portal awaits it during installation, so a throw there aborts the plugin - no CSS, no items, nothing for users; the administrator's plugin card reads "Failed to initialize" with this message`,
         );
 
       return true;

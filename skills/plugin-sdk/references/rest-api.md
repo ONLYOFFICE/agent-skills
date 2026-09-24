@@ -1,45 +1,12 @@
 # Talking to the ONLYOFFICE Apps REST API
 
-Two callers, two clients ([sdk-contract.md → Two kinds of callback](sdk-contract.md#two-kinds-of-callback) has the wider comparison). A **React component** uses `usePluginAPI()`, which needs no scope, unwraps the `response` envelope and authenticates itself ([react.md → API client](react.md#the-api-client)). A **class-side callback** — menu click, file click, event, create-dialog `onSave` — has `fetch` against `getAPI()`, needs the `API` scope, reads `.response` itself and rides the session cookies.
+Two callers, two clients ([plugin.md → Two kinds of callback](plugins/plugin.md#two-kinds-of-callback) has the wider comparison). A **React component** uses `usePluginAPI()`, which needs no scope, unwraps the `response` envelope and authenticates itself ([api.md](react/api.md)). A **class-side callback** — menu click, file click, event, create-dialog `onSave` — has `fetch` against `getAPI()`, needs the `API` scope, reads `.response` itself and rides the session cookies ([api-plugin.md](plugins/api-plugin.md)).
 
 Where a feature has both halves — a click that opens a panel — fetch in the component; the click hands over the id.
 
-## From the class: `getAPI()` and `fetch`
-
-`getAPI()` returns `{ origin, proxy, prefix }`; any part may be empty or carry stray slashes, so join carefully, and **lazily** — `setAPI` is guaranteed only before `onLoadCallback`, so a value computed at module scope is empty:
-
-```ts
-const buildApiUrl = (): string => {
-  const { origin, proxy, prefix } = plugin.getAPI();
-  let url = origin.replace(/\/+$/, "");
-  for (const part of [proxy, prefix]) {
-    const clean = (part ?? "").trim().replace(/^\/+/, "");
-    if (clean) url += `/${clean}`;
-  }
-  return url;   // https://portal.example.com/api/2.0
-};
-
-const onFileAction = async (id: number): Promise<IMessage> => {
-  try {
-    const res = await fetch(`${buildApiUrl()}/files/file/${id}`, { credentials: "include" });
-    const file = (await res.json()).response;                        // the envelope, class-side
-    if (!file.security?.Download)
-      return { actions: [Actions.showToast], toastProps: [{ type: ToastType.error, title: t("noPermission") }] };
-    const bytes = await fetch(file.viewUrl);                         // no credentials — viewUrl may be off-origin (below)
-    const text = bytes.status === 404 ? "" : await bytes.text();     // 404 = no content stream yet (below)
-    …
-    return { actions: [Actions.showToast], toastProps: [{ type: ToastType.success, title: t("done") }] };
-  } catch {
-    return { actions: [Actions.showToast], toastProps: [{ type: ToastType.error, title: t("failed") }] };   // nothing catches this for you
-  }
-};
-```
-
-Forgetting `.response` yields an object that looks plausible and has none of the fields. Inside a component the opposite holds — `.response` is `undefined`.
-
 ## Permissions
 
-Every file, folder and room in a payload carries a `security` map: PascalCase keys, all optional, `true` when the current user may do that thing. Check it before offering or performing an action; a 403 afterwards is the same fact learned late. Item-level filters (`security`, `itemSecurity`, `fileSecurity` in [items.md](items.md)) do the same declaratively.
+Every file, folder and room in a payload carries a `security` map: PascalCase keys, all optional, `true` when the current user may do that thing. Check it before offering or performing an action; a 403 afterwards is the same fact learned late. Item-level filters (`security` and `itemSecurity` on a [context menu item](items/context-menu-item.md), `fileSecurity` on a [`File` item](items/file-item.md)) do the same declaratively.
 
 **The keys are enums, so type them as enums** — `Partial<Record<FilesSecurity, boolean>>` from the SDK, never `Record<string, boolean>`, which is how a misspelled key ends up read as `undefined` and the plugin quietly decides the user has no rights (or offers an action the portal then refuses):
 
@@ -101,7 +68,7 @@ List endpoints page with `count` + `startIndex` and take filter/sort as query pa
 | Folder **contents** — the total is inside the payload | `/files/{id}`, `/files/@my`, `/files/rooms` | the payload itself: `{ files, folders, total, … }` |
 | A paged **collection** — the total is a top-level envelope field | `/files/rooms/{id}/share`, `/files/file/{id}/links`, `/people`, groups | `{ total, items }` — the rows are under **`items`**, whatever the endpoint's own field was called |
 
-Reading `.folders` or `.files` off the second kind gives `undefined` with no error and an empty surface, which is the failure this costs. Class-side the envelope is not unwrapped at all, so `total` and the rows sit where the server put them, under `.response`.
+Reading `.folders` or `.files` off the second kind gives `undefined` with no error and an empty surface, which is the failure this costs. Class-side the envelope is not unwrapped at all, so everything sits where the server put it: the rows under `.response`, and a collection's `total` beside it at the top level.
 
 ### Walking a folder tree
 

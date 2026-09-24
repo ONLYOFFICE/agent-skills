@@ -18,7 +18,7 @@
  * The portal contract: what the loader calls on each scope, which values it compares
  * against, which payload every action needs, which packages the host supplies to a
  * module plugin. Deliberately *not* derived from the SDK - that says what compiles,
- * this says what a released portal runs. See references/scopes.md.
+ * this says what a released portal runs. See references/plugins/scopes.md.
  */
 
 export const SDK_PACKAGE = "@onlyoffice/docspace-plugin-sdk";
@@ -316,8 +316,8 @@ export const checkSdkDrift = (sdk, installedVersion) => {
   if (Number.isInteger(major) && major !== SDK_MAJOR)
     drift.push(
       major < SDK_MAJOR
-        ? `the project installed ${SDK_PACKAGE} ${installedVersion}, but this tool encodes the portal contract for ${SDK_MAJOR}.x - that SDK has no React entry, no "component" props and no ArticleNavigation scope, so the plugin is limited to the deprecated declarative trees (see references/scopes.md)`
-        : `the project installed ${SDK_PACKAGE} ${installedVersion}, but this tool encodes the portal contract for ${SDK_MAJOR}.x - a scope or action the SDK adds ahead of the portal compiles and then does nothing (see references/scopes.md)`,
+        ? `the project installed ${SDK_PACKAGE} ${installedVersion}, but this tool encodes the portal contract for ${SDK_MAJOR}.x - that SDK has no React entry, no "component" props and no ArticleNavigation scope, so the plugin is limited to the deprecated declarative trees (see references/plugins/scopes.md)`
+        : `the project installed ${SDK_PACKAGE} ${installedVersion}, but this tool encodes the portal contract for ${SDK_MAJOR}.x - a scope or action the SDK adds ahead of the portal compiles and then does nothing (see references/plugins/scopes.md)`,
     );
 
   const values = (enumObject) => (enumObject ? Object.values(enumObject) : []);
