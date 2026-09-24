@@ -131,10 +131,11 @@ ${registrationTodos(scopes)}
 
 ${STATUS_MEMBERS}
 
-  // Called once, immediately before onLoadCallback - not again when the language
-  // changes (that reloads the whole plugin as a fresh module, so the factories run
-  // again on their own). Recording the locale is the whole job: the item factories
-  // below it are what translate the labels.
+  // Called immediately before onLoadCallback - when the plugin loads and again each
+  // time it is switched back on, never when the language changes (that reloads the
+  // whole plugin as a fresh module, so the factories run again on their own).
+  // Recording the locale is the whole job: the item factories below it are what
+  // translate the labels.
   setLanguage = (language: PluginLocale): void => {
     setLocale(language);
   };

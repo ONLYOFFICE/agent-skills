@@ -83,7 +83,7 @@ export const harnessHtml = () => `<!doctype html>
 <meta charset="utf-8" />
 <title>plugin preview</title>
 <style>
-  /* The portal's own global typography - in the DocSpace client's stylesheet, not the kit. */
+  /* The portal's own global typography - in the ONLYOFFICE Apps client's stylesheet, not the kit. */
   html, body { margin: 0; padding: 0; }
   body {
     font-family: var(--font-family, "Open Sans", sans-serif);
@@ -216,10 +216,10 @@ const boot = async () => {
         const dialog = message?.modalDialogProps;
         if (dialog?.dialogBodyComponent) {
           // A dialog opened from a click has no current file; its box is the display type's -
-          // except that autoMaxWidth and fullScreen hand sizing to the body, which is how a
-          // large dialog is built (components.md). Measuring one inside the 400px box those
-          // flags exist to escape reports an overflow the portal never draws, so it is given
-          // the width it asks for. The height is not reproduced for any dialog: the modal's
+          // except that autoMaxWidth hands sizing to the body, which is how a large dialog is
+          // built, and fullScreen swaps the dialog for a full-viewport box
+          // (components/modal-dialog.md). Measuring either inside the 400px box reports an
+          // overflow the portal never draws, so it is given the width it asks for. The height is not reproduced for any dialog: the modal's
           // 280px cap and an aside's full height are both absent, so nothing here can show a
           // body that would need to scroll.
           const aside = String(dialog.displayType) === "aside";

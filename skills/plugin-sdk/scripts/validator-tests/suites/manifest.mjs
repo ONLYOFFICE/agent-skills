@@ -17,7 +17,7 @@
 /*
  * The manifest, the assets it points at, and how the bundle hands the plugin over - the
  * cheapest half of the validator, catching the most expensive defect: a bundle without a
- * default export, or without `runtime: "module"`, installs, enables and does nothing.
+ * default export, or without `runtime: "module"`, uploads and never becomes a plugin.
  */
 
 import {

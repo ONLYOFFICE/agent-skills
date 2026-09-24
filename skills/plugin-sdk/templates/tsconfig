@@ -5,6 +5,7 @@
     "lib": ["ES2017", "DOM"],
     "jsx": "react-jsx",
     "strict": true,
+    "isolatedModules": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
