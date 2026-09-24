@@ -131,7 +131,9 @@ skills/ui-kit/
 ## Development
 
 - What a skill directory must contain and how changes are judged: [CONTRIBUTING.md](CONTRIBUTING.md).
-- Validate the plugin before pushing: `claude plugin validate . --strict`; run
+- Validate the plugin before pushing, with both forms: `claude plugin validate . --strict`
+  checks the marketplace manifest and stops there, and `claude plugin validate skills --strict`
+  is what reads the `SKILL.md` files. Then run
   `node skills/<name>/scripts/test-validator.mjs` for every skill that has a validator, and
   `node tools/sync-ui-kit.mjs --check` to confirm no synced page was edited here.
 - Quality gate: run a skill's evals after substantial content changes

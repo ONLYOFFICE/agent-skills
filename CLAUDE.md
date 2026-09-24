@@ -18,9 +18,15 @@ against a column gap".
 Both are required by `CONTRIBUTING.md`, and both are fast:
 
 ```bash
-claude plugin validate . --strict
+claude plugin validate . --strict        # the marketplace manifest, and only that
+claude plugin validate skills --strict   # the SKILL.md files; the line above never reads them
 node skills/<name>/scripts/test-validator.mjs   # for every skill that has one
 ```
+
+Both forms are needed because `validate` picks its mode from the path: given a directory that
+holds a `.claude-plugin/` it validates the manifest and stops, and only a directory without one
+is walked for skills, agents and commands. Pointing it at a single skill fails -- `skills/ui-kit`
+is not a plugin and has no manifest of its own.
 
 `plugin-sdk`'s suite has 90 expectations. Run it after touching anything under
 `skills/plugin-sdk/scripts/`, `templates/` or `vendor/` -- it is the only thing that

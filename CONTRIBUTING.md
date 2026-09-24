@@ -57,7 +57,8 @@ tends to be lost on the next rewrite.
 ## Before opening a pull request
 
 ```
-claude plugin validate . --strict
+claude plugin validate . --strict               # the marketplace manifest, and only that
+claude plugin validate skills --strict          # the SKILL.md files; the line above never reads them
 node skills/<name>/scripts/test-validator.mjs   # for every skill that has a validator
 node tools/sync-sources.mjs --check             # every link and pinned version traces to sources.json
 node tools/sync-ui-kit.mjs --check              # no synced page was edited here

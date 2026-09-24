@@ -84,7 +84,10 @@ is also stated in `skills/plugin-sdk/references/plugins/scopes.md`. When an SDK 
 
 Before tagging a release:
 
-1. `claude plugin validate . --strict` passes.
+1. `claude plugin validate . --strict` **and** `claude plugin validate skills --strict` pass.
+   Two commands, not one: the tool picks its mode from the path, so a directory holding a
+   `.claude-plugin/` is validated as a manifest and nothing under it is read. The `.` form alone
+   has never checked a `SKILL.md`, which is most of what a release changes.
 2. `node skills/embed-sdk/scripts/test-validator.mjs`,
    `node skills/plugin-sdk/scripts/test-validator.mjs` and
    `node skills/ui-kit/scripts/test-validator.mjs` pass.
