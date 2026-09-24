@@ -85,9 +85,10 @@ the rule wins and the kit's page is what should be corrected.
    bundler is not following those imports, not that a stylesheet is missing.
 2. **Mount both providers, from their own subpaths.** `ThemeProvider` from `providers/theme`,
    `TranslationProvider` from `providers/translation` with a
-   `Map<lang, Map<namespace, table>>` built from `locales/en/Common.json`. Leave `colorTheme`
-   out: it is the portal's palette, and without it the kit's own accent is used — nothing is
-   fetched.
+   `Map<lang, Map<namespace, table>>` built from `locales/en/Common.json` — the package ships
+   `en` and nothing else, so every other language is the application's to supply. Leave
+   `colorTheme` out: it is the portal's palette, and without it the kit's own accent is used —
+   nothing is fetched. A provider given no `translations` installs no context at all.
 3. **Never `providers/Providers`** (the portal's composed root: it reaches the REST API) and
    never mount `components/theme-provider` yourself (it expects a resolved theme object).
 4. **The prop that shows and hides is per component.** `visible` — `ModalDialog`, `Aside`,
@@ -139,9 +140,12 @@ the rule wins and the kit's page is what should be corrected.
   page.
 - Render once in the dark theme: skeletons are fixed-colour and literal colours of your own do
   not switch.
-- Run `node $SKILL/scripts/check-usage.mjs <project>` and leave no errors. It reads the
-  project as text and knows the kit from the synced manifest: wrong visibility props,
-  portal-internal imports, a missing provider, the silent form traps.
+- Run `node $SKILL/scripts/check-usage.mjs <project>`: leave no errors, and no warning you
+  cannot explain. The warnings are the silent half — a toggle that occupies no space, a field
+  outside the tab order, a textarea that never fills its field — and every one of them renders
+  without complaining. It reads the project as text and knows the kit from the synced
+  manifest: wrong visibility props, portal-internal imports, a missing provider, the form
+  traps that fail quietly.
 
 ## Not covered
 

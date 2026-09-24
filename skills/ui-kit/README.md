@@ -83,18 +83,31 @@ re-sync; a page edited here is reverted by the next sync and the self-test says 
 written here by hand is the part no component README can hold: which component to choose,
 how the pieces compose, and the rules an agent breaks without being told.
 
-**How a rule earns its place in `SKILL.md`.** `SKILL.md` is loaded whole on every trigger,
-so it has a hard budget of 150 lines. A new trap goes on the component's page upstream or
-into a reference; it moves into `SKILL.md` only with an eval assertion behind it, and it
-moves back out when the assertion passes without it.
+**How a rule earns its place in `SKILL.md`.** `SKILL.md` is loaded whole on every trigger, so
+it has a budget of **175 lines**. A new trap goes on the component's page upstream or into a
+reference; it reaches `SKILL.md` only with an eval assertion behind it.
 
-**Rules the kit's own pages now state as well.** After the last sync, most of the sixteen are
-said somewhere under `references/components/` too — rules 1, 2, 5 and 6 in
-`_getting-started.md`, rule 4 in the catalogue's *prop that shows and hides it* table, and
-rules 7 to 15 on the page of the component each is about. That makes them candidates for
-deletion, not deletions: a rule in `SKILL.md` is read on every trigger, a page only when
-something sends the agent to it, so the question is whether the eval assertion behind the rule
-still passes once it is gone. Nothing is cut before that run.
+The budget was 150 and was raised deliberately once it started binding. It exists to stop the
+file growing without limit, not because any particular number is right, and 150 was chosen by
+eye before a single rule had been measured. Trading a trap that an eval has shown to matter for
+a round number is a bad exchange; what keeps the file small is the entry condition above, not
+the ceiling.
+
+**Rules the kit's own pages now state as well.** Most of the sixteen are said somewhere under
+`references/components/` too — rules 1, 2, 5 and 6 in `_getting-started.md`, rule 4 in the
+catalogue's *prop that shows and hides it* table, and rules 7 to 15 on the page of the component
+each is about.
+
+**That is not, by itself, a reason to cut them, and the first two eval iterations do not settle
+it.** Both arms of every scenario had the kit installed, so both could read those pages and the
+package's own `.d.ts`; what the ties show is that the pages are *sufficient once read*. They say
+nothing about whether an agent would go and read them unprompted, which is exactly what a rule
+in `SKILL.md` buys: it names the trap before the agent decides what to open. No run so far has
+separated those two things.
+
+Separating them needs a third arm — the skill with one rule removed, against the same scenario —
+and until that is run, a rule with a passing assertion behind it stays. An argument from "the
+page says it too" is not evidence.
 
 Two are not candidates at all. **Rule 16 cannot move upstream**: the kit's own validator
 forbids the string `PUBLIC_DIR` in any README, even in a sentence telling the reader not to use
@@ -102,11 +115,29 @@ it, so the kit is structurally unable to warn about the alias its own client def
 **rule 3** is only half-said upstream — `providers/README.md` explains what the composed
 `Providers` is, but that page is not one this skill copies.
 
-## What is not here yet
+## What the evidence says, and what it does not
 
-Everything the skill consists of is written; what is missing is the evidence. The scenarios in
-[`evals/`](evals/README.md) and the trigger tests have not been run, so no rule in `SKILL.md`
-has yet been shown to change an outcome, and the description has not been checked for
-triggering on its neighbours. Both tables carry a *not yet run* row. Until they are run and the
-rules that survive are kept, the plugin version stays where it is: an installed copy that sees
-0.2.0 should get a skill that has been measured.
+Both instruments have been run. [`evals/`](evals/README.md) carries two iterations — 67/70
+against a baseline's 60/70 in the second — and [`trigger-tests.md`](evals/trigger-tests.md)
+carries ten of ten and none of ten across three orders.
+
+What that buys: the skill's value is concentrated where the package cannot answer for itself —
+explaining a symptom with no project to read, auditing someone else's file without inventing
+findings, and the composition traps no single component page states. The two build scenarios
+that tied did so because the kit vendors its own READMEs and hand-annotated `.d.ts` into
+`node_modules`, which is workstream A working, not this skill failing.
+
+What it does not buy, and should not be claimed:
+
+- **No rule has been shown to be individually load-bearing.** Measuring that needs the third arm
+  described above. The run tells you the skill as a whole beats no skill; it does not rank the
+  rules inside it.
+- **The trigger figure is from a routing-judgement method, not the protocol.** The protocol wants
+  fresh sessions with the plugin installed; the run gave three judges the descriptions and the
+  messages. `trigger-tests.md` says so in full. Re-run the real thing before a release that
+  changes the description.
+- **Prose in the synced pages is checked by nobody.** The kit's validator settles metadata,
+  generated tables and compiling examples; a sentence that has become false as the component
+  changed is caught only by someone re-reading it. Three such sentences were found by the eval
+  runs and fixed upstream, which is the argument for running these at all — and also the measure
+  of how they were found.
