@@ -1,7 +1,7 @@
 {
   "package": "@onlyoffice/apps-ui-kit",
   "kitVersion": "4.0.0",
-  "syncedCommit": "df87c36e",
+  "syncedCommit": "b434e363",
   "syncedBranch": "feature/component-readme-template",
   "syncedFrom": "checkout",
   "repo": "https://github.com/ONLYOFFICE/docspace-ui-kit-react",
@@ -322,7 +322,6 @@
     "RoomLogoCoverDialogProps",
     "RoomLogoCoverProps",
     "RoomLogoProps",
-    "RoomLogoPure",
     "RoomTile",
     "RoomTileProps",
     "RootTooltip",
@@ -1947,7 +1946,6 @@
       "providers": [],
       "exports": [
         "RoomLogo",
-        "RoomLogoPure",
         "RoomLogoProps"
       ],
       "testIds": [

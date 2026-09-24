@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/collapsible-card/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 8ea8e41764f844fd8dd6f495889caa9f4b3e6ca542c982c432917e1e7a473a42 -->
+<!-- body-sha256: 62106c88c3970d909893209ec3a55ec371fd531014def884e851e8847484f38e -->
 
 > Synced from the kit's own `components/collapsible-card/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -186,9 +186,10 @@ theme's colour variables, so the only ways in are `className` and `style`.
 
 - The header is a real `<button type="button">` with `aria-expanded`, so it is reachable by Tab
   and operated with Enter and Space with no work from you.
-- It also carries `aria-controls` pointing at the body's generated id. That id only exists while
-  the card is open, because the body is unmounted otherwise — a known gap, and one no prop can
-  close.
+- It carries `aria-controls` only while the body is in the document — the body is unmounted when
+  the card is closed and never rendered without `children`, so naming a missing id would be worse
+  than naming nothing. A reader is therefore told the header is expandable, but not what it
+  controls, until it is open.
 - The title is not a heading. In a list of collapsible sections, put a
   [`Heading`](heading.md) in the `title` slot so the outline keeps the entries; it
   stays inside the button, which is allowed.

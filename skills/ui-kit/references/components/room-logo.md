@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/room-logo/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: b6f72839c02874ea967eb8f6efb674d33888473b682397da3c38f407e6691b1f -->
+<!-- body-sha256: 1889a61596538fe5a75c0a3a2b07c2c88b3d74f489e07026d82d2b2b858d1092 -->
 
 > Synced from the kit's own `components/room-logo/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -13,7 +13,7 @@
   "status": "public",
   "summary": "Fixed 32px glyph saying which kind of room this is, with an optional selection checkbox.",
   "import": { "subpath": "components/room-logo", "barrel": true, "default": false },
-  "exports": ["RoomLogo", "RoomLogoPure", "RoomLogoProps"],
+  "exports": ["RoomLogo", "RoomLogoProps"],
   "providers": [],
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["room-icon", "room-type", "checkbox"],

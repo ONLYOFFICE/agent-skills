@@ -1,13 +1,13 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 docs/known-defects.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: bb629efa1e129819363838f118830585e95404abeac73b231794cad216b897b1 -->
+<!-- body-sha256: a12ad879799ee334c7f5552b5beb1dd157d19c5b412a8f7d235195c0d50851f8 -->
 
 > Synced from the kit's own `docs/known-defects.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
 # Known defects
 
-Found while rewriting the component READMEs against
-[`README_TEMPLATE.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/df87c36e/README_TEMPLATE.md). Each is a fault in the component, not in its
+Found while rewriting the component READMEs against `README_TEMPLATE.md`, which lives in the
+repository rather than in the published package. Each is a fault in the component, not in its
 documentation: the READMEs describe the behaviour as it is, and this list is what should change so
 that the description can change with it.
 

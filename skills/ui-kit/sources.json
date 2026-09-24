@@ -1,6 +1,6 @@
 {
   "version": "4.0.0",
-  "syncedCommit": "df87c36e",
+  "syncedCommit": "b434e363",
   "syncedBranch": "feature/component-readme-template",
   "sources": {
     "repo": {"host": "github", "path": "/docspace-ui-kit-react", "verify": true}
