@@ -52,10 +52,10 @@ console unless it says so.
 
 | What you see | Why | Fix |
 |---|---|---|
-| Tab skips every field | `TextInput` and `Checkbox` default `tabIndex` to `-1` | `tabIndex={0}` on every control |
-| Clicking a label focuses nothing; the field is announced unnamed | `FieldContainer` renders `htmlFor=""` | Repeat the label as `aria-label` on the control |
-| A `Textarea` cannot be named at all | Its props are a closed object type: no `aria-*`, no `name` | There is no workaround. Report it |
-| A dialog announced without a name | `role="dialog"` sits on the click-to-close element and an `aria-label` is spread onto the internal header | There is no workaround. Report it |
+| Clicking a label focuses nothing; the field is announced unnamed | `FieldContainer` was given `labelText` but no `labelFor` | `labelFor` on the container, the same string as `id` on the control |
+| A `Textarea` is announced unnamed | `labelFor` cannot reach it: its props type is closed | `aria-labelledby` pointing at the caption, or `aria-label` |
+| A dialog is announced without a name | Nothing was passed to name it | `aria-labelledby` pointing at the header's `id`, or `aria-label` |
+| Tab skips one control | Something passed `tabIndex={-1}`, or it is a `DropDownItem` | Remove the `tabIndex`; on a listbox option the `-1` is correct and the container holds focus |
 | Arrow keys do nothing in a `ComboBox` | Its key handler looks for options by a test id its own options never carry | Click, or build the list yourself |
 
 ## Imports
@@ -73,5 +73,8 @@ console unless it says so.
 
 Every page under `references/components/` is a copy of the kit's own README, and its header
 says so. Where one of them contradicts a rule here, the rule here is the one that was checked
-against the source last — and the kit's page is what should be corrected. The defects this
-skill knows about are listed in [`components/_known-defects.md`](components/_known-defects.md).
+against the source last — and the kit's page is what should be corrected.
+
+A fault in a component is described on that component's page, under "Behaviour the types don't
+state" or "Accessibility". There is no separate list of them: the kit kept one until every entry
+in it was fixed, and then removed it rather than leave a second place to go stale.

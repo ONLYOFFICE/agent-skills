@@ -19,7 +19,6 @@
  *   components/<parent>/<child>/README.md → <parent>/<child>.md
  *   providers/<name>/README.md           → providers/<name>.md
  *   docs/getting-started.md              → _getting-started.md
- *   docs/known-defects.md                → _known-defects.md
  *   docs/components.md                   → README.md (the catalogue)
  *
  * Every page keeps a provenance header and a hash of its own body, so a hand edit here is
@@ -46,10 +45,13 @@ const ROOT_SOURCES = path.join(ROOT, "sources.json");
 
 const PACKAGE = "@onlyoffice/apps-ui-kit";
 const PROVIDER_PAGES = ["theme", "translation", "error-boundary"];
+// `docs/known-defects.md` used to travel here as `_known-defects.md`. The kit emptied and
+// removed it once every entry was fixed: a fault now lives in its own component's README, which
+// is a page this tool already copies, and what a fix means for a consumer is in the kit's
+// CHANGELOG. Nothing replaced it here.
 const DOC_PAGES = {
   "docs/components.md": "README.md",
   "docs/getting-started.md": "_getting-started.md",
-  "docs/known-defects.md": "_known-defects.md",
 };
 
 /**

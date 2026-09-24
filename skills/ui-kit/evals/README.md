@@ -17,7 +17,7 @@ file.
 
 | # | Name | Mode | What it puts under strain |
 |---|---|---|---|
-| 0 | `settings-form` | build | The form half end to end: `labelVisible`, the doubled spacing of a gapped column, `TextInput`'s required props, a `Textarea` that will not fill its field, a `ComboBox` whose selection the caller owns, a `ToggleButton` that occupies no space, `tabIndex` on every control, and the label that is associated with nothing |
+| 0 | `settings-form` | build | The form half end to end: `labelVisible`, the doubled spacing of a gapped column, `TextInput`'s required props, a `Textarea` that will not fill its field and cannot be named from its container, a `ComboBox` whose selection the caller owns, a `ToggleButton` that occupies no space, and tying each caption to its control with `labelFor` |
 | 1 | `confirm-dialog` | build | `ModalDialog`: `visible` mounting nothing, the four slots being direct children, the footer as a flex row two `scale` buttons share, and the absent destructive variant — which is `--accent-button` on the button, not on a wrapper and not on the dialog |
 | 2 | `side-panel-list` | build | Choosing: `Aside` over a div, plain rows over the portal's `Rows`, `SearchInput`'s string payload and its one-second debounce, skeletons over a bare `Loader`, `EmptyView` over a blank body — and keeping `selectors/*` out |
 | 3 | `explain-empty-labels` | explain | The i18n mechanism, from a symptom: which provider, the Map's shape, the `Common` table inside the package, and why the text is empty rather than the raw key |
@@ -124,9 +124,10 @@ Iteration 0 totalled 53/54 against 41/54, at 1.5× the wall clock and 1.3× the 
 with the two ties in mind: their checks were answerable from the package's own documentation,
 and the graders showed both arms citing it by name. The run earned three things regardless —
 the `explain` and `audit` scenarios, where there is no project to read from; zero invented
-findings against the baseline's five; and two real defects in the kit
-(`docs/known-defects.md`) plus one in `check-usage.mjs`. The assertions were rewritten
-afterwards to aim at composition, workarounds and a real build.
+findings against the baseline's five; and two real defects in the kit — which were recorded in
+its `docs/known-defects.md`, and have since been fixed and that file removed — plus one in
+`check-usage.mjs`. The assertions were rewritten afterwards to aim at composition, workarounds
+and a real build.
 
 Iteration 1 totalled 67/70 against 60/70 — a smaller margin than iteration 0's, and the
 truer one: the baseline now has the package in all five scenarios, and the package's own

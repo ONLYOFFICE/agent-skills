@@ -26,49 +26,48 @@ export function NameField() {
       isVertical
       labelVisible
       labelText="Room name"
+      labelFor="room-name"
       isRequired
       hasError={hasError}
       errorMessage="Enter a name"
     >
       <TextInput
         scale
-        tabIndex={0}
+        id="room-name"
         type={InputType.text}
         size={InputSize.base}
         value={name}
         onChange={(event) => setName(event.target.value)}
         hasError={hasError}
-        aria-label="Room name"
       />
     </FieldContainer>
   );
 }
 ```
 
-Five things in that block are not optional, and four of them are silent when missed.
+Four things in that block are not optional, and three of them are silent when missed.
 
 | Written | Left out |
 |---|---|
 | `labelVisible` | No label, no required marker, no help button. `labelText` alone renders nothing and reports nothing — the default is `false` |
-| `tabIndex={0}` | The field cannot be reached by keyboard: the input defaults to `tabIndex = -1` |
+| `labelFor` **and** the control's `id` | The caption captions nothing: clicking it focuses nothing and the field is announced unnamed |
 | `type` and `value` on `TextInput` | Both are required props; TypeScript catches this one |
 | `hasError` **and** `errorMessage` | No message. One without the other renders nothing |
-| `aria-label` on the control | The field is announced unnamed — see below |
 
-## Three defects to work around, every time
+## Naming the field
 
-These are faults in the kit, recorded in its own
-[`known-defects.md`](components/_known-defects.md). Until they are fixed, a form has to
-carry the workaround.
+`labelFor` paired with the control's `id` is the whole of it for a single-line field, and it is
+what the example above does. Two cases need something else:
 
-1. **Nothing is in the tab order.** `TextInput`'s inner input and `Checkbox` both default
-   `tabIndex` to `-1`. Pass `tabIndex={0}` to every control in every field.
-2. **The label is associated with nothing.** `FieldContainer` renders its `<label>` with an
-   empty `htmlFor`, so clicking a label focuses nothing and a screen reader announces the
-   field unnamed. Repeat the label as `aria-label` on the control.
-3. **A `Textarea` cannot be named at all.** Its props are a closed object type: no `aria-*`,
-   no `name`, no `aria-labelledby` reaches it. There is no workaround short of a second,
-   duplicate `<label>` of your own. Say so rather than inventing a prop.
+- **A control with no visible caption** — a search box, a field in a toolbar — takes
+  `aria-label` of its own.
+- **`Textarea`** has a closed props type: it accepts no arbitrary DOM attributes, so `labelFor`
+  on the container does not reach it. It takes `aria-label`, `aria-labelledby` and
+  `aria-describedby` as real props; point `aria-labelledby` at the caption, or give it an
+  `aria-label`.
+
+Do not pass `tabIndex={0}` to make a control reachable. Every control here is in the tab order
+already; `tabIndex` is for taking one **out**, which is a deliberate and rare thing to want.
 
 ## Spacing: do not add a gap
 

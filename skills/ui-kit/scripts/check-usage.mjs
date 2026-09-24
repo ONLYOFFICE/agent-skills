@@ -24,6 +24,15 @@ const DEFAULT_MANIFEST = path.join(HERE, "data", "kit-manifest.json");
 const PACKAGE = "@onlyoffice/apps-ui-kit";
 const LEGACY_PACKAGE = "@docspace/ui-kit";
 const VISIBILITY_NAMES = ["visible", "isVisible", "isOpen", "opened", "open"];
+// Controls that are in the tab order by default, so a `tabIndex={0}` on one is
+// left over from when they were not. `AddButton` is deliberately absent: it has
+// no default and genuinely needs one.
+const TAB_INDEX_UNNEEDED = new Set([
+  "TextInput",
+  "Textarea",
+  "Checkbox",
+  "ComboBox",
+]);
 const SKIP_DIRS = new Set(["node_modules", "dist", "build", "out", "coverage", ".next", ".git", ".turbo", ".cache"]);
 const SOURCE_FILE = /\.(?:m|c)?[jt]sx?$/;
 
@@ -269,14 +278,24 @@ function checkTag(file, text, name, index, component) {
   if (name === "FieldContainer" && !has("labelVisible")) {
     add("warning", "W-fieldcontainer-label", file, line, "<FieldContainer> without `labelVisible`", "the default is false and the whole label block is behind it, so labelText renders nothing");
   }
+  if (name === "FieldContainer" && has("labelVisible") && !has("labelFor")) {
+    add("warning", "W-label-unattached", file, line, "<FieldContainer labelVisible> without `labelFor`", "the caption then captions nothing: clicking it focuses no field and a screen reader announces the control unnamed. Pass the control's id as `labelFor` and the same string as its `id`");
+  }
   if (name === "Loader" && !has("type")) {
     add("warning", "W-loader-type", file, line, "<Loader> without `type`", "the fallback renders the label as plain text with no animation; pass oval, dualRing, rombs or track");
   }
   if (name === "TextInput" && (!has("type") || !has("value"))) {
     add("warning", "W-textinput-required", file, line, "<TextInput> without `type` or `value`", "both are required props");
   }
-  if ((name === "TextInput" || name === "Checkbox") && !has("tabIndex")) {
-    add("warning", "W-tabindex", file, line, `<${name}> without \`tabIndex\``, "it defaults to -1, so the field cannot be reached from the keyboard");
+  // The kit's controls used to default `tabIndex` to -1, and this check used to
+  // warn when one was missing. They default to 0 now, so a `tabIndex={0}` is at
+  // best noise and at worst a habit that spreads to a listbox option, where -1
+  // is the correct value and 0 breaks the active-descendant pattern.
+  if (TAB_INDEX_UNNEEDED.has(name) && /\btabIndex\s*=\s*\{?\s*0\s*\}?/.test(attributes)) {
+    add("warning", "W-tabindex-noise", file, line, `<${name} tabIndex={0}>`, "every control in the kit is in the tab order already; `tabIndex` is for taking one out, not for putting it in");
+  }
+  if (name === "Textarea" && !has("aria-label") && !has("aria-labelledby")) {
+    add("warning", "W-textarea-unnamed", file, line, "<Textarea> with neither `aria-label` nor `aria-labelledby`", "its props type is closed, so a FieldContainer's `labelFor` cannot reach it and it is the one control that has to be named on itself");
   }
   if (name === "Textarea" && !declaresIn(attributes, /(^|[\s;{])(width|flex)\s*:/)) {
     add("warning", "W-textarea-width", file, line, "<Textarea> whose wrapper is given no width", "it has a max-width and no width of its own, and only `wrapperClassName` reaches the element that carries it — a `style` is spread onto the inner scroller, which is already full width, so it reads as though it worked and changes nothing");

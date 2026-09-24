@@ -72,8 +72,7 @@ missing provider empties every label, and nothing is logged.
 | Testing a screen built on it | [references/testing.md](references/testing.md) |
 | Public versus portal-internal | [references/public-api.md](references/public-api.md) |
 | A symptom with no error | [references/troubleshooting.md](references/troubleshooting.md) |
-| One component in detail | [references/components/\<name\>.md](references/components/README.md) — synced from the kit |
-| Faults in the kit itself | [references/components/\_known-defects.md](references/components/_known-defects.md) |
+| One component in detail, faults in it included | [references/components/\<name\>.md](references/components/README.md) — synced from the kit |
 
 The component pages are copies of the kit's own READMEs. Where one contradicts a rule below,
 the rule wins and the kit's page is what should be corrected.
@@ -106,11 +105,12 @@ the rule wins and the kit's page is what should be corrected.
    label, no required marker, no help button, and reports nothing.
 8. **`FieldContainer` carries its own `margin: 0 0 16px`.** A column with `gap: 16` spaces
    fields 32px apart, because the gap adds to the margin. Use no gap, or `removeMargin`.
-9. **Pass `tabIndex={0}` to every `TextInput` and `Checkbox`.** Both default to `-1`, so a
-   form built from them cannot be filled in from the keyboard. And because `FieldContainer`
-   renders `htmlFor=""`, repeat the label as `aria-label` on the control — except on
-   `Textarea`, which accepts no `aria-*` at all and cannot be named. Say so; do not invent a
-   prop.
+9. **Name every field with `labelFor` and the control's `id`.** That pair is what makes the
+   caption clickable and announces it with the field; `FieldContainer` alone captions nothing.
+   A control with no visible caption takes `aria-label` instead, and `Textarea` takes
+   `aria-label` or `aria-labelledby` as real props, because its props type is closed and
+   `labelFor` cannot reach it. Do **not** add `tabIndex={0}` to make a control reachable —
+   every control is in the tab order already, and `tabIndex` is for taking one out.
 10. **`TextInput` requires `type` and `value`**, is 173px wide without `scale`, and its
     `onChange` receives the event. `SearchInput.onChange` receives the **string**, is debounced
     by a second, and its clear button does not call it at all.

@@ -100,15 +100,14 @@ export function Form() {
   const [name, setName] = useState("");
   return (
     <Aside visible onClose={() => {}}>
-      <FieldContainer isVertical labelVisible labelText="Name">
+      <FieldContainer isVertical labelVisible labelText="Name" labelFor="name">
         <TextInput
           scale
-          tabIndex={0}
+          id="name"
           type={InputType.text}
           size={InputSize.base}
           value={name}
           onChange={(event) => setName(event.target.value)}
-          aria-label="Name"
         />
       </FieldContainer>
     </Aside>
@@ -123,8 +122,9 @@ export function Form() {
       "E-no-theme-provider",
       "E-no-translation-provider",
       "W-fieldcontainer-label",
+      "W-label-unattached",
       "W-textinput-required",
-      "W-tabindex",
+      "W-tabindex-noise",
       "W-whole-library-css",
     ],
   },
@@ -283,10 +283,59 @@ export function Traps() {
       "W-fieldcontainer-label",
       "W-fieldcontainer-gap",
       "W-textinput-required",
-      "W-tabindex",
       "W-loader-type",
     ],
   },
+);
+
+/**
+ * The two halves of naming a field. `labelFor` on the container and a matching `id` on the
+ * control is what associates the caption with the field; `Textarea` cannot be reached that way
+ * at all, because its props type is closed, so it carries its own name.
+ *
+ * Both checks replaced `W-tabindex`, which warned when a control was given no `tabIndex`. The
+ * kit's controls defaulted to -1 then and default to 0 now, so that warning turned into advice
+ * to write something between useless and harmful.
+ */
+expect(
+  "a caption attached to nothing",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Unnamed.tsx": `import { FieldContainer } from "@onlyoffice/apps-ui-kit/components/field-container";
+import { Textarea } from "@onlyoffice/apps-ui-kit/components/textarea";
+import { InputType, TextInput } from "@onlyoffice/apps-ui-kit/components/text-input";
+
+export function Unnamed() {
+  return (
+    <>
+      <FieldContainer labelVisible labelText="Name">
+        <TextInput type={InputType.text} value="" onChange={() => {}} />
+      </FieldContainer>
+      <Textarea wrapperClassName="full" value="" onChange={() => {}} />
+    </>
+  );
+}
+`,
+    "src/Unnamed.css": `.full {
+  width: 100%;
+}
+`,
+  },
+  { code: 0, has: ["W-label-unattached", "W-textarea-unnamed"] },
+);
+
+expect(
+  "a tabIndex that is only noise",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Noise.tsx": `import { Checkbox } from "@onlyoffice/apps-ui-kit/components/checkbox";
+
+export function Noise() {
+  return <Checkbox tabIndex={0} label="Yes" isChecked={false} onChange={() => {}} />;
+}
+`,
+  },
+  { code: 0, has: ["W-tabindex-noise"] },
 );
 
 expect(
@@ -350,14 +399,22 @@ import { InputType, TextInput } from "@onlyoffice/apps-ui-kit/components/text-in
 
 export function Arrow({ set }: { set: (value: string) => void }) {
   return (
-    <FieldContainer labelVisible labelText="Name">
-      <TextInput type={InputType.text} value="" tabIndex={0} onChange={(event) => set(event.target.value)} />
+    <FieldContainer labelVisible labelText="Name" labelFor="name">
+      <TextInput id="name" type={InputType.text} value="" onChange={(event) => set(event.target.value)} />
     </FieldContainer>
   );
 }
 `,
   },
-  { code: 0, lacks: ["W-fieldcontainer-label", "W-textinput-required", "W-tabindex"] },
+  {
+    code: 0,
+    lacks: [
+      "W-fieldcontainer-label",
+      "W-label-unattached",
+      "W-textinput-required",
+      "W-tabindex-noise",
+    ],
+  },
 );
 
 /**

@@ -43,16 +43,17 @@ The kit puts `data-testid` on its components — `button`, `aside`, `modal-dialo
 and each component's page lists the ids it renders under *Test ids*. `getByTestId` is the
 reliable handle.
 
-`getByRole` and `getByLabelText` are often not, and the reasons are defects rather than
-conventions:
+`getByRole` and `getByLabelText` work where the screen was built properly, and that is worth
+knowing as a test of the screen rather than of the kit:
 
-- `FieldContainer` renders its `<label>` with an empty `htmlFor`, so **no field is associated
-  with its label** and `getByLabelText` finds nothing. Query by the `aria-label` your own code
-  puts on the control.
-- `Checkbox` applies `tabIndex` to an SVG rather than to the input, and the input is
-  hard-coded out of the tab order, so the focusable element is not the one with the role.
-- `ModalDialog` puts `role="dialog"` on its click-to-close element and cannot be given an
-  accessible name, so `getByRole("dialog", { name })` will not match.
+- `getByLabelText` finds a field only when `FieldContainer` was given `labelFor` and the control
+  the matching `id`. Finding nothing usually means the screen forgot the pair, not that the
+  query is wrong.
+- `getByRole("dialog", { name })` matches when `ModalDialog` was given `aria-labelledby` or
+  `aria-label`. The role is on the dialog surface, not on the click-to-close layer.
+- `Checkbox` is the exception: the focusable element is the SVG icon, and the input beneath it
+  is hard-coded to `tabIndex={-1}`. So the element with the role is not the one focus lands on,
+  and a keyboard test has to aim at the icon.
 
 ## Things that behave differently than a test expects
 
