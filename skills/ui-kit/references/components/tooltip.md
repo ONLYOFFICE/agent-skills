@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/tooltip/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 10d9d56340f7ba4b2c5779fa40ba4bf345c9aca188c9633124e49d03d16d4577 -->
+<!-- body-sha256: cfcd63a112652621de38058ef990d9d7cc2a1184b79398f3c55b214415922bc5 -->
 
 > Synced from the kit's own `components/tooltip/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -223,7 +223,10 @@ useful for giving a hint to markup of your own.
 
 - Only a **string** produces a tooltip. `tooltipContent` of any other node type leaves the
   element with no tooltip at all, and `tooltipContent` wins over `title` when both are given.
-- `tooltipPlace` and `tooltipFitToContent` are accepted and ignored — the placement is the
+- `tooltipPlace` and `tooltipFitToContent` have been removed from `WithTooltipProps`: they were
+  declared, stripped before forwarding and read nowhere, so passing one now fails to compile
+  rather than doing nothing. `omitTooltipProps` still strips them, so a caller that has not
+  caught up does not put them on the DOM. The placement is the
   system tooltip's `bottom-start`.
 - Under `NODE_ENV=test` the wrapper skips all of this and renders a native `title` attribute
   instead, so a test asserts on `title`, not on a floating element.

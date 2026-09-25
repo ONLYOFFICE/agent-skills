@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/section/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 5f4954fd14a4eb62da75adb894f688b9ca6042482e616376d30d949b36d0fb55 -->
+<!-- body-sha256: 98e4564af842b8a32ea197ffabac913492d845b376c8e422a32f48e7acee296b -->
 
 > Synced from the kit's own `components/section/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -345,10 +345,10 @@ export function FilteredPage() {
   `uploadFiles` and a `ref` you pass. The table above says so prop by prop.
 - **`withBodyScroll` and `settingsStudio` have destructuring defaults but are declared required**, so
   the compiler asks for them anyway.
-- **The section header has no height and no background.** Both come from custom properties declared
-  under a selector that cannot match — `.header .light` rather than `.light .header` — so the header
-  sizes to its content and the container's background resolves to nothing. Set
-  `--section-header-size` and `--section-bg` yourself if the 69px header matters.
+- **The header's height and background come from the theme, not from a prop.** 69px on a desktop,
+  61px on a tablet, 53px on a phone, and white or black to match the `light`/`dark` class on
+  `<body>`. Override any of them with the custom properties below rather than by styling the
+  header element.
 - **It is memoised with a deep equality check** over all its props, arrays included, which is
   expensive on long operation lists and means an identity change alone does not re-render it.
 - The progress button appears as soon as any operation array is non-empty **or** `startDropPreview`
@@ -376,10 +376,10 @@ render nothing themselves.
 
 | Variable                         | Default | Effect                                               |
 | -------------------------------- | ------- | ---------------------------------------------------- |
-| `--section-bg`                   | none    | Background of the section                            |
-| `--section-header-size`          | none    | Height of the header on a desktop                    |
-| `--section-header-tablet-size`   | none    | Height of the header on a tablet                     |
-| `--section-header-mobile-size`   | none    | Height of the header on a phone                      |
+| `--section-bg`                   | theme   | Background of the section                            |
+| `--section-header-size`          | `69px`  | Height of the header on a desktop                    |
+| `--section-header-tablet-size`   | `61px`  | Height of the header on a tablet                     |
+| `--section-header-mobile-size`   | `53px`  | Height of the header on a phone                      |
 | `--section-content-padding`      | `-20px` | Negative inline padding that bleeds the body out     |
 | `--section-footer-margin`        | `40px`  | Space above the footer                               |
 | `--section-footer-margin-mobile` | `32px`  | The same on a phone                                  |
@@ -393,7 +393,8 @@ render nothing themselves.
 | `--chat-panel-bg`                | theme   | Background of the chat panel                         |
 | `--chat-panel-drop-border`       | accent  | Border of its "drop to attach" overlay               |
 
-The header's three sizes have no working default — see the behaviour note above.
+Every default above is the theme's own value, applied through the `light`/`dark` class on
+`<body>`; the table lists what you get when you override nothing.
 
 ## Accessibility
 

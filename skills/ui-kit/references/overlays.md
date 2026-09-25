@@ -78,33 +78,23 @@ state inside it. `embedded` disables closing ahead of `isCloseable` — no cross
 `onClose` never called. The dialog portals into `document.body`, so no parent's `overflow`
 matters; layering is `zIndex`, 310 by default.
 
-**A dialog cannot be given an accessible name.** `role="dialog"` and `aria-modal` sit on the
-click-to-close element, and an `aria-label` you pass is spread onto the internal header — and
-only when a header is rendered. This is a defect, not a technique to work around; say so.
+**Name the dialog yourself.** `role="dialog"` and `aria-modal` sit on the dialog surface, and
+`aria-labelledby`, `aria-label` and `aria-describedby` are props that reach it. Prefer
+`aria-labelledby` pointing at an `id` on the heading you already render in
+`ModalDialog.Header`; a dialog given neither is announced as an unnamed dialog.
 
-**The bottom of a long `Aside` body cannot be reached.** The panel is `position: fixed;
-height: 100%` and block-level, and the `Scrollbar` inside it is given no height of its own — so
-it sizes to the whole panel rather than to what is left under the header, and its last ~53px
-sit below the panel's bottom edge. Take the layout over: `className` makes the panel a flex
-column, `withoutBodyScroll` renders the children directly, and a scroller of yours takes the
-remaining space.
+**An `Aside` lays its own body out.** The panel is a flex column and the scrolling body takes
+the space the header leaves, so a long list reaches its last item with nothing on your side.
+Do not add a `className` making it a flex column or reach for `withoutBodyScroll` to fix
+scrolling — both were the workaround for a defect the kit has since fixed, and the second one
+now costs you the scroller you would otherwise get for free.
 
-```css
-.members-panel {
-  display: flex;
-  flex-direction: column;
-}
-.members-panel__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-}
-```
+If you do pass `withoutBodyScroll` and bring a scroller of your own, give it `flex: 1 1 0` and
+`min-height: 0`. A plain `height: 100%` there resolves against the whole panel and hangs its
+bottom below the edge — which is exactly the shape the old defect had.
 
-Overriding the kit scroller's own inline height with `!important` reaches the same pixels and
-breaks the next time that element changes. `style` is not a way in either: `Aside` writes
-`style={{ zIndex }}` before spreading the rest of its props, so a `style` of yours replaces it
-and lands on the header as well.
+`style` is not a way into the panel: `Aside` writes `style={{ zIndex }}` before spreading the
+rest of its props, so a `style` of yours replaces it and lands on the header as well.
 
 ## Menus
 

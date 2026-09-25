@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/link/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: cc1f81b408c343d3d9dc8cf1517c8a36099fa53a5e6e5bc188be67433610e065 -->
+<!-- body-sha256: b2b0b76038eef0c36c0f6e652a9044126f1160e03debb40a98423598d64673f1 -->
 
 > Synced from the kit's own `components/link/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -119,14 +119,12 @@ Declared by [`components/text`](text.md) and accepted here too.
 
 The `index` module exports a wrapped component, so these are accepted on top of the props above.
 
-| Prop                  | Type                | Required | Default | Description                                                                                                                                                                                       |
-| --------------------- | ------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `onMouseEnter`        | `MouseEventHandler` | no       | –       | Called in addition to the handler that opens the tooltip, after it.                                                                                                                               |
-| `onMouseLeave`        | `MouseEventHandler` | no       | –       | Called in addition to the handler that closes the tooltip, after it.                                                                                                                              |
-| `onMouseMove`         | `MouseEventHandler` | no       | –       | Passed through only while the element has no tooltip. Once one is active the wrapper's own handler replaces it and this is dropped.                                                               |
-| `tooltipContent`      | `ReactNode`         | no       | –       | Tooltip content, used instead of `title` when both are set. Only a string produces a tooltip: the wrapper needs text for the anchor, so any other node leaves the element with no tooltip at all. |
-| `tooltipFitToContent` | `boolean`           | no       | –       | Ignored. Nothing reads this prop.                                                                                                                                                                 |
-| `tooltipPlace`        | `TTooltipPlace`     | no       | –       | Ignored. Nothing reads this prop; the tooltip's placement comes from the `Tooltip` the anchor resolves to.                                                                                        |
+| Prop             | Type                | Required | Default | Description                                                                                                                                                                                       |
+| ---------------- | ------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onMouseEnter`   | `MouseEventHandler` | no       | –       | Called in addition to the handler that opens the tooltip, after it.                                                                                                                               |
+| `onMouseLeave`   | `MouseEventHandler` | no       | –       | Called in addition to the handler that closes the tooltip, after it.                                                                                                                              |
+| `onMouseMove`    | `MouseEventHandler` | no       | –       | Passed through only while the element has no tooltip. Once one is active the wrapper's own handler replaces it and this is dropped.                                                               |
+| `tooltipContent` | `ReactNode`         | no       | –       | Tooltip content, used instead of `title` when both are set. Only a string produces a tooltip: the wrapper needs text for the anchor, so any other node leaves the element with no tooltip at all. |
 
 <!-- props:end -->
 

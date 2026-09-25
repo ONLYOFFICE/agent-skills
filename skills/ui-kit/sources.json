@@ -1,6 +1,6 @@
 {
   "version": "4.0.0",
-  "syncedCommit": "2d1f8fe6",
+  "syncedCommit": "34a6606b",
   "syncedBranch": "feature/ui-kit-separation",
   "sources": {
     "repo": {"host": "github", "path": "/docspace-ui-kit-react", "verify": true}

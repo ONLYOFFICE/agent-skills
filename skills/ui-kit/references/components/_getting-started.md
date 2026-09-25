@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 docs/getting-started.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 60b419c82a94e0c72df5aef0b50c34eb71a1d8b96659e883973821f45e486838 -->
+<!-- body-sha256: c75e9b1487233ec118b81ec41a742e0b4c3e4be6c518ca3221f62a301199b257 -->
 
 > Synced from the kit's own `docs/getting-started.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -121,13 +121,12 @@ class on `<body>`, `ltr` or `rtl` beside it, `data-theme` and `data-dir` on `<ht
   it: the provider listens for changes to that media query for as long as it is mounted.
 - `locale` — a language tag. It decides two things: the writing direction, from a list of
   thirteen right-to-left languages, and the font family.
-- **`colorTheme` — the portal's accent palette; an application of its own leaves it out.** The
-  provider looks as though it asks a portal for the palette when the prop is absent, but the call
-  it makes is the API SDK's _parameter builder_: it returns `{ url, options }` and sends nothing,
-  the result is read as a response, and the branch quietly ends. No request, no rejection, no
-  retry — the kit's own accent is kept. That dead call is what puts the REST client and `axios`
-  into every application that mounts this provider; see
-  [`known-defects.md`](_known-defects.md).
+- **`colorTheme` — the portal's accent palette; an application of its own leaves it out**, and
+  the kit's own accent is used. Nothing is fetched: this prop is the only way a palette gets in.
+  The provider used to look as though it asked a portal when the prop was absent, but the call
+  was the API SDK's _parameter builder_ — it returns `{ url, options }` and sends nothing — and
+  that dead call dragged the REST client and `axios` into every application that mounted the
+  provider. Both are gone.
 
 Do not mount `ThemeProviderComponent` from `components/theme-provider` yourself. It is the older
 layer this provider is built on; used directly it takes a full theme object rather than a name, and
@@ -264,4 +263,4 @@ width when the arrangement matters.
   and the prop that shows and hides it, with a table for choosing between the close calls.
 - Each component's own README, next to its source under `components/<name>/README.md`, and shipped
   in the package at the same path.
-- [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/2d1f8fe6/docs/public-api.md) — the full public and portal-internal boundary.
+- [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/34a6606b/docs/public-api.md) — the full public and portal-internal boundary.

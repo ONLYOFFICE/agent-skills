@@ -37,12 +37,12 @@ components that are default exports are all facts rather than a hand-kept list. 
 things that are already broken: a visibility prop the component ignores, a portal-internal
 import, `Providers`, a path into `dist/`, `PUBLIC_DIR`, a missing provider, a `SearchInput`
 handler reading `.target.value` off a string. Warnings are the silent traps: a field with no
-visible label, a column whose `gap` doubles the spacing, an input outside the tab order, a
+visible label, a caption attached to no control, a column whose `gap` doubles the spacing, a
 `Loader` with no type, the whole-library stylesheet.
 
-**`test-validator.mjs`** builds fourteen throwaway projects in the temp directory and asserts
+**`test-validator.mjs`** builds twenty throwaway projects in the temp directory and asserts
 both what each must report and what it must not, then checks the manifest for internal sense
-and runs the two sync tools offline. 374 expectations; breaking one branch of the validator
+and runs the two sync tools offline. 390 expectations; breaking one branch of the validator
 fails it.
 
 ## What it targets

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/drop-down-item/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 21502e67a9505f7235d71328983c931391165bbcf135038271c8a72c0e7c81c8 -->
+<!-- body-sha256: 3052b3afc37bd0a85ecbee5a9927021d7327037fbb4fd557de81efb054cf7f7c -->
 
 > Synced from the kit's own `components/drop-down-item/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -217,8 +217,11 @@ export function NotificationsItem() {
 - The row is a `<div role="option">` — or `role="separator"` — with `aria-selected` and
   `aria-disabled`, but its parent is a `role="listbox"` that is not linked to any control, so
   the pattern is incomplete on its own.
-- `tabIndex` is -1 by default, so the item is not in the tab order; the menu's arrow keys move a
-  visual highlight rather than focus, and they work only when the menu has a `maxHeight`.
+- **`tabIndex` is -1 by default, and that is correct here**, unlike on the kit's inputs: an
+  option inside a listbox is meant to stay off the tab order while the container keeps focus and
+  the arrow keys move a highlight. That is the active-descendant pattern, and the row carries
+  `data-focused` for it. What is incomplete is the container, per the point above — not this.
+  The arrow keys also work only when the menu has a `maxHeight`.
 - Clicks are handled on the row, and there is no key handler: Enter and Space do nothing unless
   the enclosing menu's keyboard navigation is on.
 - The badges are text inside the row, so their meaning is announced; the external-link icon is

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/aside/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: d411b7522bf08216abf5bec68219f608d1926a1a58cfbd53b3c3e4fe9bb99c9c -->
+<!-- body-sha256: 1feb95fef1530f2a2001986f390b3a754c3552506ba53c5dd29ab7c67e3f6def -->
 
 > Synced from the kit's own `components/aside/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -188,6 +188,11 @@ export function LazyPanel({ ready }: { ready: boolean }) {
   for the usual behaviour.
 - **`withoutBodyScroll` does not lock the page's scroll.** It decides whether the children are
   wrapped in the kit's `Scrollbar`; the page behind keeps scrolling either way.
+- **The panel is a flex column, and the body takes the space the header leaves.** A list long
+  enough to scroll reaches its last item without anything on your side. If you pass
+  `withoutBodyScroll` and bring a scroller of your own, give it `flex: 1 1 0` and `min-height: 0`
+  for the same result — a plain `height: 100%` there resolves against the whole panel and hangs
+  its bottom below the edge.
 - **`withoutHeader` removes the only way out.** With no header there is no cross, so a panel
   that hides its header has to be closed by something of yours.
 - Everything the component does not read itself is spread onto the `<aside>` element **and**
