@@ -47,7 +47,7 @@ release. Semver: new skill or breaking rewrite of one → minor while `0.x`; cor
 **Target SDK version** — the SDK release a skill describes. Lives in each skill's
 `SKILL.md` frontmatter as `metadata.sdk-version`, and is repeated in prose in the root
 README (the "Targets" column of the skills table). For `plugin-sdk` the SDK/DocSpace pair
-is also stated in `skills/plugin-sdk/references/scopes.md`. When an SDK is released:
+is also stated in `skills/plugin-sdk/references/plugins/scopes.md`. When an SDK is released:
 
 - `embed-sdk`: `node tools/sync-sources.mjs --skill embed-sdk --set-version <x.y.z>` (moves
   `sdk-version`, the pinned-facts line, the validator header and the raw GitHub links
@@ -57,7 +57,7 @@ is also stated in `skills/plugin-sdk/references/scopes.md`. When an SDK is relea
   describe behaviour (`config-reference.md` traps, `methods.md`, `events.md`, mode files).
   Finish with `--verify` on the links and the README table.
 - `plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
-  generator and validator) and the version pair in `references/scopes.md`; if the
+  generator and validator) and the version pair in `references/plugins/scopes.md`; if the
   client's `libs/ui-kit` changed, repack the tarball in `vendor/` and update
   `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
   validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.

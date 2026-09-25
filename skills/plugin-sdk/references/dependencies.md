@@ -1,6 +1,6 @@
 # Third-party dependencies
 
-Anything imported beyond the five specifiers the portal provides ([react.md → Bundling](react.md#bundling)) is compiled into `plugin.js`, shipped inside the 5 MB archive, and executed in the portal's own window — its DOM, its cookies, the signed-in user's session. Both halves of that matter, and they pull in opposite directions.
+Anything imported beyond the five specifiers the portal provides ([bundling.md](bundling.md)) is compiled into `plugin.js`, shipped inside the 5 MB archive, and executed in the portal's own window — its DOM, its cookies, the signed-in user's session. Both halves of that matter, and they pull in opposite directions.
 
 **Do not hand-write what a well-known library already does.** Archive formats, PDF or spreadsheet output, HTML sanitising, markdown, date arithmetic, charts, fuzzy search, diffing — a few hundred lines of your own is a few hundred lines of unreviewed edge cases (zip64, CRC, DST, XSS), and they surface on the user's real file rather than on the one you tested. Take the established package and spend the effort on the feature.
 
@@ -30,7 +30,7 @@ The recurring needs, with the package that is the usual answer. Each is browser-
 | Need | Package | Licence | What it leaves to you |
 |---|---|---|---|
 | Zip read/write, deflate, gzip | `fflate` | MIT | **Encrypted entries** — it ignores the general-purpose bit-0 flag and inflates a password-protected entry as if it were plain, failing with a codec error: read the flag yourself and say the archive is protected. **Non-ASCII names** — without bit 11 they are decoded as latin1, so an older archiver's Cyrillic or CJK name arrives as mojibake |
-| Sanitising HTML before it reaches the DOM | `dompurify` | MPL-2.0 or Apache-2.0 | It sanitises HTML, not URLs or CSS you interpolate yourself; and it needs a DOM, so nothing about it works in a class-side callback |
+| Sanitising HTML before it reaches the DOM | `dompurify` | MPL-2.0 or Apache-2.0 | It sanitises HTML, not URLs or CSS you interpolate yourself |
 | Markdown to HTML | `marked` | MIT | It does **not** sanitise — the output goes through `dompurify` before it reaches `innerHTML` |
 | Date arithmetic beyond `Intl` | `date-fns` | MIT | Time zones are a separate package (`date-fns-tz`); portal timestamps are UTC and the user's zone is theirs |
 | Validating a foreign JSON payload at runtime | `zod` | MIT | Nothing, but it is only worth its bytes for input you do not control |
