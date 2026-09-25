@@ -42,7 +42,7 @@ visible label, a caption attached to no control, a column whose `gap` doubles th
 
 **`test-validator.mjs`** builds twenty throwaway projects in the temp directory and asserts
 both what each must report and what it must not, then checks the manifest for internal sense
-and runs the two sync tools offline. 390 expectations; breaking one branch of the validator
+and runs the two sync tools offline. 393 expectations; breaking one branch of the validator
 fails it.
 
 ## What it targets
@@ -98,12 +98,18 @@ the ceiling.
 catalogue's *prop that shows and hides it* table, and rules 7 to 15 on the page of the component
 each is about.
 
-**That is not, by itself, a reason to cut them, and the first two eval iterations do not settle
+**That is not, by itself, a reason to cut them, and three eval iterations have not settled
 it.** Both arms of every scenario had the kit installed, so both could read those pages and the
 package's own `.d.ts`; what the ties show is that the pages are *sufficient once read*. They say
 nothing about whether an agent would go and read them unprompted, which is exactly what a rule
 in `SKILL.md` buys: it names the trap before the agent decides what to open. No run so far has
 separated those two things.
+
+Iteration 2 is the nearest thing to evidence either way, and it points the other direction. The
+kit gained `labelFor` and the fixed `Aside` the day before, and both are documented on the kit's
+own pages — yet the baseline attached two captions to nothing and hand-rebuilt the panel layout
+the component now brings, while the with-skill arm did neither. The facts were in `node_modules`
+in both arms. Only one arm was told to look.
 
 Separating them needs a third arm — the skill with one rule removed, against the same scenario —
 and until that is run, a rule with a passing assertion behind it stays. An argument from "the
@@ -117,15 +123,21 @@ it, so the kit is structurally unable to warn about the alias its own client def
 
 ## What the evidence says, and what it does not
 
-Both instruments have been run. [`evals/`](evals/README.md) carries two iterations — 67/70
-against a baseline's 60/70 in the second — and [`trigger-tests.md`](evals/trigger-tests.md)
-carries ten of ten and none of ten across three orders.
+Both instruments have been run. [`evals/`](evals/README.md) carries three iterations — **70/70
+against a baseline's 58/70** in the third, every scenario built and typechecked — and
+[`trigger-tests.md`](evals/trigger-tests.md) carries ten of ten and none of ten across three
+orders.
 
 What that buys: the skill's value is concentrated where the package cannot answer for itself —
 explaining a symptom with no project to read, auditing someone else's file without inventing
-findings, and the composition traps no single component page states. The two build scenarios
-that tied did so because the kit vendors its own READMEs and hand-annotated `.d.ts` into
-`node_modules`, which is workstream A working, not this skill failing.
+findings, and the composition traps no single component page states. It also shows in the
+discipline the scenarios grade rather than the knowledge: the failure path of a dialog, colours
+declared for both themes, a review that names its source, and not hand-rolling what a fixed
+component already does.
+
+The one persistent tie is `explain-empty-labels`, 10/10 both arms in two iterations running.
+That is the kit vendoring its own READMEs and hand-annotated `.d.ts` into `node_modules` —
+workstream A working, not this skill failing.
 
 What it does not buy, and should not be claimed:
 
@@ -138,6 +150,8 @@ What it does not buy, and should not be claimed:
   changes the description.
 - **Prose in the synced pages is checked by nobody.** The kit's validator settles metadata,
   generated tables and compiling examples; a sentence that has become false as the component
-  changed is caught only by someone re-reading it. Three such sentences were found by the eval
-  runs and fixed upstream, which is the argument for running these at all — and also the measure
-  of how they were found.
+  changed is caught only by someone re-reading it. Five such sentences have now been found by the
+  eval runs and fixed upstream, which is the argument for running these at all — and also the
+  measure of how they were found. The last two were a day old: a page written the same week the
+  component changed said `initialTheme` needs a remount and that `labelFor` cannot reach a
+  `Textarea`, and both were wrong. Freshly written is not the same as checked.

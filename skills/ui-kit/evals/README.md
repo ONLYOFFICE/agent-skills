@@ -120,6 +120,12 @@ transcript for reads outside the project before trusting a result.
 | 1 | 2026-09-24 | Opus 5 | `explain-empty-labels` | 9/10 | **10/10** |
 | 1 | 2026-09-24 | Opus 5 | `audit-snippet` | 13/13 | 10/13 |
 
+| 2 | 2026-09-25 | Opus 5 | `settings-form` | **18/18** | 15/18 |
+| 2 | 2026-09-25 | Opus 5 | `confirm-dialog` | **14/14** | 12/14 |
+| 2 | 2026-09-25 | Opus 5 | `side-panel-list` | **15/15** | 13/15 |
+| 2 | 2026-09-25 | Opus 5 | `explain-empty-labels` | 10/10 | **10/10** |
+| 2 | 2026-09-25 | Opus 5 | `audit-snippet` | **13/13** | 8/13 |
+
 Iteration 0 totalled 53/54 against 41/54, at 1.5× the wall clock and 1.3× the tokens. Read it
 with the two ties in mind: their checks were answerable from the package's own documentation,
 and the graders showed both arms citing it by name. The run earned three things regardless —
@@ -143,6 +149,31 @@ scroller; `wrapperClassName` is the only way in); an empty toast title renders *
 so there is no gap to see; and `Dropzone` translates nothing — eleven components do, and it is
 not one of them. All three were wrong in the skill *and* in the kit's own pages, which is the
 argument for running this at all.
+
+Iteration 2 totalled **70/70 against 58/70** — the first clean sheet, and a wider margin than
+iteration 1's despite a stronger baseline. Nothing was carried forward: the kit's thirteen
+faults had been fixed the day before, so the package was rebuilt and reinstalled and **both**
+arms' reading material changed with it. `PROVENANCE.md` in the workspace has the detail,
+including the two assertions corrected before grading — one of which would have failed the
+with-skill arm for obeying the skill, since `references/overlays.md` now tells an agent not to
+apply the `Aside` workaround the kit made unnecessary.
+
+The margin moved for a reason worth naming: three of the twelve the baseline lost were the new
+labelling and layout facts, which are in the kit's pages but were not reached for unprompted.
+The cost premium also disappeared — 55 minutes and 630K tokens with the skill against 58
+minutes and 641K without, where iteration 0 cost half as much again.
+
+It forced two more corrections, both in pages written the day before and both found by arms
+disagreeing with the documentation in front of them:
+
+- **`initialTheme` is not read once.** `providers/theme/README.md` said a new value needs a
+  remount; `useTheme` re-resolves it in an effect keyed on that prop. Two arms reported it
+  independently, one of them the baseline.
+- **`labelFor` does reach a `Textarea`.** Its `id` lands on the `<textarea>` element and
+  `FieldContainer` renders `htmlFor`, so the pair names it like any other control. Rule 9, the
+  kit's own page and its JSDoc all said otherwise — and `check-usage.mjs` warned
+  `W-textarea-unnamed` at a project that had done the naming correctly. The false positive is
+  fixed, with a regression case on each side of it.
 
 ## Adding one
 

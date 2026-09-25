@@ -294,8 +294,19 @@ function checkTag(file, text, name, index, component) {
   if (TAB_INDEX_UNNEEDED.has(name) && /\btabIndex\s*=\s*\{?\s*0\s*\}?/.test(attributes)) {
     add("warning", "W-tabindex-noise", file, line, `<${name} tabIndex={0}>`, "every control in the kit is in the tab order already; `tabIndex` is for taking one out, not for putting it in");
   }
+  // A Textarea's `id` lands on the `<textarea>` itself, so a container's `labelFor` names it
+  // exactly as it names any other control. What its closed props type costs is the ability to
+  // pass arbitrary attributes -- hence the three `aria-*` it declares as props of its own. This
+  // check used to ignore the pair and warn about every captioned textarea in the repository.
   if (name === "Textarea" && !has("aria-label") && !has("aria-labelledby")) {
-    add("warning", "W-textarea-unnamed", file, line, "<Textarea> with neither `aria-label` nor `aria-labelledby`", "its props type is closed, so a FieldContainer's `labelFor` cannot reach it and it is the one control that has to be named on itself");
+    const id = /\bid=(?:"([^"]*)"|\{([^}]*)\})/.exec(attributes);
+    const token = (id?.[1] ?? id?.[2] ?? "").trim();
+    const quoted = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const captioned =
+      token !== "" && new RegExp(`labelFor=(?:"${quoted}"|\\{\\s*${quoted}\\s*\\})`).test(text);
+    if (!captioned) {
+      add("warning", "W-textarea-unnamed", file, line, "<Textarea> named by nothing", "it carries no `aria-label` or `aria-labelledby`, and no FieldContainer's `labelFor` points at an `id` on it, so it is announced unnamed");
+    }
   }
   if (name === "Textarea" && !declaresIn(attributes, /(^|[\s;{])(width|flex)\s*:/)) {
     add("warning", "W-textarea-width", file, line, "<Textarea> whose wrapper is given no width", "it has a max-width and no width of its own, and only `wrapperClassName` reaches the element that carries it — a `style` is spread onto the inner scroller, which is already full width, so it reads as though it worked and changes nothing");

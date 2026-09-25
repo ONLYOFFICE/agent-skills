@@ -324,6 +324,37 @@ export function Unnamed() {
   { code: 0, has: ["W-label-unattached", "W-textarea-unnamed"] },
 );
 
+/**
+ * The other half of the same check, and the reason it exists: a Textarea's `id` lands on the
+ * `<textarea>` element, so a container's `labelFor` names it like any other control. Warning
+ * about a textarea that is already captioned was a false positive found by an eval run --
+ * against a project that had done the naming correctly.
+ */
+expect(
+  "a Textarea named by a container's labelFor",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Named.tsx": `import { FieldContainer } from "@onlyoffice/apps-ui-kit/components/field-container";
+import { Textarea } from "@onlyoffice/apps-ui-kit/components/textarea";
+
+const DESCRIPTION_ID = "room-description";
+
+export function Named() {
+  return (
+    <FieldContainer labelVisible labelText="Description" labelFor={DESCRIPTION_ID}>
+      <Textarea id={DESCRIPTION_ID} wrapperClassName="full" value="" onChange={() => {}} />
+    </FieldContainer>
+  );
+}
+`,
+    "src/Named.css": `.full {
+  width: 100%;
+}
+`,
+  },
+  { code: 0, lacks: ["W-textarea-unnamed", "W-label-unattached"] },
+);
+
 expect(
   "a tabIndex that is only noise",
   {

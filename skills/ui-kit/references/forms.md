@@ -61,10 +61,11 @@ what the example above does. Two cases need something else:
 
 - **A control with no visible caption** — a search box, a field in a toolbar — takes
   `aria-label` of its own.
-- **`Textarea`** has a closed props type: it accepts no arbitrary DOM attributes, so `labelFor`
-  on the container does not reach it. It takes `aria-label`, `aria-labelledby` and
-  `aria-describedby` as real props; point `aria-labelledby` at the caption, or give it an
-  `aria-label`.
+- **`Textarea`** is named the same way as the rest — its `id` lands on the `<textarea>` itself,
+  so a container's `labelFor` reaches it. What is different is that its props type is closed: it
+  accepts no arbitrary DOM attributes, so `aria-label`, `aria-labelledby` and `aria-describedby`
+  are declared as props of its own. Use them for a textarea with no visible caption; a captioned
+  one needs nothing beyond the pair.
 
 Do not pass `tabIndex={0}` to make a control reachable. Every control here is in the tab order
 already; `tabIndex` is for taking one **out**, which is a deliberate and rare thing to want.

@@ -107,9 +107,9 @@ the rule wins and the kit's page is what should be corrected.
    fields 32px apart, because the gap adds to the margin. Use no gap, or `removeMargin`.
 9. **Name every field with `labelFor` and the control's `id`.** That pair is what makes the
    caption clickable and announces it with the field; `FieldContainer` alone captions nothing.
-   A control with no visible caption takes `aria-label` instead, and `Textarea` takes
-   `aria-label` or `aria-labelledby` as real props, because its props type is closed and
-   `labelFor` cannot reach it. Do **not** add `tabIndex={0}` to make a control reachable —
+   A control with no visible caption takes `aria-label` instead — `Textarea` among them, whose
+   props type is closed, so the three `aria-*` it accepts are props of its own rather than
+   attributes you can pass. Do **not** add `tabIndex={0}` to make a control reachable —
    every control is in the tab order already, and `tabIndex` is for taking one out.
 10. **`TextInput` requires `type` and `value`**, is 173px wide without `scale`, and its
     `onChange` receives the event. `SearchInput.onChange` receives the **string**, is debounced
