@@ -42,8 +42,8 @@ try/catch, never as a hard assertion.
 
 ## System mode in tests
 
-A System frame never finishes loading by itself — call
-`window.DocSpace.SDK.frames[frameId].setIsLoaded()` after init or the loader spins forever.
+On clients from late 2025 on the System page reports its own load. On an older portal the loader
+spins until you call `window.DocSpace.SDK.frames[frameId].setIsLoaded()` after init.
 
 ## E2E environment checklist
 

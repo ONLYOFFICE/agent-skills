@@ -28,8 +28,8 @@ sdk.initSystem({
 Key points:
 
 - Wrap the container in a `hidden` parent — the frame itself must exist in the DOM.
-- The loader is **forced on** and the frame never reports completion by itself — if you
-  need it to stop "loading" (e.g. in tests), call `frames[frameId].setIsLoaded()`.
+- The loader is **forced on**. The page reports its own load on clients from late 2025 on;
+  on an older portal the frame stays "loading" until you call `frames[frameId].setIsLoaded()`.
 - `waiting: true` is ignored here — System always renders.
 - Full auth flows built on this mode (linking, silent re-login, sign-out handling,
   multi-frame pages): [auth-recipes.md](../auth-recipes.md).

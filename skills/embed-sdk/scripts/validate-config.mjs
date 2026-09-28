@@ -228,7 +228,7 @@ if (config.editorCustomization !== undefined) {
     }
     for (const key of Object.keys(config.editorCustomization)) {
       if (!KNOWN_CUSTOMIZATION_KEYS.includes(key)) {
-        warn(`editorCustomization.${key}: unknown key — silently ignored by SDK 2.2.0`);
+        warn(`editorCustomization.${key}: not in TEditorCustomization (SDK 2.2.0) — the portal passes it to Document Server unchecked`);
       }
     }
   }

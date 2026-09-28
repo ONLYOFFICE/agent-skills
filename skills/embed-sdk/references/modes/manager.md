@@ -21,7 +21,8 @@ const instance = sdk.initManager({
 Key points:
 
 - `id` (optional) = start folder; the SDK moves it into `filter.folder` automatically.
-- `rootPath` default `/rooms/shared/`; the iframe URL is `{src}{rootPath}?{filter…}`.
+- `rootPath` default `/rooms/shared/`; the iframe URL is `{src}{rootPath}filter?{filter…}`
+  (`{src}{rootPath}{id}/filter?…` with an `id`).
 - The loader is **forced on** in this mode (`noLoader` is ignored).
 - `filter.sortBy` takes **API values** (`"AZ"`, `"DateAndTime"`, …) — use `FilterSortBy`
   enum constants, never enum key names.

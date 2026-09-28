@@ -18,7 +18,7 @@ Key points:
 
 - **`id` is mandatory.** The SDK builds `/sdk/public-room?folder={id}&key={requestToken}`
   and the portal page calls `getFolder(folder)` during server-side rendering. Without `id`
-  the render throws and the frame shows a white "Something went wrong" screen — no
+  that call fails and the page renders its invalid-link error (client 4.0.0) — no
   `onAppError`, no console hint pointing at the config. Run `validate-config.mjs`: it
   rejects a public-room config without `id`.
 - Where `id` and the token come from (always as a pair — the token is bound to the room):

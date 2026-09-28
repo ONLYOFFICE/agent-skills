@@ -1,7 +1,7 @@
 {
   "skill_name": "embed-sdk",
   "format": "skill-creator: one entry per scenario, expectations as strings. Each expectation starts with [C] (critical, weight 2: a silent breakage) or [Q] (quality, weight 1) and ends with a (how: …) hint for the grader. Arms: with_skill = the plugin installed, prompt alone; without_skill = no skill, prompt plus docs_hint. The executor never reads evals/. Operator answers are put into the prompt identically in both arms.",
-  "docs_hint": "Documentation: https://api.onlyoffice.com/docspace/javascript-sdk/get-started/ and https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/classes/SDKInstance/; every page of that site lives at a URL ending in a slash, the guides are under get-started/, embedding-modes/, customization/ and events-and-callbacks/, and the generated reference is under usage-sdk/{classes,type-aliases,enumerations,variables}/.",
+  "docs_hint": "Documentation: https://api.onlyoffice.com/docspace/javascript-sdk/get-started/ and https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/classes/SDKInstance/; every page of that site lives at a URL ending in a slash, the guides are under get-started/ and embedding-modes/ (there is no customization/ or events-and-callbacks/ section), the generated reference is under usage-sdk/{classes,type-aliases,enumerations,variables}/ and covers only some of the exports, and the samples are under samples/{basic-samples,advanced-samples,react-samples}/.",
   "models": [
     "claude-sonnet-5",
     "claude-opus-5",
