@@ -92,8 +92,9 @@ Before tagging a release:
 
 ## Not yet done
 
-- CI that runs steps 1, 2, 2a (`--check`), 4 and 5 on every push, and the cheap eval cases
-  (`--tag question --tag trigger`) on a schedule.
+- CI that runs the offline checks of [TESTING.md](TESTING.md) on every push and the cheap eval
+  cases (`--tag question --tag trigger`) on a schedule; the build cases need a Linux or macOS
+  runner, since a shell grant requires a sandbox backend. Until then every step is run by hand.
 - `skills/plugin-sdk/vendor/` holds ~7 MB of tarballs in git; move them to LFS, a
   registry or release assets once a home is chosen.
 - `skills/embed-sdk/scripts/sync-sdk.mjs` derives the validator dictionaries by parsing the

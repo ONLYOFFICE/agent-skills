@@ -124,12 +124,8 @@ skills/plugin-sdk/
 ## Development
 
 - What a skill directory must contain and how changes are judged: [CONTRIBUTING.md](CONTRIBUTING.md).
-- Validate the plugin before pushing: `claude plugin validate . --strict`; run
-  `node skills/<name>/scripts/test-validator.mjs` for every skill that has a validator.
-- Quality gate: `claude plugin eval . --tag question --tag trigger` after a content change,
-  the build cases before a release ([evals/README.md](evals/README.md)); the per-skill A/B
-  protocols stay in [embed-sdk](skills/embed-sdk/evals/README.md) and
-  [plugin-sdk](skills/plugin-sdk/evals/README.md).
+- How to test — the offline checks after every edit, the behaviour suite after a content
+  change, everything before a release, and the platform limits: [TESTING.md](TESTING.md).
 - Versions, names, what counts as publishing and the release checklist:
   [RELEASING.md](RELEASING.md).
 

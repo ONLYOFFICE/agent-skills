@@ -53,8 +53,9 @@ work; a check both runs pass is a passage that can probably go.
   each skill's `evals/README.md`.
 
 Run the plugin suite's cheap cases (`--tag question --tag trigger`) after every content
-change and the build cases before a release. The best new case is a real failure turned into
-a check: watch it fail, fix the skill, watch it pass.
+change and the build cases before a release — the commands, costs and platform limits are in
+[TESTING.md](TESTING.md). The best new case is a real failure turned into a check: watch it
+fail, fix the skill, watch it pass.
 
 Feedback from testing (the internal testing log, issues, a reflection somebody wrote after a
 session) is an input to this loop, not a note to file: every remark becomes either a new
@@ -66,9 +67,13 @@ tends to be lost on the next rewrite.
 
 ```
 claude plugin validate . --strict
-node skills/<name>/scripts/test-validator.mjs   # for every skill that has a validator
-node tools/sync-sources.mjs --check             # every link and pinned version traces to sources.json
+node skills/<name>/scripts/test-validator.mjs                  # for every skill that has a validator
+node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs      # the internal docs script's parsers
+node tools/sync-sources.mjs --check                            # every link and pinned version traces to sources.json
 ```
+
+For a content change, also the cheap behaviour suite — [TESTING.md](TESTING.md) has the full
+protocol and what each result means.
 
 Commit messages say what changed and why in one line, in the imperative, without a type
 prefix ("Warn that FieldContainer's own margin doubles against a column gap").
