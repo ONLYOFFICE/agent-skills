@@ -2,6 +2,9 @@
 
 What can and cannot be asserted, based on a working Playwright suite for the SDK.
 
+Contents: What to assert · What NOT to assert · Unit level (host app) · System mode in tests · E2E environment
+checklist · Self-check protocol
+
 ## What to assert
 
 The reliable contract is the **generated `iframe.src` URL**, not the DOM inside the frame:

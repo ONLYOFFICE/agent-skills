@@ -1,7 +1,14 @@
-# TFrameEvents reference (SDK 2.2.0)
+# TFrameEvents: what the pages send (SDK 2.2.0, client 4.0.0)
 
-Pass handlers via `config.events`. All are optional (`null` = disabled). Events flow from
-the iframe to the host. Payload shapes below are what real integrations rely on.
+The handler list with one line each is on
+[TFrameEvents](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameEvents.md); the typed
+payloads have their own pages (`TSelectedRoom`, `TSelectedFile`, `TEditorOpenPayload`, `TFileInfo`,
+`TGetExternalDataRequest`, `TSetExternalDataPayload`, the `TUpload*` family) — import them from
+`@onlyoffice/docspace-sdk-js` instead of declaring your own shapes. This file records which page fires what, the
+payloads the pages actually send, and the lifecycle traps.
+
+Contents: Lifecycle · Selectors · Auth · Navigation / access · Manager / editor · Uploads · Custom actions ·
+External storage bridge
 
 ## Lifecycle
 
@@ -50,14 +57,7 @@ mode needs.
 | `onDownload` | download requested and `downloadToEvent: true` | `url: string` — bridge the file into the host system |
 
 Both manager events fire only when the handler is present in `config.events`; leaving one
-`null` restores the portal's default behaviour for that action.
-
-SDK 2.2.0 types these payloads: `onSelectCallback` receives `TSelectedRoom[] | TSelectedFile`
-(with `TRequestTokenInfo[]` under `requestTokens`), `onEditorOpen` a `TEditorOpenPayload`
-(`TFileInfo` plus `share` and `action: TEditorAction`), `onFileManagerClick` a `TFileInfo`.
-Import them from `@onlyoffice/docspace-sdk-js` instead of declaring your own shapes; the generated reference has
-each one: [TFrameEvents](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameEvents.md), [TSelectedRoom](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TSelectedRoom.md),
-[TSelectedFile](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TSelectedFile.md), [TEditorOpenPayload](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TEditorOpenPayload.md).
+`null` restores the portal's default behaviour for that action. The Forms and Personal pages fire them too.
 
 ## Uploads (Uploader, Forms and Personal modes)
 
@@ -81,9 +81,6 @@ Personal page's own UI do not fire these events.
 
 ## External storage bridge
 
-| Event | Direction | Semantics |
-|---|---|---|
-| `onGetExternalData` | frame asks host to **read** a value | receives `{ key, callId }`; return the value (sync or Promise) — the SDK posts it back correlated by `callId`. Throw/reject → routed to `onAppError`, no response sent |
-| `onSetExternalData` | frame asks host to **persist** a value | receives `{ key, value }`; fire-and-forget — no response is posted back |
-
-The meaning of `key`/`value` is integrator-defined; the SDK treats them as opaque.
+`onGetExternalData` (the frame reads a value: return it, sync or as a Promise, and the SDK posts it back by `callId`)
+and `onSetExternalData` (the frame persists a value: fire-and-forget) are fully described on their type pages. The one
+trap: a handler that throws or rejects is routed to `onAppError` and **no response is sent**, so the frame waits.

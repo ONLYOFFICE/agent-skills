@@ -9,7 +9,7 @@ types do not say: which mode reads a field, what a wrong value does, and where t
 surprise.
 
 Contents: Required · Per-mode meaning of `id` · General fields · Manager and `filter` · Selectors ·
-Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs · Iframe paths per mode
+Editor / viewer · Uploader, Forms, Chat, Personal · Script-tag configs · Iframe paths per mode
 
 ## Required
 
@@ -81,32 +81,14 @@ what can be picked; the labels, the colour and the `with*` / `show*` toggles, wi
   needs Document Server >= 9.0.3, `uiTheme` is a `TTheme` value (`"Base"`, `"Dark"`, `"System"`) — the portal maps
   only those to editor themes and falls back to `"System"` for any other string, so prefer the frame-level `theme`.
 
-## Uploader
+## Uploader, Forms, Chat, Personal (SDK >= 2.2)
 
-`id` = destination folder; `acceptExtensions` (`".pdf,.docx"`); `isFolderUpload`,
-`isMultipleUpload`; `maxPerUploadSize`, `maxTotalUploadSize` are **strings** of bytes;
-`linkMainText`, `secondaryText`, `extensionsText` are drop-zone texts. No programmatic
-`upload()` here (Forms and Personal only); the events carry the Uploader payload shapes
-([events](events.md#uploads-uploader-forms-and-personal-modes)).
-
-## Forms
-
-`id` = room; `destination` initial section (`my-forms` default, `in-progress`, `completed-forms`,
-`library`, `settings`); `libraryId` restricts to one library; `showMenu` side panel;
-`headerOffset` / `headerHeight` as above.
-
-## Chat (SDK >= 2.2)
-
-`agentId` (numeric agent room id; omitted → the user's own chat), `entityId` (room/folder context —
-ignored when `agentId` is set), `fileId` (attach to the composer), `threadId` (resume; was `chatId`
-in pre-release builds). Renders a composer only for a signed-in user who is not a guest; anyone else gets the
-page's no-access state and `onNoAccess` — [chat](modes/chat.md).
-
-## Personal (SDK >= 2.2)
-
-`personalDestination` initial section (`my-documents` default, `favorites`, `recent`, `trash`,
-`settings`); `id` opens a folder; manager-family display options apply; its page answers `setConfig`,
-`navigateSection` and `upload()` — every data method rejects with `MODE_MISMATCH`.
+Their fields and defaults are on [TFrameConfig](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameConfig.md);
+what each page does with them — the upload payload shapes, `upload()` only in Forms and Personal, the Chat gate and
+`onNoAccess`, the `MODE_MISMATCH` of every data method on the Personal page — is in the mode files:
+[uploader](modes/uploader.md), [forms](modes/forms.md), [chat](modes/chat.md), [personal](modes/personal.md).
+Two traps that cross modes: `maxPerUploadSize` / `maxTotalUploadSize` are **strings** of bytes, and `entityId` is
+ignored by Chat when `agentId` is set.
 
 ## Script-tag configs
 

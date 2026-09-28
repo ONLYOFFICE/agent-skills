@@ -1,10 +1,19 @@
-# SDKInstance methods (SDK 2.2.0)
+# SDKInstance methods: what the pages do with them (SDK 2.2.0, client 4.0.0)
+
+Signatures, parameters and return types are on
+[SDKInstance](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/classes/SDKInstance.md), one section per
+method, with the response shapes on their type pages (`TFilesResponse`, `TRoomsResponse`, `TFolderInfo`, `TUserInfo`,
+`TLoginResult`, `TCreateRoomOptions`). This file records what the docs cannot: how a result or failure arrives, which
+page handles which method, and the traps.
 
 All methods (except `getConfig`, `initFrame`, `destroyFrame`, `setIsLoaded`) are proxied
 into the iframe over postMessage and return promises. Call them **after `onAppReady`**: before the
 iframe has loaded they fail with `DISCONNECTED`, and between the load and `onAppReady` they reach a page
 that may not be listening yet. Each call is bounded by `config.methodTimeout` (default 30 s) and rejects
 with `SDKError(TIMEOUT)` if the frame does not answer.
+
+Contents: Result semantics · Method support by embedded page · Frame lifecycle · Listings and info · Auth · Content ·
+Editor / navigation / actions
 
 ## Result semantics — read this first
 
@@ -61,20 +70,10 @@ System frame for data calls. The matrix is portal-version-specific — older por
 
 ## Listings and info
 
-| Method | Returns | Notes |
-|---|---|---|
-| `getFolderInfo()` | `TFolderInfo` | current folder of the open frame |
-| `getSelection()` | `TFileInfo[]` | currently selected items |
-| `getFiles()` | `TFilesResponse` | files of the current folder |
-| `getFolders()` | `TFilesResponse` | subfolders |
-| `getList()` | `TFilesResponse` | files + folders |
-| `getRooms(filter)` | `TRoomsResponse` | rooms matching a `TFrameFilter` |
-| `getUserInfo()` | `TUserInfo` | current user; also the standard "is a session alive?" probe |
-
-`TFilesResponse`/`TRoomsResponse` are `TListResponse<TFolderInfo>` / `TListResponse<TRoomInfo>` =
-`{ files, folders, current, pathParts, total, count, … }`. `TFileInfo`, `TFolderInfo` and
-`TRoomInfo` extend `TEntityBase` (`id`, `title`, `created`, `updated`, `createdBy`, `updatedBy`,
-`access`, `security`, `shared`, `canShare`, `mute`).
+`getFolderInfo`, `getSelection`, `getFiles`, `getFolders`, `getList`, `getRooms(filter)` and `getUserInfo` are
+Manager-page methods (System handles `getUserInfo` too) and act on the folder the frame currently shows; their
+return shapes are on the SDKInstance page. `getUserInfo()` doubles as the "is a session alive?" probe: call it and
+compare the email before any `login()`.
 
 ## Auth
 
@@ -90,22 +89,13 @@ System frame for data calls. The matrix is portal-version-specific — older por
 | Method | Notes |
 |---|---|
 | `createFile(folderId, title, templateId?, formId?)` | `templateId` and `formId` are optional (SDK 2.2.0; omitted ones are left out of the call). The portal runs `POST /files/{folderId}/file` with `{ title, templateId, formId }` (client 4.0.0). **The format comes from the extension in `title`**: `"Contract.pdf"` creates a PDF (form), `"Contract.docx"` a text document — copying a PDF form template under a `.docx` title yields a plain document that is no longer a form; a title without extension gets `.docx`. `templateId`/`formId` only supply the content. `folderId` is a destination folder: `getFolderInfo().id` of an open Manager frame, a file-selector's `folderId`, or your stored mapping — never a section's `rootFolderId` (REST answers 403; the call rejects with `API_ERROR`, `status: 403`) |
-| `createFolder(parentFolderId, title)` | returns `TFolderInfo` |
 | `createRoom(title, roomType, options?)` | SDK 2.2 signature; `options: TCreateRoomOptions = { quota?, tags?, color?, cover?, indexing?, denyDownload? }`. **Older SDKs (<= 2.1) had positional params** `(title, type, quota?, tags?)` — real integrations hit type mismatches here; match the portal's SDK version. Room types are the `RoomType` enum (SDK 2.2.0, a `const enum` — write the numbers under `isolatedModules`): `1` form filling, `2` collaboration, `5` custom, `6` public, `8` virtual data room, `9` AI (the client also knows `13`, a private room, which the enum does not list). The value is posted to `POST /files/rooms` unvalidated. Reviewing and commenting access exist only in a custom room (`5`); creating any room needs the room admin role, otherwise `status: 403` |
-| `setListView(viewType)` | `"row"` / `"table"` / `"tile"` |
-| `openModal(type, options)` | open a portal modal dialog |
+| `setListView(viewType)` | `"row"` / `"table"` / `"tile"` — the only way to set the Manager layout on client 4.0.0, since `viewAs` is ignored; call it after `onAppReady` |
 | `upload(file: File)` | **Forms and Personal** (the form filling room, or the folder open in the Personal frame) — rejects with `SDKError(MODE_MISMATCH)` elsewhere. Resolves the `onUploadSuccess` payload (`{ fileName, fileSize }`), so the event handler is optional; rejects with `UPLOAD_FAILED` on `onUploadError` or after its own 120 s timeout (`methodTimeout` does not apply); `onUploadProgress` is not emitted for it. Uploader mode accepts files only via its UI |
 
-`createFile`/`createFolder` act on the current folder context of an open Manager frame; the
-Personal page does not implement them.
-
-## Tags
-
-| Method | Notes |
-|---|---|
-| `createTag(name)` | create a portal-wide tag |
-| `addTagsToRoom(roomId, tags: string[])` | attach existing tags |
-| `removeTagsFromRoom(roomId, tags: string[])` | detach |
+`createFile`, `createFolder`, `openModal` and the tag methods (`createTag`, `addTagsToRoom`, `removeTagsFromRoom`) are
+Manager-page methods acting on the current folder context; the Personal page does not implement them. A tag is
+portal-wide — `createTag` before `addTagsToRoom` when the name is new.
 
 ## Editor / navigation / actions
 
