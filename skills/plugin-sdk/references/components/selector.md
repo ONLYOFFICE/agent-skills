@@ -23,7 +23,7 @@ Contents: [The five types](#the-five-types) · [The Files selector: folder vs fi
 | `Base` | `TBaseSelector` — your own `items: { id, label, icon? }[]` | `{ selectedIds, fileName, isFooterCheckboxChecked }` — your ids | **only** your `disabledSubmitButton`; the kit never disables it, so refuse an empty `selectedIds` in `onSubmit` |
 
 - **A header needs `withHeader: true`**, not just `headerProps`; without it there is no title and no close cross.
-- **Nothing closes itself.** Call `closeSelector()` from `onSubmit` and from the cancel path — `onCancel` for `Files`, `headerProps.onCloseClick` for the other four; supply both and every type closes. An `onSubmit` that refuses its input returns nothing (plus a toast) and the selector stays open.
+- **Nothing closes itself.** Call `closeSelector()` from `onSubmit` and from both ways out: `onCancel` is the cancel button (and the `Files` header cross), `headerProps.onCloseClick` the header cross of the other types; supply both and every type closes. An `onSubmit` that refuses its input returns nothing (plus a toast) and the selector stays open.
 - **One portal surface at a time.** A selector opened over your modal sits behind its backdrop, visible and dead: `closeModal()`, open the selector, reopen the modal from `onSubmit` *and* from the cancel path, with the form's values in module scope ([below](#from-a-dialog-one-surface-at-a-time)). From a page nothing needs sequencing, so a picker can simply be awaited.
 - **Only the props the type declares reach the host.** `Room`: `roomType`, `searchArea`, `excludeItems`, `withSearch`, `withCreate` with `createDefineRoomLabel`/`createDefineRoomType`. `People`: `roomId` + `onlyRoomMembers`, `withGroups`/`isGroupsOnly`, `withGuests`/`isGuestsOnly`, `excludeItems`, `currentUserId`, `disableDisabledUsers`, `disableInvitedUsers`, `alwaysShowFooter`. `Groups`: the header and nothing else — no cancel button, no search. `Base`: paging (`totalItems`, `hasNextPage`, `onLoadNextPage`), `isMultiSelect`, `maxSelectedItems`, `selectedItems`, breadcrumbs, `onSelect({ selectedId, isDoubleClick })`, an inline input row (`isInputItem`) and a "create new" row (`isCreateNewItem`), `icon` as an asset file name resolved like item icons — and no search.
 - **Ids come back `string | number`; keep them so** ([rest-api.md → Identifiers](../rest-api.md#identifiers)).
@@ -34,14 +34,13 @@ Contents: [The five types](#the-five-types) · [The Files selector: folder vs fi
 Entering a folder sets `selectedItemId` to it (and `selectedItemType` to `"rooms"` on the rooms list, `"files"` inside); clicking a file leaves `selectedItemId` on the folder and fills `selectedFileInfo` (`{ id, title, fileExst }`). Both are current in `onSubmit`.
 
 - **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, and on portals before January 2026 never — a Select gated on it is dead there. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
-- `filterParam` filters what is *listed*, not what can be submitted. `FilterType` (`None 0`, `FilesOnly 1`, `FoldersOnly 2`, `DocumentsOnly 3`, `PresentationsOnly 4`, `SpreadsheetsOnly 5`, `ImagesOnly 7`) is **not exported from the SDK root** and a deep import is refused: `const DOCUMENTS_ONLY: TFilesSelector["filterParam"] = 3`.
+- `filterParam` filters what is *listed*, not what can be submitted; it takes `FilterType` from the SDK root (`FilterType.DocumentsOnly`).
 - `selectedFileInfo` is `{ id, title, fileExst }` and `@inline` in the SDK — declare your own type where you store it; anything more is `GET /files/file/{id}`.
 
 **Pick a document, pick a destination, copy, open**, from a page — awaited, one selector at a time, every exit resolving once:
 
 ```ts
 type Picked = { id: string | number; title: string };
-const DOCUMENTS_ONLY: TFilesSelector["filterParam"] = 3;
 
 export const pickDocument = ({ showSelector, closeSelector, showToast }: PluginActions, label: string) =>
   new Promise<Picked | null>((resolve) => {
@@ -54,7 +53,7 @@ export const pickDocument = ({ showSelector, closeSelector, showToast }: PluginA
       props: {
         withHeader: true, headerProps: { label, isCloseable: true, onCloseClick: cancel },
         withBreadCrumbs: true, withSearch: true, withCancelButton: true, submitButtonLabel: t("select"),
-        filterParam: DOCUMENTS_ONLY,
+        filterParam: FilterType.DocumentsOnly,
         getIsDisabled: ({ isFirstLoad, selectedItemId, selectedItemType }) =>          // the folder: always known
           isFirstLoad || !selectedItemId || selectedItemType === "rooms",
         onSubmit: ({ selectedFileInfo }) => {                                          // the file: checked here

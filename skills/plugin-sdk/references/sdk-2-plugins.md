@@ -25,7 +25,7 @@ Migrate whole, not half: `runtime: "module"`, the Vite config from a fresh scaff
 
 ## How the host renders a tree — what matters when auditing
 
-- Only `box` can have children; `box` maps nine `*Prop` fields to CSS and copies every other prop into `style` verbatim. Every other node's props are spread into the matching kit component as-is.
+- Only `box` can have children, always as an array — a single node object throws; `box` maps nine `*Prop` fields to CSS and copies every other prop into `style` verbatim. Every other node's props are spread into the matching kit component as-is.
 - **No error boundary.** A throw during render replaces the whole portal with an error screen. A `button` without `onClick` throws on click. A `comboBox` needs `options` to be an array and every option a `key`.
 - `updateProps` **replaces** the element's props (send the full set); `newProps` only admits form controls — a `text`/`box` is updated via `contextName` + `updateContext`. Both work only from callbacks inside a rendered tree, not from a menu item ([actions.md](react/actions.md#which-actions-work-from-which-callback)).
 - `checkbox`/`toggleButton` `onChange` receive **nothing** — the plugin tracks state and returns `updateProps`.
