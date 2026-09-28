@@ -37,6 +37,11 @@ Key points:
 - `requestToken` (the room's share key) opens a file of a public room with no session: the SDK
   appends `share=<token>&is_file=true` to `/doceditor`. This is how a viewer inside a public-room
   page shows its documents ([public-room](public-room.md)).
+- `/doceditor` carries `X-Frame-Options: SAMEORIGIN` like the portal's own pages (client 4.0.0 nginx); it embeds
+  cross-origin only because the CSP `frame-ancestors` header lists your origin — same rule as the Manager
+  ([discovery](../discovery.md#frame-headers--what-they-mean)).
+- The editor page does not flag failed method calls (`isError`): its two methods, `setConfig` and `executeInEditor`,
+  resolve whatever the page returns — `executeInEditor` resolves `{}` even when your callback threw.
 - Programmatic access to document content (forms, fields, signatures):
   [editor-automation.md](../editor-automation.md).
 - `onEditorOpen` is a **manager-mode** event (fires when the user opens the editor from

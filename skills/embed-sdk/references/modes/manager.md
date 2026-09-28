@@ -7,7 +7,7 @@ const instance = sdk.initManager({
   frameId: "ds-frame",
   src: "https://portal.example.com",
   showMenu: true, showFilter: true, showTitle: true,
-  viewAs: "table",
+  theme: "Base",                   // read once, at load — see below
   filter: { sortBy: "AZ", sortOrder: "ascending", count: "50" },
   events: {
     onAppReady: () => {},
@@ -33,6 +33,12 @@ Key points:
 - Instance methods available here: all listings (`getFiles`, `getFolders`, `getList`,
   `getRooms`), `getSelection`, `getFolderInfo`, `createFile`/`createFolder` (act on the
   current folder), `createRoom`, tags, `setListView`.
+- `theme` is read once from the frame URL when the page loads; an unknown value becomes `Base`, and a later
+  `setConfig({ theme })` does nothing — pass `reload: true` to re-create the frame with the new theme (client 4.0.0).
+- Over a `requestToken` (`rootPath: "/rooms/share"`) the page reports **every** access error as `onNotFound` —
+  401, 402, 403 and 404 alike; `onNoAccess` (403) is only distinguished on a signed-in Manager.
+- `logout()` from a Manager frame resolves before the sign-out request completes; when the next step depends on the
+  session being gone, run sign-out through a System frame, which awaits it.
 - Typical embed pattern: catch `onFileManagerClick` or `onEditorOpen` and host the editor
   yourself (own tab/modal with a second frame in editor mode, unique `frameId`).
 - Front-end "read-only-ish" embeds combine `editorGoBack: false`, `editorType: "embedded"`,

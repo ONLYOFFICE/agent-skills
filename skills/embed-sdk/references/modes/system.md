@@ -28,8 +28,10 @@ sdk.initSystem({
 Key points:
 
 - Wrap the container in a `hidden` parent — the frame itself must exist in the DOM.
-- The loader is **forced on**. The page reports its own load on clients from late 2025 on;
-  on an older portal the frame stays "loading" until you call `frames[frameId].setIsLoaded()`.
+- The loader is **forced on**. The page reports its own load on client 4.0.0;
+  on an older portal the frame may stay "loading" until you call `frames[frameId].setIsLoaded()`.
+- `logout()` here is awaited by the page — the promise resolves once the session is gone (the Manager page
+  answers earlier), so sign-out sequences belong in a System frame.
 - `waiting: true` is ignored here — System always renders.
 - Full auth flows built on this mode (linking, silent re-login, sign-out handling,
   multi-frame pages): [auth-recipes.md](../auth-recipes.md).

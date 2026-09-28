@@ -33,7 +33,8 @@ the report top to bottom:
 - **OAuth discovery** — `/.well-known/openid-configuration` answering 200 with a
   `token_endpoint` means the identity service is on.
 - **CSP allow-list API** — `GET /api/2.0/security/csp` answers anonymously on client 4.0.0
-  and lists the allow-listed domains; adding one is `PUT` with an admin session or API key.
+  and lists the allow-listed domains; adding one is `POST` to the same path with an admin session or API key
+  (the `EditPortalSettings` permission) — there is no `PUT`.
 - **Recommendations** — the connection method, the modes the portal can serve, and the
   lines to forward to the portal admin verbatim.
 
@@ -57,7 +58,9 @@ From the portal's nginx config (release/v4.0.0) and live portals:
 - The portal's nginx sends `X-Frame-Options: SAMEORIGIN` on **every page by default** — the Manager's
   `/rooms/*`, `/old-sdk/system` (the page behind `initSystem` and the hash-login flow) and the portal's
   own pages included. The `/sdk/*` pages (selectors, public room, uploader, forms, chat, personal) do not
-  carry it. `/doceditor` sets its own headers in the 4.0 config; a live cloud portal sends the header there too.
+  carry it — the `/sdk` location declares its own `add_header`, which by nginx's inheritance rule drops the
+  server-level header. `/doceditor` and `/login` include the static-headers snippet and carry `SAMEORIGIN` too, so
+  the editor and viewer embed under the same `frame-ancestors` rule as the Manager.
 - Every HTML response also gets `Content-Security-Policy: frame-ancestors …` built from the
   portal's CSP allow-list (Developer Tools → Embed SDK). The `Accept` header must contain
   `html` for that middleware to run, hence `-H "Accept: text/html"` above.

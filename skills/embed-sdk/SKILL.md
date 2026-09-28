@@ -29,9 +29,10 @@ promise-based methods and events. This file is the router — read the matching 
 - Package `@onlyoffice/docspace-sdk-js`, current version **2.2.0** (`npm i @onlyoffice/docspace-sdk-js@^2.2.0`,
   GitHub tag `v2.2.0`, Node >= 18). The portal serves the same code as a script: `{portal}/static/scripts/sdk/{version}/api.js`
   (known versions 1.0.0, 1.0.1, 2.0.0, 2.1.0, 2.2.0). Modes and fields by version: [discovery](references/discovery.md#capabilities-by-portal-sdk-version).
-- 2.2.0 exports `SDK` as the default only — `import { SDK }` is `undefined` — plus `SDKInstance`, `SDKError`,
-  `SDKErrorCode`, the enums (`RoomType` included), the types and the constants `CSPApiUrl`, `FRAME_NAME`,
-  `defaultConfig`, `cspErrorText`, `connectErrorText`; 2.0 and 2.1 export nothing but the default. The type declarations make every
+- 2.2.0 exports `SDK` both as the default and by name (`import SDK from …` and `import { SDK } from …` both work), plus
+  `SDKInstance`, `SDKError`, `SDKErrorCode`, the enums (`RoomType` included), the types and the constants `CSPApiUrl`,
+  `FRAME_NAME`, `defaultConfig`, `cspErrorText`, `connectErrorText`; 2.0 and 2.1 export nothing but the default, so
+  `import { SDK }` is `undefined` there. The type declarations make every
   enum except `SDKMode` and `SDKErrorCode` a `const enum`, so `import { FilterSortBy }` fails to compile under
   `isolatedModules` or `verbatimModuleSyntax` (TS2748; the Vite `react-ts` template sets the latter), and against 2.0/2.1
   a named enum import that reaches runtime is `undefined`. Write the string values, typed with `TFilterSortBy`, `TTheme`, ….
@@ -45,24 +46,23 @@ promise-based methods and events. This file is the router — read the matching 
 When sources disagree, the higher one wins — say so to the user instead of switching between them.
 
 1. **The installed package's types**: `node_modules/@onlyoffice/docspace-sdk-js/dist/types/main.d.ts` — the exact contract of the version the project runs.
-2. **The docs site** for the portal's SDK version. The section has no landing page; it starts at the introduction
-   `https://api.onlyoffice.com/docspace/javascript-sdk/get-started`, with the guides
-   `get-started/{quickstart|playground|authentication-security}` beside it, one guide per mode under
-   `embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|frame}-mode`, the generated
-   reference under `usage-sdk/{classes|type-aliases|enumerations|variables}` (`classes/SDK`, `classes/SDKInstance`,
-   `classes/SDKError`, `type-aliases/TFrameConfig`, `TFrameEvents`, `TSelectedRoom`, `TSelectedFile`,
-   `TRequestTokenInfo`, `TLoginResult`, `enumerations/SDKErrorCode`, `variables/CSPApiUrl`, …) and samples under
+2. **The docs site** for the portal's SDK version, under `https://api.onlyoffice.com/docspace/javascript-sdk/`: the
+   guides `get-started/{quickstart|playground|authentication-security}` and one per mode under
+   `embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|forms|frame}-mode`, the generated
+   reference under `usage-sdk/{classes|type-aliases|enumerations|variables}` (a class or type name is its page name:
+   `classes/SDKInstance`, `type-aliases/TFrameConfig`, `enumerations/SDKErrorCode`, …) and samples under
    `samples/{basic-samples|advanced-samples}`. **Read pages as Markdown**: append `.md` to the page URL, which has no
-   trailing slash (`…/embedding-modes/manager-mode.md`, `…/usage-sdk/type-aliases/TFrameConfig.md`). Every page of the
-   section, with a one-line summary each, is listed in `https://api.onlyoffice.com/docspace/javascript-sdk/llms.txt`;
-   the root `https://api.onlyoffice.com/llms.txt` lists only the sections.
+   trailing slash (`…/embedding-modes/manager-mode.md`). Every page of the section, with a one-line summary each, is
+   listed in `https://api.onlyoffice.com/docspace/javascript-sdk/llms.txt`; the root
+   `https://api.onlyoffice.com/llms.txt` lists the sections.
 3. **The SDK sources** at the matching tag: `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/v2.2.0/src/types/index.ts`,
    `…/src/enums/index.ts`, `…/src/constants/index.ts`.
 4. **This skill** — the process, the traps and the portal behaviours the types cannot express. Facts marked
-   "client 4.0.0" were verified against the client's `release/v4.0.0` branch (last on 2026-09-28).
+   "client 4.0.0" were verified against the client's `release/v4.0.0` branch.
 
-Forms, Chat, Personal and Public room have no guide page: `usage-sdk/classes/SDK` documents their wrappers (`initForms`,
-`initChat`, `initPersonal`, `initPublicRoom`), and this skill's mode references cover the rest. The samples show the calls,
+Chat, Personal and Public room have no guide page (Forms has `embedding-modes/forms-mode`): `usage-sdk/classes/SDK`
+documents their wrappers (`initChat`, `initPersonal`, `initPublicRoom`), `type-aliases/TFrameConfig` their fields, and this
+skill's mode references cover the portal's behaviour. The samples show the calls,
 not the checks — the login samples never look at `status` ([auth-recipes](references/auth-recipes.md)).
 
 ## Not covered here — name the edge when you reach it
@@ -140,7 +140,7 @@ Host portal is an OAuth provider (Nextcloud)→ providerName + inviteKey/emplTyp
 
 **2FA in the hash flow needs client 4.0.0.** Its System page reads SDK 2.2.0's fifth `login` argument: after a
 `/confirm/…` answer, `login(email, hash, undefined, undefined, code)` finishes the sign-in. A portal whose System page
-predates that (4.0.0 builds before 2026-09-28, every 3.x) forwards only `email` and `passwordHash`, re-issues the same
+predates that (every 3.x portal) forwards only `email` and `passwordHash`, re-issues the same
 challenge and never creates a session — there a "code" field is not the deliverable; route those users through OAuth
 and say so ([auth-recipes §7](references/auth-recipes.md#7-two-factor-authentication)).
 
@@ -158,22 +158,24 @@ Each one exists because the failure is silent: the integration looks right and d
    keys (`sortBy=AZ`); bracket and lowercase forms are dropped; pass `src` explicitly ([config-reference](references/config-reference.md#script-tag-configs)).
 5. **Loader and waiting.** `noLoader` defaults to `true` but Manager and System force the loader on. `waiting: true`
    keeps the iframe out of the DOM (ignored by System): a plain `setConfig` then rejects with `DISCONNECTED` — release it
-   with `setConfig({ waiting: false }, true)` or a fresh `init*`. A System frame reports its own load on clients from
-   late 2025 on; on an older portal it stays on the loader until you call `setIsLoaded()`.
+   with `setConfig({ waiting: false }, true)` or a fresh `init*`. A System frame reports its own load on client 4.0.0;
+   on an older portal it may stay on the loader until you call `setIsLoaded()`.
 6. **Lifecycle.** `destroyFrame()` is synchronous and complete, `init*` may follow at once; re-initializing a live
    `frameId` reuses the instance. React StrictMode double-invokes effects in dev — guard with a ref
    ([react](references/frameworks/react.md)). Keep editor state across tabs by hiding with CSS, not unmounting.
    `window.DocSpace` is browser-only — never touch it during SSR.
 7. **CSP and frame headers.** The host origin must be allow-listed (Developer Tools → Embed SDK, or
-   `PUT /api/2.0/security/csp`), or the frame shows the SDK's CSP page and `onAppError` receives the message string —
+   `POST /api/2.0/security/csp` with portal-settings rights; `GET` is anonymous), or the frame shows the SDK's CSP page
+   and `onAppError` receives the message string —
    the `SDKError` with code `CSP_VIOLATION` goes to the console only.
    `checkCSP: false` only silences the early check. `X-Frame-Options` without `frame-ancestors` (Step 0) and
    third-party-cookie blocking both kill the frame with no SDK event.
 8. **Call methods after `onAppReady`.** Before the iframe has loaded they reject with `DISCONNECTED`; between the load
    and `onAppReady` they are sent to a page that may not be listening yet and end in `TIMEOUT` (`methodTimeout`).
    Manager and System frames fire `onAppReady` again on every `setConfig` — guard a handler that calls `setConfig`.
-9. **API failures reject — except in `login()` and `createRoom()`.** Client 4.0.0 flags a failed handler
-   (`isError: true`) and SDK 2.2.0 turns it into a rejection with code `API_ERROR` (`err.status`, `err.data`); a method
+   Manager and System read `theme` once, from the frame URL: `setConfig({ theme })` changes nothing without `reload: true`.
+9. **API failures reject — except in `login()` and `createRoom()`.** The Manager and System pages of client 4.0.0 flag
+   a failed handler (`isError: true`) and SDK 2.2.0 turns it into a rejection with code `API_ERROR` (`err.status`, `err.data`); a method
    the mode's page lacks rejects with `MODE_MISMATCH`. The two legacy methods keep resolving `{ status, message }`, so
    check `status !== 200` there (`login()` with wrong credentials, `createRoom()` with `402`). On an older portal every
    method resolves the error object instead — check both ([methods](references/methods.md#result-semantics--read-this-first)).
@@ -205,7 +207,8 @@ Each one exists because the failure is silent: the integration looks right and d
 `onAppReady` — methods may be called; `onContentReady` — reveal the iframe. Room-selector fires an **array**
 (`items[0].id`, `.label`, `.requestTokens[0].requestToken`), file-selector an **object** (`item.id`, `.title`).
 `onFileManagerClick` / `onEditorOpen` carry the portal's file object and, once registered, suppress the portal's own
-open action — open the file in your own frame. `onNotFound` means the entity was deleted, drop your mapping. Full
+open action — open the file in your own frame. `onNotFound` means the entity was deleted, drop your mapping — except on
+a Manager over a `requestToken`, which reports every access error (403 included) as `onNotFound`. Full
 table with payloads: [events](references/events.md). Symptom → cause → fix: [troubleshooting](references/troubleshooting.md).
 
 ## Before handing over

@@ -8,7 +8,7 @@ the iframe to the host. Payload shapes below are what real integrations rely on.
 | Event | Fires when | Payload |
 |---|---|---|
 | `onAppReady` | frame app fully initialized — **methods may be called from here**. Manager and System pages fire it again after every `setConfig` (the reference says "once"), so a handler that calls `setConfig` needs a guard | `{ frameId }` |
-| `onContentReady` | frame content is visible — reveal the iframe, drop your spinner | — |
+| `onContentReady` | frame content is visible — reveal the iframe, drop your spinner. With `noLoader: true` (the default outside Manager and System) the SDK fires it itself on the iframe's `load` event | — |
 | `onAppError` | an SDK-side error: CSP failure, unparsable message, a call on a disconnected frame, a method timeout, a token failure — only the message arrives; the `SDKError` with its code goes to the console. An API failure of a method call does not fire it: the method's promise rejects instead ([methods](methods.md#result-semantics--read-this-first)) | `message: string` |
 
 Pattern from production: keep the iframe hidden (CSS) with your own spinner until
@@ -18,7 +18,7 @@ Pattern from production: keep the iframe hidden (CSS) with your own spinner unti
 
 | Event | Payload |
 |---|---|
-| `onSelectCallback` | **room-selector: an array** — `items[0].id`, `.label`, `.icon`, `.requestTokens[0].requestToken`; **file-selector: an object** — `item.id`, `.title`, `.fileExst`, `.documentType`; it has no `.icon` (the portal does not send one) |
+| `onSelectCallback` | **room-selector: an array** — `items[0].id`, `.label`, `.icon`, `.requestTokens[0].requestToken` (`requestTokens` only for public rooms and shared custom/form rooms); **file-selector: an object** — `item.id`, `.title`, `.fileExst`, `.documentType` (`"word"`, `"cell"`, `"slide"`, `"pdf"`, …), plus `.requestTokens` when the file lives in a public room; it has no `.icon` (the portal does not send one) |
 | `onCloseCallback` | dialog closed/cancelled — no payload |
 
 The `requestTokens[0].requestToken` from a selected room is exactly what `public-room`
@@ -36,8 +36,8 @@ mode needs.
 
 | Event | Fires when | Production reaction |
 |---|---|---|
-| `onNoAccess` | navigating to an inaccessible room/folder; the Chat page fires it when the frame's user may not use AI (a guest, or nobody signed in) | show a "request access" flow, or sign the user in |
-| `onNotFound` | room/folder does not exist (404) | the entity was deleted on the portal — drop your stored mapping, offer to create a new one |
+| `onNoAccess` | Manager: navigating to a room/folder the user may not open (403); Public room page: an expired link; Chat page: the frame's user may not use AI (a guest, or nobody signed in) | show a "request access" flow, or sign the user in |
+| `onNotFound` | Manager: the room/folder does not exist (404) or was deleted while open; Public room page: an invalid or revoked link. **A Manager opened with `requestToken` reports every access error — 401, 402, 403 and 404 alike — as `onNotFound`** (client 4.0.0) | the entity was deleted on the portal — drop your stored mapping, offer to create a new one; over a `requestToken` treat it as "link no longer works" |
 | `onNavigate` | Forms/Personal section change | `{ section }` |
 
 ## Manager / editor

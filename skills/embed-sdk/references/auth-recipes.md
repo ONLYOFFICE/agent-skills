@@ -10,7 +10,7 @@ auto-login · 5 API keys · 6 the cross-origin cookie wall · 7 two-factor authe
 
 | Thing | Lives | Grants | SDK entry | Cannot |
 |---|---|---|---|---|
-| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult`; a second `login(…, code)` for 2FA on client 4.0.0 (§7) | finish 2FA on a portal whose System page predates 2026-09-28; cross-site, the session it creates follows §6 |
+| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult`; a second `login(…, code)` for 2FA on client 4.0.0 (§7) | finish 2FA on a 3.x portal, whose System page ignores `code`; cross-site, the session it creates follows §6 |
 | Session cookie `asc_auth_key` | browser, portal origin | every request the iframe makes | nothing to pass | reach a cross-site frame from a portal tab (third-party cookie blocking, partitioned cookies) → `401` despite a live session |
 | `requestToken` (share key) | room share link, or `items[0].requestTokens[0].requestToken` from a room-selector | anonymous access to one room and its files | `public-room` (`id` + `requestToken`); manager with `rootPath: "/rooms/share"`; editor/viewer (`share=` on `/doceditor`) | anything outside that room; must never be committed |
 | OAuth access token | your backend (refresh token stays there) | API calls as the user, sent as `Bearer` — no cookie involved | `getToken` (preferred) or `accessToken`, SDK >= 2.2 | outlive expiry unless `getToken` re-fetches |
@@ -221,11 +221,11 @@ you learn that a second factor is pending (client 4.0.0).
 
 Whether the second step is reachable depends on the portal's build:
 
-- **Client 4.0.0** (System page from 2026-09-28, Manager page from 2026-09-10): the dispatcher reads `code`
+- **Client 4.0.0** (Manager and System pages alike): the dispatcher reads `code`
   and calls `loginWithCode`. After the `/confirm/…` answer, ask the user for the code and call
   `login(email, hash, undefined, undefined, code)` (SDK 2.2.0); the answer is `{ url: "/" }` on success or
   `{ status, message }` (401 for a wrong code). The code is single-use and bound to the same `email` + `hash`.
-- **An older System page** (4.0.0 builds before 2026-09-28, every 3.x): it forwards `email` and `passwordHash`
+- **An older System page** (every 3.x portal): it forwards `email` and `passwordHash`
   alone, so the code never reaches the portal and the second call re-issues the same `/confirm/…` challenge.
   Detect it at runtime — a second `login(…, code)` that answers `/confirm/…` again — and fall back to the
   options below; do not present the code field as working there.

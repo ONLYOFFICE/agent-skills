@@ -8,12 +8,15 @@ with `SDKError(TIMEOUT)` if the frame does not answer.
 
 ## Result semantics — read this first
 
-Verified against the ONLYOFFICE Apps client dispatchers (client 4.0.0 sources, `release/v4.0.0`, 2026-09-28) and
-SDK 2.2.0's `#handleMethodResponse`. The portal wraps every handler in `try/catch`; what the host sees depends on
-the method and on the portal's build:
+Verified against the ONLYOFFICE Apps client dispatchers (client 4.0.0 sources, `release/v4.0.0`) and
+SDK 2.2.0's `#handleMethodResponse`. The Manager and System pages wrap every handler in `try/catch` and flag a
+failure; the editor page and the `/sdk/*` pages (Forms, Personal, selectors, Uploader, Public room, Chat) answer
+with the raw error instead — they only serve `setConfig`, `executeInEditor`, `navigateSection`, `setCustomActions`
+and `upload`, so in practice the rule below is about Manager and System. What the host sees depends on the method
+and on the portal's build:
 
-1. **API-level failures reject with `API_ERROR`** on client 4.0.0. The dispatcher answers a failed handler with
-   `{ isError: true, status, message, name, code }` and the SDK rejects the promise with an `SDKError` whose
+1. **API-level failures reject with `API_ERROR`** on client 4.0.0. The Manager and System dispatchers answer a failed
+   handler with `{ isError: true, status, message, name, code }` and the SDK rejects the promise with an `SDKError` whose
    `code` is `API_ERROR`, `status` the HTTP status (`401`, `403`, `404`, …) and `data` that payload. So `await`
    in `try`/`catch` and branch on `err.code`. `createRoom(...)` failing with `err.status === 402` is the
    pricing plan limit — point the user to `{portal}/portal-settings/payments/portal-payments`.
@@ -52,9 +55,9 @@ System frame for data calls. The matrix is portal-version-specific — older por
 |---|---|
 | `initFrame(config)` | (re)build the iframe; warns to console on empty `frameId`/`src` |
 | `destroyFrame()` | synchronous; replaces the iframe with a placeholder `<div id="{frameId}">` showing `destroyText`, removes the `message` listener, rejects pending calls, deletes the entry from `DocSpace.SDK.frames`. The container id survives, so `init*` on the same `frameId` may follow immediately — nothing to await |
-| `setConfig(config, reload = false)` | merge + send config to the frame; `reload: true` re-runs `initFrame`. On a `waiting` frame the plain call rejects with `DISCONNECTED` (the iframe is not in the DOM) — `setConfig({ waiting: false }, true)` releases it. Manager and System pages fire `onAppReady` again after each one |
+| `setConfig(config, reload = false)` | merge + send config to the frame; `reload: true` re-runs `initFrame`. On a `waiting` frame the plain call rejects with `DISCONNECTED` (the iframe is not in the DOM) — `setConfig({ waiting: false }, true)` releases it. Manager and System pages fire `onAppReady` again after each one. `theme` is read by Manager and System once, from the frame URL at load — a plain `setConfig({ theme })` changes nothing; `locale` is applied live |
 | `getConfig()` | returns the current merged `TFrameConfig` (synchronous) |
-| `setIsLoaded()` | public: removes the loader, reveals the iframe and fires `onContentReady` (every call). The embedded pages call it themselves once they are ready (Manager and Chat do; the System page on clients from late 2025 on); on an older portal a System frame stays on the loader until you call it |
+| `setIsLoaded()` | public: removes the loader, reveals the iframe and fires `onContentReady` (every call). The embedded pages call it themselves once they are ready (Manager, Chat and the System page on client 4.0.0); on an older portal a System frame may stay on the loader until you call it |
 
 ## Listings and info
 
@@ -79,8 +82,8 @@ System frame for data calls. The matrix is portal-version-specific — older por
 |---|---|
 | `getHashSettings()` | `{ size, iterations, salt }` — PBKDF2 parameters of the portal |
 | `createHash(password, hashSettings)` | portal-compatible password hash; run in a hidden System frame |
-| `login(email, passwordHash, password?, session?, code?)` | resolves with `TLoginResult` (SDK 2.2.0), never rejects. Three shapes on client 4.0.0: `{ url: "/" }` — session created; `{ url: "/confirm/TfaAuth…", user, hash }` — second factor required, no session; an error object with `status` (401 for wrong credentials) and `message` — failed. The REST DTO fields (`token`, `tfa`, `confirmUrl`) never reach the SDK: the dispatcher calls the client's sign-in store, not the API. The store forwards only `email` and `passwordHash` and always asks for a persistent session, so `password` and `session` do nothing from the frame although the REST endpoint itself accepts a plaintext password. The fifth argument `code` is read by the Manager page (since 2026-09-10) and by the System page (since 2026-09-28) on client 4.0.0: after a `/confirm/…` answer, `login(email, hash, undefined, undefined, code)` creates the session. An older System page forwards `email` and `passwordHash` alone and re-issues the challenge. See [auth-recipes §7](auth-recipes.md#7-two-factor-authentication) |
-| `logout()` | end the portal session |
+| `login(email, passwordHash, password?, session?, code?)` | resolves with `TLoginResult` (SDK 2.2.0), never rejects. Three shapes on client 4.0.0: `{ url: "/" }` — session created; `{ url: "/confirm/TfaAuth…", user, hash }` — second factor required, no session; an error object with `status` (401 for wrong credentials) and `message` — failed. The REST DTO fields (`token`, `tfa`, `confirmUrl`) never reach the SDK: the dispatcher calls the client's sign-in store, not the API. The store forwards only `email` and `passwordHash` and always asks for a persistent session, so `password` and `session` do nothing from the frame although the REST endpoint itself accepts a plaintext password. The fifth argument `code` is read by the Manager and System pages of client 4.0.0: after a `/confirm/…` answer, `login(email, hash, undefined, undefined, code)` creates the session. An older (3.x) System page forwards `email` and `passwordHash` alone and re-issues the challenge. See [auth-recipes §7](auth-recipes.md#7-two-factor-authentication) |
+| `logout()` | end the portal session. The System page awaits the sign-out before answering; the Manager page answers at once, so after a Manager `logout()` the session may still be alive for a moment — run sign-out sequences through a System frame |
 
 ## Content
 
@@ -88,7 +91,7 @@ System frame for data calls. The matrix is portal-version-specific — older por
 |---|---|
 | `createFile(folderId, title, templateId?, formId?)` | `templateId` and `formId` are optional (SDK 2.2.0; omitted ones are left out of the call). The portal runs `POST /files/{folderId}/file` with `{ title, templateId, formId }` (client 4.0.0). **The format comes from the extension in `title`**: `"Contract.pdf"` creates a PDF (form), `"Contract.docx"` a text document — copying a PDF form template under a `.docx` title yields a plain document that is no longer a form; a title without extension gets `.docx`. `templateId`/`formId` only supply the content. `folderId` is a destination folder: `getFolderInfo().id` of an open Manager frame, a file-selector's `folderId`, or your stored mapping — never a section's `rootFolderId` (REST answers 403; the call rejects with `API_ERROR`, `status: 403`) |
 | `createFolder(parentFolderId, title)` | returns `TFolderInfo` |
-| `createRoom(title, roomType, options?)` | SDK 2.2 signature; `options: TCreateRoomOptions = { quota?, tags?, color?, cover?, indexing?, denyDownload? }`. **Older SDKs (<= 2.1) had positional params** `(title, type, quota?, tags?)` — real integrations hit type mismatches here; match the portal's SDK version. Room types are the `RoomType` enum (SDK 2.2.0, a `const enum` — write the numbers under `isolatedModules`): `1` form filling, `2` collaboration, `5` custom, `6` public, `8` virtual data room, `9` AI. Reviewing and commenting access exist only in a custom room (`5`); creating any room needs the room admin role, otherwise `status: 403` |
+| `createRoom(title, roomType, options?)` | SDK 2.2 signature; `options: TCreateRoomOptions = { quota?, tags?, color?, cover?, indexing?, denyDownload? }`. **Older SDKs (<= 2.1) had positional params** `(title, type, quota?, tags?)` — real integrations hit type mismatches here; match the portal's SDK version. Room types are the `RoomType` enum (SDK 2.2.0, a `const enum` — write the numbers under `isolatedModules`): `1` form filling, `2` collaboration, `5` custom, `6` public, `8` virtual data room, `9` AI (the client also knows `13`, a private room, which the enum does not list). The value is posted to `POST /files/rooms` unvalidated. Reviewing and commenting access exist only in a custom room (`5`); creating any room needs the room admin role, otherwise `status: 403` |
 | `setListView(viewType)` | `"row"` / `"table"` / `"tile"` |
 | `openModal(type, options)` | open a portal modal dialog |
 | `upload(file: File)` | **Forms and Personal** (the form filling room, or the folder open in the Personal frame) — rejects with `SDKError(MODE_MISMATCH)` elsewhere. Resolves the `onUploadSuccess` payload (`{ fileName, fileSize }`), so the event handler is optional; rejects with `UPLOAD_FAILED` on `onUploadError` or after its own 120 s timeout (`methodTimeout` does not apply); `onUploadProgress` is not emitted for it. Uploader mode accepts files only via its UI |

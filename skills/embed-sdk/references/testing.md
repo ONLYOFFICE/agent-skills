@@ -42,8 +42,8 @@ try/catch, never as a hard assertion.
 
 ## System mode in tests
 
-On clients from late 2025 on the System page reports its own load. On an older portal the loader
-spins until you call `window.DocSpace.SDK.frames[frameId].setIsLoaded()` after init.
+On client 4.0.0 the System page reports its own load. On an older portal the loader may
+spin until you call `window.DocSpace.SDK.frames[frameId].setIsLoaded()` after init.
 
 ## E2E environment checklist
 

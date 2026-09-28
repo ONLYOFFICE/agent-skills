@@ -1,7 +1,8 @@
 # Chat mode (AI chat)
 
 Full-page AI conversation UI. **Requires SDK >= 2.2 on both the package and the portal.**
-No docs-site page exists — this file and the SDK source are the reference. Only `src` is
+No guide page exists: `usage-sdk/classes/SDK.md` documents `initChat`, `type-aliases/TFrameConfig.md` its fields; this
+file covers what the portal's page does with them. Only `src` is
 required: without `agentId` the chat is bound to the current user; with `agentId` it is
 bound to that AI agent room.
 
@@ -26,7 +27,7 @@ Verified against the portal's `/sdk/chat` page (client 4.0.0): the composer, too
 context are rendered only when `canUseAi` is true, which requires **a signed-in user who is not
 a guest/visitor**. Otherwise the page still fires `onAppReady`, calls `setIsLoaded()` and shows
 the "no access" state — visually a blank chat with only a "Chat history" control and no input —
-and fires `onNoAccess` (since 2026-09-10); nothing arrives on `onAppError`.
+and fires `onNoAccess`; nothing arrives on `onAppError`.
 
 Before generating a chat integration, make sure that:
 

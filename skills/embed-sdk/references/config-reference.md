@@ -37,8 +37,8 @@ Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs �
 | `waiting` | `true` keeps the iframe out of the DOM (System renders anyway); a plain `setConfig` then rejects with `DISCONNECTED` — release it with `setConfig({ waiting: false }, true)` or a fresh `init*` |
 | `checkCSP` | `false` only skips the early CSP probe; the portal still enforces the allow-list |
 | `methodTimeout` | ms before a method rejects with `TIMEOUT` (30 000); absent on SDK < 2.2 |
-| `theme` | `"Base"`, `"Dark"`, `"System"` — capitalized; `"dark"` is rejected |
-| `locale` | BCP 47 (`"en-US"`); `null` = portal default. Applies to the frame. Manager, System and selector pages before client 4.0.0 (2026-09-28) also wrote it into the signed-in user's profile language — permanently, on every `setConfig` |
+| `theme` | `"Base"`, `"Dark"`, `"System"` — capitalized; `"dark"` fails the validator, and the Manager and System pages map any unknown value to `Base`. Those two pages read it **once, from the frame URL at load**: `setConfig({ theme })` without `reload: true` changes nothing (client 4.0.0) |
+| `locale` | BCP 47 (`"en-US"`); `null` = portal default. Applies to the frame and is applied live on `setConfig`. Portals before 4.0.0 also wrote it into the signed-in user's profile language — permanently, on every `setConfig`; client 4.0.0 no longer does |
 | `destroyText` | text of the placeholder after `destroyFrame()` — plain text in 2.2 (`textContent`); 2.1 and earlier inserted it as HTML |
 | `stylesUrl`, `integrationUrl` | SDK 2.2: custom stylesheet inside the frame; host URL to return to from external portal pages |
 | `getToken` / `accessToken` / `tokenExpiresAt` | SDK >= 2.2 only; `getToken` wins when both are set; the SDK does not parse the token |

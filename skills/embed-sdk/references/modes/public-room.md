@@ -10,9 +10,18 @@ sdk.initPublicRoom({
   id: roomId,                   // the shared room's id — NOT optional
   requestToken,                 // from the room's external share link
   showFilter: true,
-  events: { onAppReady: () => {}, onAppError: (m) => {} },
+  events: {
+    onAppReady: () => {},
+    onNotFound: () => {},         // invalid link (wrong or revoked key)
+    onNoAccess: () => {},         // expired link
+    onAppError: (m) => {},
+  },
 });
 ```
+
+`onAppReady` is expected from every mode. A portal build whose `/sdk/public-room` page has no frame bridge (a
+4.0.0 pre-release defect) never sends it; there `onContentReady`, which the SDK fires itself on the iframe's `load`
+because `noLoader` defaults to `true` in this mode, is the only ready signal ([troubleshooting](../troubleshooting.md)).
 
 Key points:
 
@@ -20,7 +29,9 @@ Key points:
   and the portal page calls `getFolder(folder)` during server-side rendering. Without `id`
   that call fails and the page renders its invalid-link error (client 4.0.0) — no
   `onAppError`, no console hint pointing at the config. Run `validate-config.mjs`: it
-  rejects a public-room config without `id`.
+  rejects a public-room config without `id`. A wrong or revoked `requestToken` takes a
+  different path: the portal redirects to its error page, which fires `onNotFound` (invalid
+  link) or `onNoAccess` (expired link) — the only two portal events this mode sends.
 - Where `id` and the token come from (always as a pair — the token is bound to the room):
   - the room's external sharing link on the portal (the room id is in the portal URL of
     that room), or

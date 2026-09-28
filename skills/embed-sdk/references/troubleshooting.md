@@ -7,7 +7,7 @@ integration looks right and does nothing.
 |---|---|---|
 | Blank iframe | missing `id` (editor/viewer); empty or invalid `src` | console: `SDK Warning: src is empty…`; [config-reference → Required](config-reference.md#required) |
 | Browser refuses to display the frame | no `frame-ancestors` header on that page, or origin not in it | Step 0 probe; portal admin ([discovery → Frame headers](discovery.md#frame-headers--what-they-mean)) |
-| CSP error page inside the frame | host origin not allow-listed | Developer Tools → Embed SDK, or `PUT /api/2.0/security/csp` |
+| CSP error page inside the frame | host origin not allow-listed | Developer Tools → Embed SDK, or `POST /api/2.0/security/csp` (portal-settings rights) |
 | Frame loads, its API calls return 401 while the portal tab is signed in | the portal tab's session does not reach a cross-site frame (third-party cookie blocking; on HTTPS the portal partitions its auth cookie per top-level site) | OAuth `getToken` or same-site hosting ([auth-recipes §6](auth-recipes.md#6-the-cross-origin-cookie-wall)) |
 | `login()` answers a `/confirm/…` url for a correct password | 2FA on the account | `login(email, hash, undefined, undefined, code)` on client 4.0.0; on an older portal OAuth, sign in on the portal in another tab or disable 2FA for the integration account ([auth-recipes §7](auth-recipes.md#7-two-factor-authentication)) |
 | Chat shows only "Chat history", no composer | the frame's user is a guest or nobody is signed in (`onNoAccess` fires), or the OAuth token lacks profile scopes | [chat](modes/chat.md) |
@@ -26,9 +26,11 @@ integration looks right and does nothing.
 | `createFile` made the wrong format | extension taken from `title` | keep the template's extension ([methods → Content](methods.md#content)) |
 | REST 403 on a folder you can see | `rootFolderId` used as destination | use `folderId` — REST is outside this skill |
 | `api.js` loaded but `window.DocSpace` empty | two consumers race on the script tag | remove and re-append the tag |
-| System frame loads forever | an older portal whose System page does not report its own load (clients before late 2025) | `frames[frameId].setIsLoaded()` ([system](modes/system.md)) |
+| System frame loads forever | a portal older than 4.0.0 whose System page does not report its own load | `frames[frameId].setIsLoaded()` ([system](modes/system.md)) |
+| `onAppReady` never fires on a public-room frame | a client build whose `/sdk/public-room` page lacks the frame bridge every other SDK page mounts (a 4.0.0 pre-release defect) | update the portal; until then gate on `onContentReady`, which the SDK fires itself on the iframe's `load` ([public-room](modes/public-room.md)) |
+| `setConfig({ theme })` changes nothing | Manager and System read `theme` once, from the frame URL at load; an unknown value becomes `Base` | `setConfig({ theme }, true)` (reload) |
 | `TS2748: Cannot access ambient const enums` on `import { FilterSortBy }` | the types declare the enums `const`, and the project sets `isolatedModules` or `verbatimModuleSyntax` | string values typed with `TFilterSortBy`, `TTheme`, … |
-| `import { FilterSortBy }` or `import { SDK }` is `undefined` at runtime | SDK 2.0/2.1 export only the default; 2.2 exports the enums but still not a named `SDK` | `import SDK from …`; string values for the enums |
+| `import { FilterSortBy }` or `import { SDK }` is `undefined` at runtime | SDK 2.0/2.1 export only the default; 2.2.0 exports `SDK` by name and the enums | `import SDK from …` on 2.0/2.1; string values for the enums |
 
 `SDKError.code` values are listed in [SDKErrorCode](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/enumerations/SDKErrorCode.md) (SDK 2.2; earlier SDKs have no `SDKError` at all).
 A rejected method promise carries the code; `onAppError` receives only the message string.
