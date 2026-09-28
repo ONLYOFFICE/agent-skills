@@ -30,7 +30,8 @@ promise-based methods and events. This file is the router — read the matching 
   GitHub tag `v2.2.0`, Node >= 18). The portal serves the same code as a script: `{portal}/static/scripts/sdk/{version}/api.js`
   (known versions 1.0.0, 1.0.1, 2.0.0, 2.1.0, 2.2.0). Modes and fields by version: [discovery](references/discovery.md#capabilities-by-portal-sdk-version).
 - 2.2.0 exports `SDK` as the default only — `import { SDK }` is `undefined` — plus `SDKInstance`, `SDKError`,
-  `SDKErrorCode`, the enums and the types; 2.0 and 2.1 export nothing but the default. The type declarations make every
+  `SDKErrorCode`, the enums (`RoomType` included), the types and the constants `CSPApiUrl`, `FRAME_NAME`,
+  `defaultConfig`, `cspErrorText`, `connectErrorText`; 2.0 and 2.1 export nothing but the default. The type declarations make every
   enum except `SDKMode` and `SDKErrorCode` a `const enum`, so `import { FilterSortBy }` fails to compile under
   `isolatedModules` or `verbatimModuleSyntax` (TS2748; the Vite `react-ts` template sets the latter), and against 2.0/2.1
   a named enum import that reaches runtime is `undefined`. Write the string values, typed with `TFilterSortBy`, `TTheme`, ….
@@ -58,7 +59,7 @@ When sources disagree, the higher one wins — say so to the user instead of swi
 3. **The SDK sources** at the matching tag: `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/v2.2.0/src/types/index.ts`,
    `…/src/enums/index.ts`, `…/src/constants/index.ts`.
 4. **This skill** — the process, the traps and the portal behaviours the types cannot express. Facts marked
-   "client 4.0.0" were verified against the client's `release/v4.0.0` branch (last on 2026-09-23).
+   "client 4.0.0" were verified against the client's `release/v4.0.0` branch (last on 2026-09-28).
 
 Forms, Chat, Personal and Public room have no guide page: `usage-sdk/classes/SDK` documents their wrappers (`initForms`,
 `initChat`, `initPersonal`, `initPublicRoom`), and this skill's mode references cover the rest. The samples show the calls,
