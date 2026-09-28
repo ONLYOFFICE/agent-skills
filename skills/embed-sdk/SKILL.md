@@ -179,11 +179,11 @@ Each one exists because the failure is silent: the integration looks right and d
     only as hashes (`getHashSettings` → `createHash` → `login`); the plaintext `password` and `session` arguments never
     reach the portal; a `url` under `/confirm/` in the result is a pending second factor — see Authentication above.
 11. **Uploads and files.** `upload(file)` works in Forms and Personal (`MODE_MISMATCH` elsewhere, own 120 s timeout,
-    resolves the `onUploadSuccess` payload); Uploader accepts files only through its UI. `createFile(folderId, title, templateId, formId)` — the types require all four,
-    pass `""` for the ones you do not use — is `POST /files/{folderId}/file`:
-    the **format comes from the extension in `title`** (a PDF form copied under a `.docx` title stops being a form),
-    `folderId` is a folder from `getFolderInfo()` or a selector — never a section's `rootFolderId`. Personal mode
-    rejects every data method with `MODE_MISMATCH` — data calls go through a Manager or System frame.
+    resolves the `onUploadSuccess` payload); Uploader accepts files only through its UI. `createFile(folderId, title,
+    templateId?, formId?)` is `POST /files/{folderId}/file`: the **format comes from the extension in `title`** (a PDF
+    form copied under a `.docx` title stops being a form; no extension → `.docx`), `folderId` is a folder from
+    `getFolderInfo()` or a selector — never a section's `rootFolderId`. Personal mode rejects every data method
+    with `MODE_MISMATCH` — data calls go through a Manager or System frame.
 12. **`executeInEditor(cb, data)` calls `cb(editor, asc, data)` — three arguments** (SDK <= 2.1 typed it wrong). Create the
     connector yourself (`editor.createConnector()`); fill forms with the Document Builder API inside `connector.callCommand`
     (`GetAllForms()` → `SetText`/`SetChecked`, data through `Asc.scope`, no closures). `executeMethod("SetFormValue" |
