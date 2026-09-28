@@ -71,7 +71,12 @@ Before tagging a release:
    `node skills/plugin-sdk/scripts/test-validator.mjs` pass.
 2a. `node tools/sync-sources.mjs --verify` passes: every link traces to a `sources.json`,
    every pinned version matches, every source URL answers. For `embed-sdk` also
-   `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`.
+   `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`. Before the docs site
+   is deployed, `--verify --fallback` checks the same links on the stand (`apiSiteFallback`).
+2b. `node .claude/skills/onlyoffice-docs/scripts/docs.mjs status` exits 0: production serves
+   `llms.txt` and a Markdown page for every section, so the skills' "append `.md`" and `llms.txt`
+   instructions work for users. Exit 1 means only the stand serves them — fine for an internal
+   release, not for a public one. `node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs` passes.
 3. The skill(s) that changed have been through their evals
    ([embed-sdk](skills/embed-sdk/evals/README.md),
    [plugin-sdk](skills/plugin-sdk/evals/README.md)) — once, after the last content

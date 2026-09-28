@@ -89,9 +89,10 @@ alike — the one directory to use when a project mixes agents.
 
 ```
 .claude-plugin/          plugin + marketplace manifests
-.claude/skills/          repository-internal skills (sync-sources) — not shipped in the plugin
+.claude/skills/          repository-internal skills, not shipped in the plugin: sync-sources (links and versions),
+                         onlyoffice-docs (navigate the docs site as Markdown, production or the stand, while writing references)
 .mcp.json                MCP servers shipped with the plugin (docspace, HTTP)
-sources.json             the external hosts (docs site, GitHub, raw files, demo) named once for every skill;
+sources.json             the external hosts (docs site and its fallback stand, GitHub, raw files, MCP) named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at a staging or local docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
 skills/embed-sdk/
