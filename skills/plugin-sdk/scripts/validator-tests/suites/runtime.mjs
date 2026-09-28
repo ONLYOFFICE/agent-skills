@@ -149,7 +149,7 @@ export default ({ workspace, check }) => {
 
   check(
     "a vite config without externals is an error",
-    noExternals.errorCodes.includes("build") && noExternals.mentions("declares no rollupOptions.external"),
+    noExternals.errorCodes.includes("build") && noExternals.mentions("declares no rolldownOptions.external"),
     noExternals.errorSummary,
   );
 
@@ -284,7 +284,7 @@ export default ({ workspace, check }) => {
 
   check(
     "chunks beside plugin.js are an error naming the fix",
-    split.errorCodes.includes("dist") && split.messagesFor("dist").includes("inlineDynamicImports"),
+    split.errorCodes.includes("dist") && split.messagesFor("dist").includes("codeSplitting"),
     split.messageSummary,
   );
   check(

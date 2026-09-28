@@ -46,7 +46,7 @@ const DEV_DEPENDENCIES = {
   "@vitejs/plugin-react": "^6.0.0",
   prettier: "^3.0.0",
   typescript: "^5.6.0",
-  vite: "^8.0.0",
+  vite: "^8.3.0",
 };
 
 /** package.json, which is also the manifest the packer reads. Field order follows the SDK template. */
@@ -59,6 +59,7 @@ export const buildManifest = ({ name, pluginName, description, author, scopeName
   license: "Apache-2.0",
   homepage: "",
   private: true,
+  type: "module",
   runtime: MODULE_RUNTIME,
   logo: "logo.svg",
   nameLocale: {},

@@ -57,6 +57,7 @@ A plugin that never becomes a plugin is reported — to the administrator. The u
 | **Failed to load** — the toggle is off and locked; the plugin stays in the list so it can be deleted | *The bundle imports "lodash-es", which the portal does not provide …* — the portal's own sentence, naming the specifier | a bare import outside the five specifiers: a library that should have been bundled, the SDK **root** marked external, a `@docspace/ui-kit/…` subpath |
 | | *The plugin module has no default export* | still assigning `window.Plugins.X` instead of `export default plugin` |
 | | the exception's own message | module-scope code threw, or the bundle is not valid JavaScript for the browser |
+| | *process is not defined* | the build does not `define` `process.env` ([bundling.md](bundling.md)) |
 | | the browser's syntax error, e.g. *Cannot use import statement outside a module* | an ES module bundle without `"runtime": "module"`, loaded as a legacy script |
 | | *The request for … failed with HTTP 404* | the bundle URL does not answer — a broken upload |
 | | *The script ran but registered no plugin named "X"*, or *Failed to load the script …* | (legacy) `window.Plugins.X` ≠ `pluginName`, or the script URL does not answer |
@@ -75,7 +76,7 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 | One scope is dead, others work | scope declared but its getter is missing, or `add*Item` never called |
 | A tab, page or modal opens **blank**; console `[Plugin: name] …` | the component threw — swallowed by the error boundary. Usually an unguarded fetch/parse, a conditional hook, or a bundled React (next row) |
 | Every component blank; `usePluginRuntime must be used inside a plugin component` | a second React or SDK React entry in the bundle — fix the `external` list |
-| A surface that needs a lazily loaded module opens **blank** on the portal and worked in the preview; a `TypeError` about `./chunk-….js` in the console | the build split the bundle: the archive carries `plugin.js` alone and a blob-URL module cannot resolve a relative `import()` — `inlineDynamicImports` ([bundling.md](bundling.md)) |
+| A surface that needs a lazily loaded module opens **blank** on the portal and worked in the preview; a `TypeError` about `./chunk-….js` in the console | the build split the bundle: the archive carries `plugin.js` alone and a blob-URL module cannot resolve a relative `import()` — `codeSplitting: false` ([bundling.md](bundling.md)) |
 | Components render light and LTR on a dark/RTL portal | a bundled `@docspace/ui-kit` |
 | A hook "throws outside a component" from a click | hooks called in a class-side callback |
 | Filter by user role ignored | wrong field name — see [the filter field trap](items/common-fields.md#the-filter-field-trap) |

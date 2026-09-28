@@ -60,7 +60,7 @@ cd <target> && npm install && npm run build && npm run typecheck
 
 No `dist/plugin.zip` means the build failed, whatever the output said. Common causes: the kit's enum where the SDK's was meant (`ButtonSize` exists in both — alias one), a prop the kit does not have (check its `.d.ts` rather than casting), a component file without `.tsx`.
 
-**A `dist/` with JavaScript beside `plugin.js` is a split bundle.** The archive carries `plugin.js` alone and the portal cannot load a chunk, so a library that lazy-loads its parts dies on the portal at first use and works in the preview. The scaffold's config inlines dynamic imports; an older project adds `inlineDynamicImports: true` to `rollupOptions.output`; the validator refuses the build until `dist/` holds one script ([bundling.md](bundling.md)).
+**A `dist/` with JavaScript beside `plugin.js` is a split bundle.** The archive carries `plugin.js` alone and the portal cannot load a chunk, so a library that lazy-loads its parts dies on the portal at first use and works in the preview. The scaffold's config turns code splitting off; an older project adds `codeSplitting: false` to `build.rolldownOptions.output`; the validator refuses the build until `dist/` holds one script ([bundling.md](bundling.md)).
 
 **`npm run build` does not check types** — Vite strips them — so `npm run typecheck` (`tsc --noEmit`, in every scaffolded project) is a separate step and worth running once the feature compiles. A generated project ships `src/css-modules.d.ts`, so `import styles from "./x.module.css"` type-checks; an older project without it needs that declaration before `tsc` agrees.
 
