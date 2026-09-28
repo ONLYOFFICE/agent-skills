@@ -48,6 +48,13 @@ touching the plugin: a `tool_used: Skill` that passes with a negative delta usua
 judge, not the skill. A case that scores the same in both arms on every model measures nothing
 and should be sharpened or dropped.
 
+## Results
+
+| Date | Model | Cases | with | without | Δ | Notes |
+|---|---|---|---|---|---|---|
+| 2026-09-28 | default (sonnet), judge default | `question` + `trigger`, 3 runs per arm | 6/6 at 1.00 | 2fa 0.00 · public-room-events 0.50 · explain-filter 0.60 · csp-verb 1.00 · theme-switch 1.00 | mean 0.32 | $4.23, 18 min. The 2FA flow, the public-room events and the `usersTypes` asymmetry are knowledge the model lacks without the skill; the CSP verb and the theme reload it answers on its own, so those two cases are regression guards, not discriminators |
+| 2026-09-28 | default (sonnet) | `embed-select-then-upload`, 1 run, `--allow-tools Write Edit`, no baseline | 0.92 | — | — | every file grader passed; `config-validated` cannot pass without a shell grant (Windows) |
+
 ## Adding a case
 
 Turn a real failure into a case: the prompt as the user wrote it, one grader on the result, one
