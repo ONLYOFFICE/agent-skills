@@ -97,7 +97,7 @@ serve. Both look like a blank frame or `TIMEOUT` with no clear error.
 | 1.0.1 (npm 1.1.0) | no new modes | + `requestToken` on editor/viewer (`share=`) | `onContentReady`, `onNoAccess`, `onNotFound` appear; system and the selectors move to `/old-sdk/*` |
 | 2.0 | + public-room | | `executeInEditor`, `onEditorOpen` appear; the selectors are back under `/sdk/*`, system stays at `/old-sdk/system` |
 | 2.1 | no new modes | | `onFileManagerClick` appears |
-| 2.2 | + uploader, forms, personal, chat | + OAuth `getToken` / `accessToken` | `SDKError` codes, `methodTimeout`, `upload`, `navigateSection`, `setCustomActions`, external-data bridge |
+| 2.2 | + uploader, forms, personal, chat | + OAuth `getToken` / `accessToken` | `SDKError` codes, `methodTimeout`, `upload` (forms, personal), `navigateSection`, `setCustomActions`, `RoomType`, external-data bridge; with client 4.0.0 API failures reject with `API_ERROR` and 2FA finishes with `login(…, code)` |
 
 ## The React wrapper
 

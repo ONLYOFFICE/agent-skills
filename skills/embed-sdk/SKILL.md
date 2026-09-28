@@ -130,18 +130,19 @@ Signed in, page on another origin           → the portal tab's session does no
 Anonymous, public room                      → public-room + id + requestToken (viewer/editor take the same token)
 Programmatic password login                 → hidden System frame: getHashSettings → createHash → login;
                                               each visit getUserInfo first; status !== 200 = failure;
-                                              an account with 2FA cannot finish here on client 4.0.0 → OAuth
+                                              a /confirm/… url = second factor pending → login again with
+                                              the code (client 4.0.0); an older portal ignores it → OAuth
 ONLYOFFICE Apps OAuth app (SDK >= 2.2)      → getToken: () => fetch("/api/token"); backend owns the code exchange,
                                               the refresh and the secrets (auth-recipes §2 checklist)
 Backend automation, nobody in the browser   → API key against REST, not a frame
 Host portal is an OAuth provider (Nextcloud)→ providerName + inviteKey/emplType/uid (forms/chat/personal)
 ```
 
-**2FA on client 4.0.0 is a dead end for the hash flow.** The System page's dispatcher forwards only `email` and
-`passwordHash`, so SDK 2.2.0's fifth `code` argument never reaches the portal there and the second call re-issues the same
-`/confirm/…` challenge. The Manager page does read `code`, but it opens only for a user who is already signed in, so it
-cannot finish a sign-in either. A "code" field wired to `login()` is therefore not the deliverable — say plainly that 2FA
-accounts cannot use the hash flow and route them through OAuth ([auth-recipes §7](references/auth-recipes.md#7-two-factor-authentication)).
+**2FA in the hash flow needs client 4.0.0.** Its System page reads SDK 2.2.0's fifth `login` argument: after a
+`/confirm/…` answer, `login(email, hash, undefined, undefined, code)` finishes the sign-in. A portal whose System page
+predates that (4.0.0 builds before 2026-09-28, every 3.x) forwards only `email` and `passwordHash`, re-issues the same
+challenge and never creates a session — there a "code" field is not the deliverable; route those users through OAuth
+and say so ([auth-recipes §7](references/auth-recipes.md#7-two-factor-authentication)).
 
 ## Critical rules
 
