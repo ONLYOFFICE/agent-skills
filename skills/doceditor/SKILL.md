@@ -1,6 +1,6 @@
 ---
 name: doceditor
-description: Guidance for the ONLYOFFICE Document Editor's own API contract (v8.2+) - embedding it via DocsAPI.DocEditor, assembling the config/document/editorConfig/events payload, implementing the callbackUrl handler, signing JWT tokens (browser, header, body), and calling the server to server Command Service. Use when wiring the editor into an app that already exists - the config object, the callback handler, JWT, force-save, version history. For generating a whole sample/demo integration from scratch (project scaffolding, a file-list UI, Docker/infra, the testing methodology), use the separate `doceditor-integration` skill instead. For standalone document format conversion with no editor session involved, use `web-converter`.
+description: Guidance for the ONLYOFFICE Document Editor's own API contract (v8.2+) - embedding it via DocsAPI.DocEditor, assembling the config/document/editorConfig/events payload, implementing the callbackUrl handler, signing JWT tokens (browser, header, body), and calling the server to server Command Service. Use when wiring the editor into an app that already exists - the config object, the callback handler, JWT, force-save, version history. For generating a whole sample/demo integration from scratch (project scaffolding, a file-list UI, Docker/infra, the testing methodology), use the separate `doceditor-integration` skill instead. For standalone document format conversion with no editor session involved, use `web-converter`. For generating documents server-side from a builder script, use `web-builder`.
 license: Apache-2.0
 metadata:
   author: ONLYOFFICE
@@ -13,7 +13,7 @@ This file is the whole skill. The field by field reference is the official docs,
 This skill is scoped to *using* the API correctly, wherever it's being called from - an existing backend, a route added to a larger app, a single page. Two adjacent concerns live in sibling skills instead of here:
 
 - **Generating a whole sample/demo integration from scratch** — project scaffolding, the reusable-backend-vs-sample-UI decision, `docspace-ui-kit-react`-based UI, Docker/nginx/compose, hexagonal architecture, and the testing methodology for generated code - is the sibling **`doceditor-integration`** skill. Reach for that one when the task is "build me something I can click through," not just "wire the editor into what we have." It also carries the official React/Angular/Vue component walkthroughs.
-- **Standalone document format conversion**, no live editing session involved, is the sibling **`web-converter`** skill.
+- **Standalone document format conversion**, no live editing session involved, is the sibling **`web-converter`** skill; **server-side document generation from a builder script** is the sibling **`web-builder`** skill.
 
 ## How to use
 

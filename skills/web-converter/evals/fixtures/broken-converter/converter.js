@@ -24,7 +24,7 @@ async function requestConversion(filetype, outputtype, key, url) {
   };
   const token = jwt.sign(claims, JWT_SECRET, { algorithm: "HS256" });
 
-  const response = await fetch(`${DOCUMENT_SERVER}/ConvertService.ashx`, {
+  const response = await fetch(`${DOCUMENT_SERVER}/converter`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

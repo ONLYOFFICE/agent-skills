@@ -10,7 +10,7 @@ The routing surface for the Build task shape, in one table — implement each ro
 | `POST` | `/callback` | Editor callback (save, force-save, error, …) | `status`, `url` (present only for `status` 2/6), a signed `token` | exactly `{"error": 0}` for every status this handler acted on | `callback/handler.md` |
 | `GET` | `/download` | Streams the stored file to Document Server | a token/query proving the request is Document Server's own fetch | file bytes | `configuration/document.md`'s `document.url` |
 | `POST` | `/upload` | Ingests a locally-uploaded file | multipart file, enforced size limit | stored file id/key | [`example.md`](../references/example.md) |
-| `POST` | `/convert` | Converts between formats via the Conversion API | `filetype`, `key`, `outputtype`, `url`, signed body token, `Accept: application/json` | converted file location, or the async poll's in-progress `percent` | the sibling **`web-converter`** skill |
+| `POST` | `/convert` | Converts between formats via the Conversion API | `filetype`, `key`, `outputtype`, `url`, all inside the signed body token, `Accept: application/json` | converted file location, or the async poll's in-progress state (`endConvert: false`) | the sibling **`web-converter`** skill |
 
 ## Rules that apply across every row
 

@@ -1,0 +1,9 @@
+{
+  "name": "billing-invoicer",
+  "version": "1.0.0",
+  "description": "Generates PDF invoices through the ONLYOFFICE Document Builder API.",
+  "main": "invoicer.js",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
+  }
+}

@@ -26,7 +26,8 @@ const SIGNALS = {
   conversion: [
     ["async flag sent", /"?async"?\s*[:=]\s*[Tt]rue/],
     ["endConvert read", /endConvert/],
-    ["percent read", /\bpercent\b/],
+    ["percent read (only ever 0 or 100)", /\.percent\b|\[["']percent["']\]/],
+    ["token payload carries params", /sign\(\s*\{[^}]*(filetype|outputtype|url)/],
     ["error -7", /-\s*7\b/],
     ["error -5", /-\s*5\b/],
     ["error -8", /-\s*8\b/],
@@ -46,7 +47,7 @@ const SIGNALS = {
     ["hardcoded format list named as cause", /hardcoded|SUPPORTED_FORMATS|never updated/i],
     ["silent unsupported-format return named as cause", /returns? null|silent(ly)? (no-?op|fail)/i],
     ["generic catch-all message named as cause", /generic|catch-all|one (string|message)|collapsed/i],
-    ["Authorization header vs body token named as cause", /Authorization.{0,40}header|header.{0,40}(not|instead of).{0,20}body/i],
+    ["header token flagged as broken (should not be)", /Authorization.{0,60}(fail|reject|unauthenticated|never read|ignored)/i],
     ["lowercasing pinned as correct, not flagged", /lowercasing.{0,40}(correct|not (a )?(fault|issue|problem))/i],
   ],
 };

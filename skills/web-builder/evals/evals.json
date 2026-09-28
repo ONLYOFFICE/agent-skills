@@ -1,0 +1,93 @@
+{
+  "skill_name": "web-builder",
+  "evals": [
+    {
+      "id": 0,
+      "name": "report-generation-progress",
+      "mode": "build",
+      "prompt": "we want our node backend to spit out a monthly usage report as a docx for each customer - a title, their company name, a table of usage per day, a total at the bottom. data comes from our db. we already run onlyoffice docs at https://docs.internal.example.com with jwt on (secret is in DOCS_JWT_SECRET) and apparently it can build documents from a script, so use that rather than pulling in some docx npm library. bigger customers have thousands of rows so it can't hold the request open, and the dashboard wants to show some kind of progress while it's working. once it's done we need the file saved in our own s3 bucket. and please make failures say something support can act on, not just 'report failed'.",
+      "expected_output": "A generator that hosts one static builder script (reachable by the Document Server, owned by the app) and passes each customer's data as the request's argument object, read in the script through the global Argument - no customer data concatenated into script source. The first request is async: true with the script url and argument, no key (or a fresh one), all signed inside the JWT payload; the key is taken from the response and each poll is its own freshly signed {async: true, key} request, bounded by a timeout or attempt cap. Progress is a state (queued/generating/done or elapsed time), since the service returns no percent. error is checked before end/urls; -1, -2, -3, -4, -6 and -8 map to distinct messages, -8 is not retried. When end is true, the urls entry named after the script's SaveFile is downloaded right away and stored in S3 rather than keeping the temporary link.",
+      "files": [],
+      "assertions": [
+        "requests go to the Document Server's /docbuilder endpoint with url pointing at a .js builder script, not to /converter or a local docx library",
+        "the script url is one the application itself hosts and the Document Server can reach - not a local filesystem path and not a localhost address that only resolves on the calling machine",
+        "the base address the script is served from is required configuration, with no localhost or local-path default",
+        "per-customer data is passed in the request's argument object and read in the script through the global Argument, rather than being concatenated or templated into the script's JavaScript source",
+        "the script follows the builder structure: CreateFile, Office API content calls, SaveFile, CloseFile",
+        "script variables reach builder methods correctly - builderJS used directly, or builder with jsValue wrapping - and no request data enters the script as source text",
+        "with JWT on, url, async, argument and key are all inside the signed token payload rather than sent as plain JSON fields next to the token, since the service replaces the request's parameters with the token's payload",
+        "the token is HS256, signed server-side, and the secret comes from DOCS_JWT_SECRET with startup failing if it is unset rather than falling back to a hardcoded value",
+        "async is true and the first request returns without blocking on the generation, which is what the thousands-of-rows requirement is about",
+        "the key used for polling is the one returned by the first response (or a fresh per-job key the caller minted), and polls send async and key rather than re-sending the url, which would queue a new job each time",
+        "each poll is signed as its own request, with a token whose payload carries the key",
+        "the polling loop is bounded by a timeout or an attempt cap",
+        "progress shown to the dashboard is a state or elapsed time, not a percent read from the response or a synthetic percentage - the service sends no percent field",
+        "the response is checked for an error key before end or urls is read, since an error response carries neither",
+        "the documented error codes are mapped to distinct causes rather than one message, including -3 as a script/generation problem, -4 as the script or an opened file being unreachable from the Document Server, and -2 as a timeout",
+        "-8 is surfaced as an invalid-token problem and is not retried, because a mis-signed request fails identically every time",
+        "the result is read from urls under the exact file name the script passes to SaveFile, and is downloaded into S3 as soon as end is true instead of storing the temporary Document Server link",
+        "-3 and -8 bypass whatever retry mechanism the code uses - a job queue's attempts/backoff or a retry wrapper - rather than only being labelled non-retryable while the queue retries them anyway"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "batch-letters-sync",
+      "mode": "build",
+      "prompt": "python script, run once a year by finance: for each row in members.csv (name, address, membership_no, amount_paid) make a one-page pdf tax receipt letter with our letterhead text at the top and the numbers in a little table, save them to ./receipts/<membership_no>.pdf. there's about 400 rows, each letter is tiny, nothing fancy needed - just loop and do them one by one. use our onlyoffice server at https://docs.club.internal, jwt on, secret in DOCS_SECRET. some member names have accents and apostrophes in them (o'neill, müller, etc) and last time someone did a mail merge those came out mangled, so make sure they don't.",
+      "expected_output": "One static builder script, served at an address the Document Server can reach, that reads name, address, membership_no and amount_paid from the global Argument and saves a pdf. For each CSV row the Python script sends a single blocking request (async false or omitted, no polling loop) to /docbuilder with url and the row as argument, both inside an HS256 token signed with DOCS_SECRET (failing if unset). Names are never spliced into the script source, so apostrophes and accents survive; the script is UTF-8. The response's error is checked before urls, codes are mapped individually, the urls entry named after the script's SaveFile is downloaded immediately to ./receipts/<membership_no>.pdf, and per-row outcomes are recorded so one failing row doesn't abort or hide in the batch.",
+      "files": [],
+      "assertions": [
+        "a single static builder script is used for every row, with the row's fields passed as the request's argument and read through the global Argument - member names are never concatenated into the script source, which is what keeps apostrophes from breaking the script",
+        "the script is saved and served as UTF-8 and nothing in the pipeline re-encodes the names, so accented names come out intact",
+        "each row is one blocking request (async false or omitted) with no polling loop, matching the tiny-files, one-by-one requirement rather than inventing an async flow",
+        "url and argument are both inside the signed token payload, not plain fields beside the token",
+        "the token is HS256 signed with DOCS_SECRET from the environment, and the script refuses to run if it is unset",
+        "the script url is an address the Document Server can fetch, not a local path to the .js file",
+        "the builder script saves a pdf with SaveFile, and the Python side reads the result from urls under that exact file name",
+        "each generated file is downloaded immediately into ./receipts/<membership_no>.pdf rather than keeping the Document Server link",
+        "the response is checked for error before urls is read, and codes are mapped to distinct messages rather than one generic failure",
+        "per-row outcomes are recorded so a failing row is reported by membership number and does not abort the remaining rows"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "argument-dropped-under-jwt",
+      "mode": "build",
+      "prompt": "we generate welcome packs (docx) through onlyoffice's docbuilder from our java service. worked great on the dev box. on staging - where security made us turn on jwt - every document comes out, no errors at all, but every field in it says 'undefined': customer name, plan, start date, all of it. the static text is fine. we sign the request, the doc server clearly accepts it since we get a file back. here's roughly what we send:\n\n  body = { \"token\": jwt({\"url\": scriptUrl}), \"argument\": { \"name\": ..., \"plan\": ..., \"start\": ... } }\n\nand the script does Argument[\"name\"] etc. one of the devs wants to just turn jwt off on staging since dev works without it. what's going on?",
+      "expected_output": "With JWT enabled the Document Server replaces the request's parameters with the decoded token payload (tokenRequiredParams is on by default), so anything sent as a plain field next to the token - here argument - is dropped; the script runs with an empty Argument and every lookup is undefined, while the url inside the token still works, which is why a file comes back with no error. The fix is to sign argument inside the token payload together with url (and async/key when used). Turning JWT off would make it appear to work only because the plain fields are read again, while removing the authentication security required - it hides the bug rather than fixing it.",
+      "files": [],
+      "assertions": [
+        "the cause is identified as argument being sent outside the token: with JWT on, the service takes the request's parameters from the decoded token payload and ignores plain fields beside it",
+        "the answer explains why the symptom is 'undefined' with no error - the script runs with an empty Argument because url, which is inside the token, still arrives",
+        "the fix puts argument inside the signed payload alongside url (and async/key where used), shown for the Java side",
+        "the answer recommends keeping JWT enabled and explains that turning it off would only mask the bug, since it works without JWT merely because the plain fields are read again",
+        "the answer does not attribute the problem to - or suggest checking - the secret, the signing algorithm, or the script's Argument syntax or key names, all of which the symptom already shows to be working",
+        "the answer states the general rule - with JWT on, every parameter the service should see belongs inside the token - rather than only patching argument",
+        "the answer notes that the same rule covers every request the service receives - in particular that async polls each need their own token carrying async and key - not just this one call"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "audit-broken-invoicer",
+      "mode": "audit",
+      "prompt": "attached is the invoice generator a contractor wrote for us, uses onlyoffice's document builder to make a pdf for every paid order. mostly works. but: every so often the billing worker gets stuck on an order and we have to restart it - and if we requeue that same order it gets stuck again, every time. the admin panel's progress bar for invoices shoots to 99% and then sits there, sometimes for ages, sometimes forever. and customers keep writing in that the 'download your invoice' link in the email we send is dead when they click it the next day. jwt is on for the document server. go through it and give me a list of what's actually wrong - don't rewrite it.",
+      "expected_output": "The stuck orders trace to two compounding faults in the poll loop: it tests only result.end and never result.error, so an error response (which has no end) reads as 'still generating'; and the loop has no timeout or attempt cap, so it spins forever. The reason specific orders fail deterministically is that writeScript splices order data (customer name, line descriptions, quantities, prices) into the script's JavaScript source, so any value containing a double quote or backslash (e.g. a 27\" monitor) produces a script that fails with -3 every time - and it is script injection besides; the data belongs in argument with one static script. The 99% bar is a setInterval ticker, not real progress - the builder API returns no percent, so the panel should show a state. The dead email links are the temporary urls from the Document Server being stored and emailed instead of downloaded into the app's own storage. The catch block collapses every failure into 'generation failed' and returns null, losing the error code. The generated per-order scripts, full of customer data, are written into a public directory and never removed. Correct and not flagged: every request, polls included, is signed with all its parameters inside the token, and polls send {async: true, key} with the key from the first response.",
+      "files": [
+        "fixtures/broken-invoicer/"
+      ],
+      "assertions": [
+        "the stuck-worker symptom is traced to the poll loop checking only end and never the error field, so an error response - which carries no end - is read as still generating",
+        "the missing timeout or attempt cap on the poll loop is named as its own cause, separate from the unchecked error field",
+        "the deterministic, same-order-every-time failure is traced to order data being spliced into the script's JavaScript source, so a value containing a double quote or backslash yields a script that fails generation (-3) every time",
+        "that splicing is also flagged as script injection into code the Document Server executes, with the fix being one static script plus the order data in argument, read through Argument",
+        "the 99% progress bar is traced to the setInterval ticker producing a synthetic percentage, with the note that the builder API returns no percent, so the panel should show a state rather than a number",
+        "the dead email links are traced to storing and emailing the temporary urls link from the Document Server instead of downloading the file into the app's own storage when end is true",
+        "the catch block logging a generic 'generation failed' and returning null is flagged for discarding the error code, with distinct codes mapped to distinct messages",
+        "the per-order scripts containing customer data being written to a publicly served directory and never cleaned up is flagged",
+        "the token handling - all parameters inside the signed payload, each poll signed separately - is confirmed correct and not reported as a fault",
+        "polling with {async: true, key} using the key from the first response is confirmed correct and not reported as a fault",
+        "the deliverable is a list of findings with causes, not a rewritten generator, matching what was asked for"
+      ]
+    }
+  ]
+}
