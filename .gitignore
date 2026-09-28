@@ -5,3 +5,6 @@ node_modules/
 # eval workspaces: generated plugin projects, not sources
 skills/*-workspace/
 .plugin-preview/
+
+# claude plugin eval writes its runs here
+evals/results/

@@ -40,16 +40,25 @@ recognise it when debugging.
 
 ## Evals decide
 
-Each skill carries its own `evals/`: the same task given to the same model with and
-without the skill, graded against the same checks. A check that passes only with the skill
-is a passage doing work; a check both runs pass is a passage that can probably go. Run the
-evals of the skill you changed after the last content change, once — the protocol is in
-each skill's `evals/README.md`. The best new scenario is a real failure turned into a
-check: watch it fail, fix the skill, watch it pass.
+Two suites, one idea: the same task given to the same model with and without the skill,
+graded against the same checks. A check that passes only with the skill is a passage doing
+work; a check both runs pass is a passage that can probably go.
+
+- `evals/` at the plugin root is the suite `claude plugin eval` runs: one directory per case
+  with a `prompt.md` and one grader per file (`regex` over a produced file or the answer,
+  `tool_used: Skill` for the skill that should fire, an `llm` rubric for short answers). It
+  runs unattended and compares against a no-plugin baseline — [evals/README.md](evals/README.md).
+- `skills/<name>/evals/` keeps the skill-creator protocol (`evals.json`, the long A/B
+  scenarios, the G1 rubric, the trigger tests) for hand-graded iteration inside a session —
+  each skill's `evals/README.md`.
+
+Run the plugin suite's cheap cases (`--tag question --tag trigger`) after every content
+change and the build cases before a release. The best new case is a real failure turned into
+a check: watch it fail, fix the skill, watch it pass.
 
 Feedback from testing (the internal testing log, issues, a reflection somebody wrote after a
 session) is an input to this loop, not a note to file: every remark becomes either a new
-scenario or assertion in `evals/`, a new rule or reference passage in the skill, or is closed
+case or grader in `evals/`, a new rule or reference passage in the skill, or is closed
 with a comment saying why not. A remark that only changes prose without a check behind it
 tends to be lost on the next rewrite.
 
