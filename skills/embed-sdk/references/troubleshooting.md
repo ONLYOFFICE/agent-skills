@@ -27,7 +27,6 @@ integration looks right and does nothing.
 | REST 403 on a folder you can see | `rootFolderId` used as destination | use `folderId` — REST is outside this skill |
 | `api.js` loaded but `window.DocSpace` empty | two consumers race on the script tag | remove and re-append the tag |
 | System frame loads forever | a portal older than 4.0.0 whose System page does not report its own load | `frames[frameId].setIsLoaded()` ([system](modes/system.md)) |
-| `onAppReady` never fires on a public-room frame | a client build whose `/sdk/public-room` page lacks the frame bridge every other SDK page mounts (a 4.0.0 pre-release defect) | update the portal; until then gate on `onContentReady`, which the SDK fires itself on the iframe's `load` ([public-room](modes/public-room.md)) |
 | `setConfig({ theme })` changes nothing | Manager and System read `theme` once, from the frame URL at load; an unknown value becomes `Base` | `setConfig({ theme }, true)` (reload) |
 | `TS2748: Cannot access ambient const enums` on `import { FilterSortBy }` | the types declare the enums `const`, and the project sets `isolatedModules` or `verbatimModuleSyntax` | string values typed with `TFilterSortBy`, `TTheme`, … |
 | `import { FilterSortBy }` or `import { SDK }` is `undefined` at runtime | SDK 2.0/2.1 export only the default; 2.2.0 exports `SDK` by name and the enums | `import SDK from …` on 2.0/2.1; string values for the enums |

@@ -19,9 +19,8 @@ sdk.initPublicRoom({
 });
 ```
 
-`onAppReady` is expected from every mode. A portal build whose `/sdk/public-room` page has no frame bridge (a
-4.0.0 pre-release defect) never sends it; there `onContentReady`, which the SDK fires itself on the iframe's `load`
-because `noLoader` defaults to `true` in this mode, is the only ready signal ([troubleshooting](../troubleshooting.md)).
+The page fires `onAppReady` once when it mounts (client 4.0.0). `onContentReady` comes from the SDK itself on the
+iframe's `load` event, because `noLoader` defaults to `true` in this mode; the order of the two is not guaranteed.
 
 Key points:
 
