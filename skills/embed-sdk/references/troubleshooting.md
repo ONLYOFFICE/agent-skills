@@ -21,7 +21,7 @@ integration looks right and does nothing.
 | `login` "succeeds" but no session | `status` not checked | `status !== 200` is failure ([methods → Result semantics](methods.md#result-semantics--read-this-first)) |
 | `MODE_MISMATCH` ("… is not available in … mode"), or the resolved string `"Wrong method for this mode"` on an older portal | method not implemented by that page | switch mode (System or Manager) |
 | Script-tag `filter[...]` or lowercase params ignored | legacy syntax not recognized | bare, case-sensitive keys ([config-reference → Script-tag configs](config-reference.md#script-tag-configs)) |
-| `MODE_MISMATCH` from `upload()` | mode ≠ forms | [forms](modes/forms.md) |
+| `MODE_MISMATCH` from `upload()` | mode is neither forms nor personal | [forms](modes/forms.md), [personal](modes/personal.md) |
 | `TOKEN_RESOLVE_FAILED` / `onAuthError` | `getToken` threw or missing | check the token endpoint ([auth-recipes §2](auth-recipes.md#2-oauth-sdk--22--recommended)) |
 | `createFile` made the wrong format | extension taken from `title` | keep the template's extension ([methods → Content](methods.md#content)) |
 | REST 403 on a folder you can see | `rootFolderId` used as destination | use `folderId` — REST is outside this skill |

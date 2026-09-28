@@ -29,7 +29,7 @@ mode needs.
 | Event | Fires when | Payload |
 |---|---|---|
 | `onAuthSuccess` | successful authorization inside the frame | object |
-| `onAuthError` | OAuth mode: `getToken` threw/rejected or is missing | `{ code?, message }` |
+| `onAuthError` | OAuth mode: `getToken` threw/rejected or is missing (`code: "TOKEN_RESOLVE_FAILED"`, from the SDK), or the portal still answered 401 after a fresh token (`code: "UNAUTHORIZED"`, from the page — expired token or missing scope) | `{ code?, message }` |
 | `onSignOut` | user signed out inside the frame — tear down and unlink the account on your side | — |
 
 ## Navigation / access
@@ -59,13 +59,19 @@ Import them from `@onlyoffice/docspace-sdk-js` instead of declaring your own sha
 each one: [TFrameEvents](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameEvents.md), [TSelectedRoom](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TSelectedRoom.md),
 [TSelectedFile](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TSelectedFile.md), [TEditorOpenPayload](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TEditorOpenPayload.md).
 
-## Uploads (Uploader + Forms modes)
+## Uploads (Uploader, Forms and Personal modes)
 
-| Event | Payload |
-|---|---|
-| `onUploadSuccess` | `{ fileName, fileSize, uploadId? }` |
-| `onUploadError` | `{ fileName, message, uploadId? }` |
-| `onUploadProgress` | progress object (Uploader only) |
+Two different sources, two payload shapes (SDK 2.2.0 types them; client 4.0.0 verified):
+
+| Event | Uploader (the drop-zone's own upload) | Forms and Personal (only for `upload()`) |
+|---|---|---|
+| `onUploadSuccess` | once per batch, an **array** of `TUploaderUploadResult` — the portal's API envelope per file: `{ response: { id, folderId, version, title, uploaded, file: TFileInfo }, count, status, statusCode }` | once per `upload()` call, `TUploadResult` `{ fileName, fileSize }` — the same object the call resolves with |
+| `onUploadError` | `TUploaderUploadError` `{ error, rejectedFiles?: [{ fileName, fileSize, fileType, errors: [{ code, message }] }] }` — `rejectedFiles` when the dialog's validation refused files | `TUploadError` `{ fileName, message }` |
+| `onUploadProgress` | `TUploadProgress` `{ sessionId, fileName, uploadedChunks, totalChunks, percent }`, after every chunk of every file | never |
+
+So `onUploadSuccess: (files) => files.map((f) => f.response?.title)` on an Uploader frame, and `({ fileName }) => …`
+on a Forms or Personal frame; `file[0].response.title` is the Uploader shape. Files added through the Forms or
+Personal page's own UI do not fire these events.
 
 ## Custom actions (Forms)
 

@@ -27,11 +27,11 @@ Sections (`TFormsSection`): `my-forms`, `in-progress`, `completed-forms`, `libra
 runtime with `await instance.navigateSection("completed-forms")`; track user navigation
 via `onNavigate`.
 
-## Programmatic upload — this is THE mode for it
+## Programmatic upload
 
-`await instance.upload(file)` (a browser `File`) works **only here**; other modes throw
-`SDKError(MODE_MISMATCH)`. Timeout 120 s. Results also surface via
-`onUploadSuccess`/`onUploadError`.
+`await instance.upload(file)` (a browser `File`) works here and in Personal; every other mode rejects with
+`SDKError(MODE_MISMATCH)`. It resolves the `onUploadSuccess` payload (`{ fileName, fileSize }`), rejects with
+`UPLOAD_FAILED` on `onUploadError` or after its own 120 s timeout, and emits no `onUploadProgress`.
 
 ## Custom context-menu actions
 

@@ -16,9 +16,9 @@ sdk.initUploader({
   secondaryText: "or click to browse",
   extensionsText: "PDF and DOCX only",
   events: {
-    onUploadSuccess: ({ fileName, fileSize, uploadId }) => {},
-    onUploadError: ({ fileName, message, uploadId }) => {},
-    onUploadProgress: (p) => {},
+    onUploadSuccess: (files) => files.map((f) => f.response?.title),   // an array per batch
+    onUploadError: ({ error, rejectedFiles }) => {},
+    onUploadProgress: ({ fileName, percent }) => {},
   },
 });
 ```
@@ -26,11 +26,13 @@ sdk.initUploader({
 Key points:
 
 - **Uploads happen only through this UI.** The programmatic `instance.upload(file)`
-  method works **only in Forms mode** and throws `SDKError(MODE_MISMATCH)` here — do not
+  method works in Forms and Personal and rejects with `SDKError(MODE_MISMATCH)` here — do not
   generate code that calls `upload()` on an Uploader frame.
 - `id` is the destination folder id; get one from a file-selector
   (`selectorType: "userFolderOnly"`), `getFolderInfo()` of a manager frame, or your own
   mapping.
 - Size limits are strings; texts are plain strings shown in the drop zone.
-- `onUploadProgress` fires only in this mode; `onUploadSuccess`/`onUploadError` also fire
-  in Forms mode.
+- The payloads are this mode's own: `onUploadSuccess` gets an **array** of API envelopes
+  (`files[0].response.title`, `.id`, `.folderId`, `.file`), `onUploadError` `{ error, rejectedFiles? }`,
+  `onUploadProgress` `{ sessionId, fileName, uploadedChunks, totalChunks, percent }` per chunk. Forms and
+  Personal send `{ fileName, fileSize }` per `upload()` call instead — [events](../events.md#uploads-uploader-forms-and-personal-modes).

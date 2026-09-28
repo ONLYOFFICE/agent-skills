@@ -82,7 +82,8 @@ what can be picked; the labels, the colour and the `with*` / `show*` toggles, wi
 `id` = destination folder; `acceptExtensions` (`".pdf,.docx"`); `isFolderUpload`,
 `isMultipleUpload`; `maxPerUploadSize`, `maxTotalUploadSize` are **strings** of bytes;
 `linkMainText`, `secondaryText`, `extensionsText` are drop-zone texts. No programmatic
-`upload()` here (Forms only).
+`upload()` here (Forms and Personal only); the events carry the Uploader payload shapes
+([events](events.md#uploads-uploader-forms-and-personal-modes)).
 
 ## Forms
 
@@ -100,8 +101,8 @@ page's no-access state and `onNoAccess` — [chat](modes/chat.md).
 ## Personal (SDK >= 2.2)
 
 `personalDestination` initial section (`my-documents` default, `favorites`, `recent`, `trash`,
-`settings`); manager-family display options apply; only `setConfig` and `navigateSection` are
-answered by its page.
+`settings`); `id` opens a folder; manager-family display options apply; its page answers `setConfig`,
+`navigateSection` and `upload()` — every data method rejects with `MODE_MISMATCH`.
 
 ## Script-tag configs
 

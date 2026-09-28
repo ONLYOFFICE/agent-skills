@@ -38,7 +38,7 @@ the method and on the portal's build:
 | System (`/old-sdk/system`) | `setConfig`, `createHash`, `getUserInfo`, `getHashSettings`, `login`, `logout` |
 | Editor / Viewer (`/doceditor`) | `setConfig`, `executeInEditor` |
 | Forms (`/sdk/forms/*`) | `setConfig`, `navigateSection`, `setCustomActions`, `upload` |
-| Personal (`/sdk/personal-files/*`) | `setConfig`, `navigateSection` |
+| Personal (`/sdk/personal-files/*`) | `setConfig`, `navigateSection`, `upload` |
 | Room selector, File selector, Uploader, Public room, Chat (`/sdk/*`) | `setConfig` only |
 
 Everything not listed for the current mode's page rejects with `MODE_MISMATCH` (an older portal resolves the
@@ -91,7 +91,7 @@ System frame for data calls. The matrix is portal-version-specific — older por
 | `createRoom(title, roomType, options?)` | SDK 2.2 signature; `options: TCreateRoomOptions = { quota?, tags?, color?, cover?, indexing?, denyDownload? }`. **Older SDKs (<= 2.1) had positional params** `(title, type, quota?, tags?)` — real integrations hit type mismatches here; match the portal's SDK version. Room types (numeric): `1` form-filling, `2` collaboration, `5` custom, `6` public, `8` virtual data room |
 | `setListView(viewType)` | `"row"` / `"table"` / `"tile"` |
 | `openModal(type, options)` | open a portal modal dialog |
-| `upload(file: File)` | **Forms mode only** — rejects with `SDKError(MODE_MISMATCH)` elsewhere; after 120 s it rejects with `UPLOAD_FAILED`; Uploader mode accepts files only via its UI |
+| `upload(file: File)` | **Forms and Personal** (the form filling room, or the folder open in the Personal frame) — rejects with `SDKError(MODE_MISMATCH)` elsewhere. Resolves the `onUploadSuccess` payload (`{ fileName, fileSize }`), so the event handler is optional; rejects with `UPLOAD_FAILED` on `onUploadError` or after its own 120 s timeout (`methodTimeout` does not apply); `onUploadProgress` is not emitted for it. Uploader mode accepts files only via its UI |
 
 `createFile`/`createFolder` act on the current folder context of an open Manager frame; the
 Personal page does not implement them.
