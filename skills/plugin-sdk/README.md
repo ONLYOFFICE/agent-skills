@@ -71,7 +71,7 @@ A missing `dist/plugin.zip` means the toolchain disagrees with itself, and `type
 
 ### Where the documentation links point
 
-The references do not restate the SDK's documentation — signatures, props, enum values and method lists are linked, one docs page per interface, hook and enum, and the references keep only what the portal does with them. Every such link is built on a source in [`sources.json`](sources.json): `docs` for the Plugins SDK pages under `https://api.onlyoffice.com/docspace/plugins-sdk` and `restDocs` for the REST API reference under `https://api.onlyoffice.com/docspace/api-backend`, both on the `apiSite` host declared once in the repository's root `sources.json`. Pages are linked in their `.md` form, which the docs site serves as plain Markdown — its `llms.txt` states the rule: replace the trailing slash of any page URL with `.md`.
+The references do not restate the SDK's documentation — signatures, props, enum values and method lists are linked, one docs page per interface, hook and enum, and the references keep only what the portal does with them. Every such link is built on a source in [`sources.json`](sources.json): `docs` for the Plugins SDK pages (indexed in [`llms.txt`](https://api.onlyoffice.com/docspace/plugins-sdk/llms.txt)) and `restDocs` for the REST API reference ([`llms.txt`](https://api.onlyoffice.com/docspace/api-backend/llms.txt)), both on the `apiSite` host declared once in the repository's root `sources.json`. Pages are linked in their `.md` form, which the docs site serves as plain Markdown — the `llms.txt` states the rule: replace the trailing slash of any page URL with `.md`.
 
 The committed text always carries the production URLs. To work against a staging site or a local build of the docs, move the whole plugin there and back again before committing:
 
@@ -81,7 +81,7 @@ node tools/sync-sources.mjs --skill plugin-sdk --verify                         
 node tools/sync-sources.mjs --host apiSite=<production origin>                           # back, so git status shows no change to sources.json
 ```
 
-`localhost` is a placeholder host for the checker — links to it are neither checked nor verified — so a local build is addressed as `127.0.0.1` with its port. A new link enters a reference only if it is built on one of those two sources (or the SDK repository); `node tools/sync-sources.mjs --check` fails otherwise. Until the SDK 3.0 pages are published, `--verify` against production reports the pages the site does not have yet as `DEAD`.
+`localhost` is a placeholder host for the checker — links to it are neither checked nor verified — so a local build is addressed as `127.0.0.1` with its port. A new link enters a reference only if it is built on one of those two sources (or the SDK repository); `node tools/sync-sources.mjs --check` fails otherwise. Until the SDK 3.0 pages are published, `--verify` against production reports the pages the site does not have yet as `DEAD`; `--verify --fallback` requests the same links from the docs stand (`apiSiteFallback` in the root `sources.json`) without touching the text.
 
 ### Keeping it current
 

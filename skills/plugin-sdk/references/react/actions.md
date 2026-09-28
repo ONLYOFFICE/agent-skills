@@ -54,7 +54,7 @@ const openInEditor = (id: string | number, sameTab = false) =>
   window.open(`/doceditor?fileId=${encodeURIComponent(String(id))}`, sameTab ? "_self" : "_blank");
 ```
 
-`fileId` with a capital I is what the client's own links carry; `&action=view` opens read-only; the portal uses `_blank` unless the user's *Open documents in the same tab* setting (`openEditorInSameTab` in [`GET /files/settings`](https://api.onlyoffice.com/docspace/api-backend/usage-api/get-files-settings.md)) is on; a portal under a path prefix needs it in front (`getAPI().proxy`). **`webUrl` and `viewUrl` are not links to reuse**: `webUrl` changes shape with the file type — the editor with the legacy lower-case `fileid=` for editable formats, `action=view` for convert-only ones, the media viewer for images, a download for the rest — and `viewUrl` is always the download. Keep the id, build the path.
+`fileId` with a capital I is what the client's own links carry; `&action=view` opens read-only; the portal uses `_blank` unless the user's *Open documents in the same tab* setting (`openEditorInSameTab` in [`GET /files/settings`](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/settings/get-files-settings.md)) is on; a portal under a path prefix needs it in front (`getAPI().proxy`). **`webUrl` and `viewUrl` are not links to reuse**: `webUrl` changes shape with the file type — the editor with the legacy lower-case `fileid=` for editable formats, `action=view` for convert-only ones, the media viewer for images, a download for the rest — and `viewUrl` is always the download. Keep the id, build the path.
 
 ## Changing an item from a component
 
