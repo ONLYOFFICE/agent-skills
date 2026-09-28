@@ -76,7 +76,7 @@ Each requirement plants a specific trap the skill covers:
 | 1 | `sortBy` API value `"AZ"` (not `"Name"`); `viewAs: "table"` + `viewTableColumns` | rule 2 |
 | 2 | room-selector payload is an **array**; token at `items[0].requestTokens[0].requestToken` | events |
 | 3 | own editor frames: `id` required, unique `frameId` per file, CSS-hide (not unmount) to keep state, StrictMode guard, destroy on close | rules 1, 3, 6 |
-| 4 | hidden system frame; `getUserInfo` session probe; `login()` resolves on failure → check `status !== 200` | rules 8–10 |
+| 4 | hidden system frame; `getUserInfo` session probe; `login()` resolves on failure → check `status !== 200` (the other methods reject with `API_ERROR`) | rules 8–10 |
 | 5 | `upload()` is Forms-mode-only — must init a forms frame for `{FORMS_ROOM_ID}` (or justify Uploader UI); calling `upload()` on manager throws `MODE_MISMATCH` | rule 11 |
 | 6 | `initChat` does not exist in SDK 2.0.0 — forces the version conflict into the open | rule 14, chat mode ref |
 | 7 | CSP allowlist for both `http://localhost:5173` and the prod origin | rule 7 |

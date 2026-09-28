@@ -170,10 +170,11 @@ Each one exists because the failure is silent: the integration looks right and d
 8. **Call methods after `onAppReady`.** Before the iframe has loaded they reject with `DISCONNECTED`; between the load
    and `onAppReady` they are sent to a page that may not be listening yet and end in `TIMEOUT` (`methodTimeout`).
    Manager and System frames fire `onAppReady` again on every `setConfig` — guard a handler that calls `setConfig`.
-9. **The portal never rejects a method — API failures resolve** (client 4.0.0 wraps every handler in `try/catch` and
-   returns the error as the payload). Check `status !== 200` on every API-backed result: `login()` with wrong
-   credentials, `createRoom()` with `402`. A method the mode's page lacks resolves with the string
-   `"Wrong method for this mode"` ([methods](references/methods.md#result-semantics--read-this-first)).
+9. **API failures reject — except in `login()` and `createRoom()`.** Client 4.0.0 flags a failed handler
+   (`isError: true`) and SDK 2.2.0 turns it into a rejection with code `API_ERROR` (`err.status`, `err.data`); a method
+   the mode's page lacks rejects with `MODE_MISMATCH`. The two legacy methods keep resolving `{ status, message }`, so
+   check `status !== 200` there (`login()` with wrong credentials, `createRoom()` with `402`). On an older portal every
+   method resolves the error object instead — check both ([methods](references/methods.md#result-semantics--read-this-first)).
 10. **Sign in the cheap way first.** `getUserInfo()` and compare the email before `login(email, hash)`; passwords travel
     only as hashes (`getHashSettings` → `createHash` → `login`); the plaintext `password` and `session` arguments never
     reach the portal; a `url` under `/confirm/` in the result is a pending second factor — see Authentication above.
@@ -182,7 +183,7 @@ Each one exists because the failure is silent: the integration looks right and d
     pass `""` for the ones you do not use — is `POST /files/{folderId}/file`:
     the **format comes from the extension in `title`** (a PDF form copied under a `.docx` title stops being a form),
     `folderId` is a folder from `getFolderInfo()` or a selector — never a section's `rootFolderId`. Personal mode
-    answers `"Wrong method for this mode"` to every data method.
+    rejects every data method with `MODE_MISMATCH` — data calls go through a Manager or System frame.
 12. **`executeInEditor(cb, data)` calls `cb(editor, asc, data)` — three arguments** (SDK <= 2.1 typed it wrong). Create the
     connector yourself (`editor.createConnector()`); fill forms with the Document Builder API inside `connector.callCommand`
     (`GetAllForms()` → `SetText`/`SetChecked`, data through `Asc.scope`, no closures). `executeMethod("SetFormValue" |

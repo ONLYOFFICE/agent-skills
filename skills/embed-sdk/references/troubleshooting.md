@@ -13,13 +13,13 @@ integration looks right and does nothing.
 | Chat shows only "Chat history", no composer | the frame's user is a guest or nobody is signed in (`onNoAccess` fires), or the OAuth token lacks profile scopes | [chat](modes/chat.md) |
 | `Message bus is not connected…` | method called before the iframe loaded, or on a `waiting` frame | wait for `onAppReady`; release a parked frame with `setConfig({ waiting: false }, true)` ([methods](methods.md)) |
 | The `onAppReady` handler runs again and again | it calls `setConfig`, and Manager and System frames fire `onAppReady` after each one | guard it with a flag |
-| `.catch()` never sees `MODE_MISMATCH` from `navigateSection` or `setCustomActions` | both throw synchronously | `try`/`catch` around the call |
+| A method rejects with `API_ERROR` | the portal's API call failed (client 4.0.0 flags it); `err.status` is the HTTP status, `err.data` the portal's error | branch on `err.code` in `catch`; `403` on `createFile`/`createRoom` is a permission or `rootFolderId` problem ([methods → Result semantics](methods.md#result-semantics--read-this-first)) |
 | `SDKError TIMEOUT` | frame not answering; method unsupported by mode or portal version | match SDK and portal (Step 0); [methods → support matrix](methods.md#method-support-by-embedded-page-client-400) |
 | Events never fire | `frameId` ≠ container id | make them equal; distinct ids per frame |
 | `window is undefined` | SSR | `useEffect` / dynamic import ([nextjs](frameworks/nextjs.md)) |
 | Broken or duplicated frame in dev (React) | StrictMode double effects | ref guard ([react](frameworks/react.md)) |
 | `login` "succeeds" but no session | `status` not checked | `status !== 200` is failure ([methods → Result semantics](methods.md#result-semantics--read-this-first)) |
-| `"Wrong method for this mode"` | method not implemented by that page | switch mode (System or Manager) |
+| `MODE_MISMATCH` ("… is not available in … mode"), or the resolved string `"Wrong method for this mode"` on an older portal | method not implemented by that page | switch mode (System or Manager) |
 | Script-tag `filter[...]` or lowercase params ignored | legacy syntax not recognized | bare, case-sensitive keys ([config-reference → Script-tag configs](config-reference.md#script-tag-configs)) |
 | `MODE_MISMATCH` from `upload()` | mode ≠ forms | [forms](modes/forms.md) |
 | `TOKEN_RESOLVE_FAILED` / `onAuthError` | `getToken` threw or missing | check the token endpoint ([auth-recipes §2](auth-recipes.md#2-oauth-sdk--22--recommended)) |

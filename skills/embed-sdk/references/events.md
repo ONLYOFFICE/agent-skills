@@ -9,7 +9,7 @@ the iframe to the host. Payload shapes below are what real integrations rely on.
 |---|---|---|
 | `onAppReady` | frame app fully initialized — **methods may be called from here**. Manager and System pages fire it again after every `setConfig` (the reference says "once"), so a handler that calls `setConfig` needs a guard | `{ frameId }` |
 | `onContentReady` | frame content is visible — reveal the iframe, drop your spinner | — |
-| `onAppError` | init or runtime error, the CSP failure included — only the message arrives; the `SDKError` with its code goes to the console | `message: string` |
+| `onAppError` | an SDK-side error: CSP failure, unparsable message, a call on a disconnected frame, a method timeout, a token failure — only the message arrives; the `SDKError` with its code goes to the console. An API failure of a method call does not fire it: the method's promise rejects instead ([methods](methods.md#result-semantics--read-this-first)) | `message: string` |
 
 Pattern from production: keep the iframe hidden (CSS) with your own spinner until
 `onContentReady`, and gate all instance-method calls on `onAppReady`.

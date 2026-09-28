@@ -79,7 +79,8 @@ results in the report. Every step is scriptable; a Playwright run covers 3–6.
    shows the document (`onAppReady` in `/doceditor`); system frame `getUserInfo()` returns the
    expected `email` after login; chat shows a composer, not only "Chat history".
 7. **Auth failure path.** Wrong password → `login()` resolves with `status !== 200` and your
-   UI shows its own error, not a spinner. OAuth: kill the token endpoint → `onAuthError`
+   UI shows its own error, not a spinner; a data call that fails (a folder the user cannot write)
+   rejects with `API_ERROR` and lands in your `catch`. OAuth: kill the token endpoint → `onAuthError`
    fires and your re-login UX appears.
 8. **Report** to the user: portal URL and SDK version, connection method (npm/IIFE), the
    origins that must be on the allow-list (dev and prod), the modes used, what step 6

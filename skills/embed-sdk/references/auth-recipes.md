@@ -16,8 +16,9 @@ auto-login · 5 API keys · 6 the cross-origin cookie wall · 7 two-factor authe
 | OAuth access token | your backend (refresh token stays there) | API calls as the user, sent as `Bearer` — no cookie involved | `getToken` (preferred) or `accessToken`, SDK >= 2.2 | outlive expiry unless `getToken` re-fetches |
 | API key | your backend | REST as the key owner, `Bearer`, scopes = key permissions | REST; in a frame the SDK forwards whatever `getToken` returns — plausible but **unverified**, confirm with `getUserInfo()` | be refreshed or revoked per session |
 
-`login()` resolves `{ url: "/" }` on success, `{ url: "/confirm/…" }` when a second factor is pending, and an error
-with `status` on failure — it never rejects.
+`login()` resolves `{ url: "/" }` on success, `{ url: "/confirm/…" }` when a second factor is pending, and
+`{ status, message }` on failure — it never rejects on a portal failure (with `createRoom` the only method that
+keeps that contract on client 4.0.0; the rest reject with `API_ERROR`, [methods](methods.md#result-semantics--read-this-first)).
 
 ## 1. Credential-replay (password hash) — the classic plugin flow
 
