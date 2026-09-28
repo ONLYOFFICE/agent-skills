@@ -107,7 +107,7 @@ With the script: `window.DocSpace.SDK.initManager(...)`.
 | Headless login / API calls | `system` | `initSystem` | `src` | [system](references/modes/system.md) |
 | Anonymous public room | `public-room` | `initPublicRoom` | `src`, `id` (room), `requestToken` | [public-room](references/modes/public-room.md) |
 | Upload UI | `uploader` | `initUploader` | `src`, `id` (folder) | [uploader](references/modes/uploader.md) |
-| Forms gallery | `forms` | `initForms` | `src`, `id` (room) | [forms](references/modes/forms.md) |
+| Forms gallery | `forms` | `initForms` | `src` (`id` = room; omitted → the room from the portal's Forms settings) | [forms](references/modes/forms.md) |
 | AI chat | `chat` | `initChat` | `src`; a signed-in user who is not a guest (`agentId` optional) | [chat](references/modes/chat.md) |
 | Personal files | `personal` | `initPersonal` | `src` | [personal](references/modes/personal.md) |
 | Fill forms inside the editor | `editor` + connector | — | — | [editor-automation](references/editor-automation.md) |

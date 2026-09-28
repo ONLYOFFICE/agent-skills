@@ -24,7 +24,7 @@ Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs �
 | editor, viewer | file id | empty `/doceditor`, no error — **required** |
 | public-room | room id (→ `?folder=`) | the page cannot load the room and renders its invalid-link error, no event — **required** with `requestToken` |
 | uploader | destination folder id | uploads have no target |
-| forms | room id | the gallery has no room |
+| forms | form filling room id | the room configured in the portal's Forms settings is used (client 4.0.0) |
 | manager | start folder; the SDK moves it into `filter.folder` | opens `rootPath` |
 | others | ignored | — |
 
@@ -38,7 +38,7 @@ Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs �
 | `checkCSP` | `false` only skips the early CSP probe; the portal still enforces the allow-list |
 | `methodTimeout` | ms before a method rejects with `TIMEOUT` (30 000); absent on SDK < 2.2 |
 | `theme` | `"Base"`, `"Dark"`, `"System"` — capitalized; `"dark"` is rejected |
-| `locale` | BCP 47 (`"en-US"`); `null` = portal default |
+| `locale` | BCP 47 (`"en-US"`); `null` = portal default. Applies to the frame. Manager, System and selector pages before client 4.0.0 (2026-09-28) also wrote it into the signed-in user's profile language — permanently, on every `setConfig` |
 | `destroyText` | text of the placeholder after `destroyFrame()` — plain text in 2.2 (`textContent`); 2.1 and earlier inserted it as HTML |
 | `stylesUrl`, `integrationUrl` | SDK 2.2: custom stylesheet inside the frame; host URL to return to from external portal pages |
 | `getToken` / `accessToken` / `tokenExpiresAt` | SDK >= 2.2 only; `getToken` wins when both are set; the SDK does not parse the token |
@@ -50,9 +50,12 @@ Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs �
 
 - `rootPath` default `/rooms/shared/`; the iframe URL is `{src}{rootPath}filter?{filter…}`, `{src}{rootPath}{id}/filter?…`
   with an `id`, and `{src}{rootPath}?key={requestToken}&…` over a shared room.
-- The defaults of `viewAs`, `viewTableColumns`, the `show*` flags and `showHeaderBanner` are in
+- The defaults of `viewTableColumns`, the `show*` flags and `showHeaderBanner` are in
   [TFrameConfig](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameConfig.md). Worth knowing: `viewTableColumns` lists all five columns by
-  default and embeds usually trim it to `"Name,Size,Type"`; `showSettings` adds the column picker.
+  default and embeds usually trim it to `"Name,Size,Type"`; it applies in the table layout only and a column set the
+  user saved in the browser takes precedence; `showSettings` adds the column picker. `viewAs` is **deprecated in
+  2.2.0 and ignored by client 4.0.0** — the layout is the one the user last chose; call `setListView("table")` after
+  `onAppReady` instead.
 - `filter.sortBy` takes the **API values**, not the enum key names — `AZ` for the name, `DateAndTime` for the
   modified date; the full list is [FilterSortBy](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/enumerations/FilterSortBy.md). `sortOrder` is
   `ascending` / `descending`; `count` and `page` are strings; `folder` is set from `id` — never by hand.
@@ -75,7 +78,8 @@ what can be picked; the labels, the colour and the `with*` / `show*` toggles, wi
   (prompt anonymous users for a name; `request: false` for embeds), `integrationMode: "embed"`
   (prevents auto-scroll to the frame), `compactToolbar` defaults `false` in edit and `true` in view,
   `hideRulers` defaults `true` for slides, `zoom` `-1` fit page / `-2` fit width, `macros: false`
-  needs Document Server >= 9.0.3, `uiTheme` values are `theme-*` / `default-*` strings.
+  needs Document Server >= 9.0.3, `uiTheme` is a `TTheme` value (`"Base"`, `"Dark"`, `"System"`) — the portal maps
+  only those to editor themes and falls back to `"System"` for any other string, so prefer the frame-level `theme`.
 
 ## Uploader
 

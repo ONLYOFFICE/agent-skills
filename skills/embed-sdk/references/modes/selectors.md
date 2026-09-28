@@ -34,7 +34,8 @@ const instance = sdk.initRoomSelector({          // or initFileSelector
   default `"ALL"`.
 - UI toggles: `withSearch`, `withBreadCrumbs`, `withSubtitle` (all default `true`),
   `showSelectorCancel`, `showSelectorHeader` (default `false`),
-  `cancelButtonLabel`, `buttonColor` (`"#5299E0"`).
+  `cancelButtonLabel`. `buttonColor` is deprecated in 2.2.0 and ignored by client 4.0.0 (the button follows the
+  portal theme).
 
 ## Recipe: selector in a host modal
 

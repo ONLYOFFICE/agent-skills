@@ -26,8 +26,10 @@ Key points:
 - The loader is **forced on** in this mode (`noLoader` is ignored).
 - `filter.sortBy` takes **API values** (`"AZ"`, `"DateAndTime"`, …) — use `FilterSortBy`
   enum constants, never enum key names.
-- `viewAs: "table"` pairs with `viewTableColumns` (default `"Index,Name,Size,Type,Tags"`;
-  embeds often trim to `"Name,Size,Type"`) and `showSettings` for the column picker.
+- `viewAs` is deprecated in 2.2.0 and ignored by client 4.0.0 — the layout is the one the user last chose;
+  `setListView("table")` after `onAppReady` switches it. `viewTableColumns` (default
+  `"Index,Name,Size,Type,Tags"`; embeds often trim to `"Name,Size,Type"`) applies in the table layout until
+  the user changes the columns; `showSettings` adds the column picker.
 - Instance methods available here: all listings (`getFiles`, `getFolders`, `getList`,
   `getRooms`), `getSelection`, `getFolderInfo`, `createFile`/`createFolder` (act on the
   current folder), `createRoom`, tags, `setListView`.
