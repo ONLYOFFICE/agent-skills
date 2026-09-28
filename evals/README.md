@@ -36,6 +36,13 @@ without the grant the progress output lists the tools as `not granted` and the r
 The `heavy` cases install packages from npm and build with Vite; run them with `--tag heavy` when
 the network allows it and budget an hour.
 
+**A shell grant needs a sandbox backend.** On Windows the tool refuses a run with `Bash` granted
+("sandbox required but unavailable"), so the build cases run there with `--allow-tools Write Edit`
+only: the file graders still work, the `config-validated` / `validated-against-loader` graders
+(the validator the skill makes the agent run) fail, and the `heavy` cases cannot build at all.
+Run the full build suite on Linux or macOS — the CI runner — where the shell is confined.
+A refused run leaves its temp directory behind and prints the command to remove it.
+
 For a rubric the small default judge disagrees with, re-run with `--judge-model sonnet` before
 touching the plugin: a `tool_used: Skill` that passes with a negative delta usually means the
 judge, not the skill. A case that scores the same in both arms on every model measures nothing
