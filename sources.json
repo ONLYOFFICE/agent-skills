@@ -1,6 +1,8 @@
 {
   "hosts": {
     "apiSite": "https://api.onlyoffice.com",
+    "apiSiteFallback": "https://api.onlyoffice.io",
+    "mcp": "https://mcp.onlyoffice.com",
     "github": "https://github.com/ONLYOFFICE",
     "raw": "https://raw.githubusercontent.com/ONLYOFFICE",
     "npmApi": "https://api.npmjs.org",
@@ -12,6 +14,7 @@
     "agentSkillsSpec": {"host": "agentSkills"},
     "onlyoffice": {"host": "onlyoffice"},
     "apiSite": {"host": "apiSite"},
+    "mcp": {"host": "mcp", "verify": false},
     "gitea": {"host": "gitea", "verify": false}
   }
 }

@@ -37,6 +37,11 @@ another site, and bumping a version.
   `git status`. Switch back before committing.
 - `--check` runs inside the validator self-test of a skill and in the release checklist;
   a red check blocks a release.
+- A host named `<name>Fallback` (`apiSiteFallback`, the docs stand) is a stand-in for `<name>`,
+  never a link base: no text links to it, `--check` never sees it. `--verify --fallback` requests
+  every link built on `<name>` from the twin instead — the way to verify links against the stand
+  before production serves the pages — and the internal `.claude/skills/onlyoffice-docs` script
+  reads from it when production has no Markdown page.
 
 ## Commands
 
@@ -44,6 +49,7 @@ another site, and bumping a version.
 node tools/sync-sources.mjs --check                         # every skill and the root README
 node tools/sync-sources.mjs --skill embed-sdk --check
 node tools/sync-sources.mjs --verify                        # + one request per link
+node tools/sync-sources.mjs --verify --fallback             # the same links on the stand (apiSiteFallback)
 node tools/sync-sources.mjs --host apiSite=http://127.0.0.1:3005      # whole plugin → local docs build
 node tools/sync-sources.mjs --host apiSite=https://api.teamlab.info   # whole plugin → staging
 node tools/sync-sources.mjs --host apiSite=https://api.onlyoffice.com # back to production
