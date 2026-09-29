@@ -102,7 +102,7 @@ Mounts the built bundle in Chromium against the **real** UI kit and the **real**
 | `preview-invisible` | text the same colour as what is behind it, in one of the two themes — a literal colour that only works in the other |
 | `preview-unlabelled` | a field with no visible label, no `aria-label` and no placeholder |
 
-Fix what it reports and run it again. Then **look at the screenshots** it writes to `<target>/.plugin-preview/shots/` — they are the two themes of every surface at its real width, and doubled spacing, a broken row of blocks or a dialog that reads as unfinished are judgements no assertion makes for you. The harness directory is deleted on a clean run and kept when there are errors; `--keep` keeps it either way.
+Fix what it reports and run it again. Then **look at the screenshots** it writes to `<target>/.plugin-preview/shots/` — they are the two themes of every surface at its real width, and doubled spacing, a broken row of blocks or a dialog that reads as unfinished are judgements no assertion makes for you. A clean run removes the harness and keeps `shots/`; a run with errors keeps all of it, and `--keep` keeps it either way.
 
 `preview skipped` is a setup step, never a pass: it names what is missing (`npm run build` first, `npm install` first, or `npm i -D playwright && npx playwright install chromium`). A skipped run has measured nothing — do not report the surfaces as checked.
 

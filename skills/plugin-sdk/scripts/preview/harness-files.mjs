@@ -189,6 +189,30 @@ const readMap = (value) => {
   return [];
 };
 
+/* The class-side callbacks the portal calls on an item of this scope - submenu children
+ * included - each with the argument the portal passes, on its own object, and named by where
+ * it sits so two children's dialogs stay two surfaces. The same set validate-plugin.mjs runs. */
+const clicksOf = (scope, item, path = "") => {
+  if (!item) return [];
+  const calls = [];
+  const push = (owner, name, arg, label = "") => {
+    if (typeof owner?.[name] === "function") calls.push([owner, name, arg, path + label]);
+  };
+
+  if (scope === "File") push(item, "onClick", CURRENT_FILE);
+  else if (scope === "ProfileMenu") push(item, "onClick", undefined);
+  else if (scope === "EventListener") push(item, "eventHandler", undefined);
+  else if (scope === "InfoPanel") push(item.subMenu, "onClick", 1);
+  else if (scope === "ContextMenu" || scope === "MainButton") {
+    if (typeof item.onItemClick === "function") push(item, "onItemClick", 1);
+    else push(item, "onClick", 1);
+    push(item, "onGroupClick", [{ id: 1, itemType: "file" }], " (group)");
+    for (const child of Array.isArray(item.items) ? item.items : [])
+      calls.push(...clicksOf(scope, child, path + " > " + (child?.key ?? "?")));
+  }
+  return calls;
+};
+
 const boot = async () => {
   try {
     await plugin.onLoadCallback?.();
@@ -202,10 +226,10 @@ const boot = async () => {
 
       // What a class-side click asks the portal to draw. The message is the only way to
       // reach a dialog or a viewer that no item carries directly.
-      for (const [handler, arg] of [["onItemClick", 1], ["onClick", CURRENT_FILE]]) {
+      for (const [owner, handler, arg, at] of clicksOf(scope, item)) {
         let message;
         try {
-          message = await item?.[handler]?.(arg);
+          message = await owner[handler](arg);
         } catch {
           continue;
         }
@@ -222,9 +246,9 @@ const boot = async () => {
           let width = 400;
           if (aside) width = 480;
           else if (dialog.autoMaxWidth || dialog.fullScreen) width = 0;
-          add((aside ? "aside from " : "modal from ") + scope + "/" + key, dialog.dialogBodyComponent, false, width);
+          add((aside ? "aside from " : "modal from ") + scope + "/" + key + at, dialog.dialogBodyComponent, false, width);
         }
-        add("viewer from " + scope + "/" + key, message?.mediaViewerProps?.component, true, 0);
+        add("viewer from " + scope + "/" + key + at, message?.mediaViewerProps?.component, true, 0);
       }
     }
   }
