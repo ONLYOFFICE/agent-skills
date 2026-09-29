@@ -10,6 +10,8 @@ The portal's own component library: it reads theme, accent and direction from co
 
 **The styles ship too, and they are where layout surprises are answered.** The kit is ESM-only: `dist/esm/components/<name>/<Name>.module.scss/index.js` holds the class-name map and imports `index.css` beside it, and that CSS file is the component's real stylesheet. When a control collapses, overflows, or draws somewhere you did not put it, read that file before theorising: a `position: absolute` on a label or a `display: inline-block` on a wrapper explains the behaviour that no prop does. It is worth one look **before** writing a surface too, not only after it looks wrong — the trap list below is the handful of components where that look has already been taken, not the extent of the problem. The same goes for what the kit does *not* contain — check the package rather than assuming a component exists or does not.
 
+Contents: [Imports and enums](#imports-and-enums) · [Layout conventions](#layout-conventions) · [Behavioural traps](#behavioural-traps) · [Icons and assets](#icons-and-assets)
+
 ## Imports and enums
 
 Import from the barrel only — `@onlyoffice/apps-ui-kit/components/button` is refused by the portal at load. Never bundle the kit ([bundling.md](bundling.md)).
@@ -50,4 +52,4 @@ Defaults and layout facts the `.d.ts` does not state:
 
 ## Icons and assets
 
-Two mechanisms: **item icons** (`icon`, `fileRowIcon`) are asset **file names** — `"icon-16.svg"` — resolved against the plugin's `assets/` and recolored for menus, but only shapes with an explicit `fill`/`stroke` **attribute** are repainted, so ship monochrome SVGs with `fill` on every shape. **Inside a component** nothing is resolved: use an inline SVG, or the plugin's base URL, which the portal sets on the exported object after load — `${plugin.iconUrl}/assets/logo.svg` (not declared by the SDK; read through a cast). The logo's size is in [portal.md → Limits](portal.md#limits), each item icon's in its scope's fields table ([scopes.md](plugins/scopes.md)).
+Two mechanisms: **item icons** (`icon`, `fileRowIcon`) are asset **file names** — `"icon-16.svg"` — resolved against the plugin's `assets/` and recolored for menus, but only shapes with an explicit `fill`/`stroke` **attribute** are repainted, so ship monochrome SVGs with `fill` on every shape. **Inside a component** nothing is resolved: use an inline SVG, or the plugin's base URL, which the portal sets on the exported object after load — `${plugin.iconUrl}/assets/logo.svg` (not declared by the SDK; read through a cast). The logo's size is in [portal.md → Limits](portal.md#limits), each item icon's on its interface's docs page, linked from the scope's page.

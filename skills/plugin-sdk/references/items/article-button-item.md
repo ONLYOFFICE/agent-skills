@@ -15,7 +15,7 @@ A small persistent control in the sidebar.
 
 Each field, with its type and a line, is on [`IArticleButtonItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IArticleButtonItem.md).
 
-`component` gets a **32×32 slot with `overflow: hidden`** — text does not fit; in practice one kit `IconButton size={32}` with its own `onClick`. Rendered in **two** sidebars (article and apps) from the same map; each shows at most **five** buttons across all plugins, in registration order — the sixth is dropped silently. A natural way to *open* something (`navigate("/p/<key>")`, an aside, a selector), a poor place for the thing itself.
+`component` gets a **32×32 slot with `overflow: hidden`** — text does not fit; in practice one kit `IconButton size={32}` with its own `onClick`. Rendered in the apps sidebar of every section, at most **five** buttons across all plugins, in registration order — the sixth is dropped silently — and while the sidebar is collapsed to icons only the **first** of them is shown. A natural way to *open* something (`navigate("/p/<key>")`, an aside, a selector), a poor place for the thing itself.
 
 ## Example
 

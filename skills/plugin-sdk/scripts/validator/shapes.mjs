@@ -26,9 +26,19 @@ import {
   EVENT_TYPES,
   KNOWN_ACTIONS,
   SECTIONS,
+  USER_ROLES,
   USERS_TYPES,
 } from "../contract.mjs";
 import { Check } from "./findings.mjs";
+
+/** Both role enums' values: the portal matches a UserRole value as well as a UsersType one. */
+const ROLE_VALUES = [...new Set([...USERS_TYPES, ...USER_ROLES])];
+
+/** The scopes whose items carry a submenu of the same interface in `items`. */
+const SUBMENU_SCOPES = ["ContextMenu", "MainButton"];
+
+/** Actions whose setter belongs to a mounted element: from an item callback they do nothing. */
+const ITEM_IGNORED_ACTIONS = ["update-props", "update-context", "update-create-dialog-modal"];
 
 /** `Actions.showModal` is "show-modal": the enum key is the usual mistake. */
 const asActionValue = (key) =>
@@ -62,21 +72,94 @@ export class ShapeChecks extends Check {
 
     if (item.component !== undefined) this.#component(where, item.component);
 
-    this.#checkFilterFieldName(where, scope, contract, item);
-
-    this.#filterValues(where, contract.filter, item[contract.filter]);
-    this.#filterValues(where, "devices", item.devices);
-
-    if (
-      typeof item.icon === "string" &&
-      !this.project.assetNames.includes(item.icon)
-    )
-      this.error("item", `${where} icon "${item.icon}" is not in assets/`);
-
+    this.#checkEntryFields(where, scope, contract, item);
     this.#checkScopeSpecifics(where, scope, item);
+
+    if (SUBMENU_SCOPES.includes(scope)) this.#checkMenuEntry(where, scope, contract, item);
 
     // A scope keyed by extension has no room for a prefix.
     if (contract.key === "key") this.#checkKeyIsNamespaced(where, key);
+  }
+
+  /** The fields a menu child shares with its parent: the filters and the icon. */
+  #checkEntryFields(where, scope, contract, entry) {
+    this.#checkFilterFieldName(where, scope, contract, entry);
+
+    this.#filterValues(where, contract.filter, entry[contract.filter]);
+    this.#filterValues(where, "devices", entry.devices);
+
+    if (
+      typeof entry.icon === "string" &&
+      !this.project.assetNames.includes(entry.icon)
+    )
+      this.error("item", `${where} icon "${entry.icon}" is not in assets/`);
+  }
+
+  /** A ContextMenu or MainButton entry, parent or child: how it is clicked, and its submenu. */
+  #checkMenuEntry(where, scope, contract, entry) {
+    this.#checkClickable(where, scope, entry);
+    this.#checkDeprecatedClick(where, scope, entry);
+
+    if (entry.items?.some((child) => child?.items?.length))
+      this.warn(
+        "item",
+        scope === "ContextMenu"
+          ? `${where} nests deeper than 2 levels - the SDK types leave items off a child, and the portal keeps the children of the first such child only, so the others render as entries that do nothing; keep the submenu one level deep`
+          : `${where} nests deeper than 2 levels - the SDK types leave items off a child, and the portal drops a child's items, so it renders as an entry that does nothing; keep the submenu one level deep`,
+      );
+
+    this.#checkSubmenu(where, scope, contract, entry.items);
+  }
+
+  /**
+   * An entry the host can click: a ContextMenu group action through onGroupClick and nothing
+   * else, any other entry through onItemClick (or the deprecated onClick), a parent through its
+   * children.
+   */
+  #checkClickable(where, scope, entry) {
+    if (scope === "ContextMenu" && entry.isGroupAction) {
+      if (!entry.onGroupClick)
+        this.error(
+          "item",
+          `${where} is a group action but has no onGroupClick - the host calls nothing else for a multi-selection`,
+        );
+      return;
+    }
+
+    if (entry.onItemClick || entry.onClick || entry.items) return;
+
+    this.error(
+      "item",
+      scope === "ContextMenu" && entry.onGroupClick
+        ? `${where} has only onGroupClick but is not marked isGroupAction - the host calls onItemClick for a single selection, so the click does nothing`
+        : `${where} has neither onItemClick nor nested items - the entry is drawn and does nothing`,
+    );
+  }
+
+  /** `onClick` still works on these two scopes, as the deprecated spelling of `onItemClick`. */
+  #checkDeprecatedClick(where, scope, item) {
+    if (item.onClick !== undefined)
+      this.warn(
+        "deprecated",
+        `${where} uses onClick, which SDK 3 deprecates for ${scope} items - name it onItemClick; the portal passes the same argument${item.onItemClick !== undefined ? ", and beside onItemClick it is never called" : ""}`,
+      );
+  }
+
+  /**
+   * A submenu child is an item of the same interface, filtered and clicked by the same host
+   * code - so it can carry every mistake its parent can, and none of them is reported.
+   */
+  #checkSubmenu(where, scope, contract, children) {
+    if (!Array.isArray(children)) return;
+
+    for (const child of children) {
+      if (!child || typeof child !== "object") continue;
+
+      const at = `${where} > "${child.key ?? child.label ?? "?"}"`;
+
+      this.#checkEntryFields(at, scope, contract, child);
+      this.#checkMenuEntry(at, scope, contract, child);
+    }
   }
 
   #checkOneOf(where, alternatives, item) {
@@ -137,33 +220,25 @@ export class ShapeChecks extends Check {
         `${where} eventType "${item.eventType}" is not a known Events value`,
       );
 
-    if (scope === "ContextMenu") {
-      // A group item is shown only for a multi-selection and only onGroupClick is called for it.
-      if (item.isGroupAction && !item.onGroupClick)
-        this.error(
-          "item",
-          `${where} is a group action but has no onGroupClick - the host calls nothing else for a multi-selection`,
-        );
+    if (
+      scope === "File" &&
+      typeof item.extension === "string" &&
+      !item.extension.startsWith(".")
+    )
+      this.error(
+        "item",
+        `${where} extension "${item.extension}" has no leading dot - the portal compares it with the file's extension, dot included, so it never owns a file`,
+      );
 
-      if (
-        !item.isGroupAction &&
-        !item.onItemClick &&
-        !item.onClick &&
-        !item.items
-      )
-        this.error(
-          "item",
-          item.onGroupClick
-            ? `${where} has only onGroupClick but is not marked isGroupAction - the host calls onItemClick for a single selection, so the click does nothing`
-            : `${where} has neither onItemClick/onClick nor nested items`,
-        );
-
-      if (item.items?.some((child) => child.items?.length))
-        this.warn(
-          "item",
-          `${where} nests deeper than 2 levels - the host caps nesting at maxDepth 2`,
-        );
-    }
+    if (
+      scope === "ArticleNavigation" &&
+      typeof item.icon === "string" &&
+      !item.icon.toLowerCase().endsWith(".svg")
+    )
+      this.error(
+        "item",
+        `${where} icon "${item.icon}" is not an SVG - the sidebar inlines the icon as SVG markup, so any other format draws an empty slot`,
+      );
 
     if (scope === "ArticleNavigation" && item.appears !== undefined) {
       if (!Array.isArray(item.appears))
@@ -188,7 +263,8 @@ export class ShapeChecks extends Check {
     if (
       pluginSlug &&
       typeof key === "string" &&
-      !key.toLowerCase().includes(pluginSlug.toLowerCase())
+      key !== pluginSlug &&
+      !key.startsWith(`${pluginSlug}-`)
     )
       this.warn(
         "item",
@@ -204,7 +280,7 @@ export class ShapeChecks extends Check {
       return;
     }
 
-    const allowed = field === "devices" ? DEVICES : USERS_TYPES;
+    const allowed = field === "devices" ? DEVICES : ROLE_VALUES;
 
     for (const entry of value)
       if (!allowed.includes(entry))
@@ -237,7 +313,10 @@ export class ShapeChecks extends Check {
         );
   }
 
-  /** An IMessage as a callback returned it: known actions, and their payloads. */
+  /**
+   * An IMessage as an item's callback returned it - a menu click, a file click, an event
+   * handler: known actions, their payloads, and the actions such a callback cannot carry.
+   */
   message(where, message) {
     if (message === undefined || message === null) return;
 
@@ -274,6 +353,18 @@ export class ShapeChecks extends Check {
         this.error(
           "message",
           `${where} returns action "${action}" without ${payloadField} - the host silently skips it`,
+        );
+
+      if (action === "open-info-panel" && message.infoPanelTab === undefined)
+        this.warn(
+          "message",
+          `${where} returns "open-info-panel" without infoPanelTab - the panel opens on no tab, stores an invalid view and loses the user's remembered one; pass the tab (the key of your own info panel item, or "info_details")`,
+        );
+
+      if (ITEM_IGNORED_ACTIONS.includes(action))
+        this.warn(
+          "message",
+          `${where} returns "${action}", which the portal ignores from this callback - ${action === "update-create-dialog-modal" ? "it works only from the create dialog's own onSave, onError, onChange and onSelect" : "it works only from an element of an SDK 2 declarative tree"}`,
         );
     }
 

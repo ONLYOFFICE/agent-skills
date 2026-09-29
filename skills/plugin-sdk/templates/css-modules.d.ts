@@ -4,7 +4,8 @@
  * import rather than a missing declaration. Vite's own client types declare this; a plugin
  * does not pull them in, so the declaration lives here.
  *
- * Plain `.css` imports are side-effect only (`import "./plugin.css"`) and need no type.
+ * A plain `.css` import needs no declaration, but it lands in the portal's own document
+ * unscoped and restyles the portal itself - keep stylesheets as `.module.css`.
  */
 
 declare module "*.module.css" {

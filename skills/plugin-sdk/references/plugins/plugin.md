@@ -41,7 +41,7 @@ Hooks throw outside a rendered component. The two worlds meet at `showModal`: a 
 **A class-side callback carries its own error handling — all of them, not just the ones that await.** The host `await`s each one bare: `onItemClick`, `onClick`, `onGroupClick`, `subMenu.onClick` and `eventHandler` are called with no `try` around them, so a throw or a rejection becomes an unhandled rejection and the `IMessage` never reaches the dispatcher — no modal, no navigation, no toast, and an item that reads as broken. Return an error toast instead, carrying the portal's own words (a `PluginApiError`'s `message`, a `fetch`'s status text) rather than one house phrase for everything: a plugin's failed request does not move the user anywhere the way the portal's own do, so that toast is the entire diagnosis, both for the person clicking and for whoever they report it to.
 
 ```ts
-onItemClick = async (id: number): Promise<IMessage> => {
+onItemClick = async (id: string | number): Promise<IMessage> => {
   try {
     …
     return { actions: [Actions.showModal], modalDialogProps: { … } };
@@ -51,7 +51,7 @@ onItemClick = async (id: number): Promise<IMessage> => {
 };
 ```
 
-**The create dialog's `onSave` is the one exception, and it is not a reprieve.** That call *is* wrapped, and the `catch` awaits the `onError` you supplied — but with no `onError` it swallows the failure and returns, leaving the dialog open over an error nobody hears about. Either supply `onError`, or catch inside `onSave` as above; a bare `onSave` fails more quietly than an unwrapped callback, not less. Inside a component the boundary catches the throw but the outcome is no better — the surface renders as nothing ([rendering.md](../react/rendering.md#errors-loading-language-styling)), and a `catch` that discards the reason turns a fixable 403 into "it does not work".
+**The create dialog's `onSave` is the one exception, and it is not a reprieve.** That call *is* wrapped, and the `catch` awaits the `onError` you supplied — but with no `onError` it swallows the failure and returns, leaving the dialog open over an error nobody hears about. Either supply `onError`, or catch inside `onSave` as above; a bare `onSave` fails more quietly than an unwrapped callback, not less. Inside a component the outcome is no better — a throw in render blanks the surface, and a rejected request in an effect leaves it on its skeleton ([rendering.md](../react/rendering.md#errors-loading-language-styling)), and a `catch` that discards the reason turns a fixable 403 into "it does not work".
 
 ## Localisation
 

@@ -2,9 +2,11 @@
 
 What the loader actually does with a plugin — not what the types allow — and therefore why a plugin can install cleanly and do nothing. Observed in the ONLYOFFICE Apps client this skill targets.
 
+Contents: [The switches](#before-anything-loads-the-switches) · [The loading sequence](#the-loading-sequence) · [When loading fails](#when-loading-fails) · [Silent failures](#silent-failures) · [What actually breaks the portal](#what-actually-breaks-the-portal) · [Limits](#limits)
+
 ## Before anything loads: the switches
 
-- **`plugins.enabled`** (server setting, **off by default**). When false the portal never initialises plugins: no bundle fetched, no items, no routes, nothing in the console. Every surface re-checks it. Ask about this before auditing code. Where the switches and the upload control are in the UI: [Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md).
+- **`plugins.enabled`** (server setting; the shipped configuration turns it on, a deployment can turn it off). When false the portal never initialises plugins: no bundle fetched, no items, no routes, nothing in the console. Every surface re-checks it. Ask about this before auditing code. Where the switches and the upload control are in the UI: [Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md).
 - **`pluginOptions.upload` / `pluginOptions.delete`** — a second, narrower switch *behind* the first, not beside it: the Integration → Plugins tab exists only when `plugins.enabled`, and these are read only on that tab. With `upload` off it offers no upload control, however correct the archive.
 - The plugin system is skipped when the portal's **paid period has expired**, and plugin surfaces are suppressed inside the **AI-agent/chat views**.
 
@@ -31,7 +33,7 @@ Consequences:
 - **Register items in `onLoadCallback`, not at module scope.** Both reach the maps in time (they are read at step 9), but at module scope neither the language nor the API URLs are set yet — a factory that translates a label or calls `getAPI()` there captures empty values.
 - **Anything registered after step 9 is invisible** until the matching `update*Items` action — items added from a timer or an un-awaited promise.
 - **Stored settings arrive after `onLoadCallback`, not during it.** Step 10 runs once installation has finished, so a settings value read in `onLoadCallback` is still `null` — components read settings with `usePluginSettings().load()`, class-side code reacts in `setAdminPluginSettingsValue`. The status re-read that follows is what lets a plugin stay `hide` until it is configured: set the status from the parsed value there, and the portal registers the items the moment a valid configuration is saved.
-- **Disabled plugins are still fetched and executed**, so module-scope side effects run even when switched off.
+- **Disabled plugins are still fetched and executed**, so module-scope side effects run even when switched off. A disabled plugin also gets `setLanguage` and, with the Settings scope, `setAdminPluginSettingsValue` and `getStatus` — while `setAPI` and `onLoadCallback` have not run — so those three must not rely on either, and a throw in them marks a switched-off plugin *Failed to initialize*.
 - **Enable/disable is live** (a `change-web-plugin` socket room): items appear or vanish in every open session without a reload. On re-enable the bundle is not re-fetched, so module-scope state survives, and the same instance goes through steps 4–10 again — `setLanguage`, `setAPI`, `onLoadCallback`, `getStatus`, and for a Settings plugin `setAdminPluginSettingsValue` with the settings string that session holds. A throw there marks the plugin as failed to initialize ([below](#when-loading-fails)).
 
 ### A language change reloads every plugin
@@ -76,7 +78,8 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 | Nothing loads at all: no bundle request, no console output | `plugins.enabled` is off, or the paid period expired |
 | Installed and enabled, no CSS and no items; the plugin's settings aside gives its status as *Need enter settings* | `getStatus()` returned `hide` — reversible: the portal re-reads it after the stored settings arrive, after a settings save and on `Actions.updateStatus` |
 | One scope is dead, others work | scope declared but its getter is missing, or `add*Item` never called |
-| A tab, page or modal opens **blank**; console `[Plugin: name] …` | the component threw — swallowed by the error boundary. Usually an unguarded fetch/parse, a conditional hook, or a bundled React (next row) |
+| A tab, page or modal opens **blank**; console `[Plugin: name] …` | the component threw while rendering — swallowed by the error boundary. Usually an unguarded parse, a conditional hook, or a bundled React (next rows) |
+| A tab, page or modal **never leaves its skeleton**; console *Uncaught (in promise)* | a request in an effect rejected with no `catch` — a rejected promise escapes the error boundary, so nothing replaces the loading state ([rendering.md](react/rendering.md#errors-loading-language-styling)) |
 | Every component blank; `usePluginRuntime must be used inside a plugin component` | a second React or SDK React entry in the bundle — fix the `external` list |
 | A surface that needs a lazily loaded module opens **blank** on the portal and worked in the preview; a `TypeError` about `./chunk-….js` in the console | the build split the bundle: the archive carries `plugin.js` alone and a blob-URL module cannot resolve a relative `import()` — `codeSplitting: false` ([bundling.md](bundling.md)) |
 | Components render light and LTR on a dark/RTL portal | a bundled `@onlyoffice/apps-ui-kit` |
@@ -90,8 +93,11 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 | A whole scope never appears | it exists in the installed SDK but not in this portal ([scopes.md](plugins/scopes.md)) |
 | A modal opened from the context menu knows nothing about the file | `useCurrentFile()` is `null` there — hand the id over ([hooks.md](react/hooks.md#what-usecurrentfile-returns-where)) |
 | The settings aside's Save button saves nothing | `usePluginSettings().setSaveButton(...)` never called, and no static `saveButton` declared |
-| A settings save that failed looks exactly like one that worked | the aside closes on either, and `onClick` returned no toast ([settings-plugin.md](plugins/settings-plugin.md#the-settings-client)) |
-| A class field holds the wrong value after load | it shares a name with a manifest field (`settings`, `name`, `version`, `url`, `enabled`, `image`, `description`) — overwritten in step 3 |
+| A settings save that failed looks exactly like one that worked | `onClick` caught the failure and returned no toast, and the aside closes once `onClick` resolves ([settings-plugin.md](plugins/settings-plugin.md#the-settings-client)) |
+| Save does nothing visible, the aside stays open — or spins until a reload | `onClick` threw: the portal only closes the aside when it resolves ([settings-plugin.md](plugins/settings-plugin.md#the-settings-client)) |
+| Save is lit over a form nobody touched although `isDisabled` gates on changes | `disableWhileRequestRunning` is set, and it can replace the plugin's `isDisabled` with the request state — leave it off ([settings-plugin.md](plugins/settings-plugin.md#the-settings-client)) |
+| `showCreateDialog`, `showMediaViewer` or the progress button does nothing from a settings page or the settings aside | portal settings has no create dialog, media viewer or progress button; the media viewer exists only over a folder's list in the Files section ([media-viewer.md](components/media-viewer.md)) |
+| A class field holds the wrong value after load | it shares a name with a field of the plugin's server record (`settings`, `name`, `version`, `url`, `enabled`, `image`, `description`, `author`, `license`, `homePage`, `pluginName`, `scopes`, `system`, `runtime`) or one the portal adds (`iconUrl`, `compatible`, `nameLocaleMap`, `descriptionLocaleMap`) — overwritten in step 3 |
 | Works everywhere except chat / AI-agent views | suppressed there by design |
 
 ### Silent failures in the UI layer
@@ -110,7 +116,7 @@ The plugin loaded and rendered, and what the user sees is still wrong. They read
 | A panel looks **empty**, but clicking in it and typing works | a `Textarea` as a flex item collapses to ~1px |
 | A toggle's label is drawn **over the next row** | `ToggleButton` has no intrinsic size and an absolutely positioned label |
 | A selector opened from a modal is **visible but dead** | two portal surfaces are open at once and the modal's backdrop covers the selector — close one before opening the other ([selector.md](components/selector.md#from-a-dialog-one-surface-at-a-time)) |
-| The Files selector's **Select** button never enables when a file is clicked | `getIsDisabled` waits for `selectedFileInfo`, which reaches it late or, on older portals, never — gate on the folder ([selector.md → The Files selector](components/selector.md#the-files-selector-folder-vs-file)) |
+| The Files selector's **Select** button never enables when a file is clicked | `getIsDisabled` waits for `selectedFileInfo`, which reaches it late or, on some portal builds, never — gate on the folder ([selector.md → The Files selector](components/selector.md#the-files-selector-folder-vs-file)) |
 | A copy, move or create into a folder the user **can** write to fails with *"You don't have enough permission"* | a portal id went into the JSON body as a string, so the server resolved it as a third-party id ([rest-api.md → Identifiers](rest-api.md#identifiers)) |
 | "Open" on a document the plugin created shows the 404 page or downloads the file | the link was `webUrl`/`viewUrl`, or went through `navigate()` — the editor is a page load ([actions.md → Opening a document](react/actions.md#opening-a-document-is-a-page-load)) |
 | A "running" row shows a line of text where a spinner should be | `Loader` defaults to `LoaderTypes.base`, which renders its label as text ([ui-kit.md](ui-kit.md#behavioural-traps)) |
@@ -140,7 +146,8 @@ Enforced server-side; exceeding one rejects the upload. The archive and asset li
 | Limit | Value |
 |---|---|
 | Archive size, and each extracted entry | 5 MB |
-| Assets | 10 files, `.svg` `.png` `.jpg` `.jpeg` only, no subdirectories |
+| Archive entries | 13 — `plugin.js`, `config.json`, the `assets/` folder entry the packer writes, and ten more; `plugin.css` is one of the ten, so a plugin with a stylesheet has room for **9** assets |
+| Assets | `.svg` `.png` `.jpg` `.jpeg` only — compared case-sensitively, so `icon.PNG` is dropped without a word — and no subdirectories |
 | Plugins per portal | 100 |
 | Upload format | `.zip` containing `plugin.js` and `config.json` |
 | Stored settings (`save()` / `saveSettings`) | one string of 255 characters; longer is refused with a 400, not truncated |

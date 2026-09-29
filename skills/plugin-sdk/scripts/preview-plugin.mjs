@@ -228,7 +228,9 @@ const startServer = async (project, harnessDir, port) => {
 
   const server = await vite.createServer({
     configFile: path.join(harnessDir, "vite.config.mjs"),
-    server: { port, strictPort: true },
+    // The page is opened on the IPv4 loopback, so the server listens there too: "localhost"
+    // resolves to ::1 first on some systems, where nothing answers.
+    server: { host: "127.0.0.1", port, strictPort: true },
   });
 
   await server.listen();
@@ -249,7 +251,7 @@ const reportLeaks = (findings, leaks) => {
   for (const { selector, hits } of leaks)
     findings.error(
       "preview-leak",
-      `the stylesheet's rule "${selector}" matches ${hits} element(s) of portal-shaped markup planted beside the plugin - on the portal that rule restyles ONLYOFFICE Apps itself, in every section, for every user, until the plugin is disabled. Scope it: a .module.css, or the manifest name as a prefix on the leftmost selector`,
+      `the stylesheet's rule "${selector}" reaches markup the plugin does not own - ${hits} element(s) of the portal-shaped markup planted beside it, or the page's own html/body - so on the portal that rule restyles ONLYOFFICE Apps itself, in every section, for every user, until the plugin is disabled. Scope it: a .module.css, or the manifest name as a prefix on the leftmost selector`,
     );
 };
 
@@ -378,9 +380,16 @@ const runBrowser = async ({
         messages.push(String(error?.message ?? error)),
       );
 
-      await page.goto(`http://localhost:${port}/?theme=${theme}`, {
-        waitUntil: "load",
-      });
+      try {
+        await page.goto(`http://127.0.0.1:${port}/?theme=${theme}`, {
+          waitUntil: "load",
+        });
+      } catch (error) {
+        // Themes already measured keep their findings and screenshots; the rest are skipped.
+        report.skipped = `the preview page did not load from the local server for the ${theme} theme (${error?.message?.split("\n")[0] ?? error})`;
+        await page.close();
+        break;
+      }
 
       // The harness sets this after onLoadCallback and the click traversal have finished.
       await page
@@ -439,7 +448,8 @@ const printTextReport = ({ project, findings, report, skipped }) => {
 
   if (skipped) {
     console.log(`\npreview skipped: ${skipped}`);
-    return;
+    // A theme measured before the skip still has its surfaces and its screenshot.
+    if (!report.shots?.length) return;
   }
 
   const surfaces = report.surfaces.length ? report.surfaces.join(", ") : "none";
@@ -505,8 +515,11 @@ const main = async () => {
     }
   } finally {
     if (server) await server.close();
+    // A clean run drops the harness but keeps shots/: the screenshots are what is left to read.
     if (harnessDir && !keep && !findings.hasErrors)
-      fs.rmSync(harnessDir, { recursive: true, force: true });
+      for (const entry of fs.readdirSync(harnessDir))
+        if (entry !== "shots")
+          fs.rmSync(path.join(harnessDir, entry), { recursive: true, force: true });
   }
 
   if (skipped) findings.warn("preview", skipped);

@@ -4,6 +4,8 @@ Two callers, two clients ([plugin.md → Two kinds of callback](plugins/plugin.m
 
 Where a feature has both halves — a click that opens a panel — fetch in the component; the click hands over the id.
 
+Contents: [Permissions](#permissions) · [Identifiers](#identifiers) · [Endpoints to start from](#endpoints-to-start-from) · [A file's contents](#a-files-contents-are-not-part-of-the-api) · [A file of your own extension](#creating-a-file-whose-extension-the-portal-does-not-own) · [Uploading a file](#uploading-a-file) · [Third-party origins](#third-party-origins)
+
 ## Permissions
 
 Every file, folder and room in a payload carries a `security` map: PascalCase keys, all optional, `true` when the current user may do that thing. Check it before offering or performing an action; a 403 afterwards is the same fact learned late. Item-level filters (`security` and `itemSecurity` on a [context menu item](items/context-menu-item.md), `fileSecurity` on a [`File` item](items/file-item.md)) do the same declaratively.
@@ -23,7 +25,7 @@ The wire payload is wider than either enum — one shape for files and folders, 
 
 ## Identifiers
 
-An entry the portal stores has an **integer** id; an entry inside a connected third-party storage (a Google Drive folder mounted into a room) has an opaque **string** id. Every id field on the wire — `id`, `folderId`, `parentId`, `rootFolderId`, `destFolderId`, `fileIds[]`, `folderIds[]` — is one or the other by where the entry lives, which is why the SDK types callback and hook ids `number | string` (only the `File`-scope `File` is plain numbers). Users and groups are GUID strings. **A room is a folder**: `GET /files/rooms/{id}` and `GET /files/folder/{id}` describe the same entity, `roomType` marks it, and `roomId` anywhere means that folder id. A file's `folderId` is its immediate parent — the room only at the room's top level; `rootFolderId` is the section root, not the room.
+An entry the portal stores has an **integer** id; an entry inside a connected third-party storage (a Google Drive folder mounted into a room) has an opaque **string** id. Every id field on the wire — `id`, `folderId`, `parentId`, `rootFolderId`, `destFolderId`, `fileIds[]`, `folderIds[]` — is one or the other by where the entry lives, which is why the SDK types callback and hook ids `number | string` (only the `File`-scope `File` and the info panel's `subMenu.onClick` are typed as plain numbers). Users and groups are GUID strings. **A room is a folder**: `GET /files/rooms/{id}` and `GET /files/folder/{id}` describe the same entity, `roomType` marks it, and `roomId` anywhere means that folder id. A file's `folderId` is its immediate parent — the room only at the room's top level; `rootFolderId` is the section root, not the room.
 
 **The JSON type of an id routes the request.** In a URL path an id is text either way, and `/files/folder/6358129` works whatever the variable's type. In a JSON body — `copyas`, `fileops/move|copy|delete`, room quotas — `destFolderId`, `fileIds[]`, `folderIds[]` and `roomIds[]` are dispatched on their JSON type: a number to the portal's storage, a string to the third-party layer. `{ destFolderId: "6358129" }` therefore resolves to no folder and fails with the **security** error (*You don't have enough permission…*) over a folder the user can write to. Check the type before the rights.
 
@@ -75,12 +77,14 @@ Reading `.folders` or `.files` off the second kind gives `undefined` with no err
 Recursion plus paging, the shape almost every plugin that reads or writes a subtree needs. One page at a time, `total` decides whether to ask again, and the relative path is carried down rather than reconstructed:
 
 ```ts
-type TEntry = { id: number; title: string; security?: Partial<Record<Security, boolean>> };
+type TEntry = { id: string | number; title: string; security?: Partial<Record<Security, boolean>> };
 type TFolderPage = { folders: TEntry[]; files: TEntry[]; total: number };
+type TWalked = TEntry & { path: string };
 
 const PAGE = 100;
 
-async function* walkFolder(api: PluginAPIClient, folderId: number, prefix = "", signal?: AbortSignal) {
+// The return type is spelled out: a recursive generator cannot infer its own.
+async function* walkFolder(api: PluginAPIClient, folderId: string | number, prefix = "", signal?: AbortSignal): AsyncGenerator<TWalked> {
   for (let startIndex = 0; ; startIndex += PAGE) {
     const page = await api.get<TFolderPage>(`/files/${folderId}`, { count: PAGE, startIndex }, { signal });
 

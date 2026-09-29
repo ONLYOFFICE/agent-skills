@@ -138,6 +138,11 @@ export class ProjectChecks extends Check {
             "assets",
             `assets/${entry.name} - only ${PORTAL_LIMITS.assetExtensions.join("/")} are accepted`,
           );
+        else if (!entry.name.endsWith(entry.extension))
+          this.error(
+            "assets",
+            `assets/${entry.name} - the server compares the extension as written and accepts only ${PORTAL_LIMITS.assetExtensions.join("/")} in lower case, so this file is dropped from the upload without a word; rename it`,
+          );
 
         if (entry.bytes > PORTAL_LIMITS.maxFileBytes)
           this.error(
@@ -146,10 +151,17 @@ export class ProjectChecks extends Check {
           );
       }
 
-      if (fileCount > PORTAL_LIMITS.maxAssets)
+      // plugin.css travels beside the assets and takes one of their places in the archive. Before
+      // the first build only the sources can say whether there will be one.
+      const willPackStylesheet = project.isBuilt
+        ? project.packsStylesheet
+        : /(?:from\s+|import\s+)["'][^"']+\.css["']/.test(project.sourceText);
+      const room = willPackStylesheet ? PORTAL_LIMITS.maxAssets - 1 : PORTAL_LIMITS.maxAssets;
+
+      if (fileCount > room)
         this.error(
           "assets",
-          `${fileCount} assets, the portal accepts at most ${PORTAL_LIMITS.maxAssets}`,
+          `${fileCount} assets, the portal accepts at most ${room}${willPackStylesheet ? ` beside plugin.css, which takes one of the ${PORTAL_LIMITS.maxAssets} places` : ""}`,
         );
     } else if (project.scopes.some((scope) => scope !== "API" && scope !== "PostMessage")) {
       this.warn(
