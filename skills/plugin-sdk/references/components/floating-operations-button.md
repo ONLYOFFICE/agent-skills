@@ -159,7 +159,8 @@ const StepRun = ({ steps, run }: { steps: Step[]; run: (report: Report, signal: 
           <div key={step.id} style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 24 }}>
             {s?.status === "running"
               ? <Loader type={LoaderTypes.oval} size="16px" color="var(--accent-main)" label={step.label} />   // the default type draws text, not a spinner
-              : <Text color={s?.status === "failed" ? "var(--input-error-color)" : "var(--text-disable-color)"}>{s?.status === "done" ? "✓" : s?.status === "failed" ? "!" : "·"}</Text>}
+              : <Text color={s?.status === "failed" ? "var(--input-error-color)" : "var(--info-panel-members-subtitle-color)"}>{s?.status === "done" ? "✓" : s?.status === "failed" ? "!" : "·"}</Text>   // not --text-disable-color: it is #5c5c5c on the dark theme (styles.md)
+            }
             <Text>{step.label}</Text>
             {s?.error && <Text color="var(--input-error-color)">{s.error}</Text>}
           </div>
