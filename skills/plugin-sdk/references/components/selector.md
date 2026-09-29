@@ -33,8 +33,8 @@ Contents: [The five types](#the-five-types) · [The Files selector: folder vs fi
 
 Entering a folder sets `selectedItemId` to it (and `selectedItemType` to `"rooms"` on the rooms list, `"files"` inside); clicking a file leaves `selectedItemId` on the folder and fills `selectedFileInfo` (`{ id, title, fileExst }`). Both are current in `onSubmit`.
 
-- **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, and on portals before January 2026 never — a Select gated on it is dead there. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
-- `filterParam` filters what is *listed*, not what can be submitted; it takes [`FilterType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Utility.md) from the SDK root (`FilterType.DocumentsOnly`).
+- **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, and on some portal builds never — a Select gated on it is dead there. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
+- `filterParam` filters what is *listed*, not what can be submitted; it takes [`FilterType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Utility.md) from the SDK root (`FilterType.DocumentsOnly`). The enum has seven members and the portal understands more — the selector passes the value through, so PDF files (`22`), media (`12`), archives (`10`) or diagrams (`25`) go in as the number: `filterParam: 22 as FilterType`.
 - `selectedFileInfo` is `{ id, title, fileExst }` and `@inline` in the SDK — declare your own type where you store it; anything more is `GET /files/file/{id}`.
 
 **Pick a document, pick a destination, copy, open**, from a page — awaited, one selector at a time, every exit resolving once:
@@ -104,8 +104,9 @@ const pickDestination = ({ showModal, showSelector, closeModal, closeSelector }:
     type: SelectorType.Files,
     props: {
       submitButtonLabel: t("export.choose"),
-      getIsDisabled: ({ isRoot, selectedItemId }) => isRoot || !selectedItemId,
-      onSubmit: ({ selectedItemId, folderTitle }) => {
+      getIsDisabled: ({ isFirstLoad, selectedItemId, selectedItemType }) =>
+        isFirstLoad || !selectedItemId || selectedItemType === "rooms",   // a folder, not the rooms list
+      onSubmit: ({ selectedItemId, folderTitle }) => {   // a real destination also refuses security.Create !== true here, as above
         draft.targetId = selectedItemId ?? null;   // as it arrived - a number for a portal folder
         draft.targetTitle = folderTitle;
         closeSelector();

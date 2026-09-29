@@ -14,9 +14,15 @@ An action on a selected file, folder or room.
 
 Each field, with its type and a line, is on [`IContextMenuItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IContextMenuItem.md); what the portal does beyond it:
 
-- Without `placement`, plugin items land in the menu's **"More options"** group behind a separator, in registration order. Filters are evaluated when the menu opens. Items never show in Trash or on an **archived** room; for `image`/`video` they also appear in the media viewer's menu.
+- Without `placement`, plugin items land in the menu's **"More options"** group behind a separator, in registration order. Filters are evaluated when the menu opens. Items never show in Trash, on an **archived** room, on an encrypted or private entry, in Privacy, or in a form-filling room and anything inside it.
+- **`fileType` sorts files three ways:** a file the portal views as an image is `image`, one it plays is `video`, and `file` is every other file — a `file` item never appears on a `.png` or an `.mp4`. (The info panel counts images and videos as files too; the two surfaces disagree.)
+- **`fileExt` without `fileType` also matches folders and rooms** — the extension test is skipped for an entry that has no extension, so the item shows on every folder and room and its callback receives their ids. Pair `fileExt` with `fileType`.
+- For `image`/`video` the items also appear in the media viewer's menu, where not every filter is applied — check the id and the permission in the callback as well.
+- `itemId` pins an item to particular files, folders or rooms by id — the one filter that names entities rather than kinds.
+- `withActiveItem` marks the clicked rows busy until the callback settles; a callback that throws leaves them marked until a reload — one more reason to catch.
+- Submenus: keep `items` one level deep — the SDK types leave `items` off a child. A child that carries them anyway (plain JS, a cast) is handled inconsistently: the portal keeps the children of the first such child and drops the others', which then render as entries that do nothing.
 - `isGroupAction: true` shows the item only in the **multi-selection** menu, and only when every selected entity passes the filters. Supporting both modes = **two items**, one plain and one group. This is the portal's surface for bulk actions.
-- `placement` is **dropped for `isGroupAction`** — the bulk-selection menu rebuilds the entry from `key`/`label`/`icon`/`onClick` only, so a group item always lands in the default group.
+- `placement` is **dropped for `isGroupAction`** — the bulk-selection menu rebuilds the entry from `key`/`label`/`icon` and `onGroupClick` only, so a group item always lands in the default group.
 - A click that needs UI returns `showModal` with a `dialogBodyComponent` — which gets **no current file**; pass the id yourself ([hooks.md](../react/hooks.md#what-usecurrentfile-returns-where)).
 
 **A bulk action is flat, not a submenu.** `isGroupAction` is dispatched through `onGroupClick` and nothing else, while a parent carrying `items` has no click of its own — so the two do not combine: give the user two group items ("Archive here", "Archive to…") rather than one parent with children. The validator refuses `isGroupAction` without `onGroupClick`, which is what a submenu parent looks like.

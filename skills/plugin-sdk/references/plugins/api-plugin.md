@@ -27,7 +27,7 @@ const buildApiUrl = (): string => {
   return url;   // https://portal.example.com/api/2.0
 };
 
-const onFileAction = async (id: number): Promise<IMessage> => {
+const onFileAction = async (id: string | number): Promise<IMessage> => {
   try {
     const res = await fetch(`${buildApiUrl()}/files/file/${id}`, { credentials: "include" });
     const file = (await res.json()).response;                        // the envelope, class-side

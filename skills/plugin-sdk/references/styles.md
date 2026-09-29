@@ -43,25 +43,11 @@ Traps: `--error-color`, `--success-color` and `--border-color` **do not exist** 
 
 ### Secondary text is not the disabled grey
 
-`--text-disable-color` reads like "muted text" and is the wrong variable for it: it is the
-colour of a control that cannot be used, and it **flips with the theme** — `#a3a9ae` on the
-light one, `#5c5c5c` on the dark one (`components/checkbox/Checkbox.module.scss.js`). Against
-the dark theme's `#333` surfaces that second value is about **1.9:1**, below every readability
-floor: a caption set in it is legible while you develop against the light theme and close to
-invisible the moment someone switches. Nothing reports it — the text is there, in a colour of
-the portal's own palette, so neither the validator nor a stylesheet check has anything to
-object to.
+`--text-disable-color` reads like "muted text" and is the wrong variable for it: it is the colour of a control that cannot be used, and it **flips with the theme** — `#a3a9ae` on the light one, `#5c5c5c` on the dark one (set page-wide on `.light`/`.dark` by one of the kit's stylesheets, and again by the checkbox). Against the dark theme's `#333` surfaces that second value is about **1.9:1**, below every readability floor: a caption set in it is legible while you develop against the light theme and close to invisible the moment someone switches. Nothing reports it — the text is there, in a colour of the portal's own palette, so neither the validator nor a stylesheet check has anything to object to.
 
-The portal's own secondary lines — the info panel's member subtitles — use
-`--info-panel-members-subtitle-color`, which the theme root declares as `#a3a9ae` in **both**
-themes (`components/theme-provider/ThemeProvider.scss.js`), ~5.3:1 on the dark background. Use
-it for a caption, a subtitle or a metadata line, and keep `--text-disable-color` for what its
-name says.
+The portal's own secondary lines — the info panel's member subtitles — use `--info-panel-members-subtitle-color`, which the theme root declares as `#a3a9ae` in **both** themes, ~5.3:1 on the dark background. Use it for a caption, a subtitle or a metadata line, and keep `--text-disable-color` for what its name says.
 
-**Read both themes before trusting any colour**: the theme root declares a handful of
-variables, and the rest come from the component the rule sits in — so a variable's value is a
-pair, and the pair is in that component's `.module.scss.js`, under `.dark .<hash>` and
-`.<hash>` ([ui-kit.md](ui-kit.md)).
+**Read both themes before trusting any colour.** A variable's value is a pair, declared by the theme root (`components/theme-provider/ThemeProvider.scss.js`), page-wide by some other kit stylesheet on `.light`/`.dark`, or by the component the rule sits in under `.dark .<hash>` and `.<hash>` — search the kit's `dist/esm/**/*.scss.js` for `--the-name:` and read every declaration ([ui-kit.md](ui-kit.md)).
 
 **A kit `color` prop is a CSS value, not a token** — with one exception. `Text` puts `color` straight into the element's inline `style`, so `color="accent"` is invalid CSS and the text silently inherits whatever colour surrounds it: pass `color="var(--accent-main)"`. `Link` is the exception — it maps the literal `"accent"` to `var(--accent-main)` itself, so both spellings work there. When a kit prop takes a colour and its `.d.ts` says `string`, assume the value reaches `style` unchanged and give it a real CSS value; the component's `.module.scss.js` settles it in one look.
 

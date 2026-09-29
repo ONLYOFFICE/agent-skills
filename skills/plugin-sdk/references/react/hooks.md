@@ -2,7 +2,7 @@
 
 All from `@onlyoffice/docspace-plugin-sdk/react` — signatures, return types and examples are in [Hooks](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/react/hooks.md) and [Runtime](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/react/runtime.md). They read a context the portal provides around the component, so they **throw outside one** — at module scope, in a class-side callback (`onItemClick`, `onClick`, `eventHandler`), in `onLoadCallback`. What the portal does with the objects three of them return is on [actions.md](actions.md), [api.md](api.md) and [settings-plugin.md → The settings client](../plugins/settings-plugin.md#the-settings-client).
 
-The runtime object is rebuilt only when the current file or user changes, so `api`, `actions` and `settings` (from `usePluginAPI()`, `usePluginActions()`, `usePluginSettings()`) are stable in effect dependencies.
+`api` (from `usePluginAPI()`) is one object for the plugin's lifetime. `actions` and `settings` (`usePluginActions()`, `usePluginSettings()`) are rebuilt whenever the current file or the user changes — in an info panel tab or the media viewer that is every new selection or page — so an effect with them in its dependencies re-runs each time. Key effects on `file?.id` and what the effect reads, and call the actions from inside it.
 
 ## What `useCurrentFile` returns where
 
@@ -10,8 +10,8 @@ The runtime object is rebuilt only when the current file or user changes, so `ap
 
 | Component rendered as | `useCurrentFile()` |
 |---|---|
-| Info panel tab | the selected file/folder/room, live |
-| Media viewer | the file on screen — the one passed as `fileId`, then each file the user pages to ([media-viewer.md](../components/media-viewer.md)) |
+| Info panel tab | the selected file/folder/room, live — tell a room by `isRoom` (a room can also carry `isFolder: true`), and do not compare `roomType` to a constant: its format differs between portal builds, so read the room when the type matters |
+| Media viewer | `{ id, title, fileExst }` of the file on screen — the one passed as `fileId`, then each file the user pages to ([media-viewer.md](../components/media-viewer.md)) |
 | Modal opened from **another component** via `showModal` | that component's current file |
 | Modal opened from a **class-side callback** (context menu, main button, file click, event) | **`null`** — the message carries no selection |
 | Sidebar page, sidebar button, settings page | `null` |

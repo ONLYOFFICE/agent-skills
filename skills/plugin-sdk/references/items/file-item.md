@@ -16,7 +16,7 @@ Each field, with its type and a line — the `File` the click receives included 
 
 - `extension` is also the map key and **must equal the file's extension with the dot** (`".md"`).
 - `fileRowIcon` is the icon everywhere **except the tiles view** — rows, table, upload panel, version history. The portal's icon lookup takes a size argument and ignores it for a plugin extension, so this one SVG is drawn at every size in those views.
-- **The tiles view reads `fileTileIcon` and only that one.** Ship it — recent portals fall back to `fileRowIcon` when it is missing, but older ones request `assets/undefined`, get a 404 and draw an empty tile.
+- **The tiles view reads `fileTileIcon` and only that one.** Ship it — some portal builds fall back to `fileRowIcon` when it is missing, others request `assets/undefined`, get a 404 and draw an empty tile.
 - `fileSecurity` / `security` / `devices` are evaluated at click time, not at registration.
 
 **A failed `fileSecurity` / `security` / `devices` check means `onClick` never runs at all.** The portal wraps your handler and returns early when a key is not allowed — and only the *click* is filtered: the row keeps your `fileTypeName` and your icons, so the user clicks a file the plugin visibly owns and nothing happens, with no toast and no console line. So these fields say "this action does not exist here", nothing softer. When a denial has to be *explained*, leave them unset and check the permission inside `onClick` — the portal hands the handler its whole file row, whose `security` map the SDK's `File` does not declare (read it through a cast, or re-fetch the file's metadata). A filtered handler has no message to show because it never ran.
