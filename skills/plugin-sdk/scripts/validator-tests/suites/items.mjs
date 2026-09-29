@@ -26,6 +26,7 @@ import {
   filePlugin,
   groupActionPlugin,
   manifestFor,
+  mapScopePlugin,
   multiScopePlugin,
   multiScopeSource,
   reactItemsPlugin,
@@ -219,5 +220,179 @@ export default ({ workspace, check }) => {
     hookInCallback.errorCodes.includes("message") &&
       hookInCallback.mentions("A class-side callback has no runtime context"),
     hookInCallback.messageSummary,
+  );
+
+  // --- a click whose request fails and nothing catches it -----------------------
+  //
+  // The sandbox refuses every request, which is exactly the portal's case whenever the
+  // request fails: the rejection escapes and the click does nothing.
+
+  const uncaught = workspace.validateProject(
+    "uncaught-fetch",
+    {
+      pkg: manifestFor("uncaught-fetch", "FixtureUncaught"),
+      bundle: contextMenuPlugin({
+        click: `await fetch("https://portal.example.com/api/2.0/files/file/1", { credentials: "include" });
+        return { actions: ["show-toast"], toastProps: [{ type: "success", title: "done" }] };`,
+      }),
+      src: contextMenuSource(),
+    },
+    "--invoke",
+  );
+
+  check(
+    "a click that fetches with no catch is an error, not a warning",
+    uncaught.errorsMention("threw after its request failed") && !uncaught.mentions("took its failure path"),
+    uncaught.messageSummary,
+  );
+
+  const caughtThenThrew = workspace.validateProject(
+    "caught-then-threw",
+    {
+      pkg: manifestFor("caught-then-threw", "FixtureCaughtThenThrew"),
+      bundle: contextMenuPlugin({
+        click: `try { await fetch("https://portal.example.com/api/2.0/files/file/1"); } catch {}
+        return null.actions;`,
+      }),
+      src: contextMenuSource(),
+    },
+    "--invoke",
+  );
+
+  check(
+    "a click that caught its request and then threw something else stays a warning",
+    !caughtThenThrew.errorsMention("threw after its request failed") && caughtThenThrew.warningsMention("threw"),
+    caughtThenThrew.messageSummary,
+  );
+
+  // --- submenu children carry their parent's mistakes ----------------------------
+
+  const submenu = workspace.validateProject(
+    "submenu",
+    {
+      pkg: manifestFor("submenu", "FixtureSubmenu"),
+      bundle: mapScopePlugin({
+        field: "items",
+        adder: "addContextMenuItem",
+        getter: "getContextMenuItems",
+        onLoadBody: `
+    this.items.set("fixture-submenu-parent", {
+      key: "fixture-submenu-parent", label: "Parent", icon: "logo.svg",
+      items: [
+        { key: "fixture-submenu-a", label: "A", icon: "logo.svg", usersType: ["Owner"],
+          async onItemClick() { return { actions: ["show-toast"] }; } },
+        { key: "fixture-submenu-b", label: "B", icon: "logo.svg" },
+        { key: "fixture-submenu-c", label: "C", icon: "logo.svg",
+          async onClick() { return { actions: ["open-info-panel", "update-create-dialog-modal"], createDialogProps: {} }; } },
+        { key: "fixture-submenu-d", label: "D", icon: "logo.svg",
+          async onGroupClick() { return { actions: [] }; } },
+      ],
+    });`,
+      }),
+      src: contextMenuSource(),
+    },
+    "--invoke",
+  );
+
+  check(
+    "the wrong filter field on a submenu child is an error",
+    submenu.errorsMention('> "fixture-submenu-a" uses usersType'),
+    submenu.messageSummary,
+  );
+  check(
+    "a submenu child's click is invoked and its message is reported against the child",
+    submenu.errorsMention('> "fixture-submenu-a" onItemClick returns action "show-toast" without toastProps'),
+    submenu.messageSummary,
+  );
+  check(
+    "a submenu child with only onGroupClick and no isGroupAction is an error",
+    submenu.errorsMention('> "fixture-submenu-d" has only onGroupClick but is not marked isGroupAction'),
+    submenu.messageSummary,
+  );
+  check(
+    "a submenu child with no click is an error",
+    submenu.errorsMention('> "fixture-submenu-b" has neither onItemClick nor nested items'),
+    submenu.messageSummary,
+  );
+  check(
+    "a deprecated onClick on a context menu item is a warning",
+    submenu.warningCodes.includes("deprecated") && submenu.warningsMention("name it onItemClick"),
+    submenu.messageSummary,
+  );
+  check(
+    "open-info-panel without a tab is a warning",
+    submenu.warningsMention('"open-info-panel" without infoPanelTab'),
+    submenu.messageSummary,
+  );
+  check(
+    "update-create-dialog-modal from a menu click is a warning",
+    submenu.warningsMention('"update-create-dialog-modal", which the portal ignores from this callback'),
+    submenu.messageSummary,
+  );
+
+  // --- scope-specific shapes ---------------------------------------------------
+
+  const mainButton = workspace.validateProject("main-button-dead", {
+    pkg: manifestFor("main-button-dead", "FixtureMainDead", { scopes: ["MainButton"] }),
+    bundle: mapScopePlugin({
+      field: "items",
+      adder: "addMainButtonItem",
+      getter: "getMainButtonItems",
+      onLoadBody: `this.items.set("fixture-main-button-dead-new", { key: "fixture-main-button-dead-new", label: "New thing", icon: "logo.svg" });`,
+    }),
+    src: scopeSource({ adder: "addMainButtonItem", getter: "getMainButtonItems" }),
+  });
+
+  check(
+    "a main button item with no click and no children is an error",
+    mainButton.errorsMention("has neither onItemClick nor nested items"),
+    mainButton.messageSummary,
+  );
+
+  const extension = workspace.validateProject("file-no-dot", {
+    pkg: manifestFor("file-no-dot", "FixtureNoDot", { scopes: ["File"] }),
+    bundle: mapScopePlugin({
+      field: "files",
+      adder: "addFileItem",
+      getter: "getFileItems",
+      onLoadBody: `this.files.set("thing", { extension: "thing", fileTypeName: "Thing", async onClick() {} });`,
+    }),
+    src: scopeSource({ adder: "addFileItem", getter: "getFileItems" }),
+  });
+
+  check(
+    "a File extension without its dot is an error",
+    extension.errorsMention('extension "thing" has no leading dot'),
+    extension.messageSummary,
+  );
+
+  const navIcon = workspace.validateProject("nav-png", {
+    pkg: manifestFor("nav-png", "FixtureNavPng", { scopes: ["ArticleNavigation"] }),
+    bundle: mapScopePlugin({
+      field: "pages",
+      adder: "addArticleNavigationItem",
+      getter: "getArticleNavigationItems",
+      onLoadBody: `this.pages.set("fixture-nav-png-page", { key: "fixture-nav-png-page", label: "Page", icon: "logo.png", component: () => null });`,
+    }),
+    src: scopeSource({ adder: "addArticleNavigationItem", getter: "getArticleNavigationItems" }),
+    assets: ["logo.svg", "logo.png"],
+  });
+
+  check(
+    "an ArticleNavigation icon that is not an SVG is an error",
+    navIcon.errorsMention('icon "logo.png" is not an SVG'),
+    navIcon.messageSummary,
+  );
+
+  const roles = workspace.validateProject("user-role", {
+    pkg: manifestFor("user-role", "FixtureUserRole"),
+    bundle: contextMenuPlugin({ filters: `usersTypes: ["FullAdmin", "PortalUser"]` }),
+    src: contextMenuSource(),
+  });
+
+  check(
+    "UserRole values are accepted as the portal accepts them",
+    !roles.errorsMention("is not a valid value"),
+    roles.messageSummary,
   );
 };

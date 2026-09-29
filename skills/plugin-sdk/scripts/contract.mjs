@@ -168,11 +168,18 @@ export const SCOPES = Object.keys(SCOPE_CONTRACT);
 /** The sections an ArticleNavigation item may be pinned to with `appears`. */
 export const SECTIONS = ["Files", "Accounts", "Settings"];
 
+/** The server's assetMaxCount. */
+const MAX_ASSETS = 10;
+
 /** Limits the server enforces on an upload; exceeding one rejects the archive. */
 export const PORTAL_LIMITS = {
   maxFileBytes: 5 * 1024 * 1024,
   maxFileLabel: "5 MB",
-  maxAssets: 10,
+  maxAssets: MAX_ASSETS,
+  // plugin.js, config.json and the assets/ folder entry the packer writes, beside the assets.
+  // plugin.css is one of the rest, so with a stylesheet one asset fewer fits.
+  maxArchiveEntries: MAX_ASSETS + 3,
+  // Compared as written: the server does not lower-case, so "icon.PNG" is dropped.
   assetExtensions: [".svg", ".png", ".jpg", ".jpeg"],
 };
 
@@ -239,6 +246,9 @@ export const localeSuggestions = (tag) => {
 
 /** UsersType values - the enum keys are camelCase, the host compares the values. */
 export const USERS_TYPES = ["Owner", "DocSpaceAdmin", "RoomAdmin", "Collaborator", "User"];
+
+/** The values of the newer UserRole enum, which the portal matches as well as UsersType's. */
+export const USER_ROLES = ["Owner", "FullAdmin", "RoomAdmin", "PortalUser", "Guest"];
 
 export const DEVICES = ["mobile", "tablet", "desktop"];
 

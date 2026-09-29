@@ -121,6 +121,11 @@ export class PluginProject {
     return fs.existsSync(this.stylesheetPath);
   }
 
+  /** Whether the packer will put plugin.css into the archive - it skips an empty one. */
+  get packsStylesheet() {
+    return this.hasStylesheet && fs.readFileSync(this.stylesheetPath, "utf8").trim().length > 0;
+  }
+
   get hasNodeModules() {
     return fs.existsSync(path.join(this.dir, "node_modules"));
   }

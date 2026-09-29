@@ -43,6 +43,9 @@ const noop = () => {};
  */
 export const network = { attempts: 0 };
 
+/** What every such reach is refused with - a callback that throws it caught nothing. */
+export const NETWORK_REFUSED = "network access is not available in the validator sandbox";
+
 const domElement = () => ({
   style: {},
   dataset: {},
@@ -56,7 +59,7 @@ const domElement = () => ({
 const browserGlobals = () => ({
   fetch: async () => {
     network.attempts += 1;
-    throw new Error("network access is not available in the validator sandbox");
+    throw new Error(NETWORK_REFUSED);
   },
   location: { href: "https://localhost/", origin: "https://localhost", pathname: "/" },
   localStorage: { getItem: () => null, setItem: noop, removeItem: noop },

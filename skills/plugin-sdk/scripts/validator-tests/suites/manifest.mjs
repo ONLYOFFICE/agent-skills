@@ -20,6 +20,9 @@
  * default export, or without `runtime: "module"`, uploads and never becomes a plugin.
  */
 
+import * as fs from "node:fs";
+import * as path from "node:path";
+
 import {
   contextMenuPlugin,
   contextMenuProject,
@@ -198,5 +201,45 @@ export default ({ workspace, check }) => {
     "a plugin that imports no stylesheet is not asked about one",
     !noCss.warningCodes.includes("css"),
     noCss.messagesFor("css"),
+  );
+
+  // --- assets the server drops or refuses --------------------------------------
+
+  const upperCase = workspace.validateProject("asset-case", {
+    ...contextMenuProject("asset-case", "FixtureAssetCase"),
+    assets: ["logo.svg", "extra.PNG"],
+  });
+
+  check(
+    "an asset extension in upper case is an error, since the server drops the file",
+    upperCase.errorsMention("assets/extra.PNG - the server compares the extension as written"),
+    upperCase.messageSummary,
+  );
+
+  const tenAssets = ["logo.svg", ...Array.from({ length: 9 }, (_, n) => `icon-${n}.svg`)];
+  const crowdedDir = workspace.write("asset-css", {
+    ...contextMenuProject("asset-css", "FixtureAssetCss"),
+    assets: tenAssets,
+  });
+  fs.writeFileSync(path.join(crowdedDir, "dist", "plugin.css"), ".fixture-asset-css__x{color:red}");
+  const crowded = workspace.validate(crowdedDir);
+
+  check(
+    "ten assets beside plugin.css is an error, since the stylesheet takes one of the places",
+    crowded.errorsMention("10 assets, the portal accepts at most 9 beside plugin.css"),
+    crowded.messageSummary,
+  );
+
+  const emptyCssDir = workspace.write("asset-empty-css", {
+    ...contextMenuProject("asset-empty-css", "FixtureAssetEmptyCss"),
+    assets: tenAssets,
+  });
+  fs.writeFileSync(path.join(emptyCssDir, "dist", "plugin.css"), "  \n");
+  const emptyCss = workspace.validate(emptyCssDir);
+
+  check(
+    "an empty plugin.css takes no place, since the packer leaves it out",
+    !emptyCss.errorsMention("the portal accepts at most"),
+    emptyCss.messageSummary,
   );
 };
