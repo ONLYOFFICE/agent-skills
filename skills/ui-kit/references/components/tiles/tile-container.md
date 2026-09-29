@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/tiles/tile-container/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 427efce49c9be5e461984bd6a6c073c80fccad7f04b8bc5da4b4fcc67f8bd1df -->
+<!-- body-sha256: e76f2c4a339b58193722806291389b00b3ce1f3ed7eb0a5ae689c7d9b1c02a1b -->
 
 > Synced from the kit's own `components/tiles/tile-container/README.md` at 4.0.0. Where this page and [SKILL.md](../../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -19,7 +19,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["tiles", "tiles/file-tile", "tiles/folder-tile"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # TileContainer
@@ -203,17 +204,29 @@ export function TightListing() {
   has none. Two containers on one page give you two elements with that id.
 - **The outer element's id defaults to the literal `tileContainer`**, so the same applies unless
   you pass your own.
+- **The columns are as wide as fit, with a floor that follows the viewport.** Every grid is
+  `repeat(auto-fill, minmax(clamp(216px, 13.4vw, 360px), 1fr))` — rooms and templates use
+  `clamp(275px, 13.4vw, 350px)` — so a column is never narrower than 216px (275px for rooms and
+  templates), and on a wide screen the floor rises with the window, up to 360px (350px).
+- **Text on the tiles is selectable by default.** The container sets `user-select: text` on itself
+  and everything inside but images; `noSelect` turns it off for the whole grid.
 - **Each tile is wrapped in a `div`** carrying `tile-item` and one of `room`, `template`,
   `folder` or `file` — stable hooks for a portal stylesheet, and the elements your own CSS has to
   target if you want to size a tile.
 
 ## CSS variables
 
-| Variable                            | Default | Effect                           |
-| ----------------------------------- | ------- | -------------------------------- |
-| `--tile-container-gap`              | `16px`  | Gap between tiles in every group |
-| `--tile-container-sort-font-size`   | `12px`  | Size of the two group headings   |
-| `--tile-container-sort-font-weight` | `600`   | Weight of the two group headings |
+| Variable               | Default | Effect                                             |
+| ---------------------- | ------- | -------------------------------------------------- |
+| `--tile-container-gap` | `16px`  | Gap between tiles, across and down, in every group |
+
+The tiles' own variables — `--tile-bg`, `--tile-border-style`, `--tile-radius`, `--tile-hover-bg`
+and the rest listed on each tile's page — are read by the tiles, not by the container, but they
+inherit: set them once on the container to restyle every tile in the listing.
+
+**There is no variable for the headings.** The stylesheet has rules reading
+`--tile-container-sort-font-size`, `--tile-container-sort-font-weight` and a set of sort-control
+colours, but they sit under a selector that matches no element, so none of them has any effect.
 
 ## Accessibility
 

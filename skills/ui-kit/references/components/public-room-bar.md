@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/public-room-bar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 64d31ff1caad7b54da3f3e04d609a97c61031ac76ee92b7d4ac66bafe86d5b0c -->
+<!-- body-sha256: 2913723724687935a239687e6f5f38b3161a0751226114e9cd1a19fd9d337793 -->
 
 > Synced from the kit's own `components/public-room-bar/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": "onClose", "loading": null, "disabled": null },
   "related": ["columnar-info-bar", "snackbar", "toast"],
   "subComponents": [],
-  "testIds": ["public_room_bar", "icon-button"]
+  "testIds": ["public_room_bar", "icon-button"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # PublicRoomBar
@@ -196,7 +197,7 @@ export function QuotaNote() {
 | `--public-room-bar-bg`            | light grey; dark grey in dark | Background of the bar             |
 | `--public-room-bar-header-color`  | black; white in dark          | Colour of `headerText`            |
 | `--public-room-bar-body-color`    | grey text                     | Colour of `bodyText`              |
-| `--public-room-bar-close-icon`    | grey                          | Fill of the close cross           |
+| `--public-room-bar-close-icon`    | grey                          | None; see the note below          |
 | `--public-room-bar-header-icon`   | light grey                    | Fill of the header icon's paths   |
 | `--public-room-bar-text`          | black                         | Colour the two lines fall back to |
 | `--public-room-bar-text-size`     | `12px`                        | Base font size of the bar         |
@@ -206,6 +207,10 @@ export function QuotaNote() {
 | `--public-room-bar-top-margin`    | `20px`                        | Top margin, unless `barIsVisible` |
 | `--public-room-bar-header-gap`    | `8px`                         | Gap between icon and header       |
 | `--public-room-bar-header-weight` | `600`                         | Weight of the header row          |
+
+`--public-room-bar-close-icon` is read, but by a `path` rule that `IconButton`'s own fill rule
+outranks, and `IconButton` also sets `--icon-button-color` on itself. The close cross therefore
+keeps the icon button's grey whatever a wrapper or `style` sets.
 
 ## Accessibility
 

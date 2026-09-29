@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/columnar-info-bar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: e0b8293483e886def671c3e49b072d98fa1245ceada52b4ac0ed7097fb3f496c -->
+<!-- body-sha256: 00107c157301d0b273c41137f67fb221be7af59323d9f9d6fee4bdec60beab70 -->
 
 > Synced from the kit's own `components/columnar-info-bar/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": "onAction", "loading": null, "disabled": null },
   "related": ["public-room-bar", "snackbar", "card"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ColumnarInfoBar
@@ -184,6 +185,11 @@ export function ErrorFacts() {
   list, so a different function on a later render is ignored.
 - **`onAction` does not close the bar.** It renders the cross and reports the click; removing
   the bar is yours to do.
+- **The columns are a wrapping row.** Each label sits above its value, and a column that no
+  longer fits moves to the next line; below 600px the default and `neutral` variants give every
+  column the full width, so the pairs stack one under another.
+- **`variant="neutral"` is a card, not a bar**: no accent edge, 8px corners, a 2px light-blue
+  border and a blue heading, in both themes.
 - **`variant="neutral"` caps its own height at 150px, permanently.** It opens with a 0.4s
   animation from `max-height: 0` to `max-height: 150px`, declared `both`, so the end frame keeps
   applying after the animation finishes. Content taller than that spills out of the bar and over
@@ -207,26 +213,30 @@ export function ErrorFacts() {
 
 ## CSS variables
 
-Set them through `style` on the component, or on any ancestor.
+Set them through `style` on the component.
 
-| Variable             | Default                           | Effect                                                        |
-| -------------------- | --------------------------------- | ------------------------------------------------------------- |
-| `--cib-bg`           | the snackbar grey; darker in dark | Background of the bar                                         |
-| `--cib-color`        | black; white in dark              | Text colour, and the label at 60% opacity                     |
-| `--cib-accent`       | the warning orange                | The 4px leading edge; `transparent` in the other two variants |
-| `--cib-header-color` | `--cib-accent`                    | Colour of `headerText`; `neutral` and `page` set their own    |
+| Variable             | Default                            | Effect                                                                                            |
+| -------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `--cib-bg`           | a pale warning cream; grey in dark | Background of the bar                                                                             |
+| `--cib-color`        | black; white in dark               | Text colour, and the label at 60% opacity; in `page` the label keeps its own grey at full opacity |
+| `--cib-accent`       | the warning orange                 | The 4px leading edge; `transparent` in the other two variants                                     |
+| `--cib-header-color` | `--cib-accent`                     | Colour of `headerText`; `neutral` and `page` set their own                                        |
 
-`--cib-bg`, `--cib-color` and `--cib-accent` are re-declared by the `neutral` and `page`
-variants, so overriding them on an ancestor is overridden back; set them on the component.
+The bar's own stylesheet declares `--cib-bg`, `--cib-color` and `--cib-accent` on the bar
+element under both the light and the dark theme — and `neutral` and `page` add
+`--cib-header-color` — so a value set on an ancestor never reaches it. Only
+`--cib-header-color` in the default variant can be inherited; everything else goes through
+`style`.
 
 ## Accessibility
 
 - The bar is a plain `<div>` with no role, and so are the columns — a screen reader reads each
   label and value as consecutive text with nothing tying the pair together. Put the association
   in the wording (`"Status: 200 OK"`) when it matters.
-- The close button is a real `<button>` whose `aria-label` is `closeLabel`. It defaults to the
-  English `"Close"`, so pass a translated string in a localised interface; without `onAction`
-  there is no button and the prop is ignored.
+- The close button is a real `<button>`, reached with Tab and pressed with Enter or Space, whose
+  `aria-label` is `closeLabel`. It defaults to the English `"Close"`, so pass a translated
+  string in a localised interface; without `onAction` there is no button and the prop is
+  ignored.
 - `headerText` renders as an `<h3>`. Check that level against the page around it — the component
   does not adapt it, so a bar placed under an `<h1>` skips `<h2>`.
 - Nothing here traps focus or moves it, and the bar does not announce itself when it appears —

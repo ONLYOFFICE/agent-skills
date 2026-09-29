@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/search-input/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 6a98b41e1654108b7c46333392eb2f64dbafbaac7383d64397d11e3778bcedae -->
+<!-- body-sha256: 966c06796b7557fbfb89aae245d6e44b1dca7e180eaf7b8d0ff83e342a598b9b -->
 
 > Synced from the kit's own `components/search-input/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["text-input", "input-block", "filter"],
   "subComponents": [],
-  "testIds": ["search-input", "main-button"]
+  "testIds": ["search-input", "main-button"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # SearchInput
@@ -185,21 +186,39 @@ export function InstantSearch({ onSearch }: { onSearch: (t: string) => void }) {
   memory should set `refreshTimeout={0}`.
 - **`autoRefresh={false}` does not make it immediate — it silences it.** The component only
   calls `onChange` through the debounced path, so switching the flag off means no change
-  callback ever fires.
+  callback ever fires; a parent that wants that reads the field itself through `forwardedRef`.
 - **Clearing does not go through `onChange`.** The clear button empties the field, calls
   `onClearSearch` and deliberately suppresses the change callback, so a handler that only
   listens to `onChange` keeps filtering by the old term.
 - The field keeps its own copy of the text while the user types and re-seeds it from `value`
   whenever that prop changes, so a parent can reset it but cannot override a keystroke.
-- The clear button is hidden unless `showClearButton` is set, even when the field has text.
+- The icon at the end of the field is a magnifier while the field is empty and turns into the
+  clear cross as soon as it holds text. `showClearButton` only adds the cross to an empty field
+  too; a field with text always has it. Only the cross is clickable.
+- `isDisabled` blocks typing and removes the icon altogether, magnifier and cross alike.
+- `size` follows the kit's input sizes: `base` and `middle` set the text at 13px, `large` is
+  taller and sets it at 16px.
+- The main button needs both `showMainButton` and `mainButtonProps`; either alone renders
+  nothing. It carries the plus icon (or `mainButtonIcon`), and a click anywhere on its blue
+  wrapper, padding included, is passed to the `MainButton`, which opens the dropdown built from
+  `mainButtonProps.model`.
 
 ## CSS variables
 
-| Variable                    | Default | Effect                                      |
-| --------------------------- | ------- | ------------------------------------------- |
-| `--search-input-max-height` | `32px`  | Height of the field                         |
-| `--search-input-radius`     | `3px`   | Corner radius of the icon buttons           |
-| `--search-input-gap`        | `8px`   | Space between the main button and the field |
+| Variable                          | Default | Effect                                                                                            |
+| --------------------------------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `--search-input-max-height`       | `32px`  | Height of the field                                                                               |
+| `--search-input-radius`           | `3px`   | Corner radius of the icon buttons                                                                 |
+| `--search-input-gap`              | `8px`   | Space between the main button and the field                                                       |
+| `--search-input-icon-fill`        | theme   | Colour of the icon while the field is empty (the magnifier, or the cross under `showClearButton`) |
+| `--search-input-icon-filled-fill` | theme   | Colour of the cross once the field holds text                                                     |
+
+The field itself is a [`TextInput`](text-input.md) inside an `InputBlock`, so its
+colours and radius come from that component's variables, set on a wrapper around the search
+field: `--text-input-bg` (background), `--text-input-border-color` (border at rest),
+`--text-input-border-hover` and `--text-input-border-focus` (border on hover and while the text
+field has focus), `--text-input-color` (text and caret) and `--text-input-radius` (corner
+radius). The gap only shows with the main button.
 
 ## Accessibility
 

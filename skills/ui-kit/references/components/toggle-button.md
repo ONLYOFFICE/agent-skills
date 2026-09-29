@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/toggle-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 0f49143bf5d2e71a4d677a3cca0d3119b8a55aeee41be4dbc61ae69e55fd5c46 -->
+<!-- body-sha256: 5e124e5e1f1fd891da82cbc50872ed05bc5a0e1027d7d8e933b05c37a19924dc -->
 
 > Synced from the kit's own `components/toggle-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": "isLoading", "disabled": "isDisabled" },
   "related": ["checkbox", "radio-button-group", "field-container"],
   "subComponents": [],
-  "testIds": ["toggle-button", "toggle-button-container", "toggle-button-input", "toggle-button-icon", "toggle-button-label"]
+  "testIds": ["toggle-button", "toggle-button-container", "toggle-button-input", "toggle-button-icon", "toggle-button-label"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ToggleButton
@@ -185,10 +186,12 @@ export function ReadOnlySetting({ enabled }: { enabled: boolean }) {
   (8px), and the two sit in a two-column grid, so a long label neither wraps nor pushes the
   switch.
 - In RTL the SVG is mirrored with `transform: scaleX(-1)`, which is applied by the `.rtl` class
-  the theme provider sets, not by a prop.
+  the theme provider sets, not by a prop. The off knob then sits on the right, and the label
+  comes before the switch.
 - The animation comes from `framer-motion`, a runtime dependency of this package rather than a
-  peer, so it arrives with the kit whether or not anything else uses it. `noAnimation` runs the
-  transitions with a duration of zero; it does not remove the library.
+  peer, so it arrives with the kit whether or not anything else uses it. `noAnimation` moves the
+  knob to its new end instantly instead of sliding it; the loading pulse keeps its own duration
+  and still animates. It does not remove the library.
 
 ## CSS variables
 
@@ -196,12 +199,16 @@ Set these on an ancestor. Everything else the stylesheet defines is private to i
 the `--toggle-button-fill-*` names an older version of this README listed, which the stylesheet
 assigns to itself and does not read from the outside.
 
-| Variable                          | Default                      | Effect                               |
-| --------------------------------- | ---------------------------- | ------------------------------------ |
-| `--toggle-button-checked-color`   | `--color-scheme-main-accent` | Track colour when the switch is on   |
-| `--toggle-button-off-color`       | theme grey                   | Track colour when it is off          |
-| `--toggle-button-off-hover-color` | a lighter grey               | Track colour when off and hovered    |
-| `--toggle-button-spacing`         | `8px`                        | Gap between the switch and the label |
+| Variable                          | Default                      | Effect                                              |
+| --------------------------------- | ---------------------------- | --------------------------------------------------- |
+| `--toggle-button-checked-color`   | `--color-scheme-main-accent` | Track colour when the switch is on, disabled or not |
+| `--toggle-button-off-color`       | `#d0d5da`                    | Track colour when it is off                         |
+| `--toggle-button-off-hover-color` | `#a3a9ae`                    | Track colour when off and hovered                   |
+| `--toggle-button-spacing`         | `8px`                        | Gap between the switch and the label                |
+
+The two off colours apply in the light theme only: the dark theme sets its own track colours on
+the control itself, so an ancestor's `--toggle-button-off-color` and
+`--toggle-button-off-hover-color` are ignored there.
 
 ## Accessibility
 
@@ -212,7 +219,7 @@ assigns to itself and does not read from the outside.
   no `aria-*` props, and the one it sets itself, `aria-checked`, is on a plain `<div>` with no
   role, where it means nothing. A switch without `label` is announced as an unnamed checkbox.
 - The hidden input carries no focus styling of its own and is the element that receives focus,
-  so keyboard focus is effectively invisible. Supply a `:focus-within` outline on your wrapper
+  so keyboard focus is effectively invisible. Tab reaches the input and Space toggles it. Supply a `:focus-within` outline on your wrapper
   if the form is meant to be usable from the keyboard.
 - `isDisabled` disables the input and sets `pointer-events: none` on the control, so it is
   skipped by the tab order as well as by the mouse.

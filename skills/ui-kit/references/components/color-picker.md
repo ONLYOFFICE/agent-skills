@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/color-picker/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: cc9197b0775b19e3576cd01526523255d2a07a20519fcfaa8895f08a77d545aa -->
+<!-- body-sha256: 67d45f6ee5bc1d204d9d242584b91b7ee21adfc8a3526316cc35a1ea5b8cb323 -->
 
 > Synced from the kit's own `components/color-picker/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": "onClose", "loading": null, "disabled": null },
   "related": ["color-input", "drop-down", "button"],
   "subComponents": [],
-  "testIds": ["color-picker"]
+  "testIds": ["color-picker"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ColorPicker
@@ -156,7 +157,8 @@ export function SwatchButton() {
 - **In `isPickerOnly` mode there is no apply step.** Nothing calls `onApply`, so the only way
   to learn the colour is `handleChange`, which fires continuously as the pointer moves.
 - **`handleChange` fires on every pointer move.** Debounce it before doing anything expensive,
-  and expect a stream of values rather than one.
+  and expect a stream of values rather than one. From the hex field it fires only once the
+  typed text is a valid hex code, and the field in turn follows every move of either pointer.
 - **The labels are not translated.** `applyButtonLabel`, `cancelButtonLabel` and `hexCodeLabel`
   default to English strings baked into the component; only the "Custom" title goes through the
   kit's translations.
@@ -164,23 +166,43 @@ export function SwatchButton() {
   notification that the user is done.
 - **The hex field accepts hex only.** It is `react-colorful`'s own input, so named colours,
   `rgb()` and anything else are rejected as you type.
+- **On a phone it ignores its width.** At 600px and below the picker stretches to the window
+  width less 16px on each side, whatever `--color-picker-width` says.
 - `forwardedRef` is dead — the prop is declared and never destructured, so no ref is attached.
 - `role="dialog"` and `aria-label="Color picker"` are hardcoded on the wrapper, English included.
 
 ## CSS variables
 
-The picker's chrome follows the theme through the shared tokens; the folder's stylesheet does
-not read custom properties of its own. Size it through its container.
+| Variable                       | Default             | Effect                                                                                     |
+| ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------ |
+| `--color-picker-width`         | `195px`             | Width of the picker; ignored at 600px and below, where it takes the window width less 32px |
+| `--color-picker-hue-height`    | `12px`              | Height of the hue strip                                                                    |
+| `--color-picker-hue-radius`    | `6px`               | Corner radius of the hue strip                                                             |
+| `--color-picker-border-style`  | `1px solid #d0d5da` | Border of the hex field, as a full `border` value                                          |
+| `--color-picker-bg`            | `#ffffff`           | Background of the hex field                                                                |
+| `--color-picker-text-color`    | `#555f65`           | Text colour of the hex field                                                               |
+| `--color-picker-input-height`  | `32px`              | Height of the hex field                                                                    |
+| `--color-picker-input-padding` | `6px 8px`           | Padding of the hex field                                                                   |
+| `--color-picker-input-radius`  | `3px`               | Corner radius of the hex field                                                             |
+
+The three hex-field colours are the light theme's; under a `.dark` ancestor the defaults turn
+dark, and a variable you set still wins in both.
+
+The apply and cancel pair are ordinary [`Button`](button.md)s, so its variables reach
+them through the same wrapper: the `--button-primary-*` set styles apply, the `--button-root-*`
+set styles cancel, and `--button-root-border-radius` rounds both.
 
 ## Accessibility
 
-- **The saturation square is a pointer-only control.** `react-colorful` renders `div`s with
-  pointer handlers; there is no slider role and no keyboard path to a colour, so anyone who
-  cannot use a pointer must rely on the hex field — which `isPickerOnly` removes.
+- **The square and the strip are sliders.** `react-colorful` gives them `role="slider"`, named
+  "Color" and "Hue"; the square announces its saturation and brightness in percent, the strip
+  its hue in degrees. Each is focusable, and the arrow keys move its pointer by a twentieth of
+  its range per press.
 - The wrapper claims `role="dialog"` without being one: nothing traps focus, nothing returns
   focus on close, and Escape is not handled. Put it inside a real dialog if that matters.
 - `aria-label="Color picker"` is hardcoded English and cannot be overridden.
-- The hex field has an `aria-label`, but the caption beside it is not tied to it.
+- The hex field is named "Hex color value" by its own `aria-label`; the caption beside it is not
+  tied to it. The closing cross is named "Close color picker", and each button by its label.
 - Colour alone is the only feedback that a colour is selected.
 
 ## Test ids

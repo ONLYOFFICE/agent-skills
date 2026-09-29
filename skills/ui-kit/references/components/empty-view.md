@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/empty-view/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: a25e3bcfbef06a6bab9dc569b57fe97d5e0efffffadd89b5119f5d698039f513 -->
+<!-- body-sha256: 911cc2917863209bf80292d8166cdaed6ddddf82d9076afe67dc90ca761e683e -->
 
 > Synced from the kit's own `components/empty-view/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["empty-screen-container", "error-container", "rectangle"],
   "subComponents": [],
-  "testIds": ["empty-view", "empty-view-body"]
+  "testIds": ["empty-view", "empty-view-body"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # EmptyView
@@ -167,30 +168,55 @@ export function EmptyFolder({
   `Link` component, or use an `action` option with an `onClick`.
 - `isNext: true` has the same effect on purpose, for a link that should run a handler rather
   than navigate.
+- An item with a `model` opens that context menu on click and does not call its `onClick`.
+- An item with `disabled: true` is not rendered at all — there is no greyed-out state.
 - A `button` option is `primary` unless you say otherwise, and is always `ButtonSize.small`.
 - `extraContent` renders between the header and the options, outside the body element, so it
   does not take the body's gap.
 
 ## CSS variables
 
-| Variable                        | Default     | Effect                                  |
-| ------------------------------- | ----------- | --------------------------------------- |
-| `--empty-view-width`            | `480px`     | Maximum width of the whole block        |
-| `--empty-view-padding-top`      | `61px`      | Space above the icon (40px on mobile)   |
-| `--empty-view-gap`              | `18px`      | Gap between header, extra content, body |
-| `--empty-view-header-font-size` | `16px`      | Title size                              |
-| `--empty-view-icon-size`        | `36px`      | Icon size inside an item                |
-| `--empty-view-item-padding`     | `12px 16px` | Padding inside an item                  |
-| `--empty-view-item-radius`      | `6px`       | Corner radius of an item                |
-| `--empty-view-link-padding`     | `6px 10px`  | Padding inside a link option            |
-| `--empty-view-link-radius`      | `6px`       | Corner radius of a link option          |
+| Variable                             | Default     | Effect                                                     |
+| ------------------------------------ | ----------- | ---------------------------------------------------------- |
+| `--empty-view-width`                 | `480px`     | Maximum width of the whole block                           |
+| `--empty-view-padding-top`           | `61px`      | Space above the icon (always 40px on mobile)               |
+| `--empty-view-gap`                   | `18px`      | Gap between header, extra content, body                    |
+| `--empty-view-header-font-size`      | `16px`      | Title size                                                 |
+| `--empty-view-title-color`           | theme       | Title colour                                               |
+| `--empty-view-desc-color`            | theme       | Description colour                                         |
+| `--empty-view-link-accent`           | theme       | Text colour of a link option, and of its icon's `<g>` fill |
+| `--empty-view-link-background`       | theme       | Background of a link option                                |
+| `--empty-view-link-hover-background` | theme       | Background of a link option under the pointer              |
+| `--empty-view-link-padding`          | `6px 10px`  | Padding inside a link option                               |
+| `--empty-view-link-radius`           | `6px`       | Corner radius of a link option                             |
+| `--empty-view-link-text-size`        | `13px`      | Font size of a link option                                 |
+| `--empty-view-link-text-weight`      | `600`       | Font weight of a link option                               |
+| `--empty-view-icon-size`             | `36px`      | Icon size inside an item                                   |
+| `--empty-view-item-padding`          | `12px 16px` | Padding inside an item                                     |
+| `--empty-view-item-radius`           | `6px`       | Corner radius of an item                                   |
+| `--empty-view-item-gap`              | `20px`      | Gap between an item's icon, text and arrow                 |
+| `--empty-view-item-hover-background` | theme       | Background of an item under the pointer                    |
+| `--empty-view-item-title-color`      | theme       | Title colour of an item                                    |
+| `--empty-view-item-desc-color`       | theme       | Description colour of an item                              |
+| `--empty-view-divider-color`         | theme       | Text colour of a `separator` option                        |
+
+`--empty-view-link-accent` loses to `--accent-main`: wherever the host page defines that
+token, it colours the link options instead. An `action` option has no variable of its own —
+its colour is `--accent-main`, or a fixed blue without it. The pressed backgrounds of links and
+items have no override either.
 
 ## Accessibility
 
 - The title renders as an `<h3>` and the description as a `<p>`; the wrapper has no landmark
   role, so place it inside your own region.
-- An `action` option is a `<div>` with `role="button"` and `tabIndex={0}`, so it is reachable
-  by keyboard — but it has no key handler, so Enter and Space do not activate it.
+- An item is a `<div>` with `role="button"`, `tabIndex={0}` and an `aria-label` of its
+  `title`, so it is in the Tab order and announced by its title — but it has no key handler,
+  so Enter and Space do not activate it.
+- An `action` option is a `<div>` with `role="button"` and `tabIndex={0}`, named by its own
+  text; it has no key handler either, so Enter and Space do not activate it.
+- A `button` option is a native `<button>`, activated by Enter and Space. A link option is
+  whatever your `LinkRouter` renders; without one (or with `isNext`) it is an `<a>` with no
+  `href`, which has no role and is not in the Tab order.
 - The icon you pass is rendered as given; mark it `aria-hidden` unless it carries meaning the
   title does not.
 

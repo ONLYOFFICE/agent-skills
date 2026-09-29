@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/main-button-mobile/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 06150a5884aea5d7100db573fff2fc754390fce7fee26312044e6dd58694b95c -->
+<!-- body-sha256: 3aa0e852e033c33f7a571a6982c5ca7960f678e09e08a64bbd79bacd5d50226a -->
 
 > Synced from the kit's own `components/main-button-mobile/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "opened", "close": "onClose", "loading": null, "disabled": null },
   "related": ["main-button", "floating-button", "drop-down"],
   "subComponents": [],
-  "testIds": ["main-button-mobile", "dropdown"]
+  "testIds": ["main-button-mobile", "dropdown"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # MainButtonMobile
@@ -276,8 +277,9 @@ export function CreateSheetWithAlert({
   [`Scrollbar`](scrollbar.md) and every item's hover effect is turned off.
 - **`withoutButton` does not hide anything.** It swaps the lower group's background for the
   plain wrapper colour; the button and both groups are drawn either way.
-- **An `ActionOption`'s handler is called as `onClick({ action })`**, not with the event, and
-  the sheet closes first. A `ButtonOption`'s handler takes no argument at all.
+- **Choosing any item closes the sheet**, before its handler runs. An `ActionOption`'s
+  handler is called as `onClick({ action })`, not with the event; a `ButtonOption`'s handler
+  takes no argument at all.
 - **`ref` is an imperative handle, not an element ref**: it exposes `contains(target)` and
   `getButtonElement()`. Its type `MainButtonMobileRef` is not exported from the folder, so it
   can only be typed by inference.
@@ -287,21 +289,21 @@ export function CreateSheetWithAlert({
 Set them on any ancestor. They are what the theme defines; the sheet's geometry is in the same
 set, which is why overriding it is the workaround for the dark-theme note above.
 
-| Variable                                               | Default         | Effect                                               |
-| ------------------------------------------------------ | --------------- | ---------------------------------------------------- |
-| `--main-button-mobile-button-color`                    | accent blue     | Colour of the round button.                          |
-| `--main-button-mobile-icon-fill`                       | white / black   | Fill of the plus and minus.                          |
-| `--main-button-mobile-z-index`                         | `1010`          | Stacking of the button itself.                       |
-| `--main-button-mobile-dropdown-position`               | `fixed` (light) | Positioning scheme of the sheet.                     |
-| `--main-button-mobile-dropdown-width`                  | `400px` (light) | Width of the sheet.                                  |
-| `--main-button-mobile-dropdown-right`                  | `48px` (light)  | Distance from the trailing edge.                     |
-| `--main-button-mobile-dropdown-bottom`                 | `48px` (light)  | Distance from the bottom.                            |
-| `--main-button-mobile-dropdown-z-index`                | `202` (light)   | Stacking of the sheet.                               |
-| `--main-button-mobile-dropdown-item-padding`           | `6px 23px`      | Padding of one item.                                 |
-| `--main-button-mobile-button-options-background-color` | theme blue      | Background of the lower group.                       |
-| `--main-button-mobile-button-wrapper-background`       | theme grey      | Background of the lower group under `withoutButton`. |
-| `--main-button-mobile-badge-size`                      | `12px`          | Size of the alert badge.                             |
-| `--main-button-mobile-badge-offset`                    | `10px`          | Inset of the badge from the button's corner.         |
+| Variable                                               | Default         | Effect                                                                                  |
+| ------------------------------------------------------ | --------------- | --------------------------------------------------------------------------------------- |
+| `--main-button-mobile-button-color`                    | accent blue     | Colour of the round button.                                                             |
+| `--main-button-mobile-icon-fill`                       | white / black   | Fill of the plus and minus.                                                             |
+| `--main-button-mobile-z-index`                         | `1010`          | Stacking of the button against its open sheet; below `202` the sheet covers the button. |
+| `--main-button-mobile-dropdown-position`               | `fixed` (light) | Positioning scheme of the sheet.                                                        |
+| `--main-button-mobile-dropdown-width`                  | `400px` (light) | Width of the sheet.                                                                     |
+| `--main-button-mobile-dropdown-right`                  | `48px` (light)  | Distance from the trailing edge.                                                        |
+| `--main-button-mobile-dropdown-bottom`                 | `48px` (light)  | Distance from the bottom.                                                               |
+| `--main-button-mobile-dropdown-z-index`                | `202` (light)   | Stacking of the sheet.                                                                  |
+| `--main-button-mobile-dropdown-item-padding`           | `6px 23px`      | Padding of one item.                                                                    |
+| `--main-button-mobile-button-options-background-color` | theme blue      | Background of the lower group.                                                          |
+| `--main-button-mobile-button-wrapper-background`       | theme grey      | Background of the lower group under `withoutButton`.                                    |
+| `--main-button-mobile-badge-size`                      | `12px`          | Size of the alert badge.                                                                |
+| `--main-button-mobile-badge-offset`                    | `10px`          | Inset of the badge from the button's top trailing corner.                               |
 
 ## Accessibility
 
@@ -310,9 +312,9 @@ set, which is why overriding it is the workaround for the dark-theme note above.
   keyboard.
 - Its `aria-label` is the icon's name followed by the word "button" — `"plus button"`, or
   `"minus button"` while the sheet is open — in English whatever the interface language.
-- **The sheet is not a dialog.** It is a [`DropDown`](drop-down.md) with no
-  `role="menu"`, no focus trap and no focus move; Escape does not close it, though the Back
-  button does.
+- **The sheet is not a dialog.** It is a [`DropDown`](drop-down.md), announced as a
+  `listbox` with each item an `option` (a separator a `separator`) — not a `menu` — with no
+  focus trap and no focus move; Escape does not close it, though the Back button does.
 - The alert badge is an SVG with a click handler and no accessible name.
 - Nothing marks the button as expanded. There is no `aria-expanded` or `aria-haspopup`, and
   unknown props are not accepted, so neither can be supplied from outside.

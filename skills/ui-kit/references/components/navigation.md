@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/navigation/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 8718603df925c9017ad94d7a188dc8ec838642f79395de458d292b5ece1aa9dd -->
+<!-- body-sha256: 9d6ce6a84579c19d5586ba68e8462f3effe953299797bcc57c07624fe174497a -->
 
 > Synced from the kit's own `components/navigation/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["section", "nav-menu", "context-menu"],
   "subComponents": [],
-  "testIds": ["navigation_button", "plus-button", "ai-chat-button"]
+  "testIds": ["navigation_button", "plus-button", "ai-chat-button"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Navigation
@@ -298,7 +299,8 @@ export function Breadcrumbs() {
   them. `ignoreChangeView`, `isEmptyPage` and a `ref` you pass are also ignored.
 - **The layout follows `currentDeviceType`, not the window.** The AI chat button and the info panel
   toggle are in the right-hand row only on `desktop`; below that they move into the button row, and
-  the drop box's row heights change. Nothing measures the viewport except one `isTablet()` call made
+  the drop box's row heights change. The warning chip is drawn only on `desktop`, and only when
+  `titles.warningText` is set. Nothing measures the viewport except one `isTablet()` call made
   during render, which does not re-run on resize.
 - **A room title with a one-entry trail crashes on click.** The line above the folder name reads
   `navigationItems[length - 2]`, so with `rootRoomTitle` set and a single crumb, clicking it throws.
@@ -313,18 +315,29 @@ export function Breadcrumbs() {
 
 ## CSS variables
 
-| Variable                      | Default                | Effect                            |
-| ----------------------------- | ---------------------- | --------------------------------- |
-| `--navigation-heading-size`   | `18px`                 | Font size of the folder name      |
-| `--navigation-heading-weight` | `700`                  | Font weight of the folder name    |
-| `--navigation-title-color`    | theme text colour      | Colour of the folder name         |
-| `--navigation-badge-fill`     | theme icon colour      | Background of the title badge     |
-| `--navigation-expander-fill`  | theme text colour      | Fill of the expander chevron      |
-| `--navigation-arrow-fill`     | theme muted colour     | Fill of the room title's arrow    |
-| `--navigation-warning-bg`     | theme substrate colour | Background of the warning chip    |
-| `--navigation-warning-text`   | theme muted colour     | Colour of the warning chip's text |
-| `--navigation-warning-radius` | `6px`                  | Corner radius of the warning chip |
+| Variable                       | Default                | Effect                                                                        |
+| ------------------------------ | ---------------------- | ----------------------------------------------------------------------------- |
+| `--navigation-heading-size`    | `18px`                 | Font size of the folder name and of the room title above it                   |
+| `--navigation-heading-weight`  | `700`                  | Font weight of the folder name and of the room title                          |
+| `--navigation-title-color`     | theme muted colour     | Colour of the room title above the folder name, and of the badge next to it   |
+| `--navigation-badge-fill`      | theme icon colour      | Background of the badge next to the folder name                               |
+| `--navigation-expander-fill`   | theme text colour      | Fill of the expander chevron after the folder name                            |
+| `--navigation-arrow-fill`      | theme muted colour     | Fill of the room title's arrow                                                |
+| `--navigation-separator`       | theme stroke colour    | Colour of the line between the back arrow and the title                       |
+| `--navigation-dropdown-bg`     | theme background       | Background of the open drop box                                               |
+| `--navigation-dropdown-shadow` | theme shadow           | Shadow of the open drop box                                                   |
+| `--navigation-dropdown-radius` | `6px`                  | Radius of the open drop box's lower corners; the upper ones are always square |
+| `--navigation-info-panel-bg`   | theme substrate colour | Background and border of the info panel toggle while the panel is open        |
+| `--navigation-chat-radius`     | `6px`                  | Corner radius of the AI chat button                                           |
+| `--navigation-warning-bg`      | theme substrate colour | Background of the warning chip                                                |
+| `--navigation-warning-text`    | theme muted colour     | Colour of the warning chip's text                                             |
+| `--navigation-warning-radius`  | `6px`                  | Corner radius of the warning chip                                             |
 
+The folder name itself keeps the `Heading`'s own colour; `--navigation-title-color` reaches only
+the room title. Between the phone and desktop breakpoints the heading's size is fixed at `21px`, so
+`--navigation-heading-size` applies on desktop and phone only. The badge, the pressed info panel
+toggle and the AI chat button exist only when their props switch them on (`badgeLabel`,
+`isInfoPanelVisible`, `toggleChatPanel`), and the drop box's variables show only while it is open.
 The rest of the header's colours come from the theme classes and are not exposed.
 
 ## Accessibility

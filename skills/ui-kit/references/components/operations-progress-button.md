@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/operations-progress-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: d2824ff689cdf236604e3ea6b3dd033616dc1cec869665ff7691cd4950f6c5f2 -->
+<!-- body-sha256: c11200cb061c6f6cfca2bfe9c02c660b5af62069e7ef59bc9bfd099148b5fe78 -->
 
 > Synced from the kit's own `components/operations-progress-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["floating-button", "progress-bar", "help-button"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # OperationsProgressButton
@@ -233,10 +234,15 @@ export function UploadOutcome({
   drawn at all.
 - **The list only ever shows a ring for panel operations.** Secondary operations are rendered
   with `withoutProgress`, so a copy or a move shows its label and its icon and no bar.
+- **Each row carries its own status badge** over its icon: a tick once it is `completed`, a
+  warning once it is `alert`, a stop sign once it is aborted — `stopped` on a secondary
+  operation, `canceled` on a panel one. The stop sign wins over the other two.
 - **A row without `showPanel` is inert**, and so is the whole badge when the single operation
   lacks one: the cursor stays an arrow and the click does nothing.
 - **The tooltip is a [`HelpButton`](help-button.md)**, which on a touch device opens
-  on tap and closes itself 3.5 seconds later.
+  on tap and closes itself 3.5 seconds later. With two or more operations it only counts them
+  (`Processes`); with one it says the operation was stopped under `operationsStopped`, shows
+  its bare label under `operationsCanceled`, and otherwise names it with its outcome.
 - **It renders a second, separate button while a drag is in progress**: a preview disc
   centred above the bottom edge naming the folder under the pointer, which then flies into the
   corner when the drop starts an upload. `dropTargetFolderName`, `isDragging` and
@@ -254,18 +260,23 @@ export function UploadOutcome({
 
 Set them on any ancestor.
 
-| Variable                         | Default        | Effect                                      |
-| -------------------------------- | -------------- | ------------------------------------------- |
-| `--ops-progress-dropdown-bg`     | theme grey     | Background of the list.                     |
-| `--ops-progress-dropdown-hover`  | theme grey     | Background of a row that can open a panel.  |
-| `--ops-progress-dropdown-margin` | `8px`          | Gap between the list and the badge.         |
-| `--ops-progress-list-padding`    | `0px 8px`      | Padding of one row.                         |
-| `--ops-progress-items-gap`       | `8px`          | Gap between a row's icon, label and status. |
-| `--ops-progress-icon-color`      | white          | Fill of a row's icon.                       |
-| `--ops-progress-icon-hover`      | theme grey     | Fill of that icon on hover.                 |
-| `--ops-progress-success-icon`    | theme positive | Colour of the completed badge.              |
-| `--ops-progress-error-icon`      | theme negative | Colour of the error badge.                  |
-| `--ops-progress-stopped-icon`    | theme warning  | Colour of the aborted badge.                |
+| Variable                         | Default        | Effect                                                                              |
+| -------------------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| `--ops-progress-dropdown-bg`     | theme grey     | Background of the list.                                                             |
+| `--ops-progress-dropdown-hover`  | theme grey     | Background of a row that can open a panel, on hover.                                |
+| `--ops-progress-dropdown-margin` | `8px`          | Gap between the list and the badge.                                                 |
+| `--ops-progress-list-padding`    | `0px 8px`      | Padding of one row.                                                                 |
+| `--ops-progress-bar-padding`     | `8px 16px`     | Inner padding of one row's content.                                                 |
+| `--ops-progress-wrapper-margin`  | `4px`          | Space under one row's content.                                                      |
+| `--ops-progress-items-gap`       | `8px`          | Gap between a row's icon and its label.                                             |
+| `--ops-progress-label-gap`       | `8px`          | Gap between a row's label and its arrow.                                            |
+| `--ops-progress-icon-color`      | white          | Fill of a finished row's clear icon and of a panel row's cancel cross.              |
+| `--ops-progress-icon-hover`      | theme grey     | Fill of those icons on hover.                                                       |
+| `--ops-progress-success-icon`    | theme positive | Nothing visible: the theme colour is set over it on a row's tick.                   |
+| `--ops-progress-error-icon`      | theme negative | Exclamation mark inside a failed row's warning; the warning keeps the theme colour. |
+| `--ops-progress-stopped-icon`    | theme warning  | Colour of an aborted row's stop sign.                                               |
+
+The three status variables colour the badges on the rows of the list, not the corner badge.
 
 The badge itself is a [`FloatingButton`](floating-button.md) and takes its
 variables too.

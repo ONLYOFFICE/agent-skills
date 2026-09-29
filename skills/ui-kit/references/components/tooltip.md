@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/tooltip/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: cfcd63a112652621de38058ef990d9d7cc2a1184b79398f3c55b214415922bc5 -->
+<!-- body-sha256: 35c3189ed051f76ab40b374cfee4ba63f44adde7696ae50eb7f534a2a87435c8 -->
 
 > Synced from the kit's own `components/tooltip/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "isOpen", "close": "afterHide", "loading": null, "disabled": null },
   "related": ["portal", "help-button", "icon-button"],
   "subComponents": ["TooltipContainer", "RootTooltip"],
-  "testIds": ["tooltip", "system-tooltip-container", "info-tooltip-container"]
+  "testIds": ["tooltip", "system-tooltip-container", "info-tooltip-container"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Tooltip
@@ -35,8 +36,8 @@ the viewport. The tooltip and its anchors are separate elements, tied together b
   click-to-open equivalent.
 - Not for a menu of actions: that is [`ContextMenu`](context-menu.md) or
   [`DropDown`](drop-down.md).
-- Not as an accessible name. Nothing here reaches the accessibility tree; a control that needs a
-  name needs an `aria-label` as well.
+- Not as an accessible name. The tooltip is not linked to its anchor, so a screen reader never
+  reads it with the control; a control that needs a name needs an `aria-label` as well.
 
 ## Import
 
@@ -179,7 +180,9 @@ export function MemberHints({ names }: { names: string[] }) {
   way in, and it is matched globally too — a selector such as `.row` will pick up rows rendered
   by anyone.
 - **It closes on Escape, on scroll, on resize and on a click outside the anchor**, all four
-  always on. A tooltip cannot be kept open across a scroll.
+  always on. A tooltip cannot be kept open across a scroll. The one exception is
+  `imperativeModeOnly`, which turns all four off: such a tooltip closes only when code calls
+  `close()`.
 - **`openOnClick` replaces hover rather than adding to it.** With it set, hovering does nothing
   and a second click closes the tooltip.
 - **`color` is applied in an effect and never removed.** Passing it once and clearing it later
@@ -236,26 +239,35 @@ useful for giving a hint to markup of your own.
 ## CSS variables
 
 Set these on an ancestor of the tooltip's wrapper — it is in the portal, so `:root` is the
-usual place.
+usual place — or on the wrapper itself through the `style` prop, which is the way to reach one
+tooltip only.
 
-| Variable                  | Default                         | Effect                            |
-| ------------------------- | ------------------------------- | --------------------------------- |
-| `--tooltip-bg`            | theme surface                   | Background of the tooltip         |
-| `--tooltip-color`         | theme text                      | Text colour                       |
-| `--tooltip-radius`        | `6px`                           | Corner radius                     |
-| `--tooltip-shadow`        | `0 2px 4px rgba(0, 0, 0, 0.15)` | Shadow                            |
-| `--tooltip-inner-padding` | `8px 12px`                      | Padding                           |
-| `--tooltip-text-size`     | `12px`                          | Font size                         |
-| `--tooltip-layer`         | `999`                           | Stacking order                    |
-| `--tooltip-max-width`     | `320px`                         | Width cap, also set by `maxWidth` |
+| Variable                    | Default                         | Effect                            |
+| --------------------------- | ------------------------------- | --------------------------------- |
+| `--tooltip-bg`              | theme surface                   | Background of the tooltip         |
+| `--tooltip-color`           | theme text                      | Text colour                       |
+| `--tooltip-radius`          | `6px`                           | Corner radius                     |
+| `--tooltip-shadow`          | `0 2px 4px rgba(0, 0, 0, 0.15)` | Shadow                            |
+| `--tooltip-inner-padding`   | `8px 12px`                      | Padding                           |
+| `--tooltip-text-size`       | `12px`                          | Font size                         |
+| `--tooltip-layer`           | `999`                           | Stacking order                    |
+| `--tooltip-max-width-value` | `320px`                         | Width cap, in place of `maxWidth` |
+
+The width cap is never wider than the window: it is `min(100vw, …)` of the value.
+`--tooltip-max-width` is not an override: the stylesheet declares it on the wrapper, so one set
+on an ancestor is ignored, and it is what `maxWidth` writes. `--tooltip-max-width-value` wins
+over both.
 
 ## Accessibility
 
-- The tooltip is not in the accessibility tree of the anchor: there is no `aria-describedby`,
-  no `role="tooltip"` wiring and no id relationship. A screen reader user gets nothing.
+- The floating element has `role="tooltip"`, set by react-tooltip, so it is announced as a
+  tooltip once it is shown. Nothing ties it to the anchor, though: there is no
+  `aria-describedby` and no id relationship, so a screen reader does not read it with the
+  anchor.
 - It opens on hover and on click, never on focus, so a keyboard user cannot see it at all.
   Anything a user must know belongs in the text or in an `aria-label`.
-- Escape closes it, which is the one convention it does follow.
+- Escape closes it, which is the one convention it does follow — except under
+  `imperativeModeOnly`.
 - `clickable` keeps it open while the pointer is inside, which is required if it contains a
   link — without it the link cannot be reached.
 

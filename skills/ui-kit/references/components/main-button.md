@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/main-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: f5421cfbcbc204240a6c5ab0a4e6d8e0a415a464594bfbee8523df54066ca01e -->
+<!-- body-sha256: cd779f2f00570cd09902d437b8a25dbe5187146bee0237f987b02460218e8ad5 -->
 
 > Synced from the kit's own `components/main-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["context-menu", "button", "main-button-mobile"],
   "subComponents": [],
-  "testIds": ["main-button"]
+  "testIds": ["main-button"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # MainButton
@@ -193,6 +194,10 @@ export function InviteMenu({ onInvite }: { onInvite: (role: string) => void }) {
   and on every `window` resize. There is no `ResizeObserver`: a button that changes width
   without the window changing keeps the previous menu width until the next resize. One item
   with a `description` switches that width to a `min-width` and lets the menu grow.
+- **`model` goes to the menu unchanged**, so an item takes everything a
+  [`ContextMenu`](context-menu.md) item does: an `icon` of its own, `isSeparator` for
+  a divider between groups, and `items` for a sub-menu that an arrow on the item opens to the
+  side.
 - **The menu is a [`ContextMenu`](context-menu.md) appended to `document.body`** and
   positioned `fixed` at the button's bottom inline-start corner, through a synthetic mouse
   event built from the button's rect. It is not inside the button's DOM subtree, so a parent's

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/empty-screen-container/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 7aa088d56ca11e49850d3bc9dfc1a314d0edfcf6ca2d287d0c5934cd29dcdc3b -->
+<!-- body-sha256: 9bab9ff7488ade98e62583ed511759ce49784b5c991a6f65cbe533dbb9724b63 -->
 
 > Synced from the kit's own `components/empty-screen-container/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["empty-view", "error-container", "rectangle"],
   "subComponents": [],
-  "testIds": ["empty-screen-container"]
+  "testIds": ["empty-screen-container"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # EmptyScreenContainer

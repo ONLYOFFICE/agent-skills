@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/avatar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 4e9138d3db90a116636983aa2ed9c1403b23e5d5147e27cf68ae5573f5439f5e -->
+<!-- body-sha256: 608e9332ba207b2fa20a18312f81f15f51cc311e2320cb2a998be165f4006f2c -->
 
 > Synced from the kit's own `components/avatar/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "noClick" },
   "related": ["circle", "room-icon", "icon-button"],
   "subComponents": [],
-  "testIds": ["avatar", "edit_avatar_icon_button", "file-input"]
+  "testIds": ["avatar", "edit_avatar_icon_button", "file-input"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Avatar
@@ -240,18 +241,23 @@ export function ProfileAvatar({
   no rule for `extraSmall`, so that size is for pictures.
 - Initials take the first letter of each word of `userName`, two at most, and are uppercased
   only when `isGroup` is set — "jane doe" stays "jd" for a person.
+- In a right-to-left interface the role badge and the edit button sit in the bottom-left corner,
+  and the role tooltip opens to the left.
 - A middle-button press calls `onClick` as well, through a `mousedown` handler.
 - The component is memoised. `AvatarPure` is the same component without `memo`, exported for
   tests.
 
 ## CSS variables
 
-| Variable                   | Default      | Effect                                        |
-| -------------------------- | ------------ | --------------------------------------------- |
-| `--avatar-radius`          | `50%`        | Corner radius of the picture — square it here |
-| `--avatar-bg`              | theme grey   | Background behind a picture or an icon        |
-| `--avatar-initials-bg`     | theme accent | Background behind initials                    |
-| `--avatar-initials-weight` | `600`        | Weight of the initials                        |
+| Variable                   | Default      | Effect                                                                                       |
+| -------------------------- | ------------ | -------------------------------------------------------------------------------------------- |
+| `--avatar-radius`          | `50%`        | Corner radius of the avatar and of its picture — square it here                              |
+| `--avatar-bg`              | theme grey   | Background of an avatar with neither `source` nor `userName`: the camera or the illustration |
+| `--avatar-initials-bg`     | theme accent | Background behind a person's initials; a group's initials keep their own background          |
+| `--avatar-initials-weight` | `600`        | Weight of a person's initials; a group's stay at `700`                                       |
+
+Behind a `source` the background is a theme colour that none of these overrides. The kit's
+illustration stays round whatever `--avatar-radius` says, and so does the edit button.
 
 The badge colours (`--avatar-owner-fill`, `--avatar-administrator-fill` and their strokes) are
 set from the theme on the avatar element and can be overridden the same way.
@@ -263,6 +269,8 @@ set from the theme on the avatar element and can be overridden the same way.
   reached or activated from the keyboard.
 - A picture is rendered with the literal alt text `"avatar"`, not the user's name, so a screen
   reader announces the same word for everyone. Put the name next to the avatar in text.
+- The edit button is not in the tab order either and handles no key, so a host that makes the
+  avatar editable or clickable must offer a keyboard path to the same action.
 - Initials are plain text with no label, and the role badge is an inline SVG with none either —
   the badge's meaning is available only as a hover tooltip.
 - `tooltipContent` is not translated by the component; pass text you have already translated.

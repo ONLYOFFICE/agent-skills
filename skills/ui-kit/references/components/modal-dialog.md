@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/modal-dialog/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 513e0ea4dc2c8b3a8c2fa8cbb3670170e19f7a80dcdbf63f9d1887fe9aa1e1bf -->
+<!-- body-sha256: caebd8c17fd4cf9a58e47c6ca0f9626052e098c1dec8ee9d1658baf18f45bc6c -->
 
 > Synced from the kit's own `components/modal-dialog/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "visible", "close": "onClose", "loading": "isLoading", "disabled": null },
   "related": ["aside", "backdrop", "portal"],
   "subComponents": ["ModalDialog.Header", "ModalDialog.Body", "ModalDialog.Footer", "ModalDialog.Container"],
-  "testIds": ["modal"]
+  "testIds": ["modal"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ModalDialog
@@ -210,7 +211,8 @@ export function DetailsDialog() {
 
 ### Loading
 
-The body's children are not rendered while `isLoading` is on — a skeleton takes their place.
+The header, body and footer are not rendered while `isLoading` is on — a skeleton shaped like
+the current display type takes their place.
 
 ```tsx
 import { ModalDialog } from "@onlyoffice/apps-ui-kit/components/modal-dialog";
@@ -318,9 +320,16 @@ export function RenameDialog({
   third-party editor inside the dialog will still trigger it.
 - **`embedded` disables closing altogether**, ahead of `isCloseable`: the close button is
   gone, Escape does nothing, and `onClose` is never called. `isCloseable={false}` does the
-  same for the button and Escape but leaves embedded behaviour aside.
-- **`isLoading` replaces the body.** The body's children are not rendered at all while it is
-  on, so state inside them is lost on each toggle.
+  same for the button, Escape and the backdrop click but leaves embedded behaviour aside;
+  `closeOnBackdropClick={false}` stops only the backdrop click.
+- **`isLoading` replaces the whole content, not just the body.** Header, body and footer give
+  way to a skeleton shaped like the current display type — `DialogModalSkeleton` for the modal,
+  `DialogAsideSkeleton` for the side panel. The slots' children are not rendered at all while
+  it is on, so state inside them is lost on each toggle.
+- **`withForm` wraps the content in a `<form>` and prevents its default submit** before calling
+  `onSubmit`, so a `type="submit"` button in the footer never reloads the page.
+- **`isHuge` does nothing on its own.** It only caps the width at 730px, and the modal keeps its
+  fixed 400px width until `autoMaxWidth` lets it grow with its content.
 - **`ModalDialog.Container` needs both `displayType="aside"` and `containerVisible`.** In the
   modal display type it is dropped even with `containerVisible` set.
 - **The dialog renders through a portal into `document.body`**, so it is not affected by a
@@ -351,6 +360,43 @@ export function RenameDialog({
 Three skeletons ship alongside for the loading state of a dialog you build yourself:
 `DialogAsideSkeleton`, `DialogModalSkeleton` and `DialogReassignmentSkeleton`.
 
+## CSS variables
+
+Two groups, and where you set them matters. The first four are read inside the dialog, so they
+can go on the `style` prop. The rest are read on the dialog's outer element, above the layer
+`style` and `className` reach, and the dialog renders into `document.body`, so a wrapper around
+it cannot carry them either: set them on `body` or `:root`.
+
+| Variable                      | Default     | Effect                                                                    |
+| ----------------------------- | ----------- | ------------------------------------------------------------------------- |
+| `--modal-dialog-bg`           | theme-based | Background of the dialog                                                  |
+| `--modal-dialog-color`        | theme-based | Text colour of the dialog                                                 |
+| `--modal-dialog-divider`      | theme-based | Line between the body and the footer, with `withFooterBorder`             |
+| `--modal-dialog-aside-border` | theme-based | Border on the edge where the side panel meets the page, with `withBorder` |
+
+Page-level:
+
+| Variable                                 | Default         | Effect                                                                       |
+| ---------------------------------------- | --------------- | ---------------------------------------------------------------------------- |
+| `--modal-dialog-backdrop`                | theme-based     | Background of the dimmed page behind the dialog                              |
+| `--modal-dialog-radius`                  | `6px`           | Corner radius of the modal; on a phone, of its top corners only              |
+| `--modal-dialog-horizontal-padding`      | `16px`          | Side padding of the body and the footer                                      |
+| `--modal-dialog-vertical-padding`        | `16px`          | Top and bottom padding of the footer, and bottom padding of the modal's body |
+| `--modal-dialog-buttons-gap`             | `8px`           | Gap between the footer buttons; at tablet width and below it is always 10px  |
+| `--modal-dialog-header-offset`           | `16px`          | Gap between the modal's header and body                                      |
+| `--modal-dialog-default-width`           | `400px`         | Width of the modal                                                           |
+| `--modal-dialog-default-max-height`      | `280px`         | Height cap of the modal                                                      |
+| `--modal-dialog-lg-width`                | `520px`         | Width of the modal with `isLarge`                                            |
+| `--modal-dialog-lg-max-height`           | `400px`         | Height cap of the modal with `isLarge`                                       |
+| `--modal-dialog-xl-max-width`            | `730px`         | Width cap of the modal with `isHuge` and `autoMaxWidth`                      |
+| `--modal-dialog-aside-default-width`     | `480px`         | Width of the side panel above phone width                                    |
+| `--modal-dialog-header-justify`          | `space-between` | How the header's items are spread along it                                   |
+| `--modal-dialog-header-border-display`   | `""` (shown)    | `none` hides the line under the header                                       |
+| `--modal-dialog-header-title-position`   | `static`        | CSS position of the title, `absolute` to centre it                           |
+| `--modal-dialog-header-title-inset`      | `auto`          | Distance of an absolute title from the header's start edge                   |
+| `--modal-dialog-header-title-transform`  | `none`          | Transform of the title, such as `translateX(-50%)` to centre it              |
+| `--modal-dialog-header-title-text-align` | `start`         | Text alignment of the title                                                  |
+
 ## Accessibility
 
 - `role="dialog"` and `aria-modal="true"` sit on the dialog surface, the `#modal-dialog`
@@ -365,7 +411,7 @@ Three skeletons ship alongside for the loading state of a dialog you build yours
   nor traps it, and because the markup stays in the document while `visible` is false, its
   controls remain in the tab order of the page behind it. Conditional rendering — as in the
   examples above — is what keeps that from happening.
-- The close button carries `aria-label="close"`.
+- The close button carries `aria-label="close"`; `isCloseable={false}` and `embedded` remove it.
 
 ## Test ids
 

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/floating-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 97f323b924231e76fd7b653286a0a5ff54912a56e55a71f3e640f0fdc3c71a78 -->
+<!-- body-sha256: 66627f02630aba82de63a250bab495ed997ed6c010e264f4a916f99ad11f2d4f -->
 
 > Synced from the kit's own `components/floating-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["loading-button", "progress-bar", "operations-progress-button"],
   "subComponents": [],
-  "testIds": ["floating-button", "floating-button-progress", "floating-button-alert"]
+  "testIds": ["floating-button", "floating-button-progress", "floating-button-alert"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # FloatingButton
@@ -203,19 +204,26 @@ export function CancellableUpload({
   recoloured by the theme the way the built-in icons are.
 - **`id`, `className` and `style` go on the circle, not on the wrapper** that carries the
   position — so `className` cannot be used to move the button.
-- The circle is 48px, the ring 38px and the icon box 38px; the size is controlled by
-  `--floating-button-button-size` rather than by a prop.
+- The circle is 48px, the ring 38px and the icon box 38px. There is no size prop, and
+  `--floating-button-button-size` only resizes the clickable disc — see "CSS variables".
 
 ## CSS variables
 
 Set them on any ancestor.
 
-| Variable                              | Default       | Effect                            |
-| ------------------------------------- | ------------- | --------------------------------- |
-| `--floating-circle-button-background` | accent colour | Circle and progress ring colour.  |
-| `--floating-button-button-size`       | `48px`        | Diameter of the circle.           |
-| `--floating-button-icon`              | theme token   | Fill of the icon.                 |
-| `--floating-button-shadow`            | theme shadow  | Whole `box-shadow` of the circle. |
+| Variable                              | Default       | Effect                                                                                        |
+| ------------------------------------- | ------------- | --------------------------------------------------------------------------------------------- |
+| `--floating-circle-button-background` | accent colour | Circle and progress ring colour, and the fill of the accent icons' shapes.                    |
+| `--floating-button-button-size`       | `48px`        | Width and height of the clickable circle only; the ring and the icon stay 48px in its corner. |
+| `--floating-button-icon`              | theme token   | Fill of the icon, except the accent icons.                                                    |
+| `--floating-button-shadow`            | theme shadow  | Whole `box-shadow` of the circle.                                                             |
+
+The accent icons are `upload`, `trash`, `deletePermanently` and `other`: their shapes are painted
+in the circle's colour, so `--floating-button-icon` does not reach them.
+
+`--floating-button-button-size` resizes nothing but the clickable disc — the ring, the icon box
+and the status badge are laid out in a fixed 48px box in its top corner, so any other value puts
+them out of line with it.
 
 `color` writes the first of these inline, so it wins over an ancestor's value.
 
@@ -228,6 +236,7 @@ Set them on any ancestor.
   **English regardless of the interface language**, and cannot be overridden.
 - The progress is conveyed only by the ring: no `role="progressbar"`, no `aria-valuenow`, so
   the percentage is invisible to a screen reader.
+- An `iconUrl` image is announced by its `alt`, which is always `"icon"`.
 - The cancel cross is an SVG with a click handler and no name of its own. Anything cancellable
   needs a real control elsewhere as well.
 

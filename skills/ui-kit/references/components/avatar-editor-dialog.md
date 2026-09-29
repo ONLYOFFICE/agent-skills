@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/avatar-editor-dialog/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: ae2042cb026bba3aa281a139d9b0531f522a01c1c733c2531236c14bd54e9586 -->
+<!-- body-sha256: 3140a950704686626ea13d88b82c8570395e371815f885c9ba444b14d1415a90 -->
 
 > Synced from the kit's own `components/avatar-editor-dialog/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "visible", "close": "onClose", "loading": "isLoading", "disabled": null },
   "related": ["image-editor", "modal-dialog", "avatar"],
   "subComponents": [],
-  "testIds": ["modal"]
+  "testIds": ["modal"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # AvatarEditorDialog

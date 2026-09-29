@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/rows/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 3e6c326a11bb55268d4453dc15ab652301c009dde4153563643f2fcc6d729aca -->
+<!-- body-sha256: 2089fc9dad26e2c543b2c0756ecfb4391b1412da90dfbef77fce931fa61c15c7 -->
 
 > Synced from the kit's own `components/rows/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -19,7 +19,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["rows/row", "rows/row-container", "rows/row-content"],
   "subComponents": ["Row", "RowContent", "RowContainer", "RowSkeleton", "RowsSkeleton", "IndexIconButtons"],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Rows
@@ -71,7 +72,7 @@ import { Text } from "@onlyoffice/apps-ui-kit/components/text";
 
 export function MemberList({ names }: { names: string[] }) {
   return (
-    <RowContainer useReactWindow={false} manualHeight="320px">
+    <RowContainer useReactWindow={false}>
       {names.map((name) => (
         <Row key={name} contextOptions={[]}>
           <RowContent>
@@ -106,7 +107,7 @@ export function SelectableList({ names }: { names: string[] }) {
   const [selected, setSelected] = useState<string[]>([]);
 
   return (
-    <RowContainer useReactWindow={false} manualHeight="320px">
+    <RowContainer useReactWindow={false}>
       {names.map((name) => (
         <Row
           key={name}
@@ -155,6 +156,18 @@ export function SelectableList({ names }: { names: string[] }) {
 | `RowSkeleton`, `RowsSkeleton`               | Placeholders in the shape of a row and of a list of them |
 | `IndexIconButtons`                          | The up and down arrows of the row's index-editing mode   |
 
+`RowsSkeleton` draws `count` placeholder rows, 25 when it is not given, while the real rows
+load. Each row is a 32px square for the start element, a bar for the title and a 16px square
+for the context button; below the desktop breakpoint a shorter second bar appears under the
+title, where a real row shows its line of details. The shapes take the colour, opacity, corner
+radius, `speed` and `animate` props of
+[`RectangleSkeleton`](rectangle.md), and `className` and `style` go to every row;
+`x`, `y`, `width`, `height` and `uniqueKey` are ignored, because the rows place and size their
+shapes themselves. `RowsSkeleton` has no way to round the start element: for a list of
+avatars, render `RowSkeleton isRectangle={false}` once per row, which draws a circle in the
+square's place. Neither checks the system's reduced-motion setting; `animate={false}` keeps
+the shapes still.
+
 ## Accessibility
 
 - Nothing here is a list, a grid or an option as far as assistive technology is concerned: the
@@ -164,6 +177,10 @@ export function SelectableList({ names }: { names: string[] }) {
   is reachable — it is the only part of a row that is.
 - A list a keyboard user must be able to work through needs [`Table`](table.md) or
   markup of your own.
+- Each skeleton shape is an SVG with `role="img"`, so a screen reader meets three images per
+  placeholder row. `title` names every one of them through an SVG `<title>`; without it they
+  have no name and nothing is announced. The skeletons set no `aria-busy` — mark the loading
+  region with it yourself.
 
 ## Test ids
 

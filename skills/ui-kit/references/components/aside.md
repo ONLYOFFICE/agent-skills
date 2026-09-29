@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/aside/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 1feb95fef1530f2a2001986f390b3a754c3552506ba53c5dd29ab7c67e3f6def -->
+<!-- body-sha256: 3ff3f30decdcb35edb9ff153b1afd487eeee72c14d20c7b83a47c9324247f49b -->
 
 > Synced from the kit's own `components/aside/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "visible", "close": "onClose", "loading": "isLoading", "disabled": null },
   "related": ["modal-dialog", "backdrop", "aside/aside-header"],
   "subComponents": [],
-  "testIds": ["aside", "aside-header"]
+  "testIds": ["aside", "aside-header"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Aside
@@ -198,16 +199,22 @@ export function LazyPanel({ ready }: { ready: boolean }) {
 - Everything the component does not read itself is spread onto the `<aside>` element **and**
   passed to the header, so a header prop such as `header` or `isLoading` also lands on the DOM
   element as an unknown attribute.
-- The panel is 480px wide, full width on a tablet, and on a phone it becomes a bottom sheet
-  that slides up and leaves room for the mobile footer.
+- The panel is 480px wide and slides in from the right edge — from the left one under a
+  right-to-left interface. On a phone it becomes a full-width bottom sheet that slides up and
+  leaves room for the mobile footer.
 
 ## CSS variables
 
-| Variable             | Default                      | Effect                  |
-| -------------------- | ---------------------------- | ----------------------- |
-| `--aside-width`      | `480px`                      | Width of the panel      |
-| `--aside-bg`         | theme surface                | Background of the panel |
-| `--aside-transition` | `transform 0.3s ease-in-out` | The slide animation     |
+| Variable                       | Default                      | Effect                                                                                         |
+| ------------------------------ | ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `--aside-width`                | `480px`                      | Width of the panel, and how far the closed panel is moved out of view; `scale` overrides both  |
+| `--aside-bg`                   | theme surface                | Background of the panel                                                                        |
+| `--aside-transition`           | `transform 0.3s ease-in-out` | The slide animation                                                                            |
+| `--aside-mobile-footer-height` | `64px`                       | On a phone, where the panel is a bottom sheet: how much of the window stays uncovered above it |
+
+The header reads its own `--aside-header-*` set — colour, border, height, font size, margin
+and gap among them; [`AsideHeader`](aside/aside-header.md) lists them. Set on a wrapper
+around the panel, they reach its header too.
 
 ## Accessibility
 
@@ -215,7 +222,9 @@ export function LazyPanel({ ready }: { ready: boolean }) {
   dialog: no `role="dialog"`, no `aria-modal`, and focus is neither moved into it nor trapped.
 - Because the markup stays in the document while `visible` is false, everything inside it is
   reachable by keyboard from the page behind. Conditional rendering is what prevents that.
-- The close button carries its own label from the header component.
+- The header's close cross carries `aria-label="close"`, but it is a `<div>` with no button
+  role and no tab stop, so a keyboard cannot reach it — and it is the only control that calls
+  `onClose`. A keyboard user needs a way out of yours.
 - `AriaAttributes` are part of the props type, so `aria-label` type-checks — but it lands on
   both the `<aside>` and the header, since unknown props are spread to both.
 

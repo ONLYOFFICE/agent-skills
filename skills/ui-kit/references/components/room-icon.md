@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/room-icon/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 7b466dac84dbffdec4bd613f0f3e3be805d45bbf035ddeb22c8c675a9ccda347 -->
+<!-- body-sha256: 287d1dccd511f7f8caddc739995a3346dd8677c257e021ae39a809a33a616a65 -->
 
 > Synced from the kit's own `components/room-icon/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["room-logo", "avatar", "badge"],
   "subComponents": [],
-  "testIds": ["room-icon", "room-title", "room-icon-cover", "room-icon-image", "empty-icon", "hover-container", "hover-image", "badge-container", "customFileInput"]
+  "testIds": ["room-icon", "room-title", "room-icon-cover", "room-icon-image", "empty-icon", "hover-container", "hover-image", "badge-container", "customFileInput"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # RoomIcon
@@ -132,7 +133,9 @@ export function RoomAvatar({
 ### The editable tile
 
 `withEditing` adds the pencil and the menu; `model` fills that menu; `onChangeFile` is what
-renders the hidden file input the upload entry reaches through its ref.
+renders the hidden file input. Only the entry whose `key` is
+`ROOM_ACTION_KEYS.CREATE_EDIT_ROOM_UPLOAD` (`"create_edit_room_upload"`, exported from the root
+barrel) is handed that input's ref; every other entry's `onClick` is called with no argument.
 
 ```tsx
 import { RoomIcon } from "@onlyoffice/apps-ui-kit/components/room-icon";
@@ -148,7 +151,12 @@ export function LogoPicker({
   onRemove: () => void;
 }) {
   const model: TModel[] = [
-    { key: "upload", label: "Upload", icon: "", onClick: onUpload },
+    {
+      key: "create_edit_room_upload",
+      label: "Upload",
+      icon: "",
+      onClick: onUpload,
+    },
     { key: "remove", label: "Remove", icon: "", onClick: onRemove },
   ];
 
@@ -220,6 +228,16 @@ export function PublicRoomIcon({ name }: { name: string }) {
   or an object with only `medium`, is used as an ordinary image URL and is not recoloured.
 - **`isTemplate`, `isEmptyIcon` and `showDefault` are checked in that order** and each replaces
   everything below it, so a tile that is both a template and empty renders the template.
+- **The initials' colour depends on the theme.** In the light theme they are black on a
+  `color` whose brightness is above 202 (of 255) and white on anything darker; in the dark
+  theme they are drawn in `color` itself, on the same colour at 0.1 opacity. An inlined cover
+  glyph is painted the same way. An archived tile in the dark theme keeps the black-or-white rule.
+- **`hoverSrc` animates the tile.** On hover the initials or the cover glyph slide up and fade
+  out, the background darkens to 80% brightness and the hover image fades in over it.
+- **`isArchive` removes the pencil.** An archived tile with `withEditing` keeps the 64px minimum
+  width and the pointer cursor, but draws neither the pencil nor the menu behind it.
+- **No `logo` means the initials**, on `color`. `showDefault` is for forcing them while a logo
+  exists; it is not needed to get them.
 
 ## CSS variables
 
@@ -233,6 +251,10 @@ All are read with a fallback, so setting any of them on an ancestor works.
 | `--room-icon-edit-bg`           | light grey, dark grey in dark | Background of the pencil button                   |
 | `--room-icon-dashed-border`     | `2px dashed` grey             | Border of the empty state                         |
 | `--room-icon-empty-radius`      | `10px`                        | Corner radius of the empty state                  |
+
+`--room-icon-bg` fills the badge glyph only when `badgeIconColor` is unset; a badge that keeps
+its own colours ignores it. `--room-icon-button-icon-color` paints the template outline only
+when the tile has no `color`.
 
 The tile's own size, radius and colour are written as inline custom properties from the props
 and cannot be overridden from a stylesheet.

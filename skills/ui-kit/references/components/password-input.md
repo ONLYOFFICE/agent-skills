@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/password-input/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 07d476551532aff1cfc87fda1d38ad586977ca25949c0a6d75fbfb6115b381a5 -->
+<!-- body-sha256: fe361c41857688f67016883e5a04fca96bbf645d293f5ac12a0334ce930488d3 -->
 
 > Synced from the kit's own `components/password-input/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["input-block", "text-input", "tooltip"],
   "subComponents": [],
-  "testIds": ["password-input"]
+  "testIds": ["password-input"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # PasswordInput
@@ -321,6 +322,8 @@ export function PasswordWithButton() {
   as given; an omitted one renders an empty line, and the rules list still reserves its space.
 - **The generate link appears only with `generatePasswordTitle`.** Without it the generator is
   reachable only through the `ref`.
+- **Generating reveals the password.** The generated value is written into the field and the
+  type switches to `text`, so the user sees what was made; the eye hides it again.
 - **`isDisabled` also un-reveals**: an effect forces the type back to `password`, so a revealed
   field hides itself when it is disabled.
 - **`scale` defaults to `true` here**, unlike [`InputBlock`](input-block.md), and
@@ -333,9 +336,19 @@ export function PasswordWithButton() {
 ## CSS variables
 
 The field's colours come from the shared input styles, so they follow
-[`TextInput`](text-input.md); the tooltip follows
+[`TextInput`](text-input.md): set its `--text-input-bg`, `--text-input-color`,
+`--text-input-border-color`, `--text-input-border-hover`, `--text-input-border-focus` and
+`--text-input-radius` on any ancestor of the field. The tooltip follows
 [`Tooltip`](tooltip.md). The rules in the tooltip are coloured green or red from the
 kit's status colours, which are not overridable.
+
+| Variable                         | Default | Effect                                           |
+| -------------------------------- | ------- | ------------------------------------------------ |
+| `--password-input-tooltip-width` | `294px` | Width of the rules tooltip on tablet and desktop |
+
+The rules tooltip is rendered in a portal at the end of `<body>`, so a value set on a wrapper
+around the field never reaches it: set `--password-input-tooltip-width` on `:root` or `body`. On
+mobile the width is a fixed `320px` and the variable is not read.
 
 ## Accessibility
 

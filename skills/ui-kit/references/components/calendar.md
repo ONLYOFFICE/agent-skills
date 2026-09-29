@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/calendar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 334e760da330965991f54f60d7b2d85202afab5fdda9c4cedf3f277b16ab4a60 -->
+<!-- body-sha256: 71e40105c590a6104b5b8edcdd54520bd5dad25ed1811b34d5aa615ae2a1fe99 -->
 
 > Synced from the kit's own `components/calendar/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["date-picker", "date-time-picker", "scrollbar"],
   "subComponents": [],
-  "testIds": ["calendar"]
+  "testIds": ["calendar"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Calendar
@@ -145,26 +146,69 @@ export function ExpiresAt() {
   `maxDate` is nearer, and a warning is written to the console.
 - **`locale` is typed as required but defaults to `"en"`.** The type will not let you leave it
   out; the component would cope if it could.
-- **There are three views behind one component**: days, months and years, reached by clicking the
-  header. The view resets to days when the calendar remounts, not when the date changes.
+- **There are three views behind one component**: days, months and years. Clicking the title of
+  the days view opens the months, and the title of the months view opens the years; the years
+  title does nothing. Picking a month or a year goes back one view, to that month or year. The
+  arrows step one month, one year or ten years, depending on the view. The view resets to days
+  when the calendar remounts, not when the date changes.
+- **Today is filled, the selected day is ringed**, both in the accent colour; the same goes for
+  the current and the selected month and year. When the selected day is today, only the fill
+  shows.
+- **The mobile layout follows the window, not `isMobile`.** Below 600px of window width the
+  calendar takes the full width, is 420px high with 16px padding and uses larger items and
+  title. `isMobile` only widens the gap between the two arrows from 8px to 12px.
 - `isScroll` wraps the grid in a [`Scrollbar`](scrollbar.md), which needs the container
   to have a height; without it the grid sizes itself.
-- Out-of-range days are greyed and the header arrows stop at the boundary month.
+- Out-of-range days, months and years are greyed and `disabled`, so they cannot be picked, and
+  the header arrows stop at the boundary.
 
 ## CSS variables
 
-The grid takes its colours from the shared theme tokens rather than from custom properties of
-its own; size it through its container.
+Set these on an ancestor to retheme or resize the calendar. Without them it takes its colours
+from the theme; everything else the stylesheet defines is private to it.
+
+| Variable                    | Default               | Effect                                                                                                    |
+| --------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------- |
+| `--calendar-bg`             | theme                 | Background of the calendar                                                                                |
+| `--calendar-border`         | theme                 | Colour of its one-pixel border                                                                            |
+| `--calendar-shadow`         | theme                 | Its box shadow                                                                                            |
+| `--calendar-radius`         | `6px`                 | Its corner radius                                                                                         |
+| `--calendar-padding`        | `30px 28px 28px 28px` | Inner padding; ignored with `isScroll` and in the mobile layout                                           |
+| `--calendar-width`          | `362px`               | Width; ignored in the mobile layout, which takes the full width                                           |
+| `--calendar-height`         | `376px`               | Height; ignored in the mobile layout, which is 420px high                                                 |
+| `--calendar-title`          | theme                 | Colour of the title and of its dashed underline on hover                                                  |
+| `--calendar-title-size`     | `18px`                | Font size of the title; ignored in the mobile layout                                                      |
+| `--calendar-outline`        | theme                 | Ring colour of the arrow buttons                                                                          |
+| `--calendar-arrow`          | theme                 | Colour of the arrow chevrons                                                                              |
+| `--calendar-disabled-arrow` | theme                 | Chevron colour of an arrow that cannot go further                                                         |
+| `--calendar-weekday`        | theme                 | Colour of the weekday labels                                                                              |
+| `--calendar-accent`         | theme accent          | Fill of today, ring of the selected day, arrow ring on hover and the title chevron                        |
+| `--calendar-selected-text`  | `#ffffff`             | Text colour of today, on the accent fill                                                                  |
+| `--calendar-current-radius` | `50%`                 | Corner radius of today                                                                                    |
+| `--calendar-focused-radius` | `50%`                 | Corner radius of the selected day                                                                         |
+| `--calendar-focused-bg`     | `transparent`         | Background of the selected day                                                                            |
+| `--calendar-focused-text`   | theme text colour     | Text colour of the selected day                                                                           |
+| `--calendar-hover-bg`       | theme                 | Background of an item under the pointer                                                                   |
+| `--calendar-hover-radius`   | `50%`                 | Corner radius of an item under the pointer                                                                |
+| `--calendar-past`           | theme                 | Text colour of the days of the previous and next month, and of the items outside the shown year or decade |
+| `--calendar-disabled`       | theme                 | Text colour of the items outside `minDate` and `maxDate`                                                  |
+
+"The mobile layout" is the one below 600px of window width, not `isMobile`.
 
 ## Accessibility
 
-- **The days are `<div>`s with click handlers.** There is no `grid` role, no `aria-selected`, and
-  the arrow keys do not move between days — the calendar cannot be operated from the keyboard at
-  all.
-- The header's previous and next controls are real buttons and are reachable, but changing the
-  month is announced only by the grid re-rendering.
-- Nothing states which day is selected other than its colour.
-- Where a keyboard path matters, pair the calendar with a typed date field of your own.
+Every day, month, year and arrow is a native `<button>`, so the keyboard support is the
+platform's:
+
+- Tab and Shift+Tab move through the arrows and the grid one item at a time; Enter and Space
+  pick the focused item. The arrow keys do not move between days, and there is no `grid` role.
+- Out-of-range items and arrows are `disabled`, so Tab skips them and they cannot be picked.
+- The arrows are named `aria-label="Previous"` and `aria-label="Next"`; changing the month is
+  announced only by the grid re-rendering.
+- The title that opens the month and year views is an `<h2>` with a click handler, so those
+  views are reachable by mouse only.
+- Nothing states which day is selected or which is today other than colour — there is no
+  `aria-selected` or `aria-current`, and each day is named only by its number.
 
 ## Test ids
 

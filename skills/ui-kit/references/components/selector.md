@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/selector/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 88d40a8b43ee9a003814a11153ae8ed38ad4ebd6ac9547e31d3ab47a4e6543c4 -->
+<!-- body-sha256: a8d03e515fbfc30474bca0827374d08161022e84de4b09f7069fd1bb4c1be15d -->
 
 > Synced from the kit's own `components/selector/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": "onClose", "loading": "isLoading", "disabled": null },
   "related": ["aside", "search-input", "table"],
   "subComponents": [],
-  "testIds": ["selector", "selector_search_input", "selector_submit_button", "selector_cancel_button"]
+  "testIds": ["selector", "selector_search_input", "selector_submit_button", "selector_cancel_button"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Selector
@@ -575,6 +576,74 @@ export function PeoplePanel({ people }: { people: TSelectorItem[] }) {
 }
 ```
 
+### "Save as": a folder trail and a file name
+
+`withBreadCrumbs` draws the trail above the list and `withFooterInput` puts a name field in the
+footer. A crumb click only reports the crumb — loading that folder is yours — and the edited
+name comes back as `onSubmit`'s third argument.
+
+```tsx
+import { useCallback, useState } from "react";
+import {
+  BreadCrumbsLoader,
+  RowLoader,
+  Selector,
+  type TBreadCrumb,
+  type TSelectorItem,
+} from "@onlyoffice/apps-ui-kit/components/selector";
+
+export function SaveAs({
+  folders,
+  trail,
+  openFolder,
+  save,
+}: {
+  folders: TSelectorItem[];
+  trail: TBreadCrumb[];
+  openFolder: (crumb: TBreadCrumb) => void;
+  save: (folder: TSelectorItem | undefined, name: string) => void;
+}) {
+  const [folder, setFolder] = useState<TSelectorItem | null>(null);
+  const loadNextPage = useCallback(async () => {}, []);
+
+  return (
+    <div style={{ width: 480, height: 485 }}>
+      <Selector
+        withBreadCrumbs
+        breadCrumbs={trail}
+        onSelectBreadCrumb={openFolder}
+        isBreadCrumbsLoading={false}
+        breadCrumbsLoader={<BreadCrumbsLoader />}
+        bodyIsLoading={false}
+        withFooterInput
+        footerInputHeader="File name"
+        currentFooterInputValue="Report.docx"
+        items={folders}
+        totalItems={folders.length}
+        hasNextPage={false}
+        isNextPageLoading={false}
+        isLoading={false}
+        disableFirstFetch
+        loadNextPage={loadNextPage}
+        rowLoader={<RowLoader isContainer />}
+        isMultiSelect={false}
+        selectedItem={folder}
+        onSelect={(item) => setFolder(item)}
+        submitButtonLabel="Save"
+        disableSubmitButton={false}
+        onSubmit={(selected, _access, fileName) => save(selected[0], fileName)}
+        emptyScreenImage=""
+        emptyScreenHeader="This folder is empty"
+        emptyScreenDescription="Save here, or pick another folder."
+        searchEmptyScreenImage=""
+        searchEmptyScreenHeader="Nothing matches"
+        searchEmptyScreenDescription="Try a shorter query."
+      />
+    </div>
+  );
+}
+```
+
 ## Behaviour the types don't state
 
 - **It needs a parent with a real height.** The body measures itself and hands the pixel count
@@ -617,35 +686,40 @@ export function PeoplePanel({ people }: { people: TSelectorItem[] }) {
 
 ## CSS variables
 
-| Variable                                       | Default        | Effect                                      |
-| ---------------------------------------------- | -------------- | ------------------------------------------- |
-| `--selector-border`                            | 1px solid grey | Footer's top line and the "select all" rule |
-| `--selector-body-description-text`             | theme grey     | Colour of `descriptionText`                 |
-| `--selector-breadcrumbs-prev-item-color`       | theme grey     | Crumbs behind the current one               |
-| `--selector-breadcrumbs-arrow-right-color`     | theme grey     | Arrows between crumbs                       |
-| `--selector-info-background-color`             | theme grey     | Background of the `withInfo` note           |
-| `--selector-info-color`                        | theme grey     | Text of that note                           |
-| `--selector-item-hover-background`             | theme grey     | Row under the pointer                       |
-| `--selector-item-selected-background`          | theme grey     | The ticked row, outside multi-select        |
-| `--selector-item-disabled-text-color`          | theme grey     | Label of a disabled row                     |
-| `--selector-item-input-button-border`          | 1px solid grey | Tick and cross of the inline name row       |
-| `--selector-item-input-button-border-hover`    | theme grey     | The same on hover                           |
-| `--selector-empty-screen-description-color`    | theme grey     | Paragraph on the empty screen               |
-| `--selector-empty-screen-button-color`         | theme grey     | Empty-screen link                           |
-| `--selector-empty-screen-hover-button-color`   | theme black    | The same on hover                           |
-| `--selector-empty-screen-pressed-button-color` | theme grey     | The same while pressed                      |
+| Variable                                       | Default        | Effect                                                                                                                                       |
+| ---------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--selector-border`                            | 1px solid grey | Footer's top line and the "select all" rule, as a `border` shorthand                                                                         |
+| `--selector-body-description-text`             | theme grey     | Colour of `descriptionText`                                                                                                                  |
+| `--selector-breadcrumbs-prev-item-color`       | theme grey     | Crumbs behind the current one, and the dots of a collapsed trail                                                                             |
+| `--selector-breadcrumbs-arrow-right-color`     | theme grey     | Arrows between crumbs                                                                                                                        |
+| `--selector-info-background-color`             | theme grey     | Background of the `withInfo` note                                                                                                            |
+| `--selector-info-color`                        | theme grey     | Text of that note                                                                                                                            |
+| `--selector-item-hover-background`             | theme grey     | Row under the pointer                                                                                                                        |
+| `--selector-item-selected-background`          | theme grey     | The ticked row, outside multi-select                                                                                                         |
+| `--selector-item-disabled-text-color`          | theme grey     | Label of a disabled row                                                                                                                      |
+| `--selector-item-input-button-border`          | 1px solid grey | Tick and cross of the inline name row, and the create-row drop-down, as a `border` shorthand                                                 |
+| `--selector-item-input-button-border-hover`    | theme grey     | Border and icon colour of that tick and cross on hover                                                                                       |
+| `--selector-empty-screen-description-color`    | theme grey     | Paragraph on the empty screen                                                                                                                |
+| `--selector-empty-screen-pressed-button-color` | theme grey     | Paragraph on the other empty screen, drawn without `withSearch` when the create row sets `isRoomsOnly` with a form-filling or data room type |
+
+The two empty-screen variables show only while the list is empty. The theme also defines
+`--selector-empty-screen-button-color` and `--selector-empty-screen-hover-button-color`, but
+the stylesheet reads neither, so setting them changes nothing.
 
 ## Accessibility
 
 - **The list is not reachable from the keyboard.** Rows are `<div>`s with an `onClick`, carry
   no role and are never focusable; only the rows near the viewport exist in the DOM at all, so
   assistive technology is given no list, no count and no position. In multi-select the row's
-  checkbox is focusable, and that is the only way through the list.
+  checkbox is focusable with Tab and toggled with Space, and that is the only way through the
+  list; outside multi-select a row can be picked only with the pointer.
 - The search box is given `tabIndex={1}`, a positive tab index, which pulls it ahead of
   everything else on the page in tab order.
 - Escape and Enter are listened for on the window, so they act even when focus is outside the
   panel — and Enter submits without the button being focused.
 - The empty screen's create and back controls are `<div>`s with click handlers, not buttons.
+- The footer's submit and cancel buttons are native buttons, reached with Tab and pressed with
+  Enter or Space.
 - Give the panel a name yourself: `headerProps.headerLabel` renders as text, not as a label for
   the region.
 

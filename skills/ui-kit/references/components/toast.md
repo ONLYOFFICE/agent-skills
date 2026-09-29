@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/toast/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: d7d49fde4e77b274c17b8396fb4d3de1121bc5c33e3f6e8ecd8f1a7e607a19c0 -->
+<!-- body-sha256: 84caeffec65b65519b9ec861e4e12432366c4bbdf9b9da1921ebeda2ebf4cac5 -->
 
 > Synced from the kit's own `components/toast/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["snackbar", "portal", "icon-button"],
   "subComponents": [],
-  "testIds": ["toast", "toast-content"]
+  "testIds": ["toast", "toast-content"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Toast
@@ -197,16 +198,18 @@ export async function uploadWithProgressToast(file: File) {
   out with no title line at all rather than with a blank one. Passing `null` deliberately
   reaches the same result, which is why a missing provider is easy to mistake for a design
   decision.
-- **`toastr.error` accepts more than a string.** A React element or an array is rendered as is;
-  an object with `response`, `statusText` or `message` is unwrapped; anything else becomes an
-  empty toast.
+- **Every method accepts more than a string**, not only `toastr.error`. A React element or an
+  array is rendered as is under the title — a line of text followed by a
+  [`Link`](link.md), say; an object with `response`, `statusText` or `message` is
+  unwrapped; anything else becomes an empty toast.
 - **The container is rendered into `#root`, not into `document.body`** — it is a
   [`Portal`](portal.md) with `appendTo` read from `document.getElementById("root")`,
   falling back to the body when there is no such element. An app whose root node has another id
   gets the toasts on the body, outside the theme class, and the colours go with it.
 - **`--toast-top-offset` is written on `<html>`**, not on the container: the component sets it
   from a `visualViewport` listener that only runs on a phone. It is a global side effect of
-  mounting the container.
+  mounting the container, and it does not move the toasts: the container declares its own
+  `--toast-top-offset: 16px`, which shadows the inherited value.
 - **Clicking any toast makes every toast `position: static`.** The container's own click
   handler rewrites the inline style of every `.Toastify__toast` in the document, which is how
   the stacked mobile layout is unstacked; it does not undo itself.
@@ -214,38 +217,43 @@ export async function uploadWithProgressToast(file: File) {
   while the position is fixed to `top-right` and mirrored by `inset-inline-end` in the
   stylesheet — the direction of your interface does not change it.
 - **The container is `position: fixed` at `z-index: 9999`**, 320px wide, 24px from the trailing
-  edge and `--toast-top-offset` from the top; at tablet width the toasts overlap by 8px, and on
-  a phone the container spans the viewport minus 32px.
+  edge and `--toast-top-offset` from the top. The newest toast is on top of the list. At tablet
+  width and below the toasts overlap as a deck, each 8px below the one in front and the
+  container 16px from the edge, and on a phone the container spans the viewport minus 32px.
 - `isSSR` makes the container render `null` on the first pass and appear after the first
   effect, so a server-rendered tree does not try to reach for `#root`.
 
 ## CSS variables
 
-Set them on any ancestor.
+Set them through the `style` prop of `Toast`. The container is portalled into `#root`, outside
+any wrapper of yours, so a value set on a wrapper never arrives; `#root` or `:root` would work
+for all but `--toast-top-offset`.
 
-| Variable             | Default | Effect                                      |
-| -------------------- | ------- | ------------------------------------------- |
-| `--toast-width`      | `320px` | Width of the container.                     |
-| `--toast-inset-end`  | `24px`  | Distance from the trailing edge.            |
-| `--toast-radius`     | `6px`   | Corner radius of one toast.                 |
-| `--toast-padding`    | `12px`  | Padding inside one toast.                   |
-| `--toast-text-size`  | `12px`  | Font size inside one toast.                 |
-| `--toast-top-offset` | `16px`  | Distance from the top. Rewritten on mobile. |
+| Variable             | Default | Effect                                                                                                                                                       |
+| -------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--toast-width`      | `320px` | Width of the container, above phone width; a phone always gets the viewport minus 32px.                                                                      |
+| `--toast-inset-end`  | `24px`  | Distance from the trailing edge, above tablet width; tablet width and below use 16px.                                                                        |
+| `--toast-radius`     | `6px`   | Corner radius of one toast.                                                                                                                                  |
+| `--toast-padding`    | `12px`  | Padding inside one toast.                                                                                                                                    |
+| `--toast-text-size`  | `12px`  | Font size of custom content that sets none of its own; the title and a string message stay at 12px.                                                          |
+| `--toast-top-offset` | `16px`  | Distance from the top. Declared on the container itself, so only `style` overrides it — an ancestor's value, the one written on `<html>` included, does not. |
 
 The per-type colours (`--toast-success-bg`, `--toastr-title-error-color` and their siblings)
 are set by the theme class and are not meant to be overridden one by one.
 
 ## Accessibility
 
-- Toasts are announced by `react-toastify`'s own live region, so a screen reader does hear
-  them — but a toast that closes after five seconds may be gone before it is read. Anything the
+- `react-toastify` puts `role="alert"` on the body of every toast, so a screen reader announces
+  its title and message as soon as it appears — but a toast that closes after five seconds may be gone before it is read. Anything the
   user must not miss belongs in a [`SnackBar`](snackbar.md) or a dialog.
 - **The whole toast is clickable and is not a button**: without `withCross` it is a `<div>`
   that closes on click, unreachable from the keyboard.
 - The cross is an [`IconButton`](icon-button.md), which is also a `<div>` with no
-  role and no accessible name, so it cannot be focused either.
-- The four types differ by colour and by icon. The icon is decorative, so the type is not
-  conveyed to assistive technology — put it in the title.
+  role and no accessible name, so it cannot be focused either. A toast opened with a `timeout`
+  of `0` therefore cannot be closed from the keyboard at all.
+- The four types differ by colour and by icon — a check for success, an info sign for info,
+  and one danger sign shared by error and warning, which only the colour tells apart. The icon
+  is decorative, so the type is not conveyed to assistive technology — put it in the title.
 
 ## Test ids
 

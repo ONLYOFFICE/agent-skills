@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/tab-item/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: f5092a107f409ad551a2bce0f3839d969887cd935bcb7b8c098c8bd34cda7e19 -->
+<!-- body-sha256: 44f94b513b339a60156561b9f15e98fb74347350ffa9760062cdbc8a57bec360 -->
 
 > Synced from the kit's own `components/tab-item/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["tabs", "checkbox", "quantity-picker"],
   "subComponents": [],
-  "testIds": ["tab-item"]
+  "testIds": ["tab-item"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # TabItem
@@ -161,6 +162,9 @@ export function TypeFilters() {
   not enable deselection: it turns off every internal update, including the effect that copies
   `isActive` in, so the pill's colour stops following the prop. Use it only for a pill whose
   appearance you drive entirely with `className`.
+- **Pressing an enabled pill shows the selected look** — the accent fill and label colour are
+  applied under `:active` too, so an unselected pill flashes selected while the pointer is
+  down, and a disabled one does not.
 - **A disabled pill that is also active stays fully opaque and keeps its fill**, because the
   fade rule is skipped for the active state; only the click guard still applies.
 - **The pill has no width of its own** beyond `padding: 4px 16px` and `max-width: 100%`, so a
@@ -172,14 +176,14 @@ export function TypeFilters() {
 
 Set them on any ancestor.
 
-| Variable                      | Default       | Effect                                 |
-| ----------------------------- | ------------- | -------------------------------------- |
-| `--tab-item-active-bg`        | accent colour | Background and border while selected.  |
-| `--tab-item-active-text`      | theme token   | Label colour while selected.           |
-| `--tab-item-border`           | theme token   | Whole `border` shorthand while idle.   |
-| `--tab-item-radius`           | `16px`        | Corner radius.                         |
-| `--tab-item-padding`          | `4px 16px`    | Inner padding.                         |
-| `--tab-item-disabled-opacity` | `0.5`         | Opacity while disabled and not active. |
+| Variable                      | Default       | Effect                                           |
+| ----------------------------- | ------------- | ------------------------------------------------ |
+| `--tab-item-active-bg`        | accent colour | Background and border while selected or pressed. |
+| `--tab-item-active-text`      | theme token   | Label colour while selected or pressed.          |
+| `--tab-item-border`           | theme token   | Whole `border` shorthand while idle.             |
+| `--tab-item-radius`           | `16px`        | Corner radius.                                   |
+| `--tab-item-padding`          | `4px 16px`    | Inner padding.                                   |
+| `--tab-item-disabled-opacity` | `0.5`         | Opacity while disabled and not active.           |
 
 ## Accessibility
 

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/dropzone/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 9a34bfc1fdd4ddb0176c22894844c2bfafd0da4394f2b6737c62b4bd8c915f5c -->
+<!-- body-sha256: b237738334f6fb550f84b610be0460d65aa87876ae99df2c9632ba8b15b1197e -->
 
 > Synced from the kit's own `components/dropzone/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,14 +18,15 @@
   "state": { "visibility": null, "close": null, "loading": "isLoading", "disabled": "isDisabled" },
   "related": ["drag-and-drop", "progress-bar", "file-input"],
   "subComponents": [],
-  "testIds": ["dropzone", "dropzone-input-area", "dropzone-input", "dropzone-icon", "dropzone-text", "dropzone-main-text", "dropzone-secondary-text", "dropzone-file-types"]
+  "testIds": ["dropzone", "dropzone-input-area", "dropzone-input", "dropzone-icon", "dropzone-text", "dropzone-main-text", "dropzone-secondary-text", "dropzone-file-types"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Dropzone
 
 Dashed upload area with a picture, a prompt and a format list, which turns into a loader while the
-upload runs. Clicking the prompt opens the file dialog; dropping files on the area does the same
-thing without it.
+upload runs. Clicking anywhere in the area, the prompt included, opens the file dialog; dropping
+files on the area does the same thing without it.
 
 ## Use this when / not when
 
@@ -240,12 +241,17 @@ export function UploadWithFormats({ send }: { send: (files: File[]) => void }) {
   area, which opens a hidden `webkitdirectory` input.
 - **It listens to the whole document.** `dragenter`, `dragleave` and `drop` are watched on
   `document` with a depth counter, so the area can highlight itself while a file is dragged
-  anywhere on the page. Each instance adds its own three listeners.
+  anywhere on the page: a faint tint while the file is anywhere over the page, a stronger one once
+  it is over the area itself. Each instance adds its own three listeners.
 - **A refused single upload is silent.** With `isMultipleUpload={false}`, more than one file — or,
   in folder mode, more than one root folder — calls `onSingleUploadError` and drops everything;
   nothing reaches `onDrop` and nothing is shown.
-- **`maxFiles` defaults to `0`, which means no limit**, and files over that limit go to
-  `onDropRejected`, not to `onDrop`.
+- **`maxFiles` defaults to `0`, which means no limit.** A drop over the limit is refused whole:
+  every file in it goes to `onDropRejected` with a too-many-files error, and `onDrop` is not
+  called.
+- **Folder mode has no format line.** With `isFolderUpload` the short list, the `+N` pill and the
+  full-list drop-down are not rendered, so `exstsText`, `fullExstsText` and
+  `formatsPlusBadgeValue` show nothing.
 - **The icon is rendered two different ways.** A string becomes an `<img>` with the fixed English
   `alt="Upload"`; a component is called with the class and the test id as props.
 - **The format line is only clickable with `fullExstsText`.** Without it the chevron, the
@@ -255,13 +261,39 @@ export function UploadWithFormats({ send }: { send: (files: File[]) => void }) {
 
 ## CSS variables
 
-The component's own colours come from the theme's dropzone variables, which it reads without a
-fallback of its own; there is no per-instance knob. Use `className`, `iconClassName` and
-`loaderClassName` to reach the three parts.
+Set these on the dropzone or any ancestor. Each one, when unset, falls back to the theme's own
+value or to the default below; `className`, `iconClassName` and `loaderClassName` reach the three
+parts for anything the variables do not cover.
+
+| Variable                          | Default             | Effect                                                                                      |
+| --------------------------------- | ------------------- | ------------------------------------------------------------------------------------------- |
+| `--dropzone-border-style`         | theme, `2px dashed` | Border, as a `border` shorthand                                                             |
+| `--dropzone-radius`               | `6px`               | Corner radius of the area                                                                   |
+| `--dropzone-min-height`           | `150px`             | Minimum height of the area                                                                  |
+| `--dropzone-gap`                  | `4px`               | Gap between the icon, the text lines and the format line, and between the items inside them |
+| `--dropzone-drag-bg`              | theme               | Background while a file is dragged over the page but not yet over the area                  |
+| `--dropzone-hover-bg-override`    | theme               | Background while a file is dragged over the area                                            |
+| `--dropzone-text-size`            | `13px`              | Font size of the two text lines and the format line                                         |
+| `--dropzone-link-secondary-color` | theme               | Colour of the second text line                                                              |
+| `--dropzone-text-color`           | theme               | Colour of the format line and its chevron                                                   |
+| `--dropzone-text-hover-bg`        | theme               | Format line background on hover; only with `fullExstsText`                                  |
+| `--dropzone-text-pressed-bg`      | theme               | Format line background while pressed; only with `fullExstsText`                             |
+| `--dropzone-text-focus-bg`        | theme               | Format line background while the full list is open                                          |
+| `--dropzone-text-focus-color`     | theme               | Format text colour while the full list is open                                              |
+| `--dropzone-badge-focus-color`    | theme               | `+N` pill background while the full list is open                                            |
+| `--dropzone-arrow-focus-color`    | theme               | Chevron colour while the full list is open                                                  |
+| `--dropzone-exsts-radius`         | `3px`               | Format line corner radius, seen on its hover, pressed and open backgrounds                  |
+| `--dropzone-formats-radius`       | `6px`               | Corner radius of the full-list drop-down                                                    |
+| `--dropzone-formats-shadow`       | none                | Shadow of the full-list drop-down                                                           |
+
+**The drop-down has no shadow unless you set one.** Its theme shadow is declared on the drop-down
+while the fallback is resolved on the outer element, where that value does not exist, so the
+default comes out as no shadow at all.
 
 ## Accessibility
 
-- The area is the drop library's `<div>`, which gives it a `tabIndex` and Enter and Space handling,
+- The area is the drop library's `<div>` with `role="button"`, named `File upload area` or
+  `Folder upload area`; the library gives it a `tabIndex` and Enter and Space handling,
   so the file dialog is reachable from the keyboard — **except in folder mode**, where the library's
   keyboard handling is switched off and only a pointer click opens the directory picker.
 - **Every ARIA label here is hard-coded English**: `File upload area`, `Folder upload area`,

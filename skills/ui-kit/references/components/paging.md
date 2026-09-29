@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/paging/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 363b4e8d96b030f25119c6f368522336dc095cbe854aa663704d9a4e57e6bd4a -->
+<!-- body-sha256: 534b84aabc31817f7b585a00fa3c91bc136dbed4bd41a08ec87ad7bd824d1b6a -->
 
 > Synced from the kit's own `components/paging/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["combobox", "button", "infinite-loader"],
   "subComponents": [],
-  "testIds": ["paging", "paging_previous_button", "paging_next_button", "paging_page_items_combobox", "paging_count_items_combobox"]
+  "testIds": ["paging", "paging_previous_button", "paging_next_button", "paging_page_items_combobox", "paging_count_items_combobox"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Paging
@@ -244,16 +245,18 @@ export function FetchingPaging({
 
 ## CSS variables
 
-| Variable                  | Default    | Effect                                                  |
-| ------------------------- | ---------- | ------------------------------------------------------- |
-| `--paging-gap`            | `8px`      | Gap between the button group and the page-size selector |
-| `--paging-button-gap`     | `8px`      | Gap between the buttons and the page selector           |
-| `--paging-font-size`      | `13px`     | Label size on the two buttons                           |
-| `--paging-button-padding` | `6px 28px` | Padding of the two buttons                              |
-| `--paging-prev-width`     | `111px`    | Maximum width of the previous button                    |
-| `--paging-next-width`     | `86px`     | Maximum width of the next button                        |
-| `--paging-nav-height`     | `40px`     | Height of the controls below 1024px                     |
-| `--paging-count-width`    | `125px`    | Width of the page-size selector                         |
+Set them on a wrapper or through the `style` prop.
+
+| Variable                  | Default    | Effect                                                                                                                                                |
+| ------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--paging-gap`            | `8px`      | Gap between the button group and the page-size selector; below 600px the column gap is a fixed 20px instead                                           |
+| `--paging-button-gap`     | `8px`      | Gap between the buttons and the page selector                                                                                                         |
+| `--paging-font-size`      | `13px`     | Label size on the two buttons from 1024px up; narrower windows use a fixed 14px                                                                       |
+| `--paging-button-padding` | `6px 28px` | Padding of the two buttons                                                                                                                            |
+| `--paging-prev-width`     | `111px`    | Maximum width of the previous button; a longer label is cut off. Below 1024px the cap is this plus 4px                                                |
+| `--paging-next-width`     | `86px`     | Maximum width of the next button; a longer label is cut off. Below 1024px the cap is this plus 3px                                                    |
+| `--paging-nav-height`     | `40px`     | Height of the two buttons below 1024px; it also sizes the page-size selector's wrapper there, but the button inside both selectors stays a fixed 40px |
+| `--paging-count-width`    | `125px`    | Width of the page-size selector from 600px up; narrower windows stretch it to full width                                                              |
 
 ## Accessibility
 

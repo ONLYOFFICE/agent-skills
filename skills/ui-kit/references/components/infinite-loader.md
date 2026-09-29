@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/infinite-loader/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: cbc2f2ece005e184583e9dac6f83d7e6a6d884a8ce5614c8d5d889579e8966fb -->
+<!-- body-sha256: 870838372a4cb4266c71cc45dccf7e9381d4085264c514ebb1036c6995d0a2ab -->
 
 > Synced from the kit's own `components/infinite-loader/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": "isLoading", "disabled": null },
   "related": ["rows/row-container", "table", "scrollbar"],
   "subComponents": [],
-  "testIds": ["infinite-loader-container-list"]
+  "testIds": ["infinite-loader-container-list"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # InfiniteLoader
@@ -166,17 +167,43 @@ export function LoadableList({
   or less — the inner elements of a [`Scrollbar`](scrollbar.md) — and falls back to
   the window when neither exists. Nothing here creates a scrolling region of its own.
 - **The width comes from an element found by a literal id**: `#table-container` for the `table`
-  layout and `#rowContainer` for every other. Without one of those in the document the items
-  are laid out at a width of zero, which is why the examples above put the id on the wrapper.
-- **Every item is `itemSize` tall**, and a taller one is clipped. One height for the whole
-  list.
+  layout, `#tileContainer` for `tile` and `#rowContainer` for every other. Without the right one
+  in the document the items are laid out at a width of zero, which is why the examples above
+  put the id on the wrapper.
+- **Every row and table row is `itemSize` tall**, and a taller one is clipped. The `tile` layout
+  ignores `itemSize`: it sizes each grid row by the class name of the child in it — `isRoom`,
+  `isFolder`, `isFile`, `isTemplate`, or a section header otherwise — so tiles of one kind share
+  a row height.
+- **The `table` layout takes its columns from `localStorage`.** Each row is a CSS grid whose
+  `grid-template-columns` is the value saved under `columnStorageName`, or under
+  `columnInfoPanelStorageName` while `infoPanelVisible` is set. Both keys are required there:
+  rendering a table row without either throws.
+- **Rows not loaded yet are skeletons.** In the `row` and `table` layouts every position past
+  `filesLength` shows a `RowsSkeleton` or `TableSkeleton` row until its page arrives; the
+  `tile` layout shows no placeholder for them.
 - **A long jump in the scroll position shows skeletons for 200ms.** The component watches the
-  scroll and, when it moves more than 800px in one event, swaps the rows for
-  `RowsSkeleton` or `TableSkeleton` briefly — that is what `viewAs` picks, and any other value
-  shows nothing during the jump.
+  scroll and, when it moves more than 800px in one event, swaps the rows still scrolling for
+  skeletons briefly — `TileSkeleton`s in the `tile` layout, `RowsSkeleton` or `TableSkeleton`
+  in `row` and `table`, and nothing for any other `viewAs`.
 - `isLoading` returns `null`, so the region collapses rather than holding its height.
 - `children` has to be an array; the loader indexes it and asks for two more entries than there
   are when `hasMoreFiles` is set, to leave room for the loading rows.
+
+## CSS variables
+
+Set these on an ancestor. Everything else the stylesheet defines is private to it.
+
+| Variable                          | Default        | Effect                                                                                                                        |
+| --------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `--infinite-loader-tile-gap`      | `14px 16px`    | Gap between the skeleton tiles of a `tile` row during a long scroll jump; on tablet and smaller screens it is fixed at `14px` |
+| `--infinite-loader-tile-min-size` | `216px`        | Smallest width of those skeleton tiles                                                                                        |
+| `--infinite-loader-tile-max-size` | `360px`        | Largest width of those skeleton tiles                                                                                         |
+| `--infinite-loader-list-width`    | measured width | Width of the list in the `row` and `table` layouts, in place of the measured container width                                  |
+
+The three tile variables size only the skeletons shown for a moment after a jump of more than
+800px; the real tiles are whatever the children render. `--infinite-loader-table-width` is not
+one to set: the list writes the measured width into it on its own element, overwriting a value
+from outside, so use `--infinite-loader-list-width` instead.
 
 ## Accessibility
 

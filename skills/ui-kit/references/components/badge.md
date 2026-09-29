@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/badge/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 44602984746350243afc01cbbde076e056f5b6bd0a2e7ab7046268dd6a12c61c -->
+<!-- body-sha256: aca32e2b42f587c8aeed1a0a69ab317e6ef60e23dc33ad8735f47b068c56ef4c -->
 
 > Synced from the kit's own `components/badge/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["tag", "selected-item", "text"],
   "subComponents": [],
-  "testIds": ["badge", "badge-inner", "badge-text"]
+  "testIds": ["badge", "badge-inner", "badge-text"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Badge
@@ -100,6 +101,9 @@ Declared by [`components/text`](text.md) and accepted here too.
 
 | Prop                | Type                                            | Required | Default | Description                                                                                                                                                                                                                     |
 | ------------------- | ----------------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aria-hidden`       | `Booleanish`                                    | no       | –       | Hides the element from assistive technology, passed unchanged, for decoration that repeats what is already read.                                                                                                                |
+| `aria-label`        | `string`                                        | no       | –       | Accessible name, passed unchanged, for text whose content is not what should be announced.                                                                                                                                      |
+| `aria-live`         | `"assertive" \| "off" \| "polite"`              | no       | –       | Live-region politeness, passed unchanged, for a line whose content changes and should be read out.                                                                                                                              |
 | `as`                | `ElementType<any, keyof JSX.IntrinsicElements>` | no       | –       | Element to render, replacing the component's own default — `p` for `Text` itself. Wins over `tag` when both are set.                                                                                                            |
 | `backgroundColor`   | `string`                                        | no       | –       | Background colour, as an inline style. Any CSS colour.                                                                                                                                                                          |
 | `children`          | `ReactNode`                                     | no       | –       | Text to render.                                                                                                                                                                                                                 |
@@ -121,6 +125,7 @@ Declared by [`components/text`](text.md) and accepted here too.
 | `noSelect`          | `boolean`                                       | no       | –       | Stops the text being selected, on every browser the kit supports.                                                                                                                                                               |
 | `onClick`           | `(e: React.MouseEvent<Element>) => void`        | no       | –       | Called with the event when the element is clicked.                                                                                                                                                                              |
 | `rel`               | `string`                                        | no       | –       | Passed to the element unchanged, for `as="a"`.                                                                                                                                                                                  |
+| `role`              | `AriaRole`                                      | no       | –       | ARIA role of the element, passed unchanged: `status` or `alert` for a line that reports an outcome, `button` alongside `tabIndex` and `onClick`.                                                                                |
 | `style`             | `CSSProperties`                                 | no       | –       | Inline style of the element. `Text` merges it over the style props above, so a `fontSize` here wins over the `fontSize` prop.                                                                                                   |
 | `tabIndex`          | `number`                                        | no       | –       | Passed to the element unchanged. The component adds no role, so a focusable text element needs one from you.                                                                                                                    |
 | `tag`               | `string`                                        | no       | –       | Element to render, used only while `as` is unset. It is a tag name, not an id.                                                                                                                                                  |
@@ -214,7 +219,8 @@ export function PlanMarker() {
   including the background colour. Use `className`, or pass `backgroundColor`, `height` and
   `border` as props.
 - **The pointer cursor is on by default**, hover or not, and so is a background shift on hover and
-  on active. A badge that is not clickable wants `noHover`.
+  on active: the pill turns 15% transparent under the pointer and takes 10% black while pressed,
+  muted grey included. A badge that is not clickable wants `noHover`.
 - **`type="high"` overrides the spacing props.** Its padding and radius are `!important` on the
   pill, so `padding` and `borderRadius` stop applying there; the outer element keeps the radius
   you passed. Its 13px / 400 text is a plain rule, so `fontSize` and `fontWeight` still win.
@@ -238,6 +244,8 @@ export function PlanMarker() {
 | `--badge-high-padding`   | `3px 10px`                     | Padding of the pill while `type="high"`                      |
 | `--badge-high-font-size` | `13px`                         | Font size of the label while `type="high"`                   |
 | `--accent-main`          | orange, per theme              | The default background, shared with the rest of the kit      |
+
+`isMutedBadge` wins over `--badge-bg`: a muted badge stays grey whatever the variable says.
 
 ## Accessibility
 

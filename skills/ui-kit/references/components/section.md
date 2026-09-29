@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/section/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 98e4564af842b8a32ea197ffabac913492d845b376c8e422a32f48e7acee296b -->
+<!-- body-sha256: 27504a2d130649e0a56484f61dc8162598caa5fd95073653ee8cc0d8c8562334 -->
 
 > Synced from the kit's own `components/section/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -29,7 +29,8 @@
     "Section.InfoPanelBody",
     "Section.ChatPanel"
   ],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Section
@@ -374,27 +375,39 @@ render nothing themselves.
 
 ## CSS variables
 
-| Variable                         | Default | Effect                                               |
-| -------------------------------- | ------- | ---------------------------------------------------- |
-| `--section-bg`                   | theme   | Background of the section                            |
-| `--section-header-size`          | `69px`  | Height of the header on a desktop                    |
-| `--section-header-tablet-size`   | `61px`  | Height of the header on a tablet                     |
-| `--section-header-mobile-size`   | `53px`  | Height of the header on a phone                      |
-| `--section-content-padding`      | `-20px` | Negative inline padding that bleeds the body out     |
-| `--section-footer-margin`        | `40px`  | Space above the footer                               |
-| `--section-footer-margin-mobile` | `32px`  | The same on a phone                                  |
-| `--section-filter-bottom`        | `0`     | Where the table header pins with `stickyTableHeader` |
-| `--info-panel-width`             | `400px` | Width of the info panel on a desktop                 |
-| `--info-panel-tablet-width`      | `480px` | Width of the info panel on a tablet                  |
-| `--info-panel-background`        | theme   | Background of the info panel                         |
-| `--info-panel-border-color`      | theme   | Its leading border                                   |
-| `--info-panel-backdrop`          | theme   | The blur behind it below the desktop breakpoint      |
-| `--chat-panel-width`             | `400px` | Width of the docked chat panel                       |
-| `--chat-panel-bg`                | theme   | Background of the chat panel                         |
-| `--chat-panel-drop-border`       | accent  | Border of its "drop to attach" overlay               |
+| Variable                               | Default                 | Effect                                                                                                               |
+| -------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `--section-bg`                         | theme                   | Background of the pinned strip that holds the header, the submenu and the desktop filter                             |
+| `--section-header-size`                | `69px`                  | Height of the header on a desktop                                                                                    |
+| `--section-header-tablet-size`         | `61px`                  | Height of the header on a tablet                                                                                     |
+| `--section-header-mobile-size`         | `53px`                  | Height of the header on a phone                                                                                      |
+| `--section-footer-margin`              | `40px`                  | Space above the footer                                                                                               |
+| `--section-footer-margin-mobile`       | `32px`                  | The same on a phone                                                                                                  |
+| `--section-mobile-footer-height`       | `64px`                  | Empty space under the body on a tablet and a phone, which keeps the last row clear of floating buttons               |
+| `--section-filter-top`                 | `0`                     | With `stickyTableHeader`: where the filter comes to rest under the header                                            |
+| `--section-filter-height`              | `0`                     | With `stickyTableHeader`: minimum height of the filter row                                                           |
+| `--section-filter-bottom`              | `0`                     | With `stickyTableHeader`: where the table header comes to rest under the filter                                      |
+| `--info-panel-width`                   | `400px`                 | Width of the info panel on a desktop                                                                                 |
+| `--info-panel-tablet-width`            | `480px`                 | Width of the info panel on a tablet, capped at the window width less 69px; on a phone the panel is always full width |
+| `--info-panel-background`              | theme                   | Background of the info panel                                                                                         |
+| `--info-panel-border-color`            | theme                   | Its inline-start border; desktop only, the panel has no border below it                                              |
+| `--info-panel-backdrop`                | theme                   | Colour of the overlay behind it below the desktop breakpoint                                                         |
+| `--chat-panel-width`                   | `400px`                 | Width of the docked chat panel                                                                                       |
+| `--chat-panel-background`              | theme                   | Background of the chat panel                                                                                         |
+| `--chat-panel-border-color`            | theme                   | Its inline-start border                                                                                              |
+| `--chat-panel-drop-overlay-background` | the chat panel's own    | Fill of its "drop to attach" frame, drawn at 85% opacity                                                             |
+| `--chat-panel-drop-border-color`       | accent; white in `dark` | Dashed border of that frame                                                                                          |
+| `--chat-panel-drop-inset-top`          | `69px`                  | Space left above that frame for the chat's own header; a phone always leaves 53px, whatever you set                  |
 
 Every default above is the theme's own value, applied through the `light`/`dark` class on
 `<body>`; the table lists what you get when you override nothing.
+
+**Below the desktop breakpoint the info panel is portalled to `#root`**, out of any wrapper around
+the section, so its variables have to be set on `:root` (or on an ancestor of `#root`) to reach it
+there. **A resizable chat panel owns its width**: with `isChatPanelResizable` on a desktop, docked
+and with `chatPanelWidth` set, the panel writes `--chat-panel-width` on itself, which outranks a
+value set on a wrapper. **`--section-content-padding` does nothing**: it is read only on the
+header, and the body's negative margin never sees it.
 
 ## Accessibility
 
@@ -406,6 +419,10 @@ Every default above is the theme's own value, applied through the `light`/`dark`
   assistive technology.
 - The info panel is a plain region even when it covers the page below the desktop breakpoint: focus
   is not moved into it, not trapped, and not restored when it closes, and Escape does not close it.
+- PageUp, PageDown, Home and End pressed inside the info panel's scroller stop there, so they
+  scroll the panel and not the listing behind it.
+- The chat panel's resize handle is mouse-only and carries `role="presentation"`, so it cannot be
+  reached from the keyboard and screen readers skip it.
 - Nothing announces the operations progress; the button that shows it is visual only.
 
 ## Test ids

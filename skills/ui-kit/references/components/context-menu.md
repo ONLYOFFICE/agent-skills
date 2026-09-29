@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/context-menu/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 28766ab3378ee94c90fba132a9b394f8b6d1865f487a678bad8115caea60e394 -->
+<!-- body-sha256: bd9501dffb779238179db9fb591e08d9ad75665dd9c4e3bada5492430a1b8dac -->
 
 > Synced from the kit's own `components/context-menu/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": "onHide", "loading": null, "disabled": null },
   "related": ["context-menu-button", "drop-down", "rows/row"],
   "subComponents": [],
-  "testIds": ["context-menu"]
+  "testIds": ["context-menu"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ContextMenu
@@ -35,7 +36,8 @@ keyboard navigation. It has no visibility prop: you keep a ref and call `show(ev
 - Not for a menu anchored to a button you control: [`DropDown`](drop-down.md) is
   simpler, and [`ContextMenuButton`](context-menu-button.md) wires the two together.
 - Not for choosing a value — [`ComboBox`](combobox.md).
-- Not as a dialog. The backdrop only appears in the mobile form, and nothing traps focus.
+- Not as a dialog. The backdrop only appears in the mobile form or with `ignoreChangeView`,
+  and nothing traps focus.
 
 ## Import
 
@@ -256,31 +258,68 @@ export function ShareMenu({ onCopy }: { onCopy: () => void }) {
   selection must use it — `model` is read when the component renders, not when the menu opens.
 - **A leading or trailing separator is dropped**, so a list built by filtering does not end up
   with a rule against the edge.
-- **On a phone the menu becomes a sheet at the bottom** — but only when it is taller than 210px,
-  or when `ignoreChangeView` is set. In that form it is portalled into `#root`, found by that
-  literal id, and the backdrop finally appears; on a desktop `withBackdrop` shows nothing.
+- **On a phone the menu becomes a sheet at the bottom** — a viewport 600px wide or narrower,
+  and only when the menu is taller than 210px or `ignoreChangeView` is set. In that form it is
+  portalled into `#root`, found by that literal id, and the backdrop finally appears. On a
+  desktop `withBackdrop` shows nothing unless `ignoreChangeView` is set too, which brings the
+  backdrop behind the ordinary menu.
+- **On the sheet a submenu replaces the list in place**, with a back button in the header,
+  rather than opening to the side.
+- **Disabled items are dropped from the list** unless `showDisabledItems` is set; then they
+  are shown greyed out, and an item's `getTooltipContent` explains on hover why it is
+  disabled.
 - **Escape, the arrow keys and Enter work** while the menu is open, through a `keyup` listener
   on the window. `withHotkeys={false}` turns them off. Nothing else in the kit's menus does
   this.
 - Opening the menu again while it is open re-shows it at the new position rather than toggling
   it; `toggle(event)` is the one that closes.
-- An item with `items` opens a submenu to the side, and one with `onLoad` fetches them the
-  first time it is opened.
+- An item with `items` opens a submenu to the side on hover, to any depth, and one with
+  `onLoad` fetches them the first time it is opened.
 - `global` and `autoZIndex` are declared and never read.
 
 ## CSS variables
 
-The menu styles itself from the theme and exposes no variables of its own. Its width is the
-widest item, capped by `maxHeight` for the list and `maxHeightLowerSubmenu` for a second-level
-submenu.
+The menu is portalled out of its parent, so a variable set on a wrapper element never reaches
+it: pass them through the menu's own `style` prop (or render it inside the wrapper with
+`appendTo`). Every default not given below comes from the theme.
+
+| Variable                                       | Default                          | Effect                                                                                                                    |
+| ---------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `--context-menu-bg`                            | theme                            | Menu background                                                                                                           |
+| `--context-menu-border-style`                  | none (light), `1px solid` (dark) | Menu border, as a `border` shorthand                                                                                      |
+| `--context-menu-header-border-style`           | theme                            | Separator line, and the mobile header's bottom border                                                                     |
+| `--context-menu-shadow`                        | theme                            | Menu `box-shadow`                                                                                                         |
+| `--context-menu-text`                          | theme                            | Item text and icon colour                                                                                                 |
+| `--context-menu-item-hover-bg`                 | theme                            | Item background on hover, and of the item whose submenu is open                                                           |
+| `--context-menu-item-disabled-text`            | theme                            | Disabled item text colour                                                                                                 |
+| `--context-menu-item-disabled-bg`              | theme                            | Disabled item background on hover                                                                                         |
+| `--context-menu-active-item-bg`                | theme                            | Background of the item highlighted from the keyboard                                                                      |
+| `--context-menu-radius`                        | `6px`                            | Corner radius                                                                                                             |
+| `--context-menu-menu-item-padding`             | `0 16px`                         | Item padding; keep the vertical part 0, the list height is computed for it                                                |
+| `--context-menu-divider-margin`                | `6px 16px`                       | Separator margin; keep the vertical part 6px, the list height is computed for it                                          |
+| `--context-menu-item-text-size`                | `13px`                           | Item font size                                                                                                            |
+| `--context-menu-item-text-weight`              | `600`                            | Item font weight                                                                                                          |
+| `--context-menu-item-height`                   | `36px`                           | Item row height; the list is sized for 36px, so another value leaves a gap or a scrollbar unless items carry descriptions |
+| `--context-menu-item-with-description-padding` | `8px 12px`                       | Padding of an item that has a `description`                                                                               |
+| `--context-menu-item-description-width`        | `330px`                          | Width of the description line, which sets the menu's width                                                                |
+| `--context-menu-item-description`              | theme                            | Description text colour                                                                                                   |
+| `--context-menu-header-row-height`             | `55px`                           | Mobile sheet header height                                                                                                |
+| `--context-menu-header-inner-padding`          | `6px 16px`                       | Mobile sheet header padding                                                                                               |
+| `--context-menu-header-text-size`              | `15px`                           | Mobile sheet header font size                                                                                             |
+
+Otherwise the menu's width is the widest item, and its height is capped by `maxHeight` for the
+list and `maxHeightLowerSubmenu` for a second-level submenu.
 
 ## Accessibility
 
-- The menu and its items are `<div>`s with no menu roles, but the keyboard handling is real:
-  arrows move the highlight, Enter chooses, Escape closes, and a submenu opens on the right
-  arrow.
-- Focus is not moved into the menu and not trapped, and the element that opened it is not
-  linked to it by `aria-controls` or `aria-expanded` — add those on your own control.
+- Each item is a link with `role="menuitem"` and each divider has `role="separator"`, but the
+  menu container has no `menu` role.
+- The keyboard handling is real: Arrow Up and Down move the highlight, Arrow Right opens the
+  highlighted item's submenu and Arrow Left returns to the parent list, Enter chooses the item
+  or opens its submenu, and Escape closes.
+- Focus is not moved into the menu and not trapped: the highlight is only drawn on the item, so
+  a screen reader does not announce which item is highlighted. The element that opened the menu
+  is not linked to it by `aria-controls` or `aria-expanded` — add those on your own control.
 - A right-click is the usual way in, which no keyboard user has. Give the same actions a button
   as well, as [`Row`](rows/row.md) does.
 

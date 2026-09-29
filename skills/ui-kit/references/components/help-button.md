@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/help-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 0082d7dc5ece6f75992cb9674cace771da587613dd2b8711a96e49e0cbe94957 -->
+<!-- body-sha256: ac63a71b2883e3843ae14023397e3c3ecd2155c401306d101fc7a3d82807c7e7 -->
 
 > Synced from the kit's own `components/help-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "isOpen", "close": "afterHide", "loading": null, "disabled": "isDisabled" },
   "related": ["tooltip", "icon-button", "field-container"],
   "subComponents": [],
-  "testIds": ["help-button"]
+  "testIds": ["help-button"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # HelpButton
@@ -199,14 +200,37 @@ export function LabelWithHelp() {
   generated id each time it renders, and the tooltip finds its anchor by a selector built from
   that id — so a button inside something that re-renders loses its tooltip.
 - **It opens on click by default,** not on hover, and the tooltip is `clickable`, which is what
-  lets a link inside it be reached.
-- The icon is the kit's info glyph at 12px unless you pass `iconName` or `iconNode`, and it is
-  an [`IconButton`](icon-button.md) — a `<div>`, so not focusable and not activated by
-  Enter.
+  lets a link inside it be reached. It stays open until the next click on the icon, Escape, a
+  click elsewhere, a scroll or a window resize. With `openOnClick` off it opens on hover and
+  closes when the pointer leaves.
+- `place` is a preference: when that side has no room the tooltip flips to another one.
+- The icon is the kit's info glyph at 12px, in the theme's grey, unless you pass `iconNode`, and
+  it is an [`IconButton`](icon-button.md) — a `<div>`, so not focusable and not
+  activated by Enter. **`iconName` is ignored:** the component always hands `IconButton` an
+  `iconNode`, its own glyph when you give none, and `IconButton` reads `iconName` only without
+  one.
 - `tooltipId`, `tooltipProps`, `offsetTop`, `offsetRight`, `offsetBottom` and `offsetLeft` are
   declared and never read.
 - The component renders a wrapper `<div>` of its own around the anchor, with no display or size
   of its own; put it in a flex row next to the label.
+
+## CSS variables
+
+HelpButton has no stylesheet of its own; these belong to the [`Tooltip`](tooltip.md)
+it renders for node content. That tooltip lives in a portal, outside the HelpButton's wrapper,
+so a value set around the component never reaches it: pass the variables in `tooltipStyle`,
+which lands on the tooltip box itself, or set them on `:root`. A string tooltip is drawn by the
+shared `RootTooltip`, which `tooltipStyle` does not reach.
+
+| Variable                    | Default                             | Effect                                                                      |
+| --------------------------- | ----------------------------------- | --------------------------------------------------------------------------- |
+| `--tooltip-bg`              | theme surface                       | Background of the tooltip                                                   |
+| `--tooltip-color`           | theme text                          | Text colour of the tooltip                                                  |
+| `--tooltip-max-width-value` | `--tooltip-max-width`, i.e. `320px` | Widest the tooltip grows before its text wraps; wins over `tooltipMaxWidth` |
+
+The rest of the tooltip's variables are listed in its README. The icon's colour is not a
+variable you can set from outside: `IconButton` writes `--icon-button-color` on the icon
+element itself, so use the `color` prop.
 
 ## Accessibility
 
@@ -214,6 +238,7 @@ export function LabelWithHelp() {
   handler. The explanation is unreachable from the keyboard and unannounced by a screen reader.
 - Give the wrapper a `tabIndex` and a `role` of your own, or put the same text in the page where
   it does not need opening, when the content matters.
+- Once open, the tooltip closes on Escape.
 - The tooltip is not linked to anything by `aria-describedby`; nothing here reaches the
   accessibility tree.
 

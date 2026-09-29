@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/room-logo/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 1889a61596538fe5a75c0a3a2b07c2c88b3d74f489e07026d82d2b2b858d1092 -->
+<!-- body-sha256: 1e807ab6348af5d96240e54d5f2c2830142540a883ff46a9dda55ab66b7df4b6 -->
 
 > Synced from the kit's own `components/room-logo/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["room-icon", "room-type", "checkbox"],
   "subComponents": [],
-  "testIds": ["room-logo"]
+  "testIds": ["room-logo"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # RoomLogo
@@ -189,7 +190,9 @@ export function SelectableRoom({
 | `--room-logo-size`   | `32px`  | Width and height of the box, and its minimums            |
 | `--room-logo-radius` | `6px`   | Corner radius applied to the glyph, not to the outer box |
 
-The glyphs are SVG assets with baked-in colours; neither variable recolours them.
+The glyphs are SVG assets with baked-in colours; neither variable recolours them. Nor does
+`--room-logo-size` scale them: each SVG is drawn at a fixed 32px, so a larger box only adds
+empty space around the glyph, and a smaller one leaves it overflowing the box.
 
 ## Accessibility
 

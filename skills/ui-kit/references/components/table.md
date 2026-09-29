@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/table/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: e70cd4af7272268d6d207c0eb7db97264e3bf0c4af3913feb992b3d5227e1fb8 -->
+<!-- body-sha256: 8e3ed80705da7e3066b77d4246c954870b83ada695a72f644d7a388baa6c36e1 -->
 
 > Synced from the kit's own `components/table/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": "onHideContextMenu", "loading": null, "disabled": "isBlocked" },
   "related": ["rows", "context-menu", "checkbox"],
   "subComponents": ["TableContainer", "TableHeader", "TableBody", "TableRow", "TableCell", "TableGroupMenu"],
-  "testIds": ["table-container", "table-header", "table-body", "table-row", "table-cell", "table-group-menu", "table-settings"]
+  "testIds": ["table-container", "table-header", "table-body", "table-row", "table-cell", "table-group-menu", "table-settings"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Table
@@ -419,9 +420,22 @@ export function SelectableRows({ names }: { names: string[] }) {
 ## Behaviour the types don't state
 
 - **The header lays out the whole table.** It computes a `grid-template-columns` string and
-  writes it onto the container element and onto every `.table-container_row` in the document.
-  Cells have no widths of their own, and a row rendered outside that container is not laid out
-  at all.
+  writes it onto the container element and onto itself. The plain body and every `TableRow` are
+  `display: contents`, so each cell is an item of the container's grid and lines up under its
+  header cell. Cells have no widths of their own, and a row rendered outside that container is
+  not laid out at all.
+- **With `useReactWindow` the grid moves onto the rows.** The container and the body become
+  full-height blocks, the virtual list wraps each row in a `.table-list-item` element whose grid
+  is read from the stored widths, and the header rewrites every `.table-list-item` (and
+  `.table-row`) inside the container as it resizes.
+- **The first layout.** A column with `defaultSize` gets that width, an `isShort` one its
+  `minWidth`, and the `default` column 40% of what is left — all of it when no other column is
+  enabled — while the other enabled columns share the remaining 60% equally, never below 110px.
+  With `withoutWideColumn` every column gets an equal share.
+- **Running out of room.** When the enabled columns no longer fit at their minimum widths, the
+  header collapses every column to `0px` except the `default` one, which takes the free width,
+  and the `isShort` and `defaultSize` ones; it greys the settings cog out and reports the change
+  through `setHideColumns`.
 - **`TableBody` renders an empty element unless both storage names are set.** The guard is
   `if (!columnStorageName || !columnInfoPanelStorageName) return <div />`, so a table missing
   the info-panel key shows nothing — no error, no rows. Pass both, always.
@@ -433,15 +447,50 @@ export function SelectableRows({ names }: { names: string[] }) {
   `#table-container_caption-header`, and each header cell `#column_<index>`; the virtual list
   measures the first of those by id. One table to a page.
 - **Only columns with an `onChange` appear in the settings menu**, and `isDisabled` keeps a
-  column out of it. A column whose `enable` is false keeps its slot in the grid but renders no
-  title.
+  column out of it, so a column that must always show cannot be unticked. Each entry is a
+  checkbox labelled with the column's `title` and ticked while `enable` is set; ticking it calls
+  `onChange` with the column's key and changes nothing else — flipping `enable` and storing the
+  choice is the caller's job. The list stays open across ticks and closes on a click anywhere
+  else or on the cog again. A column whose `enable` is false keeps its slot in the grid but
+  renders no title.
+- **The sort arrow belongs to a column with an `onClick`.** It shows while the pointer is over
+  the header cell or while the column is the one sorted by (or `active`), and it is turned over
+  while `sorted` is off. A click on the title calls `onClick` with the column's `sortBy`; a
+  click on the arrow calls `onIconClick` instead when the column has one. With `sortingVisible`
+  off the arrow is gone and clicks do nothing.
+- `isShort` narrows the space a header cell keeps for the resize handle from 22px to 12px, for
+  a narrow column such as a row number.
 - **`resizable` on a column describes its neighbour.** The handle is drawn on a cell when the
   _next_ column is resizable, and dragging it moves the boundary between the two. The first
   column cannot go below 210px, the rest below 110px or their own `minWidth`.
 - **`TableRow` renders the context button from the presence of `contextOptions`**, like
   [`Row`](rows/row.md), and the button is a
   [`ContextMenuButton`](context-menu-button.md) in `toggle` mode, so the row's own
-  right-click handler is what opens the menu.
+  right-click handler is what opens the menu. The context menu shows `contextOptions`, or the
+  items `getContextModel` builds at the moment it opens.
+- **`checked` and `isActive` paint nothing on the row.** `checked` adds a `checked` class, and
+  on a device with hover, children marked `create-share-link` stay hidden until the row is
+  hovered, checked or active; the highlight itself is the caller's styles. While `dragging` is set, children marked
+  `droppable-hover` are filled with the drop colour, unless the row is active or the rows are
+  being reordered.
+- **`isIndexEditingMode` is a reorder mode.** The header stops columns being resized and greys
+  the cog out, and each row drops its context-menu cell altogether.
+- **`TableCell` is a 48px box.** It has a bottom border, centres its content vertically and
+  clips whatever does not fit. With `hasAccess`, a child marked `table-container_element` is
+  swapped for a child marked `table-container_row-checkbox` while the pointer is over the cell;
+  with `checked` the checkbox stays in place either way.
+- `TableCell` and `TableRow` are memoised with a deep comparison of their props, so updating
+  one row does not redraw the others.
+- **Virtualisation.** With `useReactWindow`, the body mounts only the rows near the visible part
+  of the section's scroller (`#sectionScroll`, or the window when there is none) and three
+  beyond it, each `itemHeight` tall. While `hasMoreFiles` is set it adds two placeholder rows
+  after the loaded ones and calls `fetchMoreFiles` with the range to load as they come into view.
+  Without it, every row is rendered at once, which suits a short list only.
+- `noSelect` on the container stops text selection anywhere in the table, for example while rows
+  are being dragged. The container colours an element marked `indexing-separator`, to show where
+  a dragged row will land.
+- The line under the header and the group menu stops 20px short of each edge; with
+  `useReactWindow` it runs the full width while the pointer is over the first row.
 - The header watches the container with a `ResizeObserver` as well as the window, so it
   re-lays out when a panel opens beside it.
 - `useReactWindow` defaults to `false` on the header and `true` on the body; set it the same on
@@ -450,6 +499,19 @@ export function SelectableRows({ names }: { names: string[] }) {
   drag and drop reads.
 - The group menu needs translations of its own for the select-all checkbox and the selection
   combo box.
+- **A `headerMenu` entry whose `disabled` is true renders nothing**, rather than a greyed
+  button, so an action that does not apply to the selection disappears from the toolbar.
+  `isBlocked` is the greyed state: every button and its icon, clicks ignored, for while an
+  operation on the selection runs.
+- The group menu lays its buttons out after a separator in a scroller that runs sideways when
+  they do not fit. Each button draws the icon fetched from `iconUrl` before its label, with
+  `title` as the hover tooltip, or the label when `title` is empty. On a tablet the icon sits
+  above the label; on a phone the label is not drawn.
+- An entry with `withDropDown` calls its `onClick` and then opens its `options` in a menu under
+  the button. The menu is 354px wide when its options carry descriptions; with
+  `fixedDropdownStyles` it is 161px wide and five rows high at most.
+- The group menu's info-panel button sits on a round background while `isInfoPanelVisible`, and
+  its icon is mirrored in a right-to-left interface; the `isCloseable` cross comes before it.
 
 ## Sub-components
 
@@ -464,9 +526,15 @@ export function SelectableRows({ names }: { names: string[] }) {
 
 ## CSS variables
 
-The table styles itself from the theme and exposes no variables of its own; the column widths
-are written as inline `grid-template-columns`, and the group menu reads
-`--table-group-menu-checkbox-margin` from its `checkboxMargin` prop.
+The table styles itself from the theme; the column widths are written as inline
+`grid-template-columns`. The group menu reads one variable a consumer may set.
+
+| Variable                             | Default | Effect                                                                                                          |
+| ------------------------------------ | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `--table-group-menu-checkbox-margin` | `28px`  | `margin-inline-start` of the select-all checkbox or `headerLabel`, on desktop only; below it the margin is 24px |
+
+The `checkboxMargin` prop writes the same variable onto the toolbar itself, so when it is set it
+wins over a value set on a wrapper.
 
 ## Accessibility
 
@@ -478,6 +546,10 @@ are written as inline `grid-template-columns`, and the group menu reads
   route to sorting, resizing or the settings menu.
 - Selection is whatever [`Checkbox`](checkbox.md) you put in a cell — a real input,
   and the only reachable control in a row.
+- The group menu's action buttons are native `<button>`s rendered by
+  [`Button`](button.md): reachable with Tab and activated with Enter and Space. Each
+  one's accessible name is its label, even on a phone where the label is not drawn, and
+  `isBlocked` sets the native `disabled`, which takes them out of the tab order.
 - Data a keyboard or screen-reader user has to work through is better served by a real
   `<table>` of your own, styled with the kit's `Text`.
 

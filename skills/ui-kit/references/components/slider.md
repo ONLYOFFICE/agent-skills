@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/slider/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 59d0e12b2299a618eb1bc1b8aa00a89c20421523218444f4c5e40d76d2748277 -->
+<!-- body-sha256: 60cd0398b08139e998bff9dc65d4ec15ee214a451b21e699fcea6d2f269b93cf -->
 
 > Synced from the kit's own `components/slider/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["text-input", "progress-bar", "radio-button-group"],
   "subComponents": [],
-  "testIds": ["slider"]
+  "testIds": ["slider"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Slider
@@ -140,8 +141,11 @@ export function LockedQuality({ quality }: { quality: number }) {
   `(value - min) / (max - min)`, so a `min` equal to `max` divides by zero and the fill comes out
   as `NaN%` — nothing is drawn.
 - **The text direction is read once, on mount.** Whether the fill starts from the left or the
-  right is decided by an effect with no dependencies, so switching the interface to
-  right-to-left after mount leaves the fill on the wrong side until the component remounts.
+  right is decided by an effect with no dependencies — it pours from the right when `document.dir`,
+  the `<html>` element's `dir` or the input's own computed `direction` is right-to-left at that
+  moment. Switching the interface to right-to-left after mount leaves the fill on the wrong side
+  until the component remounts; the stylesheet's `data-dir` rule cannot correct it, because the
+  inline position wins.
 - **The size props are custom properties, not attributes.** `thumbWidth`, `thumbHeight`,
   `thumbBorderWidth` and `runnableTrackHeight` are written into the inline `style` as
   `--thumb-*` and `--runnable-track-height`, so they take CSS lengths (`"16px"`), not numbers.
@@ -159,18 +163,27 @@ export function LockedQuality({ quality }: { quality: number }) {
 | `--slider-background-color` | theme   | Background of the unfilled track                                |
 | `--slider-pouring-image`    | theme   | Fill of the poured part, used only with `withPouring`           |
 
+`--slider-pouring-image` is a `background-image`, so it takes a `linear-gradient(...)` or another
+`<image>`, not a plain colour; and it is used only while the slider is enabled. A disabled slider
+does not switch to theme colours: its handle and its poured part are mixed from
+`--slider-handle-color`, so a custom accent survives as a paler version of itself.
+
 `--thumb-width`, `--thumb-height`, `--thumb-border-width`, `--runnable-track-height` and
 `--size-prop` are written inline by the props and beat all of the above; set the props rather than
 these.
 
 ## Accessibility
 
-- A native `<input type="range">`, so it is focusable, is moved with the arrow keys, Home and
-  End, and reports its value to assistive technology by itself.
-- **It has no accessible name.** Wrap it in a `<label>`, or give it `aria-label`, or a screen
-  reader announces only "slider".
-- The value is announced as a bare number. Where it means something else — a percentage, a
-  duration — add `aria-valuetext`.
+- A native `<input type="range">`, so it is focusable, is moved one `step` with the arrow keys
+  and in larger jumps with Page Up and Page Down, goes to `min` and `max` with Home and End, and
+  reports its value, minimum and maximum to assistive technology by itself.
+- **It has no accessible name.** Wrap it in a `<label>`, or give it an `id` and point a
+  `<label htmlFor>` at it, or a screen reader announces only "slider". `aria-label` cannot be
+  passed: the props are not spread onto the input.
+- The value is announced as a bare number, and `aria-valuetext` cannot be passed either; where
+  the number means something else — a percentage, a duration — show it in the label.
+- `isDisabled` sets the native `disabled`, which blocks dragging and the keyboard and takes the
+  slider out of the tab order.
 - Keyboard focus is shown as a 3px halo around the handle, drawn on `:focus-visible` only and
   mixed from the handle's own colour. The browser's outline is turned off, so a browser that does
   not support `:focus-visible` shows nothing.

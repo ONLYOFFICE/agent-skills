@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/form-wrapper/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: a2af40c550d150330eb7726eb7345d2e37cf4b71909732f66c897ab6ad42c8f7 -->
+<!-- body-sha256: 3bedef425515d411b447a6847bcb9100dedcd364fa1ce2285ddbb4b54b8b1109 -->
 
 > Synced from the kit's own `components/form-wrapper/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["field-container", "button", "text-input"],
   "subComponents": [],
-  "testIds": ["form-wrapper"]
+  "testIds": ["form-wrapper"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # FormWrapper
@@ -75,7 +76,12 @@ export function SignIn({
   return (
     <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
       <FormWrapper>
-        <FieldContainer isVertical labelVisible labelText="Email">
+        <FieldContainer
+          isVertical
+          labelVisible
+          labelText="Email"
+          style={{ width: "100%" }}
+        >
           <TextInput
             type={InputType.email}
             size={InputSize.base}
@@ -149,7 +155,9 @@ export function WideForm({ children }: { children: React.ReactNode }) {
   a class of yours can put them back. The form ends up flush against the page.
 - **Children are centred.** The card is a flex column with `align-items: center`, so a child
   without a width of its own shrinks to its content instead of filling the card. Give inputs and
-  buttons `scale` to make them span it.
+  buttons `scale` to make them span it — and a [`FieldContainer`](field-container.md)
+  row `style={{ width: "100%" }}` as well, since it is a flex box with no width of its own and
+  `scale` only fills the row the control sits in.
 - **It brings 32px of padding**, which is on top of any margin the children carry —
   [`FieldContainer`](field-container.md)'s own 16px bottom margin among them.
 - `id`, `className` and `style` are spread onto the card, and any other DOM attribute you pass
@@ -166,8 +174,11 @@ export function WideForm({ children }: { children: React.ReactNode }) {
 | `--form-wrapper-max-width` | `320px`            | Largest width; 416px on a tablet  |
 | `--form-wrapper-min-width` | `320px`            | Smallest width; 416px on a tablet |
 
-The mobile breakpoint overrides the background and the shadow with `!important`, so those two
-variables have no effect on a phone.
+Under the mobile breakpoint the card sets its own padding, radius, shadow and background, so none
+of those four variables has an effect on a phone — the background and the shadow with
+`!important`, which a `style` or a class of yours cannot beat either. The two width variables work
+on a desktop only: a tablet fixes the width at 416px and a phone at 100%. Set the minimum and the
+maximum together, since either one alone is clamped by the other.
 
 ## Accessibility
 

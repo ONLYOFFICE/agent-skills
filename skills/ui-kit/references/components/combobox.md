@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/combobox/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: c148bd3ba16978b2e2cb94f9677fecd57515a52e529e29a68d93f7b0716152c3 -->
+<!-- body-sha256: 2e85de752e9e25a24248c02a1d55512f63728b053c0df35548b3bff88a7179f8 -->
 
 > Synced from the kit's own `components/combobox/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "opened", "close": "onBackdropClick", "loading": "isLoading", "disabled": "isDisabled" },
   "related": ["drop-down", "drop-down-item", "field-container"],
   "subComponents": ["ComboButton"],
-  "testIds": ["combobox"]
+  "testIds": ["combobox"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ComboBox
@@ -291,6 +292,9 @@ export function TimezonePicker({ zones }: { zones: TOption[] }) {
   and looks for options by the test id `drop-down-item` — which its own options never carry,
   because it gives each one a test id of its own. The result is that the arrows and Enter do
   nothing while the list is open, and Enter is swallowed for the rest of the page as well.
+- **Loading hides the choice.** `isLoading` draws a spinner in the button and hides its label,
+  icon, `children` and arrow while keeping their space, so the button keeps its width but no
+  longer shows the current value.
 - A list of four or more options becomes a bottom sheet on a phone. `hideMobileView` keeps it
   anchored to the button.
 - An option's `icon` has to be a component or a URL: an element is ignored by the button, and a
@@ -308,28 +312,39 @@ described above and calls `onClick`; everything else — opening, choosing, clos
 
 ## CSS variables
 
-| Variable                   | Default    | Effect                            |
-| -------------------------- | ---------- | --------------------------------- |
-| `--combobox-bg`            | theme grey | Background of the control         |
-| `--combobox-open-bg`       | the same   | Background while the list is open |
-| `--combobox-radius`        | `3px`      | Corner radius                     |
-| `--combobox-inner-padding` | `4px 0`    | Padding around the button         |
-| `--combobox-base-width`    | `173px`    | Width at `ComboBoxSize.base`      |
-| `--combobox-middle-width`  | `300px`    | Width at `ComboBoxSize.middle`    |
-| `--combobox-big-width`     | `350px`    | Width at `ComboBoxSize.big`       |
-| `--combobox-huge-width`    | `500px`    | Width at `ComboBoxSize.huge`      |
+| Variable                        | Default                                 | Effect                                                             |
+| ------------------------------- | --------------------------------------- | ------------------------------------------------------------------ |
+| `--combobox-border-color`       | theme grey                              | Border colour of the button                                        |
+| `--combobox-hover-border-color` | theme grey                              | Border colour of the button under the pointer                      |
+| `--combobox-focus-border-color` | the accent colour (white in dark theme) | Border colour of the button while its list is open, hovered or not |
+| `--combobox-radius`             | `3px`                                   | Corner radius of the button when it has a border                   |
+| `--combobox-inner-padding`      | `4px 0`                                 | Space above and below the button, inside the wrapper               |
+| `--combobox-base-width`         | `173px`                                 | Width of the wrapper at `ComboBoxSize.base`                        |
+| `--combobox-middle-width`       | `300px`                                 | Width of the wrapper at `ComboBoxSize.middle`                      |
+| `--combobox-big-width`          | `350px`                                 | Width of the wrapper at `ComboBoxSize.big`                         |
+| `--combobox-huge-width`         | `500px`                                 | Width of the wrapper at `ComboBoxSize.huge`                        |
+
+The four widths only apply with `scaled` off, and they size the wrapper, not the button: the
+button keeps its own fixed 173, 300, 350 or 500px, so a larger value widens only the empty area
+beside it. Under `noBorder` the button has no border and so no radius.
+
+`--combobox-bg` and `--combobox-open-bg` are read by the stylesheet and paint nothing: the rule
+that uses them waits for a `noBorder` class on the wrapper, which the component never sets.
 
 The list is a [`DropDown`](drop-down.md) and takes that component's variables.
 
 ## Accessibility
 
-- The button is a `<div role="button">` with `aria-haspopup="listbox"` and `aria-expanded`, and
-  its `tabIndex` defaults to `0`, so it is reachable. It used to default to `-1`, which left the
-  control off the keyboard entirely. Focus gets there; the arrow keys still do not open or move
-  through the list, as above.
+- The button is a `<div role="button">` with `aria-haspopup="listbox"`, and `aria-expanded` and
+  `aria-pressed` that are both true while the list is open; `aria-disabled` follows
+  `isDisabled`. Its `tabIndex` defaults to `0`, so it is reachable. It used to default to `-1`,
+  which left the control off the keyboard entirely. Focus gets there, but only a click opens the
+  list: Enter and Space on the button do nothing, Escape does not close it, and the arrow keys
+  do not move through it, as above.
 - The options are `role="option"` rows in a `role="listbox"` that is not linked to the button by
   `aria-controls` or `aria-activedescendant`.
-- The control has no accessible name of its own. Put it in a
+- The control's name comes from its content, the selected option's label, which says the value
+  but not what is being chosen. Put it in a
   [`FieldContainer`](field-container.md), or give it an `aria-label` through a wrapper.
 - `title` renders the kit's hover tooltip, which is not an accessible name and needs
   [`RootTooltip`](tooltip.md) mounted.

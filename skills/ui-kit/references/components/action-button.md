@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/action-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: f18039170053d48a54be279080cc0363b85114014a31290f346c486b6ad64153 -->
+<!-- body-sha256: 45e6a82aaf4eb262dafaf425d91800b656dc726f69857e9db1c535aaab184344 -->
 
 > Synced from the kit's own `components/action-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["button", "icon-button", "link"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ActionButton
@@ -147,6 +148,12 @@ the style does not change either.
   not render `children` at all, so a node passed as a child disappears.
 - **The component brings no width and no margin.** It is `inline-flex` with `6px 10px` of
   padding and an `8px` gap, so a row of them needs its own gap.
+- **Hover and press change only the background.** It darkens on hover — on devices that
+  have hover, so not after a tap on a touch screen — and again while pressed; the text colour
+  stays. Under `disabled` the button also shows a not-allowed cursor.
+- **The dark colours come from a `.dark` ancestor**, the class `ThemeProvider` puts on
+  `<body>` for the dark theme. Outside one the button keeps its light colours whatever the page looks like.
+- **`ref` reaches the rendered element**, whichever `as` selects.
 - **The label does not wrap or truncate.** A long label stretches the button until its parent
   clips it.
 - **`as` accepts a component as well as a tag name**, and the props of whatever you pass are

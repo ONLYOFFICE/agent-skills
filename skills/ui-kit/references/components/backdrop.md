@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/backdrop/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 915a45edc00b076bfdea1a30c098f6959d1c96835ba1b8fce180bd295d4930e2 -->
+<!-- body-sha256: f7d5d254206a854e47060c61417f48dc17fa83aa99b2d131db175876efc0c3d3 -->
 
 > Synced from the kit's own `components/backdrop/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "visible", "close": "onClick", "loading": null, "disabled": null },
   "related": ["aside", "modal-dialog", "drop-down"],
   "subComponents": [],
-  "testIds": ["backdrop"]
+  "testIds": ["backdrop"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Backdrop
@@ -143,8 +144,8 @@ export function MembersPanel() {
 
 - **A second backdrop renders nothing.** On every change the component counts the elements
   carrying the `backdrop-active` class already in the document and bails out if there is one —
-  unless `isAside` is set, which raises the allowance to two, or `shouldShowBackdrop`, which
-  ignores the count. This is how a dialog opened from a panel avoids stacking two veils, and it
+  unless `shouldShowBackdrop` is set, which ignores the count, or `isAside`, which renders the
+  layer whatever the count. This is how a dialog opened from a panel avoids stacking two veils, and it
   is also why your own backdrop may silently fail to appear behind someone else's overlay.
 - **It is transparent unless you ask for the dimming.** `withBackground` turns it on, `isAside`
   turns it on, and a viewport of 600px or less turns it on whether you asked or not;
@@ -152,18 +153,22 @@ export function MembersPanel() {
 - **The viewport is measured during render and never again.** There is no resize listener, so a
   window resized across 600px keeps whatever the backdrop decided when it opened.
 - **Touch moves over it are cancelled** unless `isModalDialog` is set, which is what stops the
-  page behind a panel scrolling under the user's finger. `onClick` receives those touch events
-  too, cast to a mouse event.
+  page behind a panel scrolling under the user's finger. `onClick` receives those touch moves,
+  and every touch end, too, cast to a mouse event — so a touch that merely passes over the layer
+  closes what it covers.
 - It is `position: fixed` at `100vw × 100vh`, so it ignores the scroll position and any
   transformed ancestor.
 - `className` accepts an array as well as a string, unlike the rest of the kit.
 
 ## CSS variables
 
-| Variable             | Default            | Effect                         |
-| -------------------- | ------------------ | ------------------------------ |
-| `--backdrop-bg`      | theme dimming blur | Colour of the dimming          |
-| `--backdrop-z-index` | `203`              | Stacking order, if no `zIndex` |
+| Variable        | Default                                                 | Effect                                                                                                |
+| --------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `--backdrop-bg` | `rgba(6, 22, 38, 0.2)`; `rgba(27, 27, 27, 0.6)` in dark | Colour of the dimming, shown only when the layer dims: `withBackground`, `isAside` or a narrow screen |
+
+The stacking order is the `zIndex` prop, not a variable. The stylesheet does read
+`--backdrop-z-index`, but the component always writes `zIndex` (203 by default) inline, which
+wins, so setting the variable has no effect; a `zIndex` in `style` overrides the prop.
 
 ## Accessibility
 

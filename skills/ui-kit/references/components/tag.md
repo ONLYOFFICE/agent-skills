@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/tag/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 2bca07f93de1d77fde4837b76480983f0865f1b72d43c1f9ccff5d445394537b -->
+<!-- body-sha256: 44482f34b3e0f132c5b642ed784cbf4f34b888e23fe4bb154615e932d493ab63 -->
 
 > Synced from the kit's own `components/tag/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["tags", "selected-item", "badge"],
   "subComponents": [],
-  "testIds": ["tag_item"]
+  "testIds": ["tag_item"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Tag
@@ -198,8 +199,12 @@ export function ProviderTag({ iconUrl }: { iconUrl: string }) {
   and 28px tall, so two tags closer than that overlap in their hit areas.
 - **The tag brings its own trailing margin** of 4px, which `isLast` removes. In a flex row with
   a `gap` the two add up.
+- **Hover highlights the tag only when `onClick` is passed.** Without a handler the tag keeps
+  its colours and the default cursor under the pointer; a disabled or deleted tag never
+  highlights.
 - **The tag is `width: fit-content` and capped at 22px tall.** `tagMaxWidth` is written into
-  the inline style, after `style`, so it wins over a `maxWidth` set there.
+  the inline style, after `style`, so it wins over a `maxWidth` set there. A label wider than
+  that cap is cut off with an ellipsis, and the full text stays in the `title` tooltip.
 - **A component passed as `icon` is rendered inside an [`IconButton`](icon-button.md)**
   at 12px and the tag's padding drops to 0; a string is fetched and inlined instead. The two
   forms do not look the same.
@@ -223,6 +228,17 @@ Set them on any ancestor.
 | `--tag-text-color`    | theme token | Label colour.                         |
 | `--tag-size`          | `13px`      | Label font size.                      |
 | `--tag-lh`            | `20px`      | Label line height.                    |
+
+`--tag-bg` is the resting background only: a new tag, and any clickable tag on hover or press,
+takes its theme colour instead. Likewise `--tag-border-style` gives way to the dashed theme
+border on a disabled tag. `--tag-height` is a `max-height`, so raise it together with the
+vertical part of `--tag-inner-padding` for a taller tag.
+
+`--tag-text-color`, `--tag-size` and `--tag-lh` are read by the same label class the
+`isDeleted` and `isDisabled` text rules need, which is never put on the text, so today they
+change nothing. The other `--tag-*` names the stylesheet
+uses (`--tag-background`, `--tag-color` and the rest) are declared by the theme on the tag
+itself, so a wrapper cannot override them.
 
 ## Accessibility
 

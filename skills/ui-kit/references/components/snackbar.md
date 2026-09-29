@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/snackbar/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 9afa814d12505ecf26ad00744ac6324729a2e4fb56ae2553e750cd32589ee4e3 -->
+<!-- body-sha256: ee916b027d54a3e0d15aa237a58791e0b78d117147182d48a92d508fe3a93372 -->
 
 > Synced from the kit's own `components/snackbar/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": "onAction", "loading": null, "disabled": null },
   "related": ["toast", "text", "heading"],
   "subComponents": [],
-  "testIds": ["snackbar-container", "snackbar-message"]
+  "testIds": ["snackbar-container", "snackbar-message"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # SnackBar
@@ -204,9 +205,10 @@ export function TimedBar() {
   empty, so a bar with an action has no other way to be dismissed.
 - **`fontSize` and `fontWeight` do not reach the message.** The message carries
   `font-size: … !important` from `--snackbar-text-size`; the two props only style the countdown.
-- **`htmlContent` means two different things.** On its own it replaces `text` with HTML run
-  through the `xss` sanitizer; together with `isCampaigns` it is used as the `src` of an
-  `<iframe>` and nothing else is drawn but a close cross.
+- **`htmlContent` means two different things.** On its own it replaces the whole text block
+  — icon, header, message, action label and countdown — with HTML run through the `xss`
+  sanitizer, and only the close cross is kept beside it; together with `isCampaigns` it is used
+  as the `src` of an `<iframe>` and nothing else is drawn but a close cross.
 - **`sectionWidth` only matters with `htmlContent`** — it is the iframe's `min-width` from the
   tablet breakpoint up, and is ignored by the text layout.
 - **The bar takes the full width of its parent and has no margin of its own.** It is
@@ -237,15 +239,19 @@ Prefer rendering `<SnackBar/>` yourself. If you do call it:
 
 Set them on any ancestor.
 
-| Variable                     | Default        | Effect                                    |
-| ---------------------------- | -------------- | ----------------------------------------- |
-| `--snackbar-background`      | theme token    | Background colour of the bar.             |
-| `--snackbar-text-color`      | theme token    | Colour of the header and the message.     |
-| `--snackbar-accent-color`    | warning colour | Colour of the stripe on the leading edge. |
-| `--snackbar-accent-width`    | `4px`          | Width of that stripe.                     |
-| `--snackbar-text-size`       | `12px`         | Font size of the header and the message.  |
-| `--snackbar-content-padding` | `12px 20px`    | Padding of the content and of the cross.  |
-| `--snackbar-icon-fill`       | warning colour | Fill of the icon drawn by `showIcon`.     |
+| Variable                     | Default        | Effect                                                          |
+| ---------------------------- | -------------- | --------------------------------------------------------------- |
+| `--snackbar-background`      | theme token    | Background colour of the bar.                                   |
+| `--snackbar-text-color`      | theme token    | Colour of the message, the extra header line and the countdown. |
+| `--snackbar-accent-color`    | warning colour | Colour of the stripe on the leading edge.                       |
+| `--snackbar-accent-width`    | `4px`          | Width of that stripe.                                           |
+| `--snackbar-text-size`       | `12px`         | Font size of the header and the message.                        |
+| `--snackbar-content-padding` | `12px 20px`    | Padding of the content and of the cross.                        |
+| `--snackbar-icon-fill`       | warning colour | Fill of the icon drawn by `showIcon`.                           |
+
+The header does not follow `--snackbar-text-color`: it is a `Heading`, which keeps its own
+colour (`--heading-text-color`). The action label and the cross are fixed colours no variable
+reaches.
 
 `--opacity` and `--background-image` are written by the component from `opacity` and
 `backgroundImg`; set those props rather than the variables.

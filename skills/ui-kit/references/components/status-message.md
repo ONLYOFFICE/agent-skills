@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/status-message/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: af46ef19e93ddb233f52167233c760e1e52ad9f6592a76b7c2fdcc04331518eb -->
+<!-- body-sha256: 2428c2bc12c1401cc9ef0770339764beb2ab61adeef705b3524496b84d3d8127 -->
 
 > Synced from the kit's own `components/status-message/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["toast", "snackbar", "columnar-info-bar"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # StatusMessage
@@ -170,21 +171,21 @@ export function RichMessage() {
 
 ## CSS variables
 
-| Variable                                | Default               | Effect                              |
-| --------------------------------------- | --------------------- | ----------------------------------- |
-| `--status-message-bg`                   | theme error colour    | Background of the bar               |
-| `--status-message-warning-bg`           | theme warning colour  | Background while `isWarning`        |
-| `--status-message-border`               | none, 2px in the dark | Border of the bar                   |
-| `--status-message-warning-border-style` | none, 2px in the dark | Border while `isWarning`            |
-| `--status-message-text`                 | theme text colour     | Colour of the message               |
-| `--status-message-icon`                 | theme text colour     | Fill of the glyph                   |
-| `--status-message-warning-icon`         | theme text colour     | Fill of the glyph while `isWarning` |
-| `--status-message-shadow`               | theme shadow          | `box-shadow` of the bar             |
-| `--status-message-radius`               | `6px`                 | Corner radius                       |
-| `--status-message-padding`              | `8px 12px`            | Padding inside the bar              |
-| `--status-message-gap`                  | `12px`                | Space between glyph and text        |
-| `--status-message-margin-bottom`        | `16px`                | Space under the bar                 |
-| `--status-message-max-width`            | `1200px`              | Widest the bar gets                 |
+| Variable                                | Default                   | Effect                              |
+| --------------------------------------- | ------------------------- | ----------------------------------- |
+| `--status-message-bg`                   | theme error colour        | Background of the bar               |
+| `--status-message-warning-bg`           | theme warning colour      | Background while `isWarning`        |
+| `--status-message-border`               | none, 2px in the dark     | Border of the bar                   |
+| `--status-message-warning-border-style` | none, 2px in the dark     | Border while `isWarning`            |
+| `--status-message-text`                 | theme text colour         | Colour of the message               |
+| `--status-message-icon`                 | black, orange in the dark | Fill of the glyph                   |
+| `--status-message-warning-icon`         | black, amber in the dark  | Fill of the glyph while `isWarning` |
+| `--status-message-shadow`               | theme shadow              | `box-shadow` of the bar             |
+| `--status-message-radius`               | `6px`                     | Corner radius                       |
+| `--status-message-padding`              | `8px 12px`                | Padding inside the bar              |
+| `--status-message-gap`                  | `12px`                    | Space between glyph and text        |
+| `--status-message-margin-bottom`        | `16px`                    | Space under the bar                 |
+| `--status-message-max-width`            | `1200px`                  | Widest the bar gets                 |
 
 Note the two border names: the ordinary state is `--status-message-border`, the warning state
 `--status-message-warning-border-style`.

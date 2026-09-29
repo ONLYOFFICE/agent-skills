@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/input-block/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: e642712042fa299a09b6c3d5e9388d46654a2b0066a1930d15fb2fe6a8f9c7c5 -->
+<!-- body-sha256: e3d39f9a0fae027aa6050d96b5e8287d06392b4384ea1d19857f1d774d7c59ae -->
 
 > Synced from the kit's own `components/input-block/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["text-input", "search-input", "password-input"],
   "subComponents": [],
-  "testIds": ["input-block"]
+  "testIds": ["input-block"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # InputBlock
@@ -283,6 +284,12 @@ export function Subdomain() {
   render to be typeable at all.
 - **It is not `scale`d by default**: the field has `TextInput`'s own base width until you pass
   `scale`, even though the group around it is 100% wide.
+- **`size` reaches the icon box too.** Besides the text size and padding of the field, it sets
+  the icon box to the field's line height, and at `large` the space after the icon grows from
+  `--input-block-icon-padding` to `--input-block-icon-padding-lg`. An unset `size` leaves the
+  box at its content's height.
+- `type` is passed straight to the inner `<input>`, so `password` masks the text and `email` or
+  `tel` bring up the matching keyboard on a phone.
 - `id` goes on the inner `<input>` while `className` and `style` go on the group, so a `htmlFor`
   pointing at `id` reaches the real field.
 - `children` are wrapped in two nested boxes of their own, both inheriting the group's
@@ -290,15 +297,23 @@ export function Subdomain() {
 
 ## CSS variables
 
-| Variable                         | Default         | Effect                     |
-| -------------------------------- | --------------- | -------------------------- |
-| `--input-block-icon-padding`     | `8px`           | Space after the icon       |
-| `--input-block-icon-padding-lg`  | `12px`          | The same at the large size |
-| `--input-block-icon-start`       | `1px`           | Space before the icon      |
-| `--input-block-children-padding` | `2px 0 2px 2px` | Padding around the prefix  |
+| Variable                         | Default                  | Effect                                                                   |
+| -------------------------------- | ------------------------ | ------------------------------------------------------------------------ |
+| `--input-block-icon-padding`     | `8px`                    | Space after the icon at `base` and `middle`; one length, not a shorthand |
+| `--input-block-icon-padding-lg`  | `12px`                   | The same at the large size; only `large` reads it                        |
+| `--input-block-icon-start`       | `1px`                    | Space before the icon; one length                                        |
+| `--input-block-children-padding` | `2px 0 2px 2px`          | Padding around the prefix, as a `padding` shorthand                      |
+| `--text-input-bg`                | `--input-bg`             | Background of the group and the field                                    |
+| `--text-input-color`             | `--input-color`          | Text colour                                                              |
+| `--text-input-border-color`      | `--input-border-color`   | Border colour of the group at rest                                       |
+| `--text-input-border-hover`      | `--input-border-hover`   | Border colour of the group while hovered                                 |
+| `--text-input-border-focus`      | `--input-border-focus`   | Border colour of the group while the field has focus                     |
+| `--text-input-radius`            | `--input-border-radius`  | Corner radius of the group                                               |
+| `--text-input-font-size`         | `13px` (`16px` at large) | Font size of the field, at every size at once                            |
 
-The border, background and focus colours come from the shared input styles, so they follow
-[`TextInput`](text-input.md).
+The `--text-input-*` variables come from the shared input styles, so they mean what they mean
+for [`TextInput`](text-input.md); here the group reads them, because the inner field
+draws no border of its own. Set them on the group or any ancestor.
 
 ## Accessibility
 

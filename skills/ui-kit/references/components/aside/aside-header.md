@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/aside/aside-header/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: b00d3ccf300b905df8c6d2fe65a151c6e07d3d5c460774b6d04412fbaa4606c0 -->
+<!-- body-sha256: b4fd47b778ff94cad1312c6c050f50465f89ced6c1396d6191c0081a86101073 -->
 
 > Synced from the kit's own `components/aside/aside-header/README.md` at 4.0.0. Where this page and [SKILL.md](../../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -19,7 +19,8 @@
   "state": { "visibility": null, "close": "onCloseClick", "loading": "isLoading", "disabled": null },
   "related": ["aside", "modal-dialog", "icon-button"],
   "subComponents": [],
-  "testIds": ["aside-header", "aside_header_back_icon_button", "aside_header_close_icon_button", "icons-container"]
+  "testIds": ["aside-header", "aside_header_back_icon_button", "aside_header_close_icon_button", "icons-container"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # AsideHeader
@@ -150,9 +151,11 @@ export function DetailsHeader({
 
 ## Behaviour the types don't state
 
-- **A string header and a node header are laid out differently.** A string becomes bold 21px
-  text that wraps; anything else goes into a `Heading` that truncates to one line with an
-  ellipsis. Wrapping your own title in a `<span>` therefore changes how a long one behaves.
+- **A string header and a node header are rendered differently.** A string becomes bold 21px
+  `Text`; anything else goes into a `Heading`. Both stay on one line and cut off with an
+  ellipsis, but only a node title reads `--aside-header-color` and `--aside-header-font-size` —
+  a string title keeps the text colour and 21px whatever you set. Wrap it in a `<span>` to
+  restyle it.
 - **`isLoading` hides the close cross.** The skeleton replaces the whole content, back arrow and
   cross included, so the panel has no way out while it is loading.
 - **The border is wider than the header.** The header has `margin: 0 16px`, and the bottom
@@ -175,17 +178,33 @@ export function DetailsHeader({
 Set these on the header or an ancestor; each is read through a bridge variable, so the theme's
 own value is the fallback.
 
-| Variable                        | Default         | Effect                                      |
-| ------------------------------- | --------------- | ------------------------------------------- |
-| `--aside-header-color`          | theme text      | Colour of the title                         |
-| `--aside-header-border`         | theme border    | Colour of the bottom border                 |
-| `--aside-header-height`         | `53px`          | Height of the bar                           |
-| `--aside-header-custom-height`  | `53px`          | Height applied when `headerHeight` is given |
-| `--aside-header-font-size`      | `21px`          | Size of the title                           |
-| `--aside-header-margin`         | `0 16px`        | Margin around the bar                       |
-| `--aside-header-gap`            | `6px`           | Gap between the parts                       |
-| `--aside-header-justify`        | `space-between` | How the parts are distributed               |
-| `--aside-header-title-position` | `static`        | Position of the title, for centring it      |
+| Variable                          | Default         | Effect                                                                                                                      |
+| --------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `--aside-header-color`            | theme text      | Colour of a node title; a string title ignores it                                                                           |
+| `--aside-header-border`           | theme border    | Colour of the bottom border                                                                                                 |
+| `--aside-header-height`           | `53px`          | Height of the bar, unless `headerHeight` is given                                                                           |
+| `--aside-header-custom-height`    | `53px`          | Height applied when `headerHeight` is given                                                                                 |
+| `--aside-header-font-size`        | `21px`          | Size of a node title; a string title stays 21px                                                                             |
+| `--aside-header-margin`           | `0 16px`        | Margin around the bar                                                                                                       |
+| `--aside-header-gap`              | `6px`           | Gap between the parts                                                                                                       |
+| `--aside-header-justify`          | `space-between` | `justify-content` of the row; no visible effect while the close cross is shown, whose automatic margin takes the free space |
+| `--aside-header-border-display`   | `""`            | `content` of the pseudo-element that draws the bottom border; `none` removes the line                                       |
+| `--aside-header-title-position`   | `static`        | `position` of the title, for centring it                                                                                    |
+| `--aside-header-title-inset`      | `auto`          | `inset-inline-start` of the title                                                                                           |
+| `--aside-header-title-transform`  | `none`          | `transform` of the title                                                                                                    |
+| `--aside-header-title-text-align` | `start`         | `text-align` of the title; visible only on a title wider than its text                                                      |
+
+`--aside-header-custom-height` is the exception to setting a variable on an ancestor: the theme
+rules redefine it on the header itself, so only `headerHeight` changes it.
+
+`--aside-header-margin` moves the bar but not its border, which keeps reaching 16px past each
+side; any value other than `0 16px` leaves the line short of the panel's edges or overflowing
+them.
+
+To centre the title, take it out of the row: `--aside-header-title-position: absolute`,
+`--aside-header-title-inset: 50%` and `--aside-header-title-transform: translateX(-50%)`. Set
+these on the header's own `style` rather than on a shared ancestor, where they would also pull
+a neighbouring header's title away from its back arrow.
 
 ## Accessibility
 
@@ -194,9 +213,11 @@ own value is the fallback.
 - The close cross is an `IconButton`, which renders a `<div>` — it has an `aria-label` but no
   button role, no tab stop and no Enter or Space activation. The header is not operable by
   keyboard.
+- The back arrow and the `headerIcons` are `IconButton`s too, and have not even the label: no
+  name, no role and no tab stop.
 - That `aria-label` is the literal string `"close"`, in English, whatever the locale.
-- A node header is truncated with an ellipsis, so a long title is unreadable rather than
-  wrapped; keep titles short or pass a string.
+- The title, string or node, is truncated with an ellipsis, so a long one is unreadable rather
+  than wrapped; keep titles short.
 
 ## Test ids
 

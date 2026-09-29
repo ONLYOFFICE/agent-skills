@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/app-loader/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 20425495f07b557493fabb4f493448523bb582638ec0d4109b02b0bf9889f078 -->
+<!-- body-sha256: 43099704f237d099e9f4eb136736efaca7d5e86069fe4275ae263323bee708c3 -->
 
 > Synced from the kit's own `components/app-loader/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -19,7 +19,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["loader", "loader-wrapper", "top-loading-indicator"],
   "subComponents": [],
-  "testIds": ["app-loader"]
+  "testIds": ["app-loader"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # AppLoader
@@ -51,7 +52,7 @@ re-exports this folder with `export *`, which carries named exports and drops de
 component is **not in the root barrel**, and the subpath above is the only way to it.
 
 No provider is required — the sheet is white and the animation dark by default. The dark theme's
-black sheet comes from the `dark` class the kit's theme provider puts on `<body>`, so without a
+dark grey sheet comes from the `dark` class the kit's theme provider puts on `<body>`, so without a
 provider it stays light whatever else the page does.
 
 ## Minimal example
@@ -136,16 +137,18 @@ export function BrandedBoot() {
 
 ## CSS variables
 
-| Variable               | Default                              | Effect                      |
-| ---------------------- | ------------------------------------ | --------------------------- |
-| `--app-loader-bg`      | white, or black under the dark theme | Background of the sheet     |
-| `--app-loader-z-index` | `5000`                               | Stacking order of the sheet |
+| Variable               | Default                                      | Effect                      |
+| ---------------------- | -------------------------------------------- | --------------------------- |
+| `--app-loader-bg`      | `#ffffff`, or `#333333` under the dark theme | Background of the sheet     |
+| `--app-loader-z-index` | `5000`                                       | Stacking order of the sheet |
 
 ## Accessibility
 
 - **Nothing is announced.** The sheet has no role, no label and no live region, so a screen reader
-  is told only that the page has changed. Put an `aria-busy` region or a visually hidden "Loading"
-  message of your own next to it if the wait is long.
+  is told only that the page has changed. The only hint is the inner `Loader`'s own
+  `aria-busy="true"`, which marks the animation as content still loading but names nothing. Put a
+  `role="status"` region or a visually hidden "Loading" message of your own next to it if the wait
+  is long.
 - Because focus is not moved or trapped, a keyboard user can tab into the page that is hidden
   behind the sheet and interact with controls they cannot see.
 - The animation runs for as long as the component is mounted, whatever the viewer's motion

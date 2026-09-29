@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/heading/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 548931efb2ed9024d8428b6c787c014ea262b7713fad67b028dfe83fb49552b4 -->
+<!-- body-sha256: 78fcd61094f0da61bab4ae5183902d14cb65aa5033eae484baa2baddb4504f9b -->
 
 > Synced from the kit's own `components/heading/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["text", "label", "link"],
   "subComponents": [],
-  "testIds": ["heading"]
+  "testIds": ["heading"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Heading
@@ -102,6 +103,9 @@ Declared by [`components/text`](text.md) and accepted here too.
 
 | Prop                | Type                                                                                                                             | Required | Default  | Description                                                                                                                                                                                                                     |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aria-hidden`       | `Booleanish`                                                                                                                     | no       | –        | Hides the element from assistive technology, passed unchanged, for decoration that repeats what is already read.                                                                                                                |
+| `aria-label`        | `string`                                                                                                                         | no       | –        | Accessible name, passed unchanged, for text whose content is not what should be announced.                                                                                                                                      |
+| `aria-live`         | `"assertive" \| "off" \| "polite"`                                                                                               | no       | –        | Live-region politeness, passed unchanged, for a line whose content changes and should be read out.                                                                                                                              |
 | `as`                | `ElementType<any, keyof JSX.IntrinsicElements>`                                                                                  | no       | –        | Element to render, replacing the component's own default — `p` for `Text` itself. Wins over `tag` when both are set.                                                                                                            |
 | `backgroundColor`   | `string`                                                                                                                         | no       | –        | Background colour, as an inline style. Any CSS colour.                                                                                                                                                                          |
 | `children`          | `((string \| number \| bigint \| boolean \| ReactElement<unknown, string \| JSXElementConstructor<any>> \| Iterable<ReactNode>…` | no       | –        | Text to render.                                                                                                                                                                                                                 |
@@ -125,6 +129,7 @@ Declared by [`components/text`](text.md) and accepted here too.
 | `onClick`           | `((e: React.MouseEvent<Element>) => void) & MouseEventHandler<HTMLHeadingElement>`                                               | no       | –        | Called with the event when the element is clicked.                                                                                                                                                                              |
 | `ref`               | `RefObject<HTMLDivElement \| null>`                                                                                              | no       | –        | Attached to the rendered element, whatever `as` made it. Typed for a div whatever that element actually is.                                                                                                                     |
 | `rel`               | `string`                                                                                                                         | no       | –        | Passed to the element unchanged, for `as="a"`.                                                                                                                                                                                  |
+| `role`              | `AriaRole`                                                                                                                       | no       | –        | ARIA role of the element, passed unchanged: `status` or `alert` for a line that reports an outcome, `button` alongside `tabIndex` and `onClick`.                                                                                |
 | `style`             | `CSSProperties`                                                                                                                  | no       | –        | Inline style of the element. `Text` merges it over the style props above, so a `fontSize` here wins over the `fontSize` prop.                                                                                                   |
 | `tabIndex`          | `number`                                                                                                                         | no       | –        | Passed to the element unchanged. The component adds no role, so a focusable text element needs one from you.                                                                                                                    |
 | `tag`               | `string`                                                                                                                         | no       | –        | Element to render, used only while `as` is unset. It is a tag name, not an id.                                                                                                                                                  |
@@ -133,7 +138,7 @@ Declared by [`components/text`](text.md) and accepted here too.
 | `truncate`          | `boolean`                                                                                                                        | no       | –        | Holds the text on one line and ends it with an ellipsis. It needs a parent of bounded width; on its own the element grows instead.                                                                                              |
 | `view`              | `string`                                                                                                                         | no       | –        | Only `"tile"` is recognised, and only together with `dir="auto"`: it clamps the text to two lines.                                                                                                                              |
 
-Plus 282 more props inherited from `React.AriaAttributes`, `React.DOMAttributes` and `React.HTMLAttributes`, forwarded to the element.
+Plus 278 more props inherited from `React.AriaAttributes`, `React.DOMAttributes` and `React.HTMLAttributes`, forwarded to the element.
 
 <!-- props:end -->
 
@@ -202,6 +207,9 @@ export function TruncatedTitle({ name }: { name: string }) {
 - **`type` wins over `size`.** The three `type` presets come later in the stylesheet at the same
   specificity as the five size classes, so `size={HeadingSize.xsmall} type="header"` renders at
   28px. `type` also fixes the line height at 50px, which the sizes do not touch.
+- **`type` sets its own weight.** `content` and `menu` are `bold` (700); `header` stays at 600,
+  from a private variable rather than `--heading-weight`. `fontWeight` still wins over all three,
+  because it is an inline style.
 - **The five sizes are 15px, 19px, 21px, 23px and 27px** for `xsmall` through `xlarge`, and 600
   weight throughout. They are declared on the element itself rather than read with a fallback, so
   they cannot be retuned from a container — only `fontSize` on the component, or the `type`
@@ -229,15 +237,18 @@ export function TruncatedTitle({ name }: { name: string }) {
 ## CSS variables
 
 Only the `type` presets and the colour and weight are exposed; the five `size` steps are private.
+The inline style props win over every variable here: `color` over `--heading-text-color`,
+`fontWeight` over `--heading-weight`, `fontSize` and `lineHeight` over the `type` sizes and line
+height.
 
-| Variable                 | Default              | Effect                                  |
-| ------------------------ | -------------------- | --------------------------------------- |
-| `--heading-weight`       | `600`                | Font weight of every heading            |
-| `--heading-text-color`   | black, white in dark | Text colour                             |
-| `--heading-size-header`  | `28px`               | Font size of `type="header"`            |
-| `--heading-size-menu`    | `23px`               | Font size of `type="menu"`              |
-| `--heading-size-content` | `18px`               | Font size of `type="content"`           |
-| `--heading-lh`           | `50px`               | Line height of all three `type` presets |
+| Variable                 | Default              | Effect                                                             |
+| ------------------------ | -------------------- | ------------------------------------------------------------------ |
+| `--heading-weight`       | `600`                | Font weight of a heading without `type`; every `type` sets its own |
+| `--heading-text-color`   | black, white in dark | Text colour                                                        |
+| `--heading-size-header`  | `28px`               | Font size of `type="header"`                                       |
+| `--heading-size-menu`    | `23px`               | Font size of `type="menu"`                                         |
+| `--heading-size-content` | `18px`               | Font size of `type="content"`                                      |
+| `--heading-lh`           | `50px`               | Line height of all three `type` presets                            |
 
 ## Accessibility
 

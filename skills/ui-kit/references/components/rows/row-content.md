@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/rows/row-content/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: e258ae0484f05288aed85b90593d2e8af08607b2db35bee78dc2b66826419116 -->
+<!-- body-sha256: 921c733bb0247befded884d03c8d5ab43f82b47a5d033352c820d833f1577cdc -->
 
 > Synced from the kit's own `components/rows/row-content/README.md` at 4.0.0. Where this page and [SKILL.md](../../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -19,7 +19,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["rows", "rows/row", "text"],
   "subComponents": [],
-  "testIds": ["row-content", "main-container-wrapper", "side-container", "tablet-side-info"]
+  "testIds": ["row-content", "main-container-wrapper", "side-container", "tablet-side-info"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # RowContent
@@ -140,7 +141,10 @@ export function FileDetails({
   side element's `containerWidth` and `containerMinWidth` size a wrapper nobody sees. They are
   read off the child's props, which means passing them to a [`Text`](../text.md) that
   does not declare them.
-- In a right-to-left interface the joined line is reversed.
+- The title stays on one line and is cut off with an ellipsis when it does not fit, and so is
+  the joined line under it; neither wraps.
+- In a right-to-left interface the joined line is reversed, and the element
+  `convertSideInfo={false}` keeps comes before it instead of after.
 - `style` lands on the content element and again on the title's wrapper.
 - `sectionWidth` is read as a flag rather than a width: any non-zero number switches the
   layout.

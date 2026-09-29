@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/loading-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: fa45d80836be10d8acfcae1a8d9936cccc0ac6a28f49898343ee12042bbe2942 -->
+<!-- body-sha256: 03cfa8b7735588db878105d9bbea098a52a6913ed1217d5b8382b748106e773b -->
 
 > Synced from the kit's own `components/loading-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["floating-button", "loader", "progress-bar"],
   "subComponents": [],
-  "testIds": ["loading-button-container"]
+  "testIds": ["loading-button-container"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # LoadingButton
@@ -125,6 +126,34 @@ export function Queued({ onRemove }: { onRemove: () => void }) {
 }
 ```
 
+### Colours of its own
+
+`loaderColor` recolours the ring and the cross, and `backgroundColor` the disc behind the
+cross, for a ring that has to match its surroundings rather than the theme.
+
+```tsx
+import { LoadingButton } from "@onlyoffice/apps-ui-kit/components/loading-button";
+
+export function Exporting({
+  percent,
+  onCancel,
+}: {
+  percent: number;
+  onCancel: () => void;
+}) {
+  return (
+    <div style={{ position: "relative", width: 16, height: 16 }}>
+      <LoadingButton
+        percent={percent}
+        loaderColor="var(--export-colour)"
+        backgroundColor="var(--export-surface)"
+        onClick={onCancel}
+      />
+    </div>
+  );
+}
+```
+
 ## Behaviour the types don't state
 
 - **Every part of the ring is `position: absolute` and the component positions nothing
@@ -135,9 +164,10 @@ export function Queued({ onRemove }: { onRemove: () => void }) {
 - **`id`, `className` and `style` are ignored.** They are declared, never read and not even
   spread onto the element, so there is no way to hook a class onto it — use the custom
   properties below.
-- **`percent` is a number from 0 to 100** and is turned into `percent × 1.8deg` of arc. At `0`
-  the arc rule is replaced by an endless rotation, which is why a ring that never receives a
-  percentage looks like a spinner.
+- **`percent` is a number from 0 to 100** and is turned into `percent × 1.8deg` of arc on each
+  half of the ring, so the fill grows clockwise from a quarter at 25 to a closed circle at 100.
+  At `0` the arc rule is replaced by a half ring rotating endlessly, which is why a ring that
+  never receives a percentage looks like a spinner.
 - **`inConversion` only removes the cross.** It is drawn as an unbroken ring; whether it spins
   still depends on `percent` being `0`.
 - **The whole 16px square is clickable**, not just the cross, and `onClick` receives no
@@ -147,20 +177,24 @@ export function Queued({ onRemove }: { onRemove: () => void }) {
   itself once. It has no visible effect in the states described above; there is nothing to
   configure and nothing to clean up.
 - **The component brings no margin and no label.** It is 16×16 with a 12px disc inside it, and
-  the cross is white in both themes unless `loaderColor` says otherwise.
+  the cross is drawn in the ring's own colour on a disc that is white in the light theme and
+  black in the dark one.
 
 ## CSS variables
 
 Set them on any ancestor.
 
-| Variable                      | Default       | Effect                                     |
-| ----------------------------- | ------------- | ------------------------------------------ |
-| `--loading-button-accent`     | accent colour | Colour of the ring and the cross.          |
-| `--loading-button-idle`       | theme grey    | The same, under `isDefaultMode`.           |
-| `--loading-button-hover-fill` | theme token   | Colour of the cross on hover in that mode. |
+| Variable                      | Default              | Effect                                     |
+| ----------------------------- | -------------------- | ------------------------------------------ |
+| `--loading-button-accent`     | `var(--accent-main)` | Colour of the ring and the cross.          |
+| `--loading-button-idle`       | theme grey           | The same, under `isDefaultMode`.           |
+| `--loading-button-hover-fill` | theme token          | Colour of the cross on hover in that mode. |
+| `--loading-button-custom-bg`  | white / black        | Colour of the disc behind the cross.       |
 
-`loaderColor` and `backgroundColor` are written as inline custom properties and win over all of
-them.
+`loaderColor` and `backgroundColor` are written as inline custom properties, so they win over
+`--loading-button-accent` and `--loading-button-custom-bg` respectively. `loaderColor` does
+nothing under `isDefaultMode`: that mode reads `--loading-button-idle` and
+`--loading-button-hover-fill` only.
 
 ## Accessibility
 

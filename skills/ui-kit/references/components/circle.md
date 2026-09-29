@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/circle/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: e6068ab53d785de9111dcd382db3bb8901030baa5ab9a157003f1fb911e17e9b -->
+<!-- body-sha256: a5a05c4579b484ea3d421b61996b82a09c652cf07e57ab275e7e0f9fd69e44e2 -->
 
 > Synced from the kit's own `components/circle/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["rectangle", "avatar", "loader"],
   "subComponents": [],
-  "testIds": ["circle-skeleton"]
+  "testIds": ["circle-skeleton"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # CircleSkeleton
@@ -160,7 +161,9 @@ export function MemberListPlaceholder({ rows }: { rows: number }) {
   `aria-labelledby` pointing at a `<title>` that is not rendered, because `title` defaults to
   `""`. Pass a `title` or mark the container `aria-busy`.
 - **The colours are fixed, not themed.** Black at 10% and 15% opacity, whatever the theme. On a
-  dark surface pass `backgroundColor` and `foregroundColor` yourself.
+  dark surface pass `backgroundColor` and `foregroundColor` yourself. They are the only way in:
+  the component reads no CSS custom property, and its colours are SVG gradient stops filled from
+  these props, so a variable set on a wrapper never reaches them.
 - **It is not safe to server-render.** The underlying library builds its gradient and clip-path
   ids from a random value unless it is given a `uniqueKey`, and this component neither accepts
   one nor supplies a stable one — so SSR and the client produce different markup.

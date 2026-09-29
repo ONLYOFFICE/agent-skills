@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/selection-area/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 6c282fca994959719be06c91daa1391e43593c0a49fab7d75ddecc1dd1b27e81 -->
+<!-- body-sha256: 8a9058e0004cdbc633b3e81c49da5f10b199fcee40f7420b134786006854013f -->
 
 > Synced from the kit's own `components/selection-area/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["tiles", "rows", "drag-and-drop"],
   "subComponents": [],
-  "testIds": ["selection-area"]
+  "testIds": ["selection-area"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # SelectionArea
@@ -231,6 +232,8 @@ export function ControlledSelection({ ids }: { ids: string[] }) {
   pointer's position with itself, which is always zero — the flag in `TOnMove` is unreachable.
 - **The drag starts after 10px.** Below that threshold the rectangle stays hidden and no `onMove`
   fires, so a plain click never reports anything.
+- **Only the left button starts a selection.** A press with any other button is dropped straight
+  after `onMouseDown` has been called.
 - **`onMouseDown` fires for every button and every target**, because it is called before the
   left-button check and before the class-name checks.
 - **In tile view three optional props are treated as required.** `countTilesInRow`,
@@ -244,11 +247,11 @@ export function ControlledSelection({ ids }: { ids: string[] }) {
 
 ## CSS variables
 
-| Variable                   | Default                    | Effect                          |
-| -------------------------- | -------------------------- | ------------------------------- |
-| `--selection-area-bg`      | `rgba(68, 170, 255, 0.5)`  | Fill of the rectangle           |
-| `--selection-area-border`  | `1px solid` the kit's blue | Border of the rectangle         |
-| `--selection-area-z-index` | `1000`                     | Stacking order of the rectangle |
+| Variable                   | Default                   | Effect                          |
+| -------------------------- | ------------------------- | ------------------------------- |
+| `--selection-area-bg`      | `rgba(68, 170, 255, 0.5)` | Fill of the rectangle           |
+| `--selection-area-border`  | `1px solid #5299e0`       | Border of the rectangle         |
+| `--selection-area-z-index` | `1000`                    | Stacking order of the rectangle |
 
 ## Accessibility
 

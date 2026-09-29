@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/quantity-picker/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 8d14944f91bcfb8cd030eac18a29285e148704355731b6065fad8c6a3a9a13f7 -->
+<!-- body-sha256: aa998a18bd4ebce1a1b1b44f2d9c0342c77623064fedac5adbf565499a82a037 -->
 
 > Synced from the kit's own `components/quantity-picker/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["slider", "text-input", "tab-item"],
   "subComponents": [],
-  "testIds": ["quantity_picker_input"]
+  "testIds": ["quantity_picker_input"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # QuantityPicker
@@ -164,15 +165,22 @@ export function SeatsWithPresets() {
 - **Typing is held as a draft and committed on blur or Enter.** Until then `onChange` fires for
   each valid intermediate number, but an empty field is not reported — it settles to 0 or
   `minValue` when you leave it.
+- **Out-of-range typing is treated unevenly.** A number above `maxValue` is replaced at once by
+  the cap (`maxValue`, or `maxValue + 1` with `showPlusSign`) and reported straight away. A
+  number below `minValue` is not reported while you type; on blur or Enter it is raised to
+  `minValue` — or, with `enableZero`, kept exactly as typed and flagged.
 - **Non-digits are stripped as you type**, so a minus sign or a decimal point cannot be entered
   at all; the control is whole, non-negative numbers only.
 - **`showPlusSign` changes what the maximum means.** Above `maxValue` the display becomes
   `<maxValue>+`, typing a larger number reports `maxValue + 1`, and the slider's own maximum is
   `maxValue + 1` so the handle can reach that overflow step.
+- **The slider writes its bounds at its ends**: `minValue` at the start and `maxValue` at the
+  end, followed by `+` with `showPlusSign`.
 - **`items` add, they do not set.** A chip's number is added to the current value, and the chips
   never look selected — they are buttons, not a choice.
 - **The minus button stops at `minValue`, or at 0 with `enableZero`.** With `enableZero` a value
-  between 0 and `minValue` also turns the line under the controls into its warning colour.
+  between 0 and `minValue` also turns the line under the controls into its warning colour, and
+  plus from anywhere below `minValue` jumps straight to `minValue` rather than adding `step`.
 - **`underControlsTitle` always renders**, even when empty, so the control reserves that line's
   height whether or not you use it.
 - **`isDisabled` removes the field from the DOM**, replacing it with text — so refs, focus and
@@ -191,9 +199,10 @@ The slider inside follows [`Slider`](slider.md).
 ## Accessibility
 
 - **The plus and minus controls are real `<button type="button">`s**, so they are in the tab
-  order and answer Enter and Space. They are unnamed until you pass `decreaseLabel` and
+  order and answer Enter and Space. Tab reaches minus, the number and plus in that order. Their
+  icons are `aria-hidden`, so they are unnamed until you pass `decreaseLabel` and
   `increaseLabel` — no `aria-label` is rendered without them, and a screen reader then announces
-  two buttons with only their icons.
+  two nameless buttons.
 - `minusDisabled` leaves the minus control focusable and marks it `aria-disabled`, so a tooltip
   attached through `minusTooltipId` can still be read; only `isDisabled` sets the real
   `disabled`.

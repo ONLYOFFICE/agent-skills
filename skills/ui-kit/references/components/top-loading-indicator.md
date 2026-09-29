@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/top-loading-indicator/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: d9a6a0978ad827c29e88a2fe22985c521347f5458171c5bbc4e1c4da9e9356e3 -->
+<!-- body-sha256: 6a7a4671741f0ddd0267d9fc918cb4ca76fb57c26429b8697ae88ef3024013f9 -->
 
 > Synced from the kit's own `components/top-loading-indicator/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -19,7 +19,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["app-loader", "progress-bar", "loader"],
   "subComponents": [],
-  "testIds": ["top-loader"]
+  "testIds": ["top-loader"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # TopLoaderService
@@ -167,6 +168,8 @@ export function TopLoaderElement() {
 - **`end()` does not leave a full bar on screen.** It animates from where it stands to 100% over one
   second, and the next tick 50ms later sets the width back to `0px`. Nothing fades it out — add a
   transition or an opacity rule of your own if the finish should be visible.
+- **`cancel()` does not animate.** It stops the timer and sets the width to `0px` and
+  `aria-valuenow` to `0` at once, whether the bar is still growing or already closing.
 - **`end()` before `start()` is ignored**, because there is no timer to end.
 - **A second `start()` does not restart the bar.** The interval is already running, so the width
   keeps being computed from the original start time; only `cancel()` then `start()` begins again.

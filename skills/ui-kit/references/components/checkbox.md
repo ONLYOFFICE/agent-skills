@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/checkbox/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 2af4ab2b91c31e3797c5bb91a58b4dc40fa00d7d4608d7b1897451cab17128bd -->
+<!-- body-sha256: 6ae3652f0f3548a34d648ea0f4ce66f3e152e19e3239941b4b4920ee10b443e7 -->
 
 > Synced from the kit's own `components/checkbox/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["toggle-button", "radio-button-group", "field-container"],
   "subComponents": [],
-  "testIds": ["checkbox", "checkbox-help-button"]
+  "testIds": ["checkbox", "checkbox-help-button"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Checkbox
@@ -176,26 +177,36 @@ export function RoomPicker() {
   line with an ellipsis instead.
 - `helpButton` renders after the label, and a click on it is swallowed — the checkbox does not
   toggle.
+- `title` is read by the `<label>` that wraps the whole control, so the shared tooltip opens
+  when the pointer rests anywhere on the box or the label — and only once `RootTooltip` is
+  mounted.
 - Anything else you pass is spread onto the input element, not onto the label the other props
   reach.
 
 ## CSS variables
 
-| Variable         | Default | Effect                              |
-| ---------------- | ------- | ----------------------------------- |
-| `--checkbox-gap` | `12px`  | Space between the box and the label |
-| `--checkbox-lh`  | `16px`  | Line height of the control          |
+| Variable                  | Default     | Effect                                                                                                               |
+| ------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
+| `--checkbox-gap`          | `12px`      | Space between the box and the label                                                                                  |
+| `--checkbox-lh`           | `16px`      | Line height of the control; the label text keeps its own 16px line, so a larger value only makes the row taller      |
+| `--checkbox-fill-color`   | theme-based | Fill of the box while it is checked; an indeterminate box uses it too, for its outer box and its inner square's edge |
+| `--checkbox-border-color` | theme-based | Border of the box; hover, focus, error and disabled draw their own border colour over it                             |
+| `--checkbox-arrow-color`  | theme-based | Colour of the tick in a checked box                                                                                  |
 
-The colour variables (`--checkbox-fill-color-default`, `--checkbox-error-color` and the rest)
-are **not** consumer settings: the stylesheet assigns them on the component's own element, so a
-value set on an ancestor is overridden. Theme them through the theme provider instead.
+The other colour variables (`--checkbox-fill-color-default`, `--checkbox-error-color` and the
+rest) are **not** consumer settings: the stylesheet assigns them on the component's own
+element, so a value set on an ancestor is overridden. Theme them through the theme provider
+instead. A disabled box ignores all three colour settings above and draws its own disabled
+colours.
 
 ## Accessibility
 
 - The control is a real `<input type="checkbox">` wrapped in a `<label>`, so a click on the
   label toggles it and a screen reader announces a checkbox with its state and its label.
 - The input is hidden from the tab order (`tabIndex={-1}`, always). Keyboard focus lands on the
-  icon, and only when you pass `tabIndex={0}`; the focus ring is drawn on the icon's stroke.
+  icon instead (`tabIndex`, `0` by default), and the focused box draws its border in the focus
+  colour. Space and Enter on the focused icon do **not** toggle it — only a click does.
+- `isDisabled` sets the native `disabled` on the input, which is announced as unavailable.
 - `isIndeterminate` sets the input's DOM `indeterminate` property, so the mixed state is
   announced, not merely drawn.
 - Without `label` the control has no accessible name and no prop supplies one.

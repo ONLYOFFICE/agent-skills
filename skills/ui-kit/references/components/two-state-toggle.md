@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/two-state-toggle/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 5b7dd5ebc7416dba9719f034ca8fac6d1d624323de24c4cc4b0121253762b67e -->
+<!-- body-sha256: 0cccd2beec2ade910d67593655d7dca5b1d7b0ab616c638a9d281c301101d4d0 -->
 
 > Synced from the kit's own `components/two-state-toggle/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["toggle-button", "modal-dialog", "button"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # TwoStateToggle
@@ -132,21 +133,39 @@ export function TranslatedSwitch({
   server-rendered page and its hydration can disagree about which half is selected.
 - **The two directions are not symmetrical.** Leaving the new view opens a confirmation
   [`ModalDialog`](modal-dialog.md); returning to it happens immediately, with no
-  dialog.
+  dialog. Confirming writes `"old"` and navigates to `/`; cancelling or closing the
+  dialog changes nothing.
 - **Without `onNavigate` the page reloads**, because the component assigns
   `window.location.href`. Pass your router's navigate to keep the application alive.
 - **There is no controlled mode.** No prop sets which side is active, and nothing reports a
   change other than the navigation itself.
 - `title` and `confirmHint` are each removed by passing an empty string.
+- **Right-to-left** puts the OLD half on the right and slides the thumb leftwards to NEW. The
+  halves follow the `dir` around the pill, but the leftward slide comes from the `rtl` class
+  that `ThemeProvider` puts on the document for an RTL `interfaceDirection`; with `dir="rtl"`
+  alone the thumb slides the wrong way, out of the pill.
+
+## CSS variables
+
+| Variable                      | Default | Effect                                                      |
+| ----------------------------- | ------- | ----------------------------------------------------------- |
+| `--color-scheme-main-accent`  | theme   | Pill background, the label on the thumb, and the focus ring |
+| `--button-root-border-radius` | `6px`   | Corner radius of the pill; the thumb's is 2px smaller       |
+| `--text-color`                | theme   | Colour of the title                                         |
+
+The thumb and the label beside it are white and read no variable.
 
 ## Accessibility
 
-- The pill is a real `<button>` with `role="switch"` and `aria-checked`, so it is focusable and
-  operable from the keyboard.
-- **Its name is the hardcoded English "Switch DocSpace design"** and cannot be overridden, so the
-  announced name will not match a translated interface.
+- The pill is a real `<button>` with `role="switch"` and `aria-checked`, so it is focusable with
+  Tab and toggled by Enter or Space as a click would. It is announced as on while the new view is
+  active and off in the classic view. Keyboard focus draws a ring around the pill in the accent
+  colour.
+- **Its name is `ariaLabel`**, the English "Switch DocSpace design" by default, which is not
+  translated for you. `title`, `labelOld` and `labelNew` do not change it.
 - The OLD and NEW labels are `aria-hidden`, which is right — but it means the only thing
-  announced is that unchangeable name plus the checked state.
+  announced is `ariaLabel` plus the checked state, so translate `ariaLabel` along with the
+  visible labels.
 - The confirmation dialog is [`ModalDialog`](modal-dialog.md) and inherits its focus
   behaviour.
 

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 providers/translation/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 0641405b1f7687ffd7461612f0039e58082a5490132077f1285ac9a40f27c595 -->
+<!-- body-sha256: 59730b0a7f531c89ad1fc377fc44ec41a75c5853e58419ba4a73c306ce1e6c23 -->
 
 > Synced from the kit's own `providers/translation/README.md` at 4.0.0. Where this page and [SKILL.md](../../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -166,7 +166,9 @@ export function German({ children }: { children: React.ReactNode }) {
 - **The instance is private, and also global.** It is built with `i18next.createInstance()`
   rather than by configuring the singleton, so it does not collide with an application's own
   i18next — but it is published on `window` as well, because `getCommonTranslation` reads it from
-  there outside React.
+  there outside React: `window.i18n.t` is its bound `t`, `window.i18n.instance` the instance, and
+  `window.i18n.loaded` the resources keyed as `<lang>/<namespace>.json`. Each mount overwrites
+  all three.
 - **The language is resolved from three sources, in order:** `locale`, then the user's
   `cultureName`, then the portal settings' `culture`, then `en`. The last two are portal-internal
   and an application of its own passes neither.

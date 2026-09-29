@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/room-type/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 89dbe9ef15204a9ece3ba516f5d8ecaac3c4af0894507aebc5a5d13b84b196aa -->
+<!-- body-sha256: d07d546f3e51b882e477ab0141a174687131e8109917433ff46f57e9edc2bc9a -->
 
 > Synced from the kit's own `components/room-type/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["room-logo", "room-icon", "drop-down"],
   "subComponents": [],
-  "testIds": ["room-type-list-item", "room-type-dropdown-button", "room-type-dropdown-item"]
+  "testIds": ["room-type-list-item", "room-type-dropdown-button", "room-type-dropdown-item"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # RoomType
@@ -185,22 +186,35 @@ export function RoomTypeSelect() {
 - **A disabled row refuses the click.** `disabledFormRoom` and `disabledPublicRoom` add a class,
   swap the tooltip for the portal-wide `create-room-tooltip` anchor, drop the `title`, mark the
   row `aria-disabled` and return before `onClick`. It is still in the tab order — `aria-disabled`
-  describes the state rather than removing the element.
+  describes the state rather than removing the element. A disabled list card turns grey; a
+  disabled dropdown entry turns grey and fades its glyph and text to half opacity.
+- **`dropdownButton` ignores both disabled props.** It passes `onClick` straight through and
+  never gets the disabled class, so a form room or public room in the collapsed button stays
+  clickable and looks enabled.
+- **The three layouts differ in their frame.** `listItem` and `dropdownButton` have a 1px border
+  and rounded corners; `dropdownItem` has neither, and hides the arrow.
+- **Open is drawn on the button only.** While `isOpen`, `dropdownButton` takes the accent border,
+  turns its chevron from down to up and stops changing background on hover. The other layouts
+  receive the class and do nothing with it.
 - **`selectedId` is required and does nothing.** It is written to `data-selected-id` and read
   nowhere in the component.
 - **A fourth layout exists in the stylesheet and cannot be reached.** `displayItem` — a static
   card with no arrow — is the fallback branch, but `type` defaults to `listItem` and its union
   has only the three names, so nothing can select it.
-- **Ten of the sixteen theme variables are dead.** Every layout resolves its background, border,
-  hover colour and description colour through the same `--room-type-list-item-*` set, so the
-  `--room-type-dropdown-button-*`, `--room-type-dropdown-item-*` (except the disabled one) and
-  `--room-type-display-item-*` declarations are never read. The visible consequence is that a
-  `dropdownItem` is transparent rather than the solid white or black it was given.
-- **The `:active` border on a list item never appears.** It reads
-  `--current-color-scheme-main-accent`, which nothing in the kit defines — the theme provider
-  writes `--color-scheme-main-accent`.
+- **Some theme variables are never read.** `dropdownButton` reads its own
+  `--room-type-dropdown-button-*` set and `dropdownItem` its own hover, disabled and description
+  values, but `dropdownItem`'s background still falls back to the list item's `none`, so it is
+  transparent rather than the solid white or black `--room-type-dropdown-item-background` gives
+  it; the `--room-type-display-item-*` set belongs to the unreachable layout.
+- **The accent border depends on the portal.** The pressed list card and the open or pressed
+  dropdown button take `--accent-main`, a portal token the component does not define or give a
+  fallback, so outside the portal that border does not change colour.
 - **`isTemplate` overrides the wording entirely**, both lines, whatever `roomType` is, while
-  `isTemplateRoom` changes only the glyph. `isFormSection` takes precedence over both.
+  `isTemplateRoom` changes only the glyph. `isFormSection` is checked first: alone it gives the
+  form-set wording, and with `isTemplate` the form-set template wording.
+- **Right to left, the arrow moves and mirrors.** It sits on the trailing edge by
+  `margin-inline-start: auto`, so it moves to the left, and under `.rtl` it is flipped with
+  `scaleX(-1)`.
 - **The row is `width: 100%` with 16px of padding** and no maximum, so it fills whatever holds
   it; the gap between rows is the container's.
 - **The title is a tooltip too** — it is passed to the wrapping `TooltipContainer`, so the kit's
@@ -215,9 +229,13 @@ export function RoomTypeSelect() {
 | `--room-type-item-border`       | light grey | Border of the list item and dropdown button   |
 | `--room-type-item-hover-bg`     | light grey | Hover background                              |
 | `--room-type-description-color` | grey       | Colour of the second line                     |
-| `--room-type-item-radius`       | `6px`      | Corner radius                                 |
+| `--room-type-item-radius`       | `6px`      | Corner radius of the list item and button     |
 | `--room-type-item-padding`      | `16px`     | Inner padding                                 |
 | `--room-type-gap`               | `12px`     | Gap between the glyph, the text and the arrow |
+
+A disabled row keeps its grey whatever `--room-type-item-bg` and `--room-type-item-hover-bg`
+say. The dropdown entry has no border and no radius, so the border and radius variables do
+nothing to it.
 
 ## Accessibility
 

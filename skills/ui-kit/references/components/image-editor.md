@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/image-editor/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 104a387a1abbdc118dc5acaa5e6577edb8631f34b6c2d30f6a632606254a39a9 -->
+<!-- body-sha256: a6a05f7dd286bac867b4ed45cdb68b5f06c9dc8e43f4cac573066ec3477c8027 -->
 
 > Synced from the kit's own `components/image-editor/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["avatar-editor-dialog", "room-logo-cover-dialog", "avatar"],
   "subComponents": ["ButtonDelete"],
-  "testIds": ["image-cropper", "change_image_button", "zoom_in_icon_button", "zoom_out_icon_button", "cropper_delete_button"]
+  "testIds": ["image-cropper", "change_image_button", "zoom_in_icon_button", "zoom_out_icon_button", "cropper_delete_button"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ImageEditor
@@ -260,7 +261,8 @@ the replace control it is a `<div>`, so it is not keyboard-operable.
   handlers: no role, no tab stop, no Enter or Space. A keyboard user cannot replace or delete the
   picture. Add your own controls beside the editor when that matters.
 - The crop area is a canvas dragged with the pointer and there is no keyboard equivalent for
-  positioning. The zoom slider is the kit's `Slider` and is reachable; the two zoom buttons come
+  positioning. The zoom slider is the kit's `Slider`, a native `<input type="range">`: it is
+  reached with Tab and moved with the arrow keys, in its 0.01 steps. The two zoom buttons come
   from `IconButton` and are `<div>`s as well.
 - The cropper sets `aria-disabled` from `isDisabled`, so the state is announced even though the
   controls inside it are not focusable to begin with.

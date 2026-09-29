@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 docs/getting-started.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: c75e9b1487233ec118b81ec41a742e0b4c3e4be6c518ca3221f62a301199b257 -->
+<!-- body-sha256: 07f6f0c73759dd7014647d77af7402bfec97c4c962e220d954891d24a15e8f3a -->
 
 > Synced from the kit's own `docs/getting-started.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -263,4 +263,4 @@ width when the arrangement matters.
   and the prop that shows and hides it, with a table for choosing between the close calls.
 - Each component's own README, next to its source under `components/<name>/README.md`, and shipped
   in the package at the same path.
-- [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/34a6606b/docs/public-api.md) — the full public and portal-internal boundary.
+- [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/0b62e991/docs/public-api.md) — the full public and portal-internal boundary.

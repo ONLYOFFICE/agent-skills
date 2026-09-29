@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/add-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 6fbb148724f2fb7e8a96b5fa6fe9a96862932c75da9838bba6c2da5f0d6c1cb1 -->
+<!-- body-sha256: 7316378984a7e60dccb392019c6e148c642a3d642774c7e8becb71526bbad354 -->
 
 > Synced from the kit's own `components/add-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": "isLoading", "disabled": "isDisabled" },
   "related": ["icon-button", "button", "selector"],
   "subComponents": [],
-  "testIds": ["selector-add-button", "selector-add-button-container"]
+  "testIds": ["selector-add-button", "selector-add-button-container"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # AddButton
@@ -160,7 +161,8 @@ export function AddTag({ onAdd }: { onAdd: () => void }) {
 
 - **Keyboard support is opt-in.** The wrapper carries `role="button"` and an Enter handler, but
   **no `tabIndex` unless you pass one** — without it the button cannot be focused and the
-  handler never runs. Space does nothing in either case.
+  handler never runs. Enter is ignored while `isDisabled` or `isLoading` is set, and Space
+  does nothing in either case.
 - **`isAction` needs a colour scheme, not just a theme.** The accent tint is written as an
   inline custom property from the theme's `currentColorScheme.main.accent`; when the provider
   has none, that property is never set and the rule `background-color: var(--main-accent-button)
@@ -187,16 +189,27 @@ export function AddTag({ onAdd }: { onAdd: () => void }) {
 
 Set them on any ancestor.
 
-| Variable                     | Default     | Effect                                  |
-| ---------------------------- | ----------- | --------------------------------------- |
-| `--add-button-dimension`     | `32px`      | Side of the square.                     |
-| `--add-button-radius`        | `3px`       | Corner radius of the square.            |
-| `--add-button-bg`            | theme grey  | Background of the square.               |
-| `--add-button-bg-hover`      | theme token | Background while hovered.               |
-| `--add-button-bg-active`     | theme token | Background while pressed.               |
-| `--add-button-icon-color`    | theme token | Fill of the icon.                       |
-| `--add-button-text-gap`      | `8px`       | Space between the square and the label. |
-| `--add-button-text-disabled` | theme grey  | Label colour while disabled.            |
+| Variable                         | Default     | Effect                                                            |
+| -------------------------------- | ----------- | ----------------------------------------------------------------- |
+| `--add-button-dimension`         | `32px`      | Side of the square; the `size` prop wins over it.                 |
+| `--add-button-radius`            | `3px`       | Corner radius of the square.                                      |
+| `--add-button-bg`                | theme grey  | Background of the square.                                         |
+| `--add-button-bg-hover`          | theme token | Background while hovered.                                         |
+| `--add-button-bg-active`         | theme token | Background while pressed.                                         |
+| `--add-button-icon-color`        | theme token | Fill of the icon.                                                 |
+| `--add-button-icon-color-hover`  | theme token | Fill of the icon while the pointer is on the square around it.    |
+| `--add-button-icon-color-active` | theme token | Fill of the icon while pressed, with the same limit as the hover. |
+| `--add-button-text-gap`          | `8px`       | Space between the square and the label.                           |
+| `--add-button-text-disabled`     | theme grey  | Label colour while disabled.                                      |
+
+- **`isAction` and `isDisabled` override the square's colours.** Under `isAction` the
+  background and the icon take the accent colour, and while disabled the theme's own greys
+  are forced with `!important`, so `--add-button-bg` and `--add-button-icon-color` (and their
+  hover and pressed forms) no longer apply. `--add-button-text-disabled` is the only variable
+  that survives the disabled state.
+- **The icon's hover fill only shows around the icon.** With the pointer over the icon itself,
+  [`IconButton`](icon-button.md)'s own hover colour is the more specific rule and
+  wins over `--add-button-icon-color-hover` and `--add-button-icon-color-active`.
 
 ## Accessibility
 

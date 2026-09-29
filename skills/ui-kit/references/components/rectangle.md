@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/rectangle/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 07dcd69c335a53a8dff712e7408cefe0e4c8bcf5fa4f9b336cfb27eb9fdadeda -->
+<!-- body-sha256: b6520cf23107fcf7206f3ef75b7b9c9fa6314ce88a359850931f649fa3b6ae5d -->
 
 > Synced from the kit's own `components/rectangle/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["circle", "loader", "empty-view"],
   "subComponents": [],
-  "testIds": ["rectangle-skeleton"]
+  "testIds": ["rectangle-skeleton"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # RectangleSkeleton
@@ -147,12 +148,15 @@ export function StillPlaceholder() {
   `title`, or mark the region `aria-busy` as the recipes do.
 - **The colours are fixed, not themed.** `backgroundColor` and `foregroundColor` both default to
   black at 10% and 15% opacity. On a dark surface that is nearly invisible — pass a light colour
-  yourself when you draw the skeleton on one.
+  yourself when you draw the skeleton on one. It reads no CSS custom property either: the colours
+  are SVG gradient stops filled from these props, so a variable set on a wrapper never reaches
+  them.
 - **`width` and `height` size both the element and the rectangle inside it.** The SVG has no
   `viewBox`, so `x`, `y` and `borderRadius` are in the element's own pixels. A skeleton with
-  `height="100%"` needs a parent with a height, or it collapses.
-- The animation is one linear gradient sweeping across the shape for `speed` seconds, forever;
-  nothing stops it, so unmount the skeleton when the content arrives.
+  `height="100%"` needs a parent with a height, or it collapses. A percentage `borderRadius` is
+  taken of the element's width, so `"50%"` on a square draws a circle.
+- The animation is one linear gradient sweeping across the shape for `speed` seconds, forever,
+  until `animate={false}` stops it; unmount the skeleton when the content arrives.
 - `uniqueKey` exists because the library picks a random id per render otherwise, which makes
   server and client markup differ. The component passes a `useId()` value when you leave it out,
   so the default is already SSR-safe — `CircleSkeleton` has no such prop and is not.

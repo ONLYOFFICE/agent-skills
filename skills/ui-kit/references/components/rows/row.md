@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/rows/row/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: ad12b739f42dfac7e9dea65cbd5b030722a952bc72a1c7186c2d0eccb5b05051 -->
+<!-- body-sha256: c0ff8d96bb882b245f62a451e99d739c7328cc9a60bf3aa230e11342bdb0ddf9 -->
 
 > Synced from the kit's own `components/rows/row/README.md` at 4.0.0. Where this page and [SKILL.md](../../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -19,7 +19,8 @@
   "state": { "visibility": null, "close": "rowContextClose", "loading": "inProgress", "disabled": "isDisabled" },
   "related": ["rows", "rows/row-content", "context-menu"],
   "subComponents": [],
-  "testIds": ["row"]
+  "testIds": ["row"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Row
@@ -207,8 +208,12 @@ export function LockedRow({ name }: { name: string }) {
 - **`onRowClick` is bound to the content and the start element**, not to the row: a click on the
   checkbox, the badges or the context button does not reach it.
 - On a touch device a click on the start element also selects the row, calling `onSelect(true)`.
-- `mode="modern"` puts the checkbox over the start element and needs **both** `checked` and
-  `element` present, or neither is rendered.
+- `mode="modern"` puts the checkbox in the start element's place and needs **both** `checked`
+  and `element` present, or neither is rendered. The start element shows until the row is
+  checked or the pointer is over it; then the checkbox takes its place. The hover swap is off
+  on a touch device and in index-editing mode, where only checking the row shows the checkbox.
+- On a phone-sized screen the context menu opens behind a backdrop, and a menu taller than
+  210px opens as a sheet from the bottom, under the header built from the child's `item`.
 - `id` and `style` are declared and never read; `className` is the way in.
 - The component is memoised with a deep comparison of all its props.
 

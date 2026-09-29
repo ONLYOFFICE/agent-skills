@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/drop-down-item/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 3052b3afc37bd0a85ecbee5a9927021d7327037fbb4fd557de81efb054cf7f7c -->
+<!-- body-sha256: c82723f5dd2bb9044edfc557abf25428f12e3bfb153e43b9513e246ff1cf3aef -->
 
 > Synced from the kit's own `components/drop-down-item/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": "setOpen", "loading": null, "disabled": "disabled" },
   "related": ["drop-down", "context-menu", "combobox"],
   "subComponents": [],
-  "testIds": ["drop-down-item"]
+  "testIds": ["drop-down-item"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # DropDownItem
@@ -171,6 +172,34 @@ export function NotificationsItem() {
 }
 ```
 
+### A nested level: a header with a way back
+
+A submenu level opens with a header row; `withHeaderArrow` puts a back arrow before its title.
+
+```tsx
+import { DropDownItem } from "@onlyoffice/apps-ui-kit/components/drop-down-item";
+
+export function SharingLevel({
+  onBack,
+  onCopyLink,
+}: {
+  onBack: () => void;
+  onCopyLink: () => void;
+}) {
+  return (
+    <>
+      <DropDownItem
+        isHeader
+        withHeaderArrow
+        headerArrowAction={onBack}
+        label="Sharing"
+      />
+      <DropDownItem label="Copy link" onClick={onCopyLink} />
+    </>
+  );
+}
+```
+
 ## Behaviour the types don't state
 
 - **`children` replaces the label, it does not follow it.** The item renders `label` if there is
@@ -194,21 +223,35 @@ export function NotificationsItem() {
 - A separator renders a non-breaking space and a border, and the enclosing menu reserves 12px
   for it (16 on a tablet) rather than the usual 32.
 - `isHeader` also turns off the hover and active styling, whatever `noHover` and `noActive` say.
+- **`isSubMenu` only draws a trailing arrow.** It opens nothing by itself — the enclosing menu
+  does that from `onClick`. The arrow turns downwards while `isActive` is set and is mirrored in
+  a right-to-left interface.
+- **`isActive` and `isSelected` do different jobs.** `isActive` paints the selected background;
+  `isSelected` only sets `aria-selected` and routes a click to `onClickSelectedItem` — on every
+  click of a selected item, a disabled one included — and paints the background only when the
+  item is also disabled.
+- **The row clips a long label but shows no ellipsis on its own**, because it is a flex row.
+  `truncateText` puts the ellipsis on the label, and `textOverflow` makes the whole row a block
+  so its own ellipsis applies.
 
 ## CSS variables
 
-| Variable                            | Default    | Effect                  |
-| ----------------------------------- | ---------- | ----------------------- |
-| `--drop-down-item-height`           | `32px`     | Line height of the row  |
-| `--drop-down-item-padding`          | `0 12px`   | Padding inside the row  |
-| `--drop-down-item-font-size`        | `13px`     | Size of the label       |
-| `--drop-down-item-font-weight`      | `600`      | Weight of the label     |
-| `--drop-down-item-color`            | theme text | Colour of the label     |
-| `--drop-down-item-hover-bg`         | theme grey | Background on hover     |
-| `--drop-down-item-icon-fill`        | theme icon | Colour of a filled icon |
-| `--drop-down-item-divider`          | theme line | Colour of a separator   |
-| `--drop-down-item-header-height`    | `48px`     | Height of a header row  |
-| `--drop-down-item-header-font-size` | `15px`     | Size of a header's text |
+| Variable                            | Default    | Effect                                                                  |
+| ----------------------------------- | ---------- | ----------------------------------------------------------------------- |
+| `--drop-down-item-height`           | `32px`     | Line height of the row                                                  |
+| `--drop-down-item-padding`          | `0 12px`   | Padding inside the row                                                  |
+| `--drop-down-item-font-size`        | `13px`     | Size of the label                                                       |
+| `--drop-down-item-font-weight`      | `600`      | Weight of the label, a header's included                                |
+| `--drop-down-item-color`            | theme text | Colour of the label                                                     |
+| `--drop-down-item-disabled-color`   | theme grey | Colour of a disabled item's label                                       |
+| `--drop-down-item-hover-bg`         | theme grey | Background on hover, while pressed and on the keyboard-highlighted item |
+| `--drop-down-item-icon-fill`        | theme icon | Colour of a filled icon, a disabled item's included                     |
+| `--drop-down-item-divider`          | theme line | Colour of a separator and of the line under a header                    |
+| `--drop-down-item-header-height`    | `48px`     | Height of a header row                                                  |
+| `--drop-down-item-header-font-size` | `15px`     | Size of a header's text                                                 |
+
+On a tablet-width viewport the row ignores `--drop-down-item-height` and `--drop-down-item-padding`:
+its line height is `36px` and its padding `0 16px` regardless.
 
 `--drop-down-min-width` is written by the component from the `minWidth` prop.
 
@@ -219,9 +262,9 @@ export function NotificationsItem() {
   the pattern is incomplete on its own.
 - **`tabIndex` is -1 by default, and that is correct here**, unlike on the kit's inputs: an
   option inside a listbox is meant to stay off the tab order while the container keeps focus and
-  the arrow keys move a highlight. That is the active-descendant pattern, and the row carries
-  `data-focused` for it. What is incomplete is the container, per the point above — not this.
-  The arrow keys also work only when the menu has a `maxHeight`.
+  the arrow keys move a highlight. That is the active-descendant pattern: the menu sets
+  `isActiveDescendant` on the highlighted row, which paints it and sets `data-focused`. What is
+  incomplete is the container, per the point above — not this. The arrow keys also work only when the menu has a `maxHeight`.
 - Clicks are handled on the row, and there is no key handler: Enter and Space do nothing unless
   the enclosing menu's keyboard navigation is on.
 - The badges are text inside the row, so their meaning is announced; the external-link icon is

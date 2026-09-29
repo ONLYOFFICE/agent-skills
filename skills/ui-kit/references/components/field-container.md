@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/field-container/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 0f46bed5a49f7816a5fcdaa1a1c68d9b99c06df05b5e51d2855144e1a58ff3a6 -->
+<!-- body-sha256: e44bb3b19769af76e9dadfa94355a68e4e092b7daea5061f958ac4f13c32f98f -->
 
 > Synced from the kit's own `components/field-container/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["label", "help-button", "text-input"],
   "subComponents": [],
-  "testIds": ["field-container"]
+  "testIds": ["field-container"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # FieldContainer
@@ -238,11 +239,14 @@ export function QuotaField({ children }: { children: ReactElement }) {
 | ----------------------------- | ------------------ | ----------------------------------------------------------------------- |
 | `--field-container-margin`    | `0 0 16px 0`       | The container's whole margin. `removeMargin` sets it to `0` regardless. |
 | `--field-container-error-top` | `4px`              | Gap between the control and the error message                           |
-| `--input-error-color`         | theme error colour | Error text colour when `errorColor` is not given                        |
+| `--error-color`               | theme error colour | Error text colour when `errorColor` is not given                        |
 
-`--label-width`, `--error-width` and `--error-color` are written onto the element from the
-`maxLabelWidth`, `errorMessageWidth` and `errorColor` props, so setting them from a
-stylesheet has no effect.
+`--label-width` and `--error-width` are written onto the element from the `maxLabelWidth`
+and `errorMessageWidth` props, so setting them from a stylesheet has no effect; set the
+props instead. `--error-color` is written the same way from `errorColor`, but only when
+that prop is given — without it, a value set on a wrapper reaches the message. The theme
+fallback behind it, `--input-error-color`, is set on the message element itself for the
+light and dark themes, so it cannot be overridden from outside.
 
 ## Accessibility
 
@@ -252,7 +256,8 @@ stylesheet has no effect.
   appearance only — it used to be rendered with an empty `htmlFor`, which is the same thing
   and could not be fixed from outside.
 - `isRequired` puts `aria-required="true"` on the label element — again, not on the control.
-  Set `required` or `aria-required` on the control as well.
+  Set `required` or `aria-required` on the control as well. The asterisk it draws is
+  `aria-hidden`, so a screen reader hears the caption without it.
 - The error message is plain text. It is not a live region and is not referenced by
   `aria-describedby`, so a screen reader will not announce it when it appears. Add
   `aria-describedby` and an `id` yourself if the form must be accessible.

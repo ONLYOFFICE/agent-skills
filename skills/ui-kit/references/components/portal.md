@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/portal/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: d107619535933254d7afc73194b779d6c39c2eadf575e252760b94b4503cf94d -->
+<!-- body-sha256: ea81a6bdc66b71935714f8a75de69de7546fb98c96326451ed82ea6139d1a1f7 -->
 
 > Synced from the kit's own `components/portal/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "visible", "close": null, "loading": null, "disabled": null },
   "related": ["modal-dialog", "drop-down", "tooltip"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # Portal

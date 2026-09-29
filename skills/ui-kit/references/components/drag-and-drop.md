@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/drag-and-drop/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: ef9c65b34a3156c1b968fbfc70b7d66b588f3ba2c93a051156615a5de675f366 -->
+<!-- body-sha256: 74c81ec8949a518fba680fe0e60b351b7473ecb8ea935a83feb603324a2daea7 -->
 
 > Synced from the kit's own `components/drag-and-drop/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDragDisabled" },
   "related": ["dropzone", "tiles", "rows"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # DragAndDrop
@@ -172,8 +173,8 @@ export function ReadOnlyFolder({
 
 ### Nesting one target inside another
 
-By default a drop is handled here and goes no further. `isDropZone` lets the events bubble, so an
-outer target sees them too.
+By default a drop is handled here and goes no further. `isDropZone` lets the events bubble, so the
+outer target takes the drop — its `onDrop` fires, and the inner one's does not.
 
 ```tsx
 import { DragAndDrop } from "@onlyoffice/apps-ui-kit/components/drag-and-drop";
@@ -204,6 +205,8 @@ export function NestedTargets({
   neither dragging nor disabled. The library's own drag-active state alone changes nothing.
 - **`isDropZone` is about bubbling, not about being a drop zone.** It is inverted into the drop
   library's `noDragEventsBubbling`, so the default — `false` — is the one that stops events here.
+  With it set, the drop is handed on rather than shared: an outer target without `isDropZone`
+  stops the event, and the inner target then skips its own `onDrop`, so only the outer one fires.
 - **An empty drop is silent.** `onDrop` is called only when at least one file came through.
 - **`onDragOver` is given a stale flag.** The `isDragActive` it passes is the value from the render
   in which the event fired, so the first drag-over of a drag still reports `false`.
@@ -220,18 +223,19 @@ export function NestedTargets({
 
 ## CSS variables
 
-| Variable                 | Default                       | Effect                             |
-| ------------------------ | ----------------------------- | ---------------------------------- |
-| `--dnd-dragging-bg`      | the theme's drag colour       | Background while `dragging`        |
-| `--dnd-accept-bg`        | the theme's drag-hover colour | Background while a drag is over it |
-| `--dnd-disabled-opacity` | `0.4`                         | Opacity while `isDragDisabled`     |
+| Variable                 | Default                       | Effect                                                   |
+| ------------------------ | ----------------------------- | -------------------------------------------------------- |
+| `--dnd-dragging-bg`      | the theme's drag colour       | Background while `dragging`                              |
+| `--dnd-accept-bg`        | the theme's drag-hover colour | Background while a drag is over it and `dragging` is set |
+| `--dnd-disabled-opacity` | `0.4`                         | Opacity while `isDragDisabled`                           |
 
 ## Accessibility
 
-- The element is a `<div>` from the drop library. It is given a `tabIndex` and key handlers by
-  that library, but with no click behaviour of its own there is nothing for a keyboard user to
-  do — **there is no file dialog here at all.** Provide a separate button that opens an
-  `<input type="file">` when uploading has to be possible without a mouse.
+- The element is a `<div>` that the drop library turns into a button: it gets `role="button"`,
+  `tabIndex="0"` and click and key handlers, so it is announced as a button and sits in the tab
+  order. Space, Enter and a click try to open a file dialog, but there is no file input, so
+  nothing happens — **there is no file dialog here at all.** Provide a separate button that opens
+  an `<input type="file">` when uploading has to be possible without a mouse.
 - Nothing announces that a drag is over the target: the feedback is a background colour, and it
   only appears when you set `dragging`.
 - `isDragDisabled` changes the opacity and sets no `aria-disabled`, so the state is invisible to a

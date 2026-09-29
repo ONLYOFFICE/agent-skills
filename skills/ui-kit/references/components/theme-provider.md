@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/theme-provider/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: faec275fb518e23133aaaa3a83dac3baa775548e56ee4021a56ed040cace7899 -->
+<!-- body-sha256: 334d59bac2b354826d48003f25bae5e388fe9a6dc434a971d22f3d0d01bc1267 -->
 
 > Synced from the kit's own `components/theme-provider/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
   "related": ["portal-logo", "nav-menu", "section"],
   "subComponents": [],
-  "testIds": []
+  "testIds": [],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # ThemeProviderComponent
@@ -180,6 +181,11 @@ export function BrandedApp() {
   That happens as soon as the module is imported, with or without the component on screen.
 - **The effects are never undone.** Unmounting leaves `data-theme`, `data-dir`, the body classes
   and every custom property exactly as they were.
+- **The colour scheme becomes four custom properties**: `--color-scheme-main-accent`,
+  `--color-scheme-main-buttons`, `--color-scheme-text-accent` and `--color-scheme-text-buttons`,
+  the colours and the text drawn on them. Accented components such as `Slider`, `Tabs`,
+  `ToggleButton` and `ProgressBar` read them from their stylesheets, while the scheme object itself
+  goes into the theme context for components that read it in code.
 - **The colour scheme is only written when `main` is present**, and only forwards — passing a
   scheme without `main`, or removing it later, leaves the previous accent in place.
 - **`fontFamily` defaults to `Open Sans, sans-serif, Arial`**, and the kit does not ship that font:

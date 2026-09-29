@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/text-input/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 652c3acbd03139a0db1d8c370fad139b1941fdfee216a35dc25df808f3525741 -->
+<!-- body-sha256: 70441297381dc01e4f7b3006a765aa535786e96d89b65f2e115c30d698b4ad63 -->
 
 > Synced from the kit's own `components/text-input/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "isDisabled" },
   "related": ["field-container", "input-block", "search-input"],
   "subComponents": [],
-  "testIds": ["text-input"]
+  "testIds": ["text-input"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # TextInput
@@ -270,22 +271,53 @@ export function PhoneField() {
   contents will not re-render it; an object mutated in place will not either.
 - **`isBold` beats `fontWeight`.** When both are set the weight is 600 and `fontWeight` is
   ignored.
+- **The sizes differ in more than width.** `middle` renders its text at weight 600 by default,
+  `large` in a 16px font with taller padding; `base` is 13px at weight 400.
+- **`dir` defaults to `auto`**, so each value picks its own text direction and mixed-script
+  text reads correctly under either interface direction.
 - **`forwardedRef` is dropped when `mask` is set** — the ref is attached to the plain
   `<input>` branch only.
 - **The browser's own clear button for `type="search"` is hidden** by the stylesheet, in
   both WebKit and Firefox.
+- **`hasError` and `hasWarning` hold their colour through hover and focus.** The border
+  takes the error (red) or warning (orange) colour at rest, on hover and while focused, so
+  the state never flickers back to the normal border. When both are set the warning colour
+  wins, because its rules come later in the stylesheet.
+- **`withBorder={false}` removes the border outright**, for a field set inline in text or a
+  table cell. With it go the hover, focus, error and warning colours, which are all border
+  colours, so a borderless field shows no validation state.
 
 ## CSS variables
 
-| Variable                                               | Default                     | Effect                                                                          |
-| ------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------- |
-| `--input-width-base` / `-middle` / `-large`            | `173px` / `300px` / `550px` | Width per `InputSize`                                                           |
-| `--text-input-bg`                                      | `--input-bg`                | Background, applied as a large inset box-shadow so autofill does not repaint it |
-| `--text-input-disabled-bg`                             | `--input-disabled-bg`       | Background while disabled                                                       |
-| `--text-input-font-size`                               | per-size value              | Overrides the font size of all three sizes at once                              |
-| `--text-input-font-size-base` / `-middle` / `-large`   | theme values                | Font size per size                                                              |
-| `--text-input-padding-base` / `-middle` / `-large`     | theme values                | Padding per size                                                                |
-| `--text-input-line-height-base` / `-middle` / `-large` | theme values                | Line height per size                                                            |
+Set these on any ancestor; the stylesheet reads them through a fallback to the theme token.
+
+| Variable                    | Default                 | Effect                                                                          |
+| --------------------------- | ----------------------- | ------------------------------------------------------------------------------- |
+| `--text-input-bg`           | `--input-bg`            | Background, applied as a large inset box-shadow so autofill does not repaint it |
+| `--text-input-color`        | `--input-color`         | Text and caret colour                                                           |
+| `--text-input-border-color` | `--input-border-color`  | Border colour at rest                                                           |
+| `--text-input-border-hover` | `--input-border-hover`  | Border colour while hovered                                                     |
+| `--text-input-border-focus` | `--input-border-focus`  | Border colour while focused                                                     |
+| `--text-input-radius`       | `--input-border-radius` | Border radius                                                                   |
+| `--text-input-font-size`    | per-size value          | Overrides the font size of all three sizes at once                              |
+| `--text-input-disabled-bg`  | `--input-disabled-bg`   | Background while disabled                                                       |
+
+Two states set their colours from the theme directly and ignore these overrides. Under
+`hasError` or `hasWarning` the border comes from the theme's error or warning tokens, so
+`--text-input-border-color`, `-hover` and `-focus` stop applying. A disabled field takes its
+text, caret and border colours from the theme as well; only `--text-input-radius`,
+`--text-input-font-size` and `--text-input-disabled-bg` still reach it.
+
+The theme tokens below are declared on the `<input>` element itself, so a value set on an
+ancestor never reaches it. Override them through the `style` prop only.
+
+| Variable                                               | Default                     | Effect                                   |
+| ------------------------------------------------------ | --------------------------- | ---------------------------------------- |
+| `--input-width-base` / `-middle` / `-large`            | `173px` / `300px` / `550px` | Width per `InputSize`                    |
+| `--text-input-font-size-base` / `-middle` / `-large`   | `13px` / `13px` / `16px`    | Font size per size                       |
+| `--text-input-padding-base` / `-middle` / `-large`     | theme values                | Padding per size                         |
+| `--text-input-line-height-base` / `-middle` / `-large` | theme values                | Line height per size                     |
+| `--text-input-placeholder-color`                       | theme value                 | Placeholder colour; disabled has its own |
 
 ## Accessibility
 

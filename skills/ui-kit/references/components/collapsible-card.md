@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/collapsible-card/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 62106c88c3970d909893209ec3a55ec371fd531014def884e851e8847484f38e -->
+<!-- body-sha256: 5a1fc0e284a5dbc9b2501efcdb083b04f70bd31f5ec07c42a8895f9396e892f5 -->
 
 > Synced from the kit's own `components/collapsible-card/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "isOpen", "close": "onToggle", "loading": null, "disabled": null },
   "related": ["card", "tabs", "text"],
   "subComponents": [],
-  "testIds": ["collapsible-card"]
+  "testIds": ["collapsible-card"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # CollapsibleCard
@@ -171,11 +172,15 @@ export function AdvancedSettings({
 - **The card is as wide as its container** and has no maximum: `width: 100%`, a 12px radius,
   24px of padding in the header and `0 24px 20px` in the body. It brings no outer margin, so a
   stack of them needs a `gap`.
-- **The chevron is the kit's arrow asset rotated**, 90° when closed and -90° when open, and its
-  colour comes from the theme rather than from `currentColor` — it cannot be recoloured by
-  setting `color` on the card.
+- **The header sets its own type**: the title at 18px bold, the description at 16px regular
+  under it. A falsy `description` — empty string, `null`, `0` — leaves the second line out
+  entirely rather than rendering an empty one.
+- **The chevron is the kit's arrow asset rotated**, 90° when closed (pointing down) and -90° when
+  open (pointing up), and its colour comes from the theme rather than from `currentColor` — it
+  cannot be recoloured by setting `color` on the card.
 - **The focus ring is drawn inside the header** (`outline-offset: -2px`) and uses `currentColor`,
-  so it follows the inherited text colour rather than the accent.
+  so it follows the inherited text colour rather than the accent. It is a `:focus-visible` ring:
+  keyboard focus shows it, a mouse click does not.
 
 ## CSS variables
 

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/room-logo-cover-dialog/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 0a7b545bd2a30e0fa286d507b82f29522368883918a0564473995b0a7b61b1ba -->
+<!-- body-sha256: 2fab175a748b8efd4dab54f030fe422e9a64ae6cead2afdd9692046c4c057524 -->
 
 > Synced from the kit's own `components/room-logo-cover-dialog/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": "visible", "close": "onClose", "loading": null, "disabled": null },
   "related": ["room-icon", "color-picker", "modal-dialog"],
   "subComponents": ["RoomLogoCover"],
-  "testIds": ["room_logo_cover_dialog", "room_logo_cover_apply_button", "room_logo_cover_cancel_button", "room_logo_cover_without_icon", "color_item_add_custom"]
+  "testIds": ["room_logo_cover_dialog", "room_logo_cover_apply_button", "room_logo_cover_cancel_button", "room_logo_cover_without_icon", "color_item_add_custom"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # RoomLogoCoverDialog
@@ -277,9 +278,14 @@ export function CoverSection({
 - **The dialog's height is computed from fixed constants** — 648px on desktop, 854px on tablet —
   recalculated on every resize, and forced to a scrolling body when the viewport is landscape and
   shorter than 640px.
-- **A custom colour is anything outside the kit's palette.** The extra swatch appears only once
-  `selectedColor` is not one of `globalColors.logoColors`; before that the same slot is the plus
-  button that opens the picker.
+- **A custom colour is anything outside the kit's palette** of nine presets. The extra swatch
+  appears only once `selectedColor` is not one of `globalColors.logoColors`; before that the same
+  slot is the plus button that opens the picker. The extra swatch carries a pencil button that
+  opens the picker again to change it.
+- **Where the colour picker opens depends on the width.** On a phone (600px and below) it is a
+  modal of its own; otherwise it is a drop-down anchored to the plus button or custom swatch.
+- **The initials are the first letters of the title's first and last words**, upper-cased, after
+  special symbols are stripped — "Quarterly reports" gives QR, a one-word title a single letter.
 - On `RoomLogoCover` the raw-room fields **`logoColor` and `coverColor` are six hex digits without
   a leading `#`** — the component prefixes it — while `initialColor` is a full `#rrggbb`.
 

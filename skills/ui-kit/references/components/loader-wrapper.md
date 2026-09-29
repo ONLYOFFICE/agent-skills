@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/loader-wrapper/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 74568cda7c277062fe06d38dd514938aff61ba2643553c3eca8e6dbcb0803b49 -->
+<!-- body-sha256: 6fa6f02f13daf4318d0192eb0b387a8e7fbbe3417ab00cc11b1082090ef5798c -->
 
 > Synced from the kit's own `components/loader-wrapper/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -18,7 +18,8 @@
   "state": { "visibility": null, "close": null, "loading": "isLoading", "disabled": null },
   "related": ["loader", "app-loader", "progress-bar"],
   "subComponents": [],
-  "testIds": ["loader-wrapper"]
+  "testIds": ["loader-wrapper"],
+  "storiesAudit": "2026-09-28"
 } -->
 
 # LoaderWrapper
@@ -164,6 +165,8 @@ export function SubtleDim() {
 
 - **It renders no loading indicator of any kind.** The whole component is one `<div>` with an
   opacity, a `pointer-events` value and a transition; nothing spins, and nothing says "loading".
+- **The pointer lock covers clicks, hovers and wheel scrolling.** Hover styles inside do not
+  react, and the wheel over the dimmed content scrolls whatever is behind it instead.
 - **`pointer-events: none` does not stop the keyboard.** Everything inside stays in the tab order
   and still fires on Enter or Space, so a button that is visibly greyed out can still be pressed by
   a keyboard user. Disable the controls themselves as well.
@@ -189,6 +192,9 @@ export function SubtleDim() {
 
 They are read from inline styles, so they must be declared on this element or on one of its
 ancestors; a rule matching a class of your own will not reach them.
+
+The transition animates the fade both ways, but only when `isLoading` changes on a mounted
+instance; a wrapper that mounts already loading starts at the dimmed opacity with no fade.
 
 ## Accessibility
 
