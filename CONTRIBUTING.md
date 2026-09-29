@@ -18,8 +18,8 @@ the README table, nothing else.
 | `README.md` | yes | For people: what the skill does, how to install it alone, what it targets, how to maintain it. Nothing in `SKILL.md` links to it. |
 | `references/` | yes | The knowledge base, one topic per file, loaded on demand. The place for "what the portal/SDK actually does" — tables, payload shapes, recipes, pitfalls. |
 | `evals/` | yes | The measuring instrument — see below. Not read by agents. |
-| `scripts/` | if useful | Tools an agent runs: validators, generators, probes. Every validator ships with a `test-validator.mjs` that exercises it against known-good and known-bad input and exits non-zero on a mismatch — the validator is what makes a rule mechanical, so it must not silently rot. Node only, no dependencies. No network, with one exception: a script named `probe-*.mjs` may query the portal or site the user named, reads only, and never runs from the self-test. |
-| `sources.json` | yes | The skill's external sources: the SDK version it targets, which of the hosts declared in the root `sources.json` it links to and at which paths, the placeholder hosts of its examples, and `skipDirs` — the directories of synced pages the link check leaves alone. A new site is a new host at the root first. `node tools/sync-sources.mjs --check` fails when a link or a pinned version is not traceable to it — see `.claude/skills/sync-sources/SKILL.md` for moving a skill to another site or SDK release. |
+| `scripts/` | if useful | Tools an agent runs: validators, generators, probes. Every validator ships with a `test-validator.mjs` that exercises it against known-good and known-bad input and exits non-zero on a mismatch — the validator is what makes a rule mechanical, so it must not silently rot. Node only, no dependencies. No network, with one exception: a script named `probe-*.mjs` may query the portal or site the user named, reads only, and never runs from the self-test. (The repository-internal `.claude/skills/onlyoffice-docs/scripts/docs.mjs` reads the docs site for the people writing references; it is not part of a shipped skill.) |
+| `sources.json` | yes | The skill's external sources: the SDK version it targets (omitted by a skill that pins none), which of the hosts declared in the root `sources.json` it links to and at which paths, the placeholder hosts of its examples, and `skipDirs` — the directories of synced pages the link check leaves alone. A new site is a new host at the root first; a host named `<name>Fallback` there (`apiSiteFallback`, the docs stand) is a stand-in, never a link base — `--verify --fallback` and the internal `onlyoffice-docs` script read from it when the primary host has no page. `node tools/sync-sources.mjs --check` fails when a link or a pinned version is not traceable to it — see `.claude/skills/sync-sources/SKILL.md` for moving a skill to another site or SDK release. |
 | a directory in `skipDirs` | if synced | Pages copied from an upstream repository by a `tools/sync-*.mjs`, each carrying a provenance header and a hash of its body. Never hand-edited: the text is corrected upstream and the sync is run again, and the sync tool's `--check` runs in the skill's self-test to catch an edit made here anyway. `skills/ui-kit/references/components/` is the one today. |
 | `templates/`, `vendor/` | if needed | Files a generator copies into a project. |
 
@@ -41,32 +41,45 @@ recognise it when debugging.
 
 ## Evals decide
 
-Each skill carries its own `evals/`: the same task given to the same model with and
-without the skill, graded against the same checks. A check that passes only with the skill
-is a passage doing work; a check both runs pass is a passage that can probably go. Run the
-evals of the skill you changed after the last content change, once — the protocol is in
-each skill's `evals/README.md`. The best new scenario is a real failure turned into a
-check: watch it fail, fix the skill, watch it pass.
+Two suites, one idea: the same task given to the same model with and without the skill,
+graded against the same checks. A check that passes only with the skill is a passage doing
+work; a check both runs pass is a passage that can probably go.
+
+- `evals/` at the plugin root is the suite `claude plugin eval` runs: one directory per case
+  with a `prompt.md` and one grader per file (`regex` over a produced file or the answer,
+  `tool_used: Skill` for the skill that should fire, an `llm` rubric for short answers). It
+  runs unattended and compares against a no-plugin baseline — [evals/README.md](evals/README.md).
+- `skills/<name>/evals/` keeps the skill-creator protocol (`evals.json`, the long A/B
+  scenarios, the G1 rubric, the trigger tests) for hand-graded iteration inside a session —
+  each skill's `evals/README.md`.
+
+Run the plugin suite's cheap cases (`--tag question --tag trigger`) after every content
+change and the build cases before a release — the commands, costs and platform limits are in
+[TESTING.md](TESTING.md). The best new case is a real failure turned into a check: watch it
+fail, fix the skill, watch it pass.
 
 Feedback from testing (the internal testing log, issues, a reflection somebody wrote after a
 session) is an input to this loop, not a note to file: every remark becomes either a new
-scenario or assertion in `evals/`, a new rule or reference passage in the skill, or is closed
+case or grader in `evals/`, a new rule or reference passage in the skill, or is closed
 with a comment saying why not. A remark that only changes prose without a check behind it
 tends to be lost on the next rewrite.
 
 ## Before opening a pull request
 
 ```
-claude plugin validate . --strict               # the marketplace manifest, and only that
-claude plugin validate skills --strict          # the SKILL.md files; the line above never reads them
-node skills/<name>/scripts/test-validator.mjs   # for every skill that has a validator
-node tools/sync-sources.mjs --check             # every link and pinned version traces to sources.json
-node tools/sync-ui-kit.mjs --check              # no synced page was edited here
+claude plugin validate . --strict                              # the marketplace manifest, and only that
+claude plugin validate skills --strict                         # the SKILL.md files; the line above never reads them
+node skills/<name>/scripts/test-validator.mjs                  # for every skill that has a validator
+node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs      # the internal docs script's parsers
+node tools/sync-sources.mjs --check                            # every link and pinned version traces to sources.json
+node tools/sync-ui-kit.mjs --check                             # no synced page was edited here
 ```
+
+For a content change, also the cheap behaviour suite — [TESTING.md](TESTING.md) has the full
+protocol and what each result means.
 
 Commit messages say what changed and why in one line, in the imperative, without a type
 prefix ("Warn that FieldContainer's own margin doubles against a column gap").
 
 Do not add `Co-Authored-By` trailers or any other AI-attribution lines to commit messages
 or pull request descriptions. Same rule as `docspace-ui-kit-react` and the DocSpace client.
-

@@ -89,7 +89,7 @@ export class ArchiveChecks extends Check {
 
     this.error(
       "dist",
-      `${where} - the build split the bundle into chunks. The packer zips plugin.js alone and the portal imports it from a blob URL, where a relative import() cannot resolve, so the first surface that needs a chunk renders blank (the preview, which serves dist/ whole, would show it working). Set build.rollupOptions.output.inlineDynamicImports: true - the generator's vite.config does - and build again`,
+      `${where} - the build split the bundle into chunks. The packer zips plugin.js alone and the portal imports it from a blob URL, where a relative import() cannot resolve, so the first surface that needs a chunk renders blank (the preview, which serves dist/ whole, would show it working). Set build.rolldownOptions.output.codeSplitting: false - the generator's vite.config does - and build again`,
     );
   }
 
@@ -107,7 +107,7 @@ export class ArchiveChecks extends Check {
       else if (specifier === SDK_PACKAGE)
         this.error(
           "dist",
-          `dist/plugin.js imports "${SDK_PACKAGE}" - the SDK root has to be bundled (only its /react entry is host-provided); remove it from rollupOptions.external`,
+          `dist/plugin.js imports "${SDK_PACKAGE}" - the SDK root has to be bundled (only its /react entry is host-provided); remove it from rolldownOptions.external`,
         );
       else
         this.error(
@@ -119,7 +119,7 @@ export class ArchiveChecks extends Check {
     if (BUNDLED_REACT_MARKERS.some((marker) => code.includes(marker)))
       this.error(
         "dist",
-        `dist/plugin.js contains a copy of React - a second React instance has its own contexts, so every SDK hook throws inside the portal's error boundary and the plugin's panels render blank; keep react, react-dom and react/jsx-runtime in rollupOptions.external`,
+        `dist/plugin.js contains a copy of React - a second React instance has its own contexts, so every SDK hook throws inside the portal's error boundary and the plugin's panels render blank; keep react, react-dom and react/jsx-runtime in rolldownOptions.external`,
       );
 
     if (!imports.includes("react/jsx-runtime") && !imports.includes("react") && /\bcomponent\s*:/.test(code) === false)

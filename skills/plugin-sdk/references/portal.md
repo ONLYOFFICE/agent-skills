@@ -4,7 +4,7 @@ What the loader actually does with a plugin — not what the types allow — and
 
 ## Before anything loads: the switches
 
-- **`plugins.enabled`** (server setting, **off by default**). When false the portal never initialises plugins: no bundle fetched, no items, no routes, nothing in the console. Every surface re-checks it. Ask about this before auditing code.
+- **`plugins.enabled`** (server setting, **off by default**). When false the portal never initialises plugins: no bundle fetched, no items, no routes, nothing in the console. Every surface re-checks it. Ask about this before auditing code. Where the switches and the upload control are in the UI: [Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md).
 - **`pluginOptions.upload` / `pluginOptions.delete`** — a second, narrower switch *behind* the first, not beside it: the Integration → Plugins tab exists only when `plugins.enabled`, and these are read only on that tab. With `upload` off it offers no upload control, however correct the archive.
 - The plugin system is skipped when the portal's **paid period has expired**, and plugin surfaces are suppressed inside the **AI-agent/chat views**.
 
@@ -43,6 +43,8 @@ Switching the interface language does not notify the plugin — it **drops and r
 
 ### Manifest fields the portal reads for itself
 
+The packed `config.json` and how `package.json` maps onto it are in [Config](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/config.md); the fields with behaviour worth knowing:
+
 - `runtime` — only `"module"` is known.
 - `minDocSpaceVersion` — written into `config.json` by the packer from the **installed SDK's** `package.json`; setting it in your own `package.json` does nothing. It only produces a compatibility warning, never blocks loading.
 - `nameLocale` / `descriptionLocale` — `{ "ru": "…", "en-US": "…" }`, used for the plugin list only; item labels you localise yourself.
@@ -57,6 +59,7 @@ A plugin that never becomes a plugin is reported — to the administrator. The u
 | **Failed to load** — the toggle is off and locked; the plugin stays in the list so it can be deleted | *The bundle imports "lodash-es", which the portal does not provide …* — the portal's own sentence, naming the specifier | a bare import outside the five specifiers: a library that should have been bundled, the SDK **root** marked external, a `@onlyoffice/apps-ui-kit/…` subpath |
 | | *The plugin module has no default export* | still assigning `window.Plugins.X` instead of `export default plugin` |
 | | the exception's own message | module-scope code threw, or the bundle is not valid JavaScript for the browser |
+| | *process is not defined* | the build does not `define` `process.env` ([bundling.md](bundling.md)) |
 | | the browser's syntax error, e.g. *Cannot use import statement outside a module* | an ES module bundle without `"runtime": "module"`, loaded as a legacy script |
 | | *The request for … failed with HTTP 404* | the bundle URL does not answer — a broken upload |
 | | *The script ran but registered no plugin named "X"*, or *Failed to load the script …* | (legacy) `window.Plugins.X` ≠ `pluginName`, or the script URL does not answer |
@@ -75,7 +78,7 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 | One scope is dead, others work | scope declared but its getter is missing, or `add*Item` never called |
 | A tab, page or modal opens **blank**; console `[Plugin: name] …` | the component threw — swallowed by the error boundary. Usually an unguarded fetch/parse, a conditional hook, or a bundled React (next row) |
 | Every component blank; `usePluginRuntime must be used inside a plugin component` | a second React or SDK React entry in the bundle — fix the `external` list |
-| A surface that needs a lazily loaded module opens **blank** on the portal and worked in the preview; a `TypeError` about `./chunk-….js` in the console | the build split the bundle: the archive carries `plugin.js` alone and a blob-URL module cannot resolve a relative `import()` — `inlineDynamicImports` ([bundling.md](bundling.md)) |
+| A surface that needs a lazily loaded module opens **blank** on the portal and worked in the preview; a `TypeError` about `./chunk-….js` in the console | the build split the bundle: the archive carries `plugin.js` alone and a blob-URL module cannot resolve a relative `import()` — `codeSplitting: false` ([bundling.md](bundling.md)) |
 | Components render light and LTR on a dark/RTL portal | a bundled `@onlyoffice/apps-ui-kit` |
 | A hook "throws outside a component" from a click | hooks called in a class-side callback |
 | Filter by user role ignored | wrong field name — see [the filter field trap](items/common-fields.md#the-filter-field-trap) |
@@ -132,7 +135,7 @@ A module plugin runs in the portal's own window — its DOM, cookies and `localS
 
 ## Limits
 
-Enforced server-side; exceeding one rejects the upload.
+Enforced server-side; exceeding one rejects the upload. The archive and asset limits are also stated in [Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md) and [Plugin structure → assets](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/plugin-structure.md#assets); the rest is observed.
 
 | Limit | Value |
 |---|---|
@@ -142,6 +145,6 @@ Enforced server-side; exceeding one rejects the upload.
 | Upload format | `.zip` containing `plugin.js` and `config.json` |
 | Stored settings (`save()` / `saveSettings`) | one string of 255 characters; longer is refused with a 400, not truncated |
 
-Limits of one scope — context menu nesting, the five sidebar buttons — are on that scope's page ([scopes.md](plugins/scopes.md)).
+Limits of one scope — context menu nesting, the five sidebar buttons — are with that scope: on its page here or on the docs page it links ([scopes.md](plugins/scopes.md)).
 
-Icons are referenced by **file name only** (`"icon-16.svg"`). The logo is 48×48; the size each item's icon wants is in its scope's fields table.
+Icons are referenced by **file name only** (`"icon-16.svg"`). The logo is 48×48; the size each item's icon wants is on its interface's docs page and in [Plugin structure → assets](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/plugin-structure.md#assets), and what the portal does with a `File` item's two icons beyond that is in [file-item.md](items/file-item.md).

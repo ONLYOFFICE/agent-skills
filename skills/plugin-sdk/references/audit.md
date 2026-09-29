@@ -6,7 +6,7 @@ Contents: [Switches](#0-the-question-that-outranks-the-code) · [1. Locate and b
 
 ## 0. The question that outranks the code
 
-One cause outranks everything and costs one question: **is the plugin system switched on for that portal?** It is off by default; when off, nothing loads and nothing logs. Installation can be disabled separately, which looks like a broken archive. Ask before auditing code ([portal.md → the switches](portal.md#before-anything-loads-the-switches)).
+One cause outranks everything and costs one question: **is the plugin system switched on for that portal?** It is off by default; when off, nothing loads and nothing logs. Installation can be disabled separately, which looks like a broken archive. Ask before auditing code ([portal.md → the switches](portal.md#before-anything-loads-the-switches); where they are in the UI: [Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md)).
 
 The second question costs as little: **what does the plugin's card say?** In Settings → Integration → Plugins a plugin that failed carries a red or warning-coloured icon — *Failed to load*, with the toggle locked, or *Failed to initialize* — and its tooltip is the portal's own reason: an HTTP status, the package the bundle imports, a missing default export, the message `onLoadCallback` threw. Ask for that text; it replaces most of the guessing below ([portal.md → When loading fails](portal.md#when-loading-fails)). No icon means the plugin loaded, and the fault is in what it registered or renders.
 

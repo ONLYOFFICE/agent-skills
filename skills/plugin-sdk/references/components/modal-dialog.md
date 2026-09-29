@@ -4,7 +4,7 @@ The portal's modal or aside, with a React component of the plugin's as its body.
 
 | | |
 |---|---|
-| Types | `IModalDialog` (`ModalDisplayType`) |
+| Types | [`IModalDialog`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/IModalDialog.md) (`ModalDisplayType`) |
 | Class side | `Actions.showModal` with `modalDialogProps` (carrying `dialogBodyComponent`); `Actions.closeModal` |
 | From a component | `showModal(props)`, `closeModal()` from `usePluginActions()` |
 | Surface | header from `dialogHeader`, close cross, **no footer slot**; a modal is padded on every side, an **aside only on the sides** — its vertical gutter is yours |
@@ -20,7 +20,7 @@ showModal({
 });
 ```
 
-Honoured on a React modal: `displayType`, `dialogHeader`, `autoMaxWidth`, `autoMaxHeight`, `withoutBodyPadding`, `withoutHeaderMargin`, `withFooterBorder`, `fullScreen`, `eventListeners`, `onClose`. `dialogBody`/`dialogFooter`/`onLoad` are ignored when `dialogBodyComponent` is present.
+Every prop on the [`IModalDialog`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/IModalDialog.md) page is honoured on a React modal except the deprecated `dialogBody`/`dialogFooter`/`onLoad`, which are ignored when `dialogBodyComponent` is present.
 
 - **Size.** `modal` is 400px wide and capped at **280px high** unless `autoMaxHeight`; `aside` is 480px and full height; the portal leaves the kit's body scroll off for a plugin aside, so a long panel needs an overflow region of its own (below). `autoMaxWidth` + `autoMaxHeight` hand sizing to the body — **a large dialog is an ordinary modal with both flags** and a width on the component's root. The kit's `isLarge`/`isHuge` are not forwarded. `fullScreen: true` is not a bigger modal: an opaque full-viewport div with no header, padding or close control — right on a phone, wrong on a desktop.
 - **No footer slot.** Render the action row in the body: `Button primary scale`, then the cancel, 8px apart; call `closeModal()` from both.

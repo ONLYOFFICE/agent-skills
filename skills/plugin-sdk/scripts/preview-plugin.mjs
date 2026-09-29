@@ -467,7 +467,7 @@ const main = async () => {
   if (!project.isBuilt)
     skipped = "no dist/plugin.js - run the build first (npm run build)";
   else if (project.distChunks.length)
-    skipped = `dist/ holds ${project.distChunks.length} chunk file(s) beside plugin.js - the archive cannot carry them, and this pass would resolve them and show the plugin working; set build.rollupOptions.output.inlineDynamicImports: true and build again (validate-plugin.mjs has the detail)`;
+    skipped = `dist/ holds ${project.distChunks.length} chunk file(s) beside plugin.js - the archive cannot carry them, and this pass would resolve them and show the plugin working; set build.rolldownOptions.output.codeSplitting: false and build again (validate-plugin.mjs has the detail)`;
   else if (!project.hasNodeModules)
     skipped = "no node_modules - run npm install first";
 

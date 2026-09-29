@@ -51,7 +51,7 @@ the portal's own script (`/static/scripts/sdk/{version}/api.js`) for pages witho
 step and for portals older than the package, because the portal, not the npm package,
 decides which methods exist. Beyond the SDK contract it records the portal behaviours that
 break real integrations and that no type expresses: which of the five "tokens" does what,
-why a cross-origin frame answers 401 with a live session, why `login()` cannot pass 2FA,
+why a cross-origin frame answers 401 with a live session, which portal builds let `login()` pass 2FA,
 what the chat page needs before it renders, and what the manager events actually carry.
 Node >= 18.
 

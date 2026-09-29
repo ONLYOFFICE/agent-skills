@@ -1,19 +1,12 @@
 # Hooks
 
-All from `@onlyoffice/docspace-plugin-sdk/react`. They read a context the portal provides around the component, so they **throw outside one** — at module scope, in a class-side callback (`onItemClick`, `onClick`, `eventHandler`), in `onLoadCallback`.
+All from `@onlyoffice/docspace-plugin-sdk/react` — signatures, return types and examples are in [Hooks](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/react/hooks.md) and [Runtime](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/react/runtime.md). They read a context the portal provides around the component, so they **throw outside one** — at module scope, in a class-side callback (`onItemClick`, `onClick`, `eventHandler`), in `onLoadCallback`. What the portal does with the objects three of them return is on [actions.md](actions.md), [api.md](api.md) and [settings-plugin.md → The settings client](../plugins/settings-plugin.md#the-settings-client).
 
-| Hook | Returns |
-|---|---|
-| `useCurrentFile()` | `TCurrentFile \| null` — `{ id, title, fileExst?, isFolder?, isRoom?, roomType? }`; `fileExst` keeps the dot |
-| `useCurrentUser()` | `TCurrentUser \| null` — `{ id, displayName, email, isOwner, isAdmin, isRoomAdmin }`; `null` while the profile loads |
-| `usePluginActions()` | the [actions](actions.md) object |
-| `usePluginAPI()` | the [API client](api.md) |
-| `usePluginSettings()` | the [settings client](../plugins/settings-plugin.md#the-settings-client) |
-| `usePluginRuntime()` | all of the above as `{ currentFile, currentUser, actions, api, settings }` |
-
-The runtime object is rebuilt only when the current file or user changes, so `api`, `actions` and `settings` are stable in effect dependencies.
+The runtime object is rebuilt only when the current file or user changes, so `api`, `actions` and `settings` (from `usePluginAPI()`, `usePluginActions()`, `usePluginSettings()`) are stable in effect dependencies.
 
 ## What `useCurrentFile` returns where
+
+[The hook's page](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/react/hooks.md#usecurrentfile) says it is `null` on a page, in settings and in a class-side dialog; the full picture, surface by surface:
 
 | Component rendered as | `useCurrentFile()` |
 |---|---|

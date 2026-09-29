@@ -37,7 +37,7 @@ export const VITE_CONFIG = `
 export default {
   build: {
     lib: { entry: "src/index.ts", formats: ["es"] },
-    rollupOptions: {
+    rolldownOptions: {
       external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@onlyoffice\\/apps-ui-kit(\\/.*)?$/],
     },
   },

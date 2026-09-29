@@ -4,7 +4,7 @@ Admin-configurable options — a page of the plugin's own in its settings aside.
 
 | | |
 |---|---|
-| Types | `ISettingsPlugin`, `ISettings`; `usePluginSettings()` returns `PluginSettingsClient` |
+| Types | [`ISettingsPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/ISettingsPlugin.md), [`ISettings`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/settings/ISettings.md); `usePluginSettings()` returns [`PluginSettingsClient`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/react/settings.md) |
 | The portal calls | `setAdminPluginSettingsValue(stored)` after `onLoadCallback` and after each `usePluginSettings().save()`; `getAdminPluginSettings()` each time the settings aside opens |
 | Surface | the plugin's settings aside, `ISettings.component` — the layout is [below](#registering-the-page) |
 | `useCurrentFile()` | `null` |
@@ -19,19 +19,13 @@ The page renders in an aside: a header, then your component, then the plugin's m
 
 ## The settings client
 
-`usePluginSettings()` — for `ISettings.component` and any component that wants a stored value.
-
-| Method | Does |
-|---|---|
-| `load<T>()` | the stored object, or `null` when nothing was saved or the string is not JSON |
-| `save(data)` | stores `JSON.stringify(data)`, then calls `setAdminPluginSettingsValue` on the class and re-reads `getStatus()` |
-| `setSaveButton(button)` | supplies the aside's Save button — a `ButtonGroup` `{ component: Components.button, props: { label, size, onClick, isDisabled, withLoadingAfterClick, disableWhileRequestRunning } }` |
+[`usePluginSettings()`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/react/settings.md) — for `ISettings.component` and any component that wants a stored value; `load`, `save` and `setSaveButton` are on that page, with the [`ButtonGroup`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Component.md#buttongroup) the last one takes.
 
 The portal owns the footer's Save/Cancel look, and it also overrides the button's `size`, `primary` and `scale` — what survives from the `ButtonGroup` is `label` (defaulting to "Save"), `isDisabled`, `isLoading`, `onClick`, `withLoadingAfterClick` and `disableWhileRequestRunning`.
 
 **Without `setSaveButton` — and without a static `saveButton` — the Save button has no `onClick` and saves nothing** — for a React settings page, this is the call that makes the footer work. Make it in an effect that re-runs when the form changes; that is also how `isDisabled` tracks validity. After `onClick` resolves the portal closes the aside. The button state is per plugin and cleared on close. (`ISettings.saveButton`, the static declaration beside `component`, still works and is not deprecated; it is the right choice only when the button never changes state — see [below](#a-static-savebutton).)
 
-**`isDisabled` covers *unchanged* as well as invalid.** The portal draws Save enabled and has no idea whether the form was touched, so a page that only guards validity opens with Save already lit over a form nobody has edited — and pressing it is a real save: a request, a `setAdminPluginSettingsValue` call in the session that saved, a version of the settings written for no reason, and an aside that closes as though something happened. Nothing reports it, and it is the state a settings aside spends most of its life in. So keep what was loaded beside what is being edited and disable Save until they differ:
+**`isDisabled` covers *unchanged* as well as invalid** — the docs say to gate on what the user changed; here is what happens otherwise. The portal draws Save enabled and has no idea whether the form was touched, so a page that only guards validity opens with Save already lit over a form nobody has edited — and pressing it is a real save: a request, a `setAdminPluginSettingsValue` call in the session that saved, a version of the settings written for no reason, and an aside that closes as though something happened. Nothing reports it, and it is the state a settings aside spends most of its life in. So keep what was loaded beside what is being edited and disable Save until they differ:
 
 ```ts
 const [saved, setSaved] = useState<TConfig>(DEFAULTS);   // what is stored

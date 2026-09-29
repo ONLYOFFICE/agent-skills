@@ -1,7 +1,7 @@
 {
   "skill_name": "embed-sdk",
   "format": "skill-creator: one entry per scenario, expectations as strings. Each expectation starts with [C] (critical, weight 2: a silent breakage) or [Q] (quality, weight 1) and ends with a (how: …) hint for the grader. Arms: with_skill = the plugin installed, prompt alone; without_skill = no skill, prompt plus docs_hint. The executor never reads evals/. Operator answers are put into the prompt identically in both arms.",
-  "docs_hint": "Documentation: https://api.onlyoffice.com/docspace/javascript-sdk/get-started/ and https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/classes/SDKInstance/; every page of that site lives at a URL ending in a slash, the guides are under get-started/ and embedding-modes/ (there is no customization/ or events-and-callbacks/ section), the generated reference is under usage-sdk/{classes,type-aliases,enumerations,variables}/ and covers only some of the exports, and the samples are under samples/{basic-samples,advanced-samples,react-samples}/.",
+  "docs_hint": "Documentation: https://api.onlyoffice.com/docspace/javascript-sdk/get-started.md and https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/classes/SDKInstance.md; any page of that site is available as Markdown by replacing the trailing slash of its URL with .md, and https://api.onlyoffice.com/llms.txt lists every page.",
   "models": [
     "claude-sonnet-5",
     "claude-opus-5",
@@ -78,12 +78,12 @@
       "title": "2FA in an existing WordPress connector (question, no build)",
       "source": "testing log row 15",
       "prompt": "Our WordPress plugin logs users into DocSpace with the Embed SDK (system frame, getHashSettings → createHash → login). Users with two-factor authentication enabled on the portal cannot log in. Add a field for the 2FA code to the login form, resend the auth request with the code and obtain the session. What exactly do I change?",
-      "expected_output": "A prose answer that says the portal's SDK dispatcher on client 4.0.0 forwards only email and passwordHash and ignores the code argument, so a code field wired to login() does not obtain a session there; the recommended change is OAuth getToken, with portal sign-in in another tab or disabling 2FA for the integration account as labelled fallbacks; the cross-origin cookie boundary is named.",
+      "expected_output": "A prose answer that says the second step depends on the portal build: client 4.0.0 reads the fifth login argument, so after a /confirm/… answer a second login(email, hash, undefined, undefined, code) creates the session and status !== 200 is a wrong code; older System pages forward only email and passwordHash and re-issue the challenge, detectable at runtime, where the fallbacks are OAuth getToken, portal sign-in in another tab or disabling 2FA for the integration account; the cross-origin cookie boundary is named.",
       "files": [],
       "expectations": [
-        "[C] states that the client 4.0.0 SDK dispatcher forwards only email and passwordHash and ignores the code argument, so 2FA cannot be completed through login() on that portal even though SDK 2.2.0 declares the argument (how: answer.md)",
-        "[C] does not present a code field wired to login() as the deliverable; the recommended change is OAuth getToken, and any code-field sketch is labelled as working only on a portal whose dispatcher reads code (how: answer.md structure and headings)",
-        "[Q] offers the real options: OAuth getToken, portal sign-in in another tab (cookie session), disabling 2FA for the integration account (how: answer.md)",
+        "[C] wires the code field to a second login(email, hash, undefined, undefined, code) after a /confirm/… url and checks status !== 200 on its result, and names the portal requirement: client 4.0.0, whose System page reads code (how: answer.md code and prose)",
+        "[C] says what an older System page does — forwards only email and passwordHash and answers /confirm/… again — and how the plugin detects it at runtime instead of presenting the code field as universal (how: answer.md)",
+        "[Q] offers the fallbacks for portals that ignore code: OAuth getToken, portal sign-in in another tab (cookie session), disabling 2FA for the integration account (how: answer.md)",
         "[Q] explains the asc_auth_key cookie boundary in cross-origin frames when the plugin runs on another origin (how: answer.md)",
         "[Q] invents no method, hook, event or portal behaviour absent from the SDK and the docs (how: every named API exists in the SDK 2.2.0 reference)"
       ]

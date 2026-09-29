@@ -1,6 +1,6 @@
 # Reading an SDK 2 plugin (declarative UI, deprecated)
 
-Before SDK 3 a plugin never rendered anything itself: it returned a **description** of a UI — an `IBox` tree of `{ component: Components.x, props }` nodes — and the portal rendered it with its own components. The portal still renders those trees, so this file exists for **auditing and migrating** plugins written that way. Do not write new UI this way; the validator warns on every deprecated form ([plugin.md → Deprecated](plugins/plugin.md#deprecated--do-not-use-in-new-code)).
+Before SDK 3 a plugin never rendered anything itself: it returned a **description** of a UI — an [`IBox`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/IBox.md) tree of `{ component: Components.x, props }` nodes (the node shapes are the `*Group` types on [Component](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/Component.md), the names on [`Components`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Components.md)) — and the portal rendered it with its own components. The portal still renders those trees, so this file exists for **auditing and migrating** plugins written that way. Do not write new UI this way; the validator warns on every deprecated form ([plugin.md → Deprecated](plugins/plugin.md#deprecated--do-not-use-in-new-code)).
 
 ## Recognising one
 
@@ -25,7 +25,7 @@ Migrate whole, not half: `runtime: "module"`, the Vite config from a fresh scaff
 
 ## How the host renders a tree — what matters when auditing
 
-- Only `box` can have children; `box` maps nine `*Prop` fields to CSS and copies every other prop into `style` verbatim. Every other node's props are spread into the matching kit component as-is.
+- Only `box` can have children, always as an array — a single node object throws; `box` maps nine `*Prop` fields to CSS and copies every other prop into `style` verbatim. Every other node's props are spread into the matching kit component as-is.
 - **No error boundary.** A throw during render replaces the whole portal with an error screen. A `button` without `onClick` throws on click. A `comboBox` needs `options` to be an array and every option a `key`.
 - `updateProps` **replaces** the element's props (send the full set); `newProps` only admits form controls — a `text`/`box` is updated via `contextName` + `updateContext`. Both work only from callbacks inside a rendered tree, not from a menu item ([actions.md](react/actions.md#which-actions-work-from-which-callback)).
 - `checkbox`/`toggleButton` `onChange` receive **nothing** — the plugin tracks state and returns `updateProps`.

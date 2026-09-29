@@ -10,14 +10,15 @@ auto-login · 5 API keys · 6 the cross-origin cookie wall · 7 two-factor authe
 
 | Thing | Lives | Grants | SDK entry | Cannot |
 |---|---|---|---|---|
-| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult` | finish when 2FA is on — client 4.0.0's System page ignores `login`'s `code` argument (§7); cross-site, the session it creates follows §6 |
+| Password hash (`createHash`) | your backend, encrypted | a portal session via `login(email, hash)` in a System frame | `login()`, resolving `TLoginResult`; a second `login(…, code)` for 2FA on client 4.0.0 (§7) | finish 2FA on a 3.x portal, whose System page ignores `code`; cross-site, the session it creates follows §6 |
 | Session cookie `asc_auth_key` | browser, portal origin | every request the iframe makes | nothing to pass | reach a cross-site frame from a portal tab (third-party cookie blocking, partitioned cookies) → `401` despite a live session |
 | `requestToken` (share key) | room share link, or `items[0].requestTokens[0].requestToken` from a room-selector | anonymous access to one room and its files | `public-room` (`id` + `requestToken`); manager with `rootPath: "/rooms/share"`; editor/viewer (`share=` on `/doceditor`) | anything outside that room; must never be committed |
 | OAuth access token | your backend (refresh token stays there) | API calls as the user, sent as `Bearer` — no cookie involved | `getToken` (preferred) or `accessToken`, SDK >= 2.2 | outlive expiry unless `getToken` re-fetches |
 | API key | your backend | REST as the key owner, `Bearer`, scopes = key permissions | REST; in a frame the SDK forwards whatever `getToken` returns — plausible but **unverified**, confirm with `getUserInfo()` | be refreshed or revoked per session |
 
-`login()` resolves `{ url: "/" }` on success, `{ url: "/confirm/…" }` when a second factor is pending, and an error
-with `status` on failure — it never rejects.
+`login()` resolves `{ url: "/" }` on success, `{ url: "/confirm/…" }` when a second factor is pending, and
+`{ status, message }` on failure — it never rejects on a portal failure (with `createRoom` the only method that
+keeps that contract on client 4.0.0; the rest reject with `API_ERROR`, [methods](methods.md#result-semantics--read-this-first)).
 
 ## 1. Credential-replay (password hash) — the classic plugin flow
 
@@ -63,7 +64,8 @@ Notes:
   both that check and the `getUserInfo()` probe; keep them.
 - The portal's handler reads only `email` and `passwordHash` (client 4.0.0). The `password` and
   `session` arguments are transmitted and ignored; the session is always persistent.
-- Accounts with **2FA enabled cannot log in this way** — see §7 before promising this flow.
+- Accounts with **2FA enabled** need a second `login(email, hash, undefined, undefined, code)` after the
+  `/confirm/…` answer, and a portal whose System page reads `code` — see §7 before promising this flow.
 - The resulting session is a cookie on the portal origin, set inside a frame on your page. Same-site it
   is first-party; cross-site it depends on §6 — on an HTTPS portal with an allow-list the cookie is
   partitioned to your site rather than dropped. Confirm with `getUserInfo()` in the next frame instead
@@ -217,17 +219,16 @@ expose that DTO: the SDK dispatcher calls the client's sign-in store, which turn
 `{ url: "/confirm/TfaAuth…", user, hash }` — a `url` under `/confirm/` in `TLoginResult` is how
 you learn that a second factor is pending (client 4.0.0).
 
-Whether the second step is reachable depends on the portal:
+Whether the second step is reachable depends on the portal's build:
 
-- **Client 4.0.0**: the System page — where the hash flow runs — calls `login(email, passwordHash)`
-  and ignores everything else, so the code never reaches the portal and the account stays signed out.
-  The Manager page does read `code` and calls `loginWithCode` (since 2026-09-10), but it is a private
-  route: it opens only for a user who already has a session, so it cannot complete a sign-in either.
-  Adding a "code" field to your form does not help, so do not ship one as the fix: the deliverable
-  for such a portal is the OAuth route below, stated as such.
-- **A portal whose System page reads `code`**: call `login(email, hash, undefined, undefined,
-  code)` (SDK 2.2.0) after the `/confirm/…` answer, then check `status`. Probe the portal version
-  first and do not promise the flow on 4.0.0.
+- **Client 4.0.0** (Manager and System pages alike): the dispatcher reads `code`
+  and calls `loginWithCode`. After the `/confirm/…` answer, ask the user for the code and call
+  `login(email, hash, undefined, undefined, code)` (SDK 2.2.0); the answer is `{ url: "/" }` on success or
+  `{ status, message }` (401 for a wrong code). The code is single-use and bound to the same `email` + `hash`.
+- **An older System page** (every 3.x portal): it forwards `email` and `passwordHash`
+  alone, so the code never reaches the portal and the second call re-issues the same `/confirm/…` challenge.
+  Detect it at runtime — a second `login(…, code)` that answers `/confirm/…` again — and fall back to the
+  options below; do not present the code field as working there.
 
 The docs' "Two-factor authentication" advanced sample is a host-side mock — a code from
 `Math.random()` shown in `alert()` before `initManager` — not the portal's second factor.
@@ -240,7 +241,7 @@ Options for hosts whose users have 2FA on a portal that ignores `code`:
   on the cookie session — only where §6 does not apply.
 - Disable 2FA on a dedicated integration account (admin decision, document it).
 
-Say plainly in the deliverable that 2FA accounts cannot use the hash-login flow.
+Say plainly in the deliverable which portal builds the code step works on, and what happens on the others.
 
 ## 8. Multi-frame pages
 

@@ -399,12 +399,12 @@ export class ProjectChecks extends Check {
     if (!/external/.test(text))
       this.error(
         "build",
-        `${file} declares no rollupOptions.external - ${REQUIRED_EXTERNALS.join(", ")} have to stay external so the portal's copies are used`,
+        `${file} declares no rolldownOptions.external - ${REQUIRED_EXTERNALS.join(", ")} have to stay external so the portal's copies are used`,
       );
     else if (missing.length)
       this.error(
         "build",
-        `${file} does not list ${missing.join(", ")} in rollupOptions.external - a bundled copy means a second React or a second ui-kit at runtime, and every SDK hook then throws`,
+        `${file} does not list ${missing.join(", ")} in rolldownOptions.external - a bundled copy means a second React or a second ui-kit at runtime, and every SDK hook then throws`,
       );
 
     if (new RegExp(`["']${SDK_PACKAGE}["']`).test(text))

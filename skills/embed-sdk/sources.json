@@ -3,6 +3,7 @@
   "sources": {
     "docs": {"host": "apiSite", "path": "/docspace/javascript-sdk", "verify": true},
     "restDocs": {"host": "apiSite", "path": "/docspace/api-backend", "verify": true},
+    "llms": {"host": "apiSite", "path": "/llms.txt", "verify": true},
     "repo": {"host": "github", "path": "/docspace-sdk-js", "verify": true},
     "raw": {"host": "raw", "path": "/docspace-sdk-js/v{version}", "verify": false}
   },

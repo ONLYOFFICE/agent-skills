@@ -33,7 +33,8 @@ the report top to bottom:
 - **OAuth discovery** — `/.well-known/openid-configuration` answering 200 with a
   `token_endpoint` means the identity service is on.
 - **CSP allow-list API** — `GET /api/2.0/security/csp` answers anonymously on client 4.0.0
-  and lists the allow-listed domains; adding one is `PUT` with an admin session or API key.
+  and lists the allow-listed domains; adding one is `POST` to the same path with an admin session or API key
+  (the `EditPortalSettings` permission) — there is no `PUT`.
 - **Recommendations** — the connection method, the modes the portal can serve, and the
   lines to forward to the portal admin verbatim.
 
@@ -57,7 +58,9 @@ From the portal's nginx config (release/v4.0.0) and live portals:
 - The portal's nginx sends `X-Frame-Options: SAMEORIGIN` on **every page by default** — the Manager's
   `/rooms/*`, `/old-sdk/system` (the page behind `initSystem` and the hash-login flow) and the portal's
   own pages included. The `/sdk/*` pages (selectors, public room, uploader, forms, chat, personal) do not
-  carry it. `/doceditor` sets its own headers in the 4.0 config; a live cloud portal sends the header there too.
+  carry it — the `/sdk` location declares its own `add_header`, which by nginx's inheritance rule drops the
+  server-level header. `/doceditor` and `/login` include the static-headers snippet and carry `SAMEORIGIN` too, so
+  the editor and viewer embed under the same `frame-ancestors` rule as the Manager.
 - Every HTML response also gets `Content-Security-Policy: frame-ancestors …` built from the
   portal's CSP allow-list (Developer Tools → Embed SDK). The `Accept` header must contain
   `html` for that middleware to run, hence `-H "Accept: text/html"` above.
@@ -97,7 +100,7 @@ serve. Both look like a blank frame or `TIMEOUT` with no clear error.
 | 1.0.1 (npm 1.1.0) | no new modes | + `requestToken` on editor/viewer (`share=`) | `onContentReady`, `onNoAccess`, `onNotFound` appear; system and the selectors move to `/old-sdk/*` |
 | 2.0 | + public-room | | `executeInEditor`, `onEditorOpen` appear; the selectors are back under `/sdk/*`, system stays at `/old-sdk/system` |
 | 2.1 | no new modes | | `onFileManagerClick` appears |
-| 2.2 | + uploader, forms, personal, chat | + OAuth `getToken` / `accessToken` | `SDKError` codes, `methodTimeout`, `upload`, `navigateSection`, `setCustomActions`, external-data bridge |
+| 2.2 | + uploader, forms, personal, chat | + OAuth `getToken` / `accessToken` | `SDKError` codes, `methodTimeout`, `upload` (forms, personal), `navigateSection`, `setCustomActions`, `RoomType`, external-data bridge; with client 4.0.0 API failures reject with `API_ERROR` and 2FA finishes with `login(…, code)` |
 
 ## The React wrapper
 

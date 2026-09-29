@@ -98,11 +98,20 @@ Before tagging a release:
    the revision `sources.json` pins, and `--strict` additionally fails when a component README
    upstream has lost its metadata block, which would drop that component from the manifest.
    The self-test runs the same tool offline, where it can only compare hashes.
-3. The skill(s) that changed have been through their evals
-   ([embed-sdk](skills/embed-sdk/evals/README.md),
+   Before the docs site is deployed, `--verify --fallback` checks the same links on the stand
+   (`apiSiteFallback`).
+2b. `node .claude/skills/onlyoffice-docs/scripts/docs.mjs status` exits 0: production serves
+   `llms.txt` and a Markdown page for every section, so the skills' "append `.md`" and `llms.txt`
+   instructions work for users. Exit 1 means only the stand serves them — fine for an internal
+   release, not for a public one. `node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs` passes.
+3. The plugin eval suite passes after the last content change:
+   `claude plugin eval . --json evals/results/release.json --threshold 0.8 --trust-plugin --no-publish --allow-tools Write Edit Bash WebFetch`
+   (the `heavy` cases need the network for npm; run them once, `--tag heavy`). Pin `--model`
+   and `--judge-model` in the notes so the number is reproducible. The per-skill A/B
+   protocols ([embed-sdk](skills/embed-sdk/evals/README.md),
    [plugin-sdk](skills/plugin-sdk/evals/README.md),
-   [ui-kit](skills/ui-kit/evals/README.md)) — once, after the last content
-   change, not in a loop.
+   [ui-kit](skills/ui-kit/evals/README.md)) are for iterating on a skill, not a
+   release gate.
 4. `version` in `plugin.json` and `metadata.version` in `marketplace.json` are bumped
    and equal.
 5. `metadata.sdk-version` in every `SKILL.md` matches the "Targets" column in the README.
@@ -111,7 +120,9 @@ Before tagging a release:
 
 ## Not yet done
 
-- CI that runs steps 1, 2, 4 and 5 on every push.
+- CI that runs the offline checks of [TESTING.md](TESTING.md) on every push and the cheap eval
+  cases (`--tag question --tag trigger`) on a schedule; the build cases need a Linux or macOS
+  runner, since a shell grant requires a sandbox backend. Until then every step is run by hand.
 - `skills/plugin-sdk/vendor/` holds ~7 MB of tarballs in git; move them to LFS, a
   registry or release assets once a home is chosen.
 - `skills/embed-sdk/scripts/sync-sdk.mjs` derives the validator dictionaries by parsing the
