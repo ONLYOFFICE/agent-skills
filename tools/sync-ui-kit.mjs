@@ -21,6 +21,10 @@
  *   docs/getting-started.md              → _getting-started.md
  *   docs/components.md                   → README.md (the catalogue)
  *
+ * and, into the manifest only: each README's metadata block, the portal-internal modules of
+ * docs/public-api.md, and docs/plugin-surface.json -- the kit's checker-written list of every
+ * root-barrel name with the module it comes from.
+ *
  * Every page keeps a provenance header and a hash of its own body, so a hand edit here is
  * caught offline by --check rather than silently reverted by the next sync. The revision the
  * pages came from is recorded once, in the skill's sources.json, rather than in every header:
@@ -299,6 +303,28 @@ function exportedNames(src, module) {
   return [...seen].sort();
 }
 
+/**
+ * The root-barrel names that come from a portal-internal module. The kit's own snapshot,
+ * `docs/plugin-surface.json`, is read first: the TypeScript checker wrote it, it credits each
+ * name to the module that put it in the barrel, and `pnpm surface:check` keeps it current. The
+ * regex reading of `uploader` and `billing` stays for a package packed before the kit shipped
+ * the snapshot, and says so.
+ */
+function portalInternalBarrelNames(src, portalInternal) {
+  const text = src.read("docs/plugin-surface.json");
+  if (text) {
+    const surface = JSON.parse(text);
+    if (surface.package !== PACKAGE) fail(`docs/plugin-surface.json describes ${surface.package}, not ${PACKAGE}`);
+    const inside = (origin) => portalInternal.some((module) => origin === module || origin.startsWith(`${module}/`));
+    return Object.entries(surface.exports ?? {})
+      .filter(([, entry]) => inside(entry.origin))
+      .map(([name]) => name)
+      .sort();
+  }
+  note("NO-SURFACE", "docs/plugin-surface.json", "not shipped by this kit; the portal-internal barrel names are read from uploader and billing by pattern");
+  return [...new Set([...exportedNames(src, "uploader"), ...exportedNames(src, "billing")])].sort();
+}
+
 function buildManifest(src, pages, metas, repoUrl) {
   const publicApi = src.read("docs/public-api.md");
   const portalInternal = modulesUnder(publicApi, "## Portal-internal");
@@ -344,7 +370,7 @@ function buildManifest(src, pages, metas, repoUrl) {
     publicSubpaths,
     portalInternalSubpaths: portalInternal,
     barrelNames: [...barrelNames].sort(),
-    portalInternalBarrelNames: [...new Set([...exportedNames(src, "uploader"), ...exportedNames(src, "billing")])].sort(),
+    portalInternalBarrelNames: portalInternalBarrelNames(src, portalInternal),
     legacyNames: LEGACY_NAMES,
     components,
   };
