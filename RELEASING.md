@@ -90,7 +90,11 @@ Before tagging a release:
    has never checked a `SKILL.md`, which is most of what a release changes.
 2. `node skills/embed-sdk/scripts/test-validator.mjs`,
    `node skills/plugin-sdk/scripts/test-validator.mjs` and
-   `node skills/ui-kit/scripts/test-validator.mjs` pass.
+   `node skills/ui-kit/scripts/test-validator.mjs` pass. Run the last one once more with
+   `--kit-project <dir>`, naming a project that has the kit installed — the `ui-kit` eval
+   fixture after its install will do: that type-checks `skills/ui-kit/templates/*` against the
+   kit's own types, which the offline run cannot reach. The templates are copied into
+   projects verbatim, so a prop the kit renamed breaks every one of them.
 2a. `node tools/sync-sources.mjs --verify` passes: every link traces to a `sources.json`,
    every pinned version matches, every source URL answers. For `embed-sdk` also
    `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`; for `ui-kit`,

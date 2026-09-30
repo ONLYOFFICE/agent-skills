@@ -9,7 +9,11 @@
  * tools offline, so that a hand-edited synced page or an untraceable link fails here rather
  * than in a release.
  *
+ * The two templates are read too: through check-usage always, and through `tsc` when a project
+ * with the kit installed is named, since their types come from the kit.
+ *
  *   node skills/ui-kit/scripts/test-validator.mjs
+ *   node skills/ui-kit/scripts/test-validator.mjs --kit-project <dir with the kit installed>
  *
  * Exit 1 on the first mismatch reported, after running every case.
  */
@@ -782,6 +786,67 @@ export const App = () => <Button label="Save" size={ButtonSize.normal} />;
   },
   { code: 1, has: ["E-no-theme-provider"] },
 );
+
+// --- the templates the skill tells a project to copy ------------------------------------------
+
+// `templates/main` and `templates/providers` are copied into projects verbatim, and nothing read
+// them. Checked as a project would hold them, next to an App that needs both providers — a
+// template that stopped mounting one would report it here.
+const TEMPLATES = path.join(HERE, "..", "templates");
+const readTemplate = async (name) => (await import("node:fs")).readFileSync(path.join(TEMPLATES, name), "utf8");
+const TEMPLATE_APP = `import { useState } from "react";
+import { ComboBox, type TOption } from "@onlyoffice/apps-ui-kit/components/combobox";
+
+const ROLES: TOption[] = [
+  { key: "viewer", label: "Viewer" },
+  { key: "editor", label: "Editor" },
+];
+
+export function App() {
+  const [role, setRole] = useState<TOption>(ROLES[0]);
+  return <ComboBox options={ROLES} selectedOption={role} onSelect={setRole} scaled scaledOptions />;
+}
+`;
+const templateProject = {
+  "src/main.tsx": await readTemplate("main"),
+  "src/AppProviders.tsx": await readTemplate("providers"),
+  "src/App.tsx": TEMPLATE_APP,
+};
+{
+  const result = run(project("templates", templateProject));
+  check("templates: check-usage reports nothing", result.code === 0 && result.findings.length === 0, result.findings.map((f) => f.code).join(", "));
+}
+
+// Compiling them needs the kit's types, which no offline run has. `--kit-project <dir>` names a
+// project with the kit installed — an eval fixture after its install, say — and the templates
+// are type-checked against its node_modules, reached through a link rather than copied. The
+// release checklist runs this; without the flag it is skipped and says so.
+const kitProjectAt = process.argv.indexOf("--kit-project");
+if (kitProjectAt > 0) {
+  const fs = await import("node:fs");
+  const kitProject = path.resolve(process.argv[kitProjectAt + 1] ?? "");
+  const modules = path.join(kitProject, "node_modules");
+  const tsc = path.join(modules, "typescript", "bin", "tsc");
+  if (!fs.existsSync(path.join(modules, "@onlyoffice", "apps-ui-kit")) || !fs.existsSync(tsc)) {
+    check("templates: --kit-project has the kit and typescript installed", false, kitProject);
+  } else {
+    const dir = project("templates-compiled", {
+      ...templateProject,
+      "tsconfig.json": fs.readFileSync(path.join(REPO, "skills/ui-kit/evals/fixtures/consumer-app/tsconfig.json"), "utf8"),
+    });
+    fs.symlinkSync(modules, path.join(dir, "node_modules"), "junction");
+    try {
+      execFileSync(process.execPath, [tsc, "--noEmit", "-p", dir], { encoding: "utf8" });
+      check("templates: compile against the installed kit", true);
+    } catch (error) {
+      check("templates: compile against the installed kit", false, `${error.stdout ?? ""}`.trim().split("\n").slice(0, 3).join(" / "));
+    }
+    // The link goes before the workspace is removed, so the removal cannot follow it.
+    fs.unlinkSync(path.join(dir, "node_modules"));
+  }
+} else {
+  console.log("templates: not compiled — pass --kit-project <dir with the kit installed> to type-check them");
+}
 
 // --- the manifest the validator reads --------------------------------------------------------
 
