@@ -28,7 +28,7 @@ holds a `.claude-plugin/` it validates the manifest and stops, and only a direct
 is walked for skills, agents and commands. Pointing it at a single skill fails -- `skills/ui-kit`
 is not a plugin and has no manifest of its own.
 
-`plugin-sdk`'s suite has 90 expectations. Run it after touching anything under
+Run `plugin-sdk`'s suite after touching anything under
 `skills/plugin-sdk/scripts/`, `templates/` or `vendor/` -- it is the only thing that
 catches a broken generator, and it covers cases a grep does not: the host-provided
 externals are written as regexes (`/^@onlyoffice\/apps-ui-kit(\/.*)?$/`) in
@@ -38,11 +38,19 @@ all three.
 
 ## The DocSpace UI kit
 
-`skills/plugin-sdk` documents `@onlyoffice/apps-ui-kit` for plugin authors, from a
-vendored tarball and hand-written prose. That kit lives in `docspace-ui-kit-react` and
-carries a `sync-ui-kit-reference` skill which reports exactly what has drifted here --
-package specifier, tarball version, dist paths, component names, prop defaults. Run it
-from that repository rather than re-deriving the answer.
+Two skills describe `@onlyoffice/apps-ui-kit`, and each is kept honest by a different tool.
+
+- **`skills/plugin-sdk`** documents it for plugin authors, from a vendored tarball and
+  hand-written prose in `references/ui-kit.md`. The kit carries a `sync-ui-kit-reference`
+  skill that reports what has drifted in that file and applies the fixes -- package
+  specifier, tarball version, dist paths, component names, prop defaults. Run it from
+  `docspace-ui-kit-react` rather than re-deriving the answer. It reads `plugin-sdk` and
+  nothing else.
+- **`skills/ui-kit`** documents it for applications of their own. Its component pages and
+  manifest are copies of the kit's READMEs and `docs/`, and `node tools/sync-ui-kit.mjs --from
+  <kit> --check --strict` is what says they have drifted; `sync-ui-kit-reference` does not
+  look at this skill at all. The hand-written `references/*.md` and the rules in `SKILL.md`
+  have no drift check -- verify a claim there against the kit's source before changing it.
 
 The package specifier is shared with DocSpace-client's plugin shim, which throws on any
 specifier it does not know. All three repositories carry a `feature/ui-kit-separation`
