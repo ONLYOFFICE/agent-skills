@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/selector/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: a8d03e515fbfc30474bca0827374d08161022e84de4b09f7069fd1bb4c1be15d -->
+<!-- body-sha256: b3a9be641bf0ebcb0775ebdad20d54817eee7074a32ec2ca70e0a2888a8c9e76 -->
 
 > Synced from the kit's own `components/selector/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -713,6 +713,10 @@ the stylesheet reads neither, so setting them changes nothing.
   assistive technology is given no list, no count and no position. In multi-select the row's
   checkbox is focusable with Tab and toggled with Space, and that is the only way through the
   list; outside multi-select a row can be picked only with the pointer.
+- **Focus moves into the selector when it mounts**: to the list's scroll container, unless the
+  search box already has it, and to the new-name field when that field appears, with its text
+  selected. Neither scrolls the page (`preventScroll`), so a selector further down a page takes
+  focus without pulling the page to itself.
 - The search box is given `tabIndex={1}`, a positive tab index, which pulls it ahead of
   everything else on the page in tab order.
 - Escape and Enter are listened for on the window, so they act even when focus is outside the

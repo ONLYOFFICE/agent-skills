@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 docs/getting-started.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 07f6f0c73759dd7014647d77af7402bfec97c4c962e220d954891d24a15e8f3a -->
+<!-- body-sha256: 388a3956107d08105c4bd130deae41f24a5cabf04d0f342ab2f57c9a89b54cc4 -->
 
 > Synced from the kit's own `docs/getting-started.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -174,7 +174,7 @@ The kit does not ship a font. Its default family is `Open Sans, sans-serif, Aria
 
 ## Which import form
 
-Two work, and both are supported:
+Two resolve, and **the subpath is the one to use**:
 
 ```tsx
 import { Button } from "@onlyoffice/apps-ui-kit";
@@ -190,13 +190,22 @@ export function Buttons() {
 }
 ```
 
+**The root barrel does not build without four optional peers.** It re-exports `billing` and
+`uploader` alongside the components, and those import `mobx`, `mobx-react`, `react-router` and —
+through the portal's API provider — `axios`. All four are optional peers, because only those
+portal modules need them; but a bundler resolves every module the barrel reaches before it
+drops what is unused, so `import { Button } from "@onlyoffice/apps-ui-kit"` in an application
+that has not installed them fails to build. Vite stops on
+`"makeAutoObservable" is not exported by "__vite-optional-peer-dep:mobx"`. A subpath reaches the
+component's own module and nothing else.
+
 All 98 component folders are re-exported by the root barrel, and `export *` is transitive — so a
 nested component such as `Row` or `AsideHeader` arrives from the barrel too, without its own
 folder being listed there.
 
-**What `export *` does not carry is a default.** Nine components are default exports, so the
-barrel has their folder's types and not the component; the subpath is the only way to them, and
-the name is yours to choose:
+**Nine components are default exports.** On their subpath the name is yours to choose, and the
+barrel carries each of them by name as well — `components/index.ts` re-exports them explicitly,
+`export { default as Section } from "./section"` — so `import { Section }` resolves too:
 
 ```tsx
 import AppLoader from "@onlyoffice/apps-ui-kit/components/app-loader";
@@ -222,8 +231,8 @@ export const defaults = {
 };
 ```
 
-`FilterInput` and `StatusMessage` are default exports as well, but they are also exported under
-their own names, so for those two the barrel works.
+`FilterInput` and `StatusMessage` are default exports as well, and are also exported under their
+own names from their folder.
 
 Never reach into the published build directory. The `exports` map is the public surface; a
 specifier that names the build output instead of a subpath is not covered by it, and it breaks the
@@ -263,4 +272,4 @@ width when the arrangement matters.
   and the prop that shows and hides it, with a table for choosing between the close calls.
 - Each component's own README, next to its source under `components/<name>/README.md`, and shipped
   in the package at the same path.
-- [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/0b62e991/docs/public-api.md) — the full public and portal-internal boundary.
+- [`public-api.md`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/2edbf9c4/docs/public-api.md) — the full public and portal-internal boundary.

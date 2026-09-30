@@ -62,7 +62,8 @@ console unless it says so.
 
 | What you see | Why | Fix |
 |---|---|---|
-| `import { Section } from "@onlyoffice/apps-ui-kit"` does not resolve | Nine components are default exports, and `export *` does not carry a default | Import from the subpath: `import Section from "…/components/section"` |
+| The build fails on an import from the root: `"makeAutoObservable" is not exported by "__vite-optional-peer-dep:mobx"` | The root barrel re-exports `billing` and `uploader`, which import `mobx`, `mobx-react`, `react-router` and `axios` — optional peers the application does not have | Import every component from its subpath |
+| `import { Section } from "…/components/section"` is `undefined` | Nine components are default exports on their subpath, and that folder has no named export of them | `import Section from "…/components/section"` |
 | An import resolves but the component fetches from a portal that is not there | It is portal-internal — `selectors/*`, `billing`, `uploader`, `ai-agent`, `api`, `providers/api` | [`public-api.md`](public-api.md) |
 | Portal-internal names importable from the root with no warning | The root barrel re-exports `./uploader` and `./billing` | Do not use them; `check-usage.mjs` flags them |
 | A path into `dist/` stops resolving after an upgrade | The `exports` map is the public surface; build paths are not covered | Import the subpath |

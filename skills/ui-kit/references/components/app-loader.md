@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/app-loader/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 43099704f237d099e9f4eb136736efaca7d5e86069fe4275ae263323bee708c3 -->
+<!-- body-sha256: f8dc499264b81ce1fbb669f7c55a39676ff825e7c92d47104aebbad22e40a80d -->
 
 > Synced from the kit's own `components/app-loader/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -12,7 +12,7 @@
   "category": "Feedback",
   "status": "public",
   "summary": "The blank first screen: a fixed sheet over the whole viewport with the kit's rombs animation on it.",
-  "import": { "subpath": "components/app-loader", "barrel": false, "default": true },
+  "import": { "subpath": "components/app-loader", "barrel": true, "default": true },
   "exports": ["default"],
   "providers": [],
   "propsType": null,
@@ -47,9 +47,10 @@ ready.
 import AppLoader from "@onlyoffice/apps-ui-kit/components/app-loader";
 ```
 
-It is a **default** export, so the name is yours to choose. `components/index.ts`
-re-exports this folder with `export *`, which carries named exports and drops defaults — the
-component is **not in the root barrel**, and the subpath above is the only way to it.
+It is a **default** export, so the name is yours to choose. The root barrel carries it by name
+as well — `components/index.ts` re-exports it as `export { default as AppLoader }` — but prefer the
+subpath: the barrel does not build without four optional peers, see
+[Which import form](_getting-started.md#which-import-form).
 
 No provider is required — the sheet is white and the animation dark by default. The dark theme's
 dark grey sheet comes from the `dark` class the kit's theme provider puts on `<body>`, so without a

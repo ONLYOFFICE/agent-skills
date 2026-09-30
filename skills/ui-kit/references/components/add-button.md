@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/add-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 7316378984a7e60dccb392019c6e148c642a3d642774c7e8becb71526bbad354 -->
+<!-- body-sha256: 0d87865a69b55fa2287541b28fa77528e947c3febabe58c87e3eb57470daa7bd -->
 
 > Synced from the kit's own `components/add-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -165,8 +165,8 @@ export function AddTag({ onAdd }: { onAdd: () => void }) {
   does nothing in either case.
 - **`isAction` needs a colour scheme, not just a theme.** The accent tint is written as an
   inline custom property from the theme's `currentColorScheme.main.accent`; when the provider
-  has none, that property is never set and the rule `background-color: var(--main-accent-button)
-!important` leaves the square transparent.
+  has none, that property is never set and the rule
+  `background-color: var(--main-accent-button) !important` leaves the square transparent.
 - **`size` shares that fate.** It is only written when the colour scheme exists, so under a
   provider without one the square stays 32×32 whatever you pass.
 - **`title` is the kit's tooltip, `titleText` is the browser's.** The first goes through the

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/aside/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 3ff3f30decdcb35edb9ff153b1afd487eeee72c14d20c7b83a47c9324247f49b -->
+<!-- body-sha256: 0002925761d37409869ae32dd590bf60ca83ee377120c4f8ca21793d73d56886 -->
 
 > Synced from the kit's own `components/aside/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -196,9 +196,10 @@ export function LazyPanel({ ready }: { ready: boolean }) {
   its bottom below the edge.
 - **`withoutHeader` removes the only way out.** With no header there is no cross, so a panel
   that hides its header has to be closed by something of yours.
-- Everything the component does not read itself is spread onto the `<aside>` element **and**
-  passed to the header, so a header prop such as `header` or `isLoading` also lands on the DOM
-  element as an unknown attribute.
+- **The props it does not read itself are split, not copied.** `aria-*` attributes go on the
+  `<aside>` element; every other one — `header`, `isBackButton`, `onBackClick`, `id`, `style` and
+  the rest — goes to the header alone, which is why `id` and `style` land on the header rather
+  than on the panel.
 - The panel is 480px wide and slides in from the right edge — from the left one under a
   right-to-left interface. On a phone it becomes a full-width bottom sheet that slides up and
   leaves room for the mobile footer.
@@ -225,8 +226,8 @@ around the panel, they reach its header too.
 - The header's close cross carries `aria-label="close"`, but it is a `<div>` with no button
   role and no tab stop, so a keyboard cannot reach it — and it is the only control that calls
   `onClose`. A keyboard user needs a way out of yours.
-- `AriaAttributes` are part of the props type, so `aria-label` type-checks — but it lands on
-  both the `<aside>` and the header, since unknown props are spread to both.
+- `AriaAttributes` are part of the props type and land on the `<aside>` element alone, so an
+  `aria-label` names the landmark.
 
 ## Test ids
 

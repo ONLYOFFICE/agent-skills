@@ -71,10 +71,22 @@ const kit = JSON.parse(readFileSync(manifestPath, "utf8"));
 const byName = new Map(Object.values(kit.components).map((component) => [component.name, component]));
 const publicSubpaths = new Set(kit.publicSubpaths);
 const portalInternalNames = new Set(kit.portalInternalBarrelNames);
-const defaultOnly = new Map(
-  Object.entries(kit.components)
-    .filter(([, component]) => component.default && component.import === "subpath only")
-    .map(([, component]) => [component.name, component.subpath]),
+// Two questions that used to share one list, and so went silent together once its answer
+// changed. Whether the root barrel carries a component is `import.barrel`, which the kit's
+// validator derives from the TypeScript checker; today it carries all of them, because
+// `components/index.ts` re-exports the default-only ones by name. Whether the component's own
+// subpath has a *named* export of it is a property of that folder alone, and a folder that
+// exports only a default has none: `import { Section } from ".../components/section"` resolves
+// to nothing however the barrel is arranged.
+const notInBarrel = new Map(
+  Object.values(kit.components)
+    .filter((component) => component.import === "subpath only")
+    .map((component) => [component.name, component.subpath]),
+);
+const defaultOnlyOnSubpath = new Map(
+  Object.values(kit.components)
+    .filter((component) => component.default && !(component.exports ?? []).includes(component.name))
+    .map((component) => [component.name, component.subpath]),
 );
 
 /** The installed copy, when the project has one: its version and which subpaths it really has. */
@@ -240,17 +252,17 @@ function checkSpecifier(file, line, specifier, bindings) {
       if (portalInternalNames.has(binding.imported)) {
         add("error", "E-internal-subpath", file, line, `\`${binding.imported}\` is portal-internal, reached through the root barrel`, "the root index re-exports uploader and billing, so these names resolve with no warning");
       }
-      const subpathOnly = defaultOnly.get(binding.imported);
+      const subpathOnly = notInBarrel.get(binding.imported);
       if (subpathOnly) {
-        add("error", "E-default-import", file, line, `\`${binding.imported}\` is not exported from the root barrel`, `it is a default export and \`export *\` does not carry one: import ${binding.imported} from "${PACKAGE}/${subpathOnly}"`);
+        add("error", "E-default-import", file, line, `\`${binding.imported}\` is not exported from the root barrel`, `the barrel does not re-export it by name: import ${binding.imported} from "${PACKAGE}/${subpathOnly}"`);
       }
     }
     return;
   }
 
   for (const binding of bindings) {
-    const subpathOnly = defaultOnly.get(binding.imported);
-    if (subpathOnly && binding.imported !== "default") {
+    const subpathOnly = defaultOnlyOnSubpath.get(binding.imported);
+    if (subpathOnly === subpath && binding.imported !== "default") {
       add("error", "E-default-import", file, line, `\`${binding.imported}\` is a default export of ${subpathOnly}`, `a named import of it resolves to nothing: import ${binding.imported} from "${PACKAGE}/${subpathOnly}"`);
     }
   }

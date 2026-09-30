@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/navigation/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 9d6ce6a84579c19d5586ba68e8462f3effe953299797bcc57c07624fe174497a -->
+<!-- body-sha256: f4b07e3f3fd3cd2c8a678c543a6784e1e2144f973d7bc0ced0291697d08a39b4 -->
 
 > Synced from the kit's own `components/navigation/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -12,7 +12,7 @@
   "category": "Navigation",
   "status": "portal-internal",
   "summary": "The file manager's header: breadcrumb title, back arrow, and the row of buttons that acts on the current folder.",
-  "import": { "subpath": "components/navigation", "barrel": false, "default": true },
+  "import": { "subpath": "components/navigation", "barrel": true, "default": true },
   "exports": ["default", "TTitles", "TNavigationItem", "TNavigationProps"],
   "providers": ["ThemeProvider"],
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
@@ -47,9 +47,10 @@ a folder trail, two context menu getters and a device type you tell it about.
 import Navigation from "@onlyoffice/apps-ui-kit/components/navigation";
 ```
 
-It is a **default** export, so the name is yours to choose. `components/index.ts`
-re-exports this folder with `export *`, which carries named exports and drops defaults — the
-component is **not in the root barrel**, and the subpath above is the only way to it.
+It is a **default** export, so the name is yours to choose. The root barrel carries it by name
+as well — `components/index.ts` re-exports it as `export { default as Navigation }` — but prefer the
+subpath: the barrel does not build without four optional peers, see
+[Which import form](_getting-started.md#which-import-form).
 
 Needs `ThemeProvider` above it in the tree: every colour it uses is declared only under the `light`
 and `dark` classes that provider puts on `<body>`, and the mirrored arrows come from its `rtl`

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/operations-progress-button/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: c11200cb061c6f6cfca2bfe9c02c660b5af62069e7ef59bc9bfd099148b5fe78 -->
+<!-- body-sha256: 9b739ed21b72557bfef75fb0503ae87b7a988e80c8976b87a161cc80391be7cc -->
 
 > Synced from the kit's own `components/operations-progress-button/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -12,7 +12,7 @@
   "category": "Feedback",
   "status": "portal-internal",
   "summary": "Corner badge that reports every background operation of the portal and lists them when there is more than one.",
-  "import": { "subpath": "components/operations-progress-button", "barrel": false, "default": true },
+  "import": { "subpath": "components/operations-progress-button", "barrel": true, "default": true },
   "exports": ["default"],
   "providers": ["ThemeProvider", "TranslationProvider"],
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
@@ -47,9 +47,10 @@ the tooltip that names what is running.
 import OperationsProgressButton from "@onlyoffice/apps-ui-kit/components/operations-progress-button";
 ```
 
-It is a **default** export, so the name is yours to choose. `components/index.ts`
-re-exports this folder with `export *`, which carries named exports and drops defaults — the
-component is **not in the root barrel**, and the subpath above is the only way to it.
+It is a **default** export, so the name is yours to choose. The root barrel carries it by name
+as well — `components/index.ts` re-exports it as `export { default as OperationsProgressButton }` — but prefer the
+subpath: the barrel does not build without four optional peers, see
+[Which import form](_getting-started.md#which-import-form).
 
 Needs `ThemeProvider` from `@onlyoffice/apps-ui-kit/providers/theme`, and
 `TranslationProvider` from `@onlyoffice/apps-ui-kit/providers/translation` carrying the

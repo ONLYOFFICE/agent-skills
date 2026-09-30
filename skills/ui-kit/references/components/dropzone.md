@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/dropzone/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: b237738334f6fb550f84b610be0460d65aa87876ae99df2c9632ba8b15b1197e -->
+<!-- body-sha256: 72eb8b21622100c43eb248d11509239bc6e3833c4b125c0f83868dff93d4dc1b -->
 
 > Synced from the kit's own `components/dropzone/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -12,7 +12,7 @@
   "category": "Interactive elements",
   "status": "public",
   "summary": "Dashed upload area with a picture, a prompt and a format list, which turns into a loader while the upload runs.",
-  "import": { "subpath": "components/dropzone", "barrel": false, "default": true },
+  "import": { "subpath": "components/dropzone", "barrel": true, "default": true },
   "exports": ["default", "DropzoneProps", "SvgIconComponent"],
   "providers": ["ThemeProvider"],
   "state": { "visibility": null, "close": null, "loading": "isLoading", "disabled": "isDisabled" },
@@ -47,9 +47,10 @@ files on the area does the same thing without it.
 import Dropzone from "@onlyoffice/apps-ui-kit/components/dropzone";
 ```
 
-It is a **default** export, so the name is yours to choose. `components/index.ts`
-re-exports this folder with `export *`, which carries named exports and drops defaults — the
-component is **not in the root barrel**, and the subpath above is the only way to it.
+It is a **default** export, so the name is yours to choose. The root barrel carries it by name
+as well — `components/index.ts` re-exports it as `export { default as Dropzone }` — but prefer the
+subpath: the barrel does not build without four optional peers, see
+[Which import form](_getting-started.md#which-import-form).
 
 Needs `ThemeProvider` above it in the tree: the border, the background and the accent on the
 prompt all come from custom properties the provider's `.light` and `.dark` classes declare.

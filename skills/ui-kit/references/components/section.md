@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/section/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 27504a2d130649e0a56484f61dc8162598caa5fd95073653ee8cc0d8c8562334 -->
+<!-- body-sha256: c3bf7a92bf07721a9855673378d8ff3927c6c76f47a5f38a12925c531ab9763b -->
 
 > Synced from the kit's own `components/section/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -12,7 +12,7 @@
   "category": "Layout",
   "status": "portal-internal",
   "summary": "DocSpace's page body: a sticky header and filter, a scrolling body, and the info and chat panels beside it.",
-  "import": { "subpath": "components/section", "barrel": false, "default": true },
+  "import": { "subpath": "components/section", "barrel": true, "default": true },
   "exports": ["default", "SectionProps"],
   "providers": ["ThemeProvider", "TranslationProvider"],
   "state": { "visibility": null, "close": null, "loading": null, "disabled": "inert" },
@@ -60,9 +60,10 @@ and it is also what supplies the kit's layout context to everything inside it.
 import Section from "@onlyoffice/apps-ui-kit/components/section";
 ```
 
-It is a **default** export, so the name is yours to choose. `components/index.ts`
-re-exports this folder with `export *`, which carries named exports and drops defaults — the
-component is **not in the root barrel**, and the subpath above is the only way to it.
+It is a **default** export, so the name is yours to choose. The root barrel carries it by name
+as well — `components/index.ts` re-exports it as `export { default as Section }` — but prefer the
+subpath: the barrel does not build without four optional peers, see
+[Which import form](_getting-started.md#which-import-form).
 
 Needs `ThemeProvider` above it in the tree for its colours, and `TranslationProvider` once any
 operation is in flight — the progress button it renders reads its labels from the kit's shared

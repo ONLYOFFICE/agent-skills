@@ -168,10 +168,34 @@ export const upload = Uploader;
   { code: 1, has: ["E-internal-subpath"] },
 );
 
+/**
+ * This case used to assert the opposite, and so held the validator to a falsehood. The root
+ * barrel re-exports every default-only component by name -- `export { default as Section }` in
+ * `components/index.ts` -- so the import below resolves; the error fired on correct code. The
+ * kit's README validator had been rebuilding the barrel's names by hand and required every one of
+ * those READMEs to say otherwise, and this check inherited that through the manifest.
+ */
 expect(
-  "default-only-component-by-name",
+  "a default-only component through the root barrel, by name",
   {
+    "src/AppProviders.tsx": PROVIDERS,
     "src/Layout.tsx": `import { Section } from "@onlyoffice/apps-ui-kit";
+
+export const layout = Section;
+`,
+  },
+  { code: 0, lacks: ["E-default-import"] },
+);
+
+/**
+ * What stays an error: a named import of that component from its own subpath. The folder's index
+ * exports only a default, so the binding resolves to nothing however the barrel is arranged.
+ */
+expect(
+  "a default-only component by name from its own subpath",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Layout.tsx": `import { Section } from "@onlyoffice/apps-ui-kit/components/section";
 
 export const layout = Section;
 `,

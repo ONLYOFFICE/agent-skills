@@ -32,8 +32,10 @@ node tools/sync-ui-kit.mjs --from ../docspace-ui-kit-react --write
 **`check-usage.mjs`** reads a project as text — no build, no network, nothing executed — and
 reports what the kit itself never does. It knows the kit from
 `scripts/data/kit-manifest.json`, which the sync derives from the kit's own sources, so the
-visibility prop it expects for a component, the list of portal-internal modules and the nine
-components that are default exports are all facts rather than a hand-kept list. Errors are
+visibility prop it expects for a component, the list of portal-internal modules and which
+components are default exports on their subpath are all facts rather than a hand-kept list —
+which is also why the barrel mistake reached it: the manifest is only as right as the kit's own
+README validator, and that validator once rebuilt the barrel's names by hand. Errors are
 things that are already broken: a visibility prop the component ignores, a portal-internal
 import, `Providers`, a path into `dist/`, `PUBLIC_DIR`, a missing provider, a `SearchInput`
 handler reading `.target.value` off a string. Warnings are the silent traps: a field with no

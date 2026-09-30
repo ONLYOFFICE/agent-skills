@@ -23,8 +23,8 @@ missing provider empties every label, and nothing is logged.
 - **Each module imports its own CSS.** Nothing is imported by hand;
   `@onlyoffice/apps-ui-kit/styles.css` is the whole library, 727 KB, for builds that cannot
   follow those imports.
-- 98 components, each with a README of its own inside the package. 89 are importable by name
-  from the root barrel; nine are default exports and reach you only through their subpath.
+- 98 components, each with a README of its own inside the package. The root barrel carries
+  every one by name, and still is not the way in — see rule 6.
 - Two providers, both mounted by the application: `ThemeProvider` from `providers/theme` and
   `TranslationProvider` from `providers/translation`.
 
@@ -98,9 +98,12 @@ the rule wins and the kit's page is what should be corrected.
    `uploader`, `ai-agent`, `api`, `providers/api`, `document-editor`, `utils/socket`, and
    eleven components including `Section`, `Article`, `Navigation` and `Filter`. The root barrel
    re-exports `uploader` and `billing`, so those names reach you with no warning.
-6. **Nine components are default exports** — `AppLoader`, `Article`, `Dropzone`, `Navigation`,
-   `OperationsProgressButton`, `PublicRoomBar`, `QuantityPicker`, `RoomType`, `Section` —
-   and `export *` does not carry a default, so they come from their subpath or not at all.
+6. **Import from the subpath, not the root barrel.** The barrel also re-exports `billing` and
+   `uploader`, which import `mobx`, `mobx-react`, `react-router` and `axios` — optional peers
+   an application of its own does not install — and a bundler resolves them before it drops
+   what is unused, so `import { Button } from "@onlyoffice/apps-ui-kit"` fails the build. Nine
+   components are default exports on their subpath (`import Section from "…/components/section"`),
+   and a named import there resolves to nothing.
 7. **`FieldContainer.labelVisible` defaults to `false`.** Without it `labelText` renders no
    label, no required marker, no help button, and reports nothing.
 8. **`FieldContainer` carries its own `margin: 0 0 16px`.** A column with `gap: 16` spaces

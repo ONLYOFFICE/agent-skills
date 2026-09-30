@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/tiles/tile-content/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 5f0edc25dcb37f807cd2b818ed0cd7bc74d13081054958f9c1e9871c50100979 -->
+<!-- body-sha256: 8f05e6c4477fc5bde4fe1bef60f5680a4bcb090224b1811d5e44544807007632 -->
 
 > Synced from the kit's own `components/tiles/tile-content/README.md` at 4.0.0. Where this page and [SKILL.md](../../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -146,8 +146,8 @@ export function TitleWithSize({ name, size }: { name: string; size: string }) {
 - **A link still wraps on a tablet.** The tile around the slot clamps a link to two lines with
   `white-space: normal`, which beats the slot's single-line rule, so only plain text gets the
   ellipsis between 600px and 1023px.
-- **`containerWidth` on the child wins over everything.** Without it the wrapper is `width:
-inherit` all the way down, which means the tile decides; with it the wrapper is exactly that
+- **`containerWidth` on the child wins over everything.** Without it the wrapper is
+  `width: inherit` all the way down, which means the tile decides; with it the wrapper is exactly that
   wide whatever the tile says.
 - **The outer element is `inline-flex` at `width: 100%`**, and the middle wrapper pushes
   everything to the start with an automatic trailing margin.

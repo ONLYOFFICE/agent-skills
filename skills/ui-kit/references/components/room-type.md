@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/room-type/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: d07d546f3e51b882e477ab0141a174687131e8109917433ff46f57e9edc2bc9a -->
+<!-- body-sha256: 62185a07de00c8efdaa159e23a7feed45fb67dad82c59fdbe7c271a77c0632a9 -->
 
 > Synced from the kit's own `components/room-type/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -12,7 +12,7 @@
   "category": "Data display",
   "status": "portal-internal",
   "summary": "Row offering one kind of room, with its glyph, its translated name and its description.",
-  "import": { "subpath": "components/room-type", "barrel": false, "default": true },
+  "import": { "subpath": "components/room-type", "barrel": true, "default": true },
   "exports": ["default", "RoomTypeProps"],
   "providers": ["ThemeProvider", "TranslationProvider"],
   "state": { "visibility": null, "close": null, "loading": null, "disabled": null },
@@ -47,9 +47,10 @@ on). Without those translations loaded the row renders a glyph and two empty lin
 import RoomType from "@onlyoffice/apps-ui-kit/components/room-type";
 ```
 
-It is a **default** export, so the name is yours to choose. `components/index.ts`
-re-exports this folder with `export *`, which carries named exports and drops defaults — the
-component is **not in the root barrel**, and the subpath above is the only way to it.
+It is a **default** export, so the name is yours to choose. The root barrel carries it by name
+as well — `components/index.ts` re-exports it as `export { default as RoomType }` — but prefer the
+subpath: the barrel does not build without four optional peers, see
+[Which import form](_getting-started.md#which-import-form).
 
 Needs `TranslationProvider` above it, with the portal's `Common` namespace, or every label is
 empty and i18next logs a missing-key error. Needs `ThemeProvider` for its borders and hover

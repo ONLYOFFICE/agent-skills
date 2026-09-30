@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/toast/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 84caeffec65b65519b9ec861e4e12432366c4bbdf9b9da1921ebeda2ebf4cac5 -->
+<!-- body-sha256: 8a05649e415890a708456620a13400939551872971dc3bb686413c7aedc965d7 -->
 
 > Synced from the kit's own `components/toast/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -112,8 +112,8 @@ method.
 
 ### Showing a toast
 
-Every method takes the same five positional arguments — `(data, title?, timeout?, withCross?,
-centerPosition?)`. Only the first is required.
+Every method takes the same five positional arguments —
+`(data, title?, timeout?, withCross?, centerPosition?)`. Only the first is required.
 
 ```tsx
 import { toastr } from "@onlyoffice/apps-ui-kit/components/toast";
@@ -187,6 +187,10 @@ export async function uploadWithProgressToast(file: File) {
 - **Nothing appears until `<Toast/>` is mounted.** A `toastr` call made while the container is
   absent is queued by `react-toastify` against the container id `toast-container` and is shown
   only once it exists.
+- **Only one `<Toast/>` renders at a time.** Mounting more — one per story on a docs page, a
+  plugin's next to the portal's — is safe: the first mounted draws the container and the rest
+  render nothing, so their `className` and `style` are ignored. When the first unmounts, the next
+  takes over, without the toasts the first was showing.
 - **The arguments are positional, and the third one is a trap.** `timeout` is in milliseconds;
   `0` means "never close by itself", but **anything below 750 is silently replaced with 5000**,
   so `toastr.success(msg, null, 300)` stays up for five seconds.

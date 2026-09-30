@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 providers/error-boundary/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 2826ec1778a56c123c76fe641aa8999777cbb5db2962114bd89da24b22a1b38c -->
+<!-- body-sha256: 045463fbe2a91e1b4691676243e728a02d621e85e2395e5e850f5fdcb9678b0d -->
 
 > Synced from the kit's own `providers/error-boundary/README.md` at 4.0.0. Where this page and [SKILL.md](../../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -149,8 +149,8 @@ export function Reported({ children }: { children: React.ReactNode }) {
   the worst possible moment. Pass `fallback` if that matters.
 - **The error's `message` is shown to the reader** by that default fallback, verbatim. For a
   failure carrying anything internal, replace it rather than letting it through.
-- **A throw with no error object still renders the fallback**, as `new Error("Unhandled
-exception")` — so `fallback` as a function always receives an `Error`, never `undefined`.
+- **A throw with no error object still renders the fallback**, as
+  `new Error("Unhandled exception")` — so `fallback` as a function always receives an `Error`, never `undefined`.
 - **`onError` receives React's `ErrorInfo`**, whose `componentStack` is the useful half; the
   boundary does not touch it.
 - **Only rendering, lifecycle and constructors are covered.** This is React's rule, not the
