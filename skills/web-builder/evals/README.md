@@ -2,7 +2,7 @@
 
 A measuring instrument for the skill, not part of it: nothing in `SKILL.md` references this directory and no agent reads it while working.
 
-The skill's whole claim is that it stops Document Builder integrations from failing *quietly* — a poll that re-sends the script instead of the returned `key`, a progress bar animating a `percent` the service never sends, an `argument` dropped because it sat beside the JWT instead of inside it, customer data spliced into script source, a temporary result link stored as if it were permanent. None of that throws, so "does it run" proves nothing. Each scenario runs twice — with the skill in context and without — and is compared. A check the with-skill run passes and the baseline fails is a passage doing real work; a check **both** pass is a passage that can probably be deleted.
+The skill's whole claim is that it stops Document Builder integrations from failing *quietly* - a poll that re-sends the script instead of the returned `key`, a progress bar animating a `percent` the service never sends, an `argument` dropped because it sat beside the JWT instead of inside it, customer data spliced into script source, a temporary result link stored as if it were permanent. None of that throws, so "does it run" proves nothing. Each scenario runs twice - with the skill in context and without - and is compared. A check the with-skill run passes and the baseline fails is a passage doing real work; a check **both** pass is a passage that can probably be deleted.
 
 ## The scenarios
 
@@ -29,6 +29,8 @@ run the evals for skills/web-builder, iteration-1
 
 It spawns two runs per scenario under `skills/web-builder-workspace/iteration-N/eval-<name>/{with_skill,without_skill}/`, grades each against the scenario's `assertions`, and opens a viewer. Run the prompts **verbatim** - several checks read chosen words, and they're worded to withhold the mechanism. Use `without_skill` as the baseline, not `old_skill`.
 
+**Evals run against the staging docs.** The skill links to `api.onlyoffice.com`; before the run, point the whole plugin at staging with the staging `--host apiSite=…` command from [`sync-sources`](../../../.claude/skills/sync-sources/SKILL.md#commands), and run its back-to-production command after grading. Don't commit while switched - afterwards `git status` should show no change to `sources.json` or to any skill's links.
+
 [`scripts/signals.mjs`](scripts/signals.mjs) `<run-dir> [<run-dir> ...]` collects regex evidence from a run's outputs so the grader has line-anchored places to look instead of re-reading a whole project per assertion - a hit is evidence, not a verdict. Add `--json` for machine-readable output.
 
 ### Keeping the baseline honest
@@ -37,7 +39,7 @@ The baseline is only a baseline if it never sees the skill. An exploring agent *
 
 - Run each arm in its own directory away from any checkout of this repo, scoped explicitly to that directory.
 - Hand scenario 3's fixture over as a **copy**, not a path into `skills/web-builder/evals/` - a baseline given that path is one `cd ..` from `SKILL.md`.
-- Audit afterwards: grep the transcript for `agent-skills`, `SKILL.md`, `evals/`. Where no transcript is persisted, ask the agent to enumerate every file it read outside its working directory — its context is intact and it generally answers honestly.
+- Audit afterwards: grep the transcript for `agent-skills`, `SKILL.md`, `evals/`. Where no transcript is persisted, ask the agent to enumerate every file it read outside its working directory - its context is intact and it generally answers honestly.
 - Same model and effort settings in both arms, fresh session each.
 
 Baselines are reusable across iterations while the prompt and model are unchanged - copy them forward rather than paying for them again. Run only the scenarios a change could touch. The model is not deterministic; for the scenario a change was meant to affect, give a variant several run directories (`with_skill`, `with_skill-2`, ...) and compare the spread before reading one changed check as a regression.

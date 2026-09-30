@@ -10,12 +10,12 @@ As part of the `onlyoffice` plugin - see [Install](../../README.md#install) in t
 
 ## What it targets
 
-The ONLYOFFICE Docs Document Builder API, **v8.2+**. Built from the official docs at
-[Document Builder API](https://api.teamlab.info/docs/docs-api/additional-api/document-builder-api.md), with the behaviours the page doesn't spell out (the server-issued key, token-only parameters, the error mapping, the temporary result links) checked against `builderRequest` in the Document Server's `DocService/sources/converterservice.js`.
+The ONLYOFFICE Docs Document Builder API, **v8.2.0+**. Built from the official docs at
+[Document Builder API](https://api.onlyoffice.com/docs/docs-api/additional-api/document-builder-api.md), with the behaviours the page doesn't spell out (the server-issued key, token-only parameters, the error mapping, the temporary result links) checked against `builderRequest` in the Document Server's `DocService/sources/converterservice.js`.
 
 ## Layout
 
-This skill is **one file**: [`SKILL.md`](SKILL.md) links directly to the official API, signature and script-file pages (as Markdown, via `api.teamlab.info`) rather than keeping a local paraphrase of them - the "Core rules" section is the only original content, covering what those pages state as fields but not as consequences. No `references/` directory: there's nothing here that isn't either the official spec (linked, not copied) or a short rule in `SKILL.md` itself.
+This skill is a router plus two references: [`SKILL.md`](SKILL.md) links directly to the official API, signature and script-file pages (as Markdown, via `api.onlyoffice.com`) rather than keeping a local paraphrase of them, and carries the Core rules - what those pages state as fields but not as consequences. [`references/script.md`](references/script.md) is the script syntax and Office API rules, [`references/errors.md`](references/errors.md) the error codes and their retry classes.
 
 ## Relationship to `web-converter`, `doceditor` and `doceditor-integration`
 
@@ -23,4 +23,4 @@ All ship together in the `onlyoffice` plugin. `web-converter` is "take file A, h
 
 ## Maintaining it
 
-There's no local copy of the spec to go stale - `SKILL.md` links straight to the live pages. On every Docs API release: skim the Document Builder API page and `builderRequest` for anything that changed shape (a `percent` field, a new error code, a change to how the key is issued), update "Core rules" if a consequence changed, and bump the version in `SKILL.md`'s description and intro (currently v8.2+). Run the [evals](evals/README.md) after any content change.
+There's no local copy of the spec to go stale - `SKILL.md` and the references link straight to the live pages; links and the pinned version are declared in [`sources.json`](sources.json). On every Docs API release: skim the Document Builder API page and `builderRequest` for anything that changed shape (a `percent` field, a new error code, a change to how the key is issued), update "Core rules" or the reference that owns it if a consequence changed, and bump the version with `node tools/sync-sources.mjs --skill web-builder --set-version <x.y.z>` (currently v8.2.0+). Run the [evals](evals/README.md) after any content change.

@@ -1,10 +1,29 @@
-# Generic Makefile skeleton — the six required targets
+# Generic Makefile skeleton - the seven required targets
 # (infrastructure/makefile.md). Fill in {{PLACEHOLDER}} commands, keep the
 # .PHONY / tab-indented-recipe / blank-line-between-targets formatting.
 
+DOCS_PUBLIC_URL ?= http://localhost:{{DOCUMENTSERVER_PUBLISHED_PORT}}
+
 .PHONY: help
 help:
-	@echo 'Targets: help, run, build, docker, lint, test'
+	@echo 'Targets: help, up, run, build, docker, lint, test'
+
+# The whole stack with a reachable Document Server, from a fresh clone.
+# Reuses one already answering on DOCS_PUBLIC_URL; otherwise starts the
+# compose documentserver service (drop the COMPOSE_PROFILES part when that
+# service has no profile) and waits until the editor script is served.
+.PHONY: up
+up:
+	@if curl -fsS $(DOCS_PUBLIC_URL)/healthcheck >/dev/null 2>&1; then \
+		echo "Using the Document Server already at $(DOCS_PUBLIC_URL)"; \
+		docker compose up -d --build; \
+	else \
+		COMPOSE_PROFILES=docs docker compose up -d --build; \
+	fi
+	@until curl -fsS $(DOCS_PUBLIC_URL)/web-apps/apps/api/documents/api.js >/dev/null 2>&1; do \
+		echo "waiting for Document Server at $(DOCS_PUBLIC_URL)..."; sleep 5; \
+	done
+	@echo "Document Server is up at $(DOCS_PUBLIC_URL)"
 
 .PHONY: run
 run:

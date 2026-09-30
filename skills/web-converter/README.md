@@ -10,12 +10,12 @@ As part of the `onlyoffice` plugin - see [Install](../../README.md#install) in t
 
 ## What it targets
 
-The ONLYOFFICE Docs Conversion API, **v8.2+**. Built from the official docs at
-[Conversion API](https://api.teamlab.info/docs/docs-api/additional-api/conversion-api.md), with the behaviours the pages don't spell out (JSON vs XML by endpoint, token-only parameters, the header fallback, `percent`) checked against `convertRequest` and `fillResponse` in the Document Server source.
+The ONLYOFFICE Docs Conversion API, **v8.2.0+**. Built from the official docs at
+[Conversion API](https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api.md), with the behaviours the pages don't spell out (JSON vs XML by endpoint, token-only parameters, the header fallback, `percent`) checked against `convertRequest` and `fillResponse` in the Document Server source.
 
 ## Layout
 
-This skill is **one file**: [`SKILL.md`](SKILL.md) links directly to the official request/response/error-codes/conversion-tables/signature pages (as Markdown, via `api.teamlab.info`) rather than keeping a local paraphrase of them - the "Core rules" section is the only original content, covering what those pages state as fields but not as consequences (token-only parameters, same-key polling, `percent` being 0-100, `-7`/`-8`/`-5` staying distinct). No `references/` directory: there's nothing here that isn't either the official spec (linked, not copied) or a short rule in `SKILL.md` itself.
+This skill is a router plus three references: [`SKILL.md`](SKILL.md) links directly to the official request/response/error-codes/conversion-tables/signature pages (as Markdown, via `api.onlyoffice.com`) rather than keeping a local paraphrase of them, and carries the Core rules - what those pages state as fields but not as consequences (token-only parameters, same-key polling, `percent` being 0-100, `-7`/`-8`/`-5` staying distinct). [`references/formats.md`](references/formats.md) is the format matrix and where it comes from, [`references/errors.md`](references/errors.md) the error codes and their retry classes, [`references/diagnosis.md`](references/diagnosis.md) diagnosing a failure report and auditing a converter.
 
 ## Relationship to `doceditor` and `doceditor-integration`
 
@@ -23,4 +23,4 @@ All three skills ship together in the `onlyoffice` plugin. `doceditor` covers th
 
 ## Maintaining it
 
-There's no local copy of the spec to go stale - `SKILL.md` links straight to the live pages. On every Docs API release: skim the linked pages for anything that changed shape, update "Core rules" if a consequence changed, and bump the version in `SKILL.md`'s description and intro (currently v8.2+).
+There's no local copy of the spec to go stale - `SKILL.md` and the references link straight to the live pages; links and the pinned version are declared in [`sources.json`](sources.json). On every Docs API release: skim the linked pages for anything that changed shape, update "Core rules" or the reference that owns it if a consequence changed, and bump the version with `node tools/sync-sources.mjs --skill web-converter --set-version <x.y.z>` (currently v8.2.0+).

@@ -36,11 +36,13 @@ async function requestConversion(filetype, outputtype, key, url) {
   return response.json();
 }
 
-async function pollUntilDone(filetype, outputtype, url) {
+async function pollUntilDone(filetype, outputtype, url, onProgress) {
   while (true) {
     // A fresh key per attempt so the service never confuses one poll for another.
     const pollKey = `poll-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const result = await requestConversion(filetype, outputtype, pollKey, url);
+    // Drives the progress bar on the upload page.
+    onProgress(result.percent || 0);
 
     if (result.endConvert) {
       return result.fileUrl;
@@ -50,13 +52,13 @@ async function pollUntilDone(filetype, outputtype, url) {
   }
 }
 
-async function convertDocument(filetype, outputtype, url) {
+async function convertDocument(filetype, outputtype, url, onProgress = () => {}) {
   if (!isSupported(filetype)) {
     return null;
   }
 
   try {
-    return await pollUntilDone(filetype, outputtype, url);
+    return await pollUntilDone(filetype, outputtype, url, onProgress);
   } catch (err) {
     console.error("conversion failed");
     throw new Error("conversion failed");

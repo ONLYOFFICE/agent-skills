@@ -26,7 +26,7 @@
         "the documented error codes are mapped to distinct causes rather than one message, including -3 as a script/generation problem, -4 as the script or an opened file being unreachable from the Document Server, and -2 as a timeout",
         "-8 is surfaced as an invalid-token problem and is not retried, because a mis-signed request fails identically every time",
         "the result is read from urls under the exact file name the script passes to SaveFile, and is downloaded into S3 as soon as end is true instead of storing the temporary Document Server link",
-        "-3 and -8 bypass whatever retry mechanism the code uses - a job queue's attempts/backoff or a retry wrapper - rather than only being labelled non-retryable while the queue retries them anyway"
+        "the retry decision separates -3 and -8 from transient codes: wherever the code retries - a job queue's attempts/backoff or a retry wrapper - -3 and -8 bypass it, rather than being labelled non-retryable while the queue retries them anyway; code that never retries anything does not satisfy this"
       ]
     },
     {
@@ -80,7 +80,7 @@
         "the missing timeout or attempt cap on the poll loop is named as its own cause, separate from the unchecked error field",
         "the deterministic, same-order-every-time failure is traced to order data being spliced into the script's JavaScript source, so a value containing a double quote or backslash yields a script that fails generation (-3) every time",
         "that splicing is also flagged as script injection into code the Document Server executes, with the fix being one static script plus the order data in argument, read through Argument",
-        "the 99% progress bar is traced to the setInterval ticker producing a synthetic percentage, with the note that the builder API returns no percent, so the panel should show a state rather than a number",
+        "the 99% progress bar is traced to the setInterval ticker producing a synthetic percentage, with the note that the builder API returns no percent at all, so no number from the service can drive the bar",
         "the dead email links are traced to storing and emailing the temporary urls link from the Document Server instead of downloading the file into the app's own storage when end is true",
         "the catch block logging a generic 'generation failed' and returning null is flagged for discarding the error code, with distinct codes mapped to distinct messages",
         "the per-order scripts containing customer data being written to a publicly served directory and never cleaned up is flagged",

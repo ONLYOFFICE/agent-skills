@@ -13,7 +13,7 @@ Apply these guidelines when:
 - The Makefile's `docker` recipe needs an image to actually build (see [`makefile.md`](makefile.md))
 - Image size, build speed, or Dockerfile-side container security come up
 
-For running the resulting image(s) together — `docker-compose.yml`, networking, environment/secrets wiring, runtime hardening (`read_only`, `cap_drop`, `tmpfs`), and the ONLYOFFICE Document Server address-split — see [`compose.md`](compose.md) instead.
+For running the resulting image(s) together - `docker-compose.yml`, networking, environment/secrets wiring, runtime hardening (`read_only`, `cap_drop`, `tmpfs`), and the ONLYOFFICE Document Server address-split - see [`compose.md`](compose.md) instead.
 
 ## Dockerfile Checklist
 
@@ -124,16 +124,16 @@ compose: when a **named volume** is empty and gets attached for the first
 time, Docker seeds it by copying the image's content *and ownership* from
 that mount path. If the image never gave that path an owner (a bare
 `VOLUME` line, or a directory that only ever got created implicitly),
-Docker creates it as `root:root` — and a `USER nonroot` process can never
+Docker creates it as `root:root` - and a `USER nonroot` process can never
 write into it, no matter how the compose file mounts it. This is invisible
 at `docker build` time; it only surfaces at runtime, as `mkdir: permission
 denied` on first write, and it repeats on every restart until the volume
 itself is recreated (`docker compose down -v`, or removing the named
-volume) — rebuilding the image alone does not fix an already-seeded volume.
+volume) - rebuilding the image alone does not fix an already-seeded volume.
 
 This build-time ownership fix is necessary but not sufficient once the
 container is also run with runtime hardening flags (`read_only`,
-`cap_drop`, `tmpfs:`) — those interact with a non-root `USER` in ways a
+`cap_drop`, `tmpfs:`) - those interact with a non-root `USER` in ways a
 Dockerfile alone can't fix and that only show up once the container is
 actually started this way. See [`compose.md`](compose.md)'s Runtime
 Hardening section.
@@ -195,7 +195,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 ```
 
-**Dockerfile `HEALTHCHECK` vs. compose `healthcheck.test` are not the same syntax** — see
+**Dockerfile `HEALTHCHECK` vs. compose `healthcheck.test` are not the same syntax** - see
 [`compose.md`](compose.md) for the exact translation mistake and why it bites hardest on the
 distroless/scratch images this guide recommends for compiled binaries (no shell, so the
 exec-form `"CMD"` array is the only option, and it's the array most likely to get copied
@@ -214,7 +214,7 @@ straight from the Dockerfile without the prefix compose needs).
 | Privileged instructions | High | Avoid `--privileged`, drop capabilities |
 | Package manager cache retained | Low | Clean in the same `RUN` layer |
 
-**Running the resulting image(s) togaether** — docker-compose service topology, networking,
+**Running the resulting image(s) togaether** - docker-compose service topology, networking,
 environment/secrets wiring, the runtime/compose half of the security audit, and troubleshooting
 a container that builds fine but misbehaves once actually started — is [`compose.md`](compose.md),
 not this file.
@@ -227,7 +227,7 @@ Flag these without being asked:
 - **`COPY . .` before dependency install** -> cache bust; reorder to install deps first.
 - **Running as root** -> add a `USER` instruction. No exceptions for production.
 - **Secrets in `ENV`/`ARG`** -> use BuildKit secret mounts instead.
-- **Hardcoded secret fallbacks in app source** (`envOr("JWT_SECRET", "change-me-…")`, defaulted HMAC keys) -> remove the default; fail fast if the env var is unset. Placeholders belong only in `.env.example`.
+- **Hardcoded secret fallbacks in app source** (`envOr("JWT_SECRET", "change-me-...")`, defaulted HMAC keys) -> remove the default; fail fast if the env var is unset. Placeholders belong only in `.env.example`.
 - **Image over 1GB** -> needs a multi-stage build; no production image should be this large.
 - **No healthcheck** -> add one.
 - **`apt-get` without cleanup in the same layer** -> `rm -rf /var/lib/apt/lists/*` in the same `RUN`.

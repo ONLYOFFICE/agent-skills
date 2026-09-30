@@ -1,4 +1,4 @@
-# Generic docker-compose skeleton — fill in {{PLACEHOLDERS}}. Check the
+# Generic docker-compose skeleton - fill in {{PLACEHOLDERS}}. Check the
 # result against infrastructure/compose.md's checklist and Security Audit
 # table (healthchecks, resource limits, non-root, read_only, cap_drop)
 # before calling it done.
@@ -21,7 +21,7 @@ services:
     environment:
       # Internal address: this service reaches Document Server by its
       # compose service name. The BROWSER needs a different, public
-      # address instead (see nginx's DOCUMENTSERVER_PUBLIC_ORIGIN below) —
+      # address instead (see nginx's DOCUMENTSERVER_PUBLIC_ORIGIN below) -
       # compose.md's "WHEN A SERVICE'S ADDRESS IS USED BOTH SERVER-SIDE AND
       # FROM THE BROWSER" section explains why these must never be
       # conflated, and why your callback handler needs its own rewrite
@@ -39,7 +39,7 @@ services:
     mem_limit: {{BACKEND_MEM_LIMIT}}
     healthcheck:
       # compose's healthcheck.test needs the leading "CMD"/"CMD-SHELL"
-      # element — a Dockerfile HEALTHCHECK's array copied straight in is
+      # element - a Dockerfile HEALTHCHECK's array copied straight in is
       # missing it and gets rejected. See infrastructure/compose.md.
       test: ["CMD", "{{BACKEND_HEALTHCHECK_BINARY}}", "{{HEALTHCHECK_FLAG}}"]
       interval: 30s
@@ -48,8 +48,17 @@ services:
 
   documentserver:
     image: onlyoffice/documentserver:{{DOCUMENTSERVER_TAG}}
+    # Always present, so one `docker compose up` (or `make up`) gives a
+    # fresh clone a working editor - see compose.md's "MAKING DOCUMENT
+    # SERVER REACHABLE LOCALLY". If the user's own container must win, put
+    # this behind `profiles: [docs]` and let `make up` add the profile when
+    # nothing answers the public URL's /healthcheck.
     environment:
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_ENABLED: "true"
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      # Service names resolve to private IPs; without this Document Server
+      # refuses to fetch document.url or post the callback to the backend.
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
     networks: [frontend, backend]
     volumes:
       - documentserver-data:/var/www/onlyoffice/Data
@@ -64,8 +73,10 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
+      # First start runs its own migrations and takes 1-2 minutes.
+      start_period: 90s
 
-  # The only publicly published service — see infrastructure/nginx.md for
+  # The only publicly published service - see infrastructure/nginx.md for
   # the CSP frame-src/connect-src rules and the Document-Server proxying
   # gotchas (own server block, no sub-path mount) that nginx.conf.template
   # already encodes.
@@ -84,7 +95,7 @@ services:
     networks: [frontend]
     read_only: true
     # nginx needs somewhere writable for its cache/pid even with
-    # read_only: true — a bare tmpfs entry mounts root-owned on every
+    # read_only: true - a bare tmpfs entry mounts root-owned on every
     # start regardless of any build-time chown; add uid/gid if this
     # image's nginx doesn't already run as root internally.
     tmpfs:

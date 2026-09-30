@@ -1,0 +1,14 @@
+{
+  "version": "8.2.0",
+  "sources": {
+    "docs": {"host": "apiSite", "path": "/docs", "verify": true},
+    "formats": {"host": "github", "path": "/document-formats", "verify": true},
+    "formatsRaw": {"host": "raw", "path": "/document-formats/master", "verify": false}
+  },
+  "placeholderHosts": ["documentserver","docs.internal","docs.ourcompany.internal"],
+  "versionPatterns": [
+    {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
+    {"file": "SKILL.md", "pattern": "\\(v{v}\\+\\)"},
+    {"file": "README.md", "pattern": "\\*\\*v{v}\\+\\*\\*"}
+  ]
+}

@@ -12,7 +12,7 @@ Hexagonal architecture (Ports and Adapters) keeps business logic independent fro
 
 ## Priority: Performance First
 
-Boundaries are a default, not a mandate. Follow every guideline below as far as it's free — but where a port, an adapter hop, or a dispatch indirection provably costs measurable performance on a hot path (extra allocation, dynamic dispatch, needless clone/copy, cache-unfriendly indirection), **performance wins**:
+Boundaries are a default, not a mandate. Follow every guideline below as far as it's free - but where a port, an adapter hop, or a dispatch indirection provably costs measurable performance on a hot path (extra allocation, dynamic dispatch, needless clone/copy, cache-unfriendly indirection), **performance wins**:
 
 - **Bypass Intentionally:** Collapse or bypass a boundary on a hot path rather than pay for it "on principle". Leave a clear comment naming the measured cost so the shortcut reads as a deliberate choice, not architectural decay.
 - **Static Dispatch:** Prefer static dispatch (generics, templates, or monomorphization) over dynamic/virtual dispatch (`dyn Trait`, interfaces, virtual methods) for ports wherever the language runtime supports it efficiently.
@@ -42,7 +42,7 @@ Boundaries are a default, not a mandate. Follow every guideline below as far as 
 ## Dependency Direction
 
 The dependency flow is strictly inward: 
-`Adapters ➔ Application Layer ➔ Port Interfaces ➔ Domain Model ➔ Nothing External`
+`Adapters -> Application Layer -> Port Interfaces -> Domain Model -> Nothing External`
 
 ## How It Works
 

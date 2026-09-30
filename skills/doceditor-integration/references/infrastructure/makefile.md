@@ -36,4 +36,4 @@ bar:
 Apply these guidelines when:
 - Creating new Makefile targets
 - Modifying existing Makefiles
-- Reviewing Makefile code for rules. There must be a base set of recipies: 1. help 2. run (for development run) 3. build (for production) 4. docker (to build a docker image) 5. lint 6. test
+- Reviewing Makefile code for rules. There must be a base set of recipies: 1. help 2. up (the whole stack with a reachable Document Server, reusing one already running - see [`compose.md`](compose.md)'s "MAKING DOCUMENT SERVER REACHABLE LOCALLY" and `templates/Makefile.template`) 3. run (for development run) 4. build (for production) 5. docker (to build a docker image) 6. lint 7. test

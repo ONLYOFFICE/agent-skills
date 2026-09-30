@@ -1,0 +1,9 @@
+# ONLYOFFICE Writing Builder Script
+
+Read this before writing or reviewing a `.js` builder script. The official pages are [Script file](https://api.onlyoffice.com/docs/document-builder/using-cli/script-file.md), [builder vs builderJS](https://api.onlyoffice.com/docs/document-builder/using-cli/overview.md#builder-vs-builderjs), [Command line arguments](https://api.onlyoffice.com/docs/document-builder/using-cli/command-line-arguments.md) and the [Office JavaScript API](https://api.onlyoffice.com/docs/office-api/get-started/overview.md).
+
+## Syntax, structure and outputs
+
+Script syntax fails as `-3` with no line number in the response, so get it right up front: the three-part structure (`CreateFile`/`OpenFile` - `Api.*` content - `SaveFile` - `CloseFile`), `builderJS` when the script uses JavaScript variables (with plain `builder`, a variable passed to a builder method must be the string `"jsValue(name)"`, and a bare variable doesn't resolve), and one open file at a time - `CloseFile` before the next `CreateFile`. The Office API itself changes between Document Server versions - `Api.CreateTable` took `(cols, rows)` before 9.4.0 and takes `(rows, cols)` since - so look each method up on the reference for the server version in use, and prefer calls whose meaning doesn't depend on it (a square table, or rows added with `AddRow`) when the script has to run on more than one. Every `SaveFile(format, name)` becomes one entry in `urls` under exactly that `name`; code that reads `urls["output.docx"]` while the script saves `"report.docx"` gets `undefined`, not an error.
+
+Request data never goes into the script source - it goes in `argument` and is read as `Argument["name"]`; the rule and why is in `SKILL.md`'s Core rules.

@@ -1,0 +1,17 @@
+{
+  "version": "8.2.0",
+  "sources": {
+    "docs": {"host": "apiSite", "path": "/docs", "verify": true},
+    "integrationSample": {"host": "github", "path": "/document-server-integration", "verify": true},
+    "uiKit": {"host": "github", "path": "/docspace-ui-kit-react", "verify": true},
+    "templates": {"host": "github", "path": "/document-templates", "verify": true},
+    "createApp": {"host": "github", "path": "/create-app", "verify": true},
+    "onlyoffice": {"host": "onlyoffice", "verify": true}
+  },
+  "placeholderHosts": ["documentserver", "your-documentserver-public-origin", "collectui.com", "developer.apple.com", "dribbble.com", "godly.website", "land-book.com", "m3.material.io", "mobbin.com", "refero.design", "tailwindui.com", "ui.shadcn.com", "www.awwwards.com", "www.lapa.ninja", "www.siteinspire.com"],
+  "versionPatterns": [
+    {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
+    {"file": "SKILL.md", "pattern": "\\(v{v}\\+\\)"},
+    {"file": "README.md", "pattern": "\\*\\*v{v}\\+\\*\\*"}
+  ]
+}

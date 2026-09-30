@@ -41,7 +41,7 @@ def main() -> int:
         return result.returncode
 
     print(
-        f"Scaffolded into {project_dir} — apply this skill's Definition of "
+        f"Scaffolded into {project_dir} - apply this skill's Definition of "
         "Done (SKILL.md) before considering it done."
     )
     return 0
