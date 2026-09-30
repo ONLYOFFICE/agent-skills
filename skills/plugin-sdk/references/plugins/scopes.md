@@ -15,25 +15,25 @@ The skill tracks a portal release, not a range, and carries no history. A plugin
 
 ## The eleven scopes
 
-`IPlugin` is not a scope — it is the mandatory base every plugin implements ([plugin.md](plugin.md)). Declare a scope in `package.json:scopes` **and** implement its interface, or nothing happens. Each scope links to its page.
+[`IPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IPlugin.md) is not a scope — it is the mandatory base every plugin implements ([plugin.md](plugin.md)). Declare a scope in `package.json:scopes` **and** implement its interface, or nothing happens. Each scope links to its page here, each interface to its docs page, where its members and signatures are ([index](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins.md)); the last three columns are what those pages do not put side by side.
 
 | Scope | Interface | What the portal calls | Items keyed by | Renders a React component |
 |---|---|---|---|---|
-| [`API`](api-plugin.md) | `IApiPlugin` | `setAPI` (`getAPI` is the plugin's own) | — | — |
-| [`Settings`](settings-plugin.md) | `ISettingsPlugin` | `setAdminPluginSettingsValue`; `getAdminPluginSettings` when the settings aside opens | — | `ISettings.component` |
-| [`ContextMenu`](../items/context-menu-item.md) | `IContextMenuPlugin` | `getContextMenuItems` | `key` | — (a click may open a modal) |
-| [`InfoPanel`](../items/info-panel-item.md) | `IInfoPanelPlugin` | `getInfoPanelItems` | `key` | `component` |
-| [`MainButton`](../items/main-button-item.md) | `IMainButtonPlugin` | `getMainButtonItems` | `key` | — |
-| [`ProfileMenu`](../items/profile-menu-item.md) | `IProfileMenuPlugin` | `getProfileMenuItems` | `key` | — |
-| [`EventListener`](../items/event-listener-item.md) | `IEventListenerPlugin` | `getEventListenerItems` | `key` | — |
-| [`File`](../items/file-item.md) | `IFilePlugin` | `getFileItems` | `extension` | — (a click may open a modal or viewer) |
-| [`ArticleButton`](../items/article-button-item.md) | `IArticleButtonPlugin` | `getArticleButtonItems` | `key` | `component` |
-| [`ArticleNavigation`](../items/article-navigation-item.md) | `IArticleNavigationPlugin` | `getArticleNavigationItems` | `key` | `component` |
-| [`PostMessage`](post-message-plugin.md) | `IPostMessagePlugin` | `setPostMessageCallback` | — | — |
+| [`API`](api-plugin.md) | [`IApiPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IApiPlugin.md) | `setAPI` (`getAPI` is the plugin's own) | — | — |
+| [`Settings`](settings-plugin.md) | [`ISettingsPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/ISettingsPlugin.md) | `setAdminPluginSettingsValue`; `getAdminPluginSettings` while the settings aside is open, possibly on every render | — | `ISettings.component` |
+| [`ContextMenu`](../items/context-menu-item.md) | [`IContextMenuPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IContextMenuPlugin.md) | `getContextMenuItems` | `key` | — (a click may open a modal) |
+| [`InfoPanel`](../items/info-panel-item.md) | [`IInfoPanelPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IInfoPanelPlugin.md) | `getInfoPanelItems` | `key` | `component` |
+| [`MainButton`](../items/main-button-item.md) | [`IMainButtonPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IMainButtonPlugin.md) | `getMainButtonItems` | `key` | — |
+| [`ProfileMenu`](../items/profile-menu-item.md) | [`IProfileMenuPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IProfileMenuPlugin.md) | `getProfileMenuItems` | `key` | — |
+| [`EventListener`](../items/event-listener-item.md) | [`IEventListenerPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IEventListenerPlugin.md) | `getEventListenerItems` | `key` | — |
+| [`File`](../items/file-item.md) | [`IFilePlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IFilePlugin.md) | `getFileItems` | `extension` | — (a click may open a modal or viewer) |
+| [`ArticleButton`](../items/article-button-item.md) | [`IArticleButtonPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IArticleButtonPlugin.md) | `getArticleButtonItems` | `key` | `component` |
+| [`ArticleNavigation`](../items/article-navigation-item.md) | [`IArticleNavigationPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IArticleNavigationPlugin.md) | `getArticleNavigationItems` | `key` | `component` |
+| [`PostMessage`](post-message-plugin.md) | [`IPostMessagePlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IPostMessagePlugin.md) | `setPostMessageCallback` | — | — |
 
 ## The item scopes share one shape
 
-**Item-map scopes** — ContextMenu, InfoPanel, MainButton, ProfileMenu, EventListener, File, ArticleButton, ArticleNavigation — share one shape: a `Map`, `add<Scope>Item`, `get<Scope>Items`, `update<Scope>Item` (plus `getContextMenuItemsKeys` for ContextMenu). Two exceptions: **EventListener** has no `update…Item` — re-add to replace; **File** keys its map by `extension`, not `key`. So the eight `I<Scope>Plugin` interfaces have no page of their own: what the portal does with each scope is on its item's page, and what every item shares is in [common-fields.md](../items/common-fields.md).
+**Item-map scopes** — ContextMenu, InfoPanel, MainButton, ProfileMenu, EventListener, File, ArticleButton, ArticleNavigation — share one shape: a `Map`, `add<Scope>Item`, `get<Scope>Items`, `update<Scope>Item` (plus `getContextMenuItemsKeys` for ContextMenu). Two exceptions: **EventListener** has no `update…Item` — re-add to replace; **File** keys its map by `extension`, not `key`. So the eight `I<Scope>Plugin` interfaces have no page of their own here: what the portal does with each scope is on its item's page, the fields on the docs pages those link, and what every item shares in [common-fields.md](../items/common-fields.md).
 
 ## Anything not in that table
 

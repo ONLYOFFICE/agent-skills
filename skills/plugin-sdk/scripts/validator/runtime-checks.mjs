@@ -26,6 +26,7 @@ import { MODULE_RUNTIME, SCOPE_CONTRACT } from "../contract.mjs";
 import { Check } from "./findings.mjs";
 import {
   CALLBACK_TIMEOUT_MS,
+  NETWORK_REFUSED,
   importModuleBundle,
   isMissingHostApi,
   network,
@@ -77,6 +78,12 @@ const invocationsFor = (scope, item) => {
   if (isFn(item.onItemClick)) calls.push(["onItemClick", () => item.onItemClick(1)]);
   else if (isFn(item.onClick)) calls.push(["onClick", () => item.onClick(1)]);
   if (isFn(item.onGroupClick)) calls.push(["onGroupClick", () => item.onGroupClick([{ id: 1, itemType: "file" }])]);
+
+  // A submenu child is clicked by the same host code as its parent.
+  for (const child of Array.isArray(item.items) ? item.items : [])
+    for (const [name, run] of invocationsFor(scope, child ?? {}))
+      calls.push([`> "${child?.key ?? child?.label ?? "?"}" ${name}`, run]);
+
   return calls;
 };
 
@@ -330,10 +337,11 @@ export class RuntimeChecks extends Check {
       const where = `${scope} item "${key}" ${name}`;
       const fetchesBefore = network.attempts;
       let openedSurface = false;
+      let threw = false;
 
       try {
         const result = await withTimeout(run(), CALLBACK_TIMEOUT_MS, where);
-        this.shapes.message(`${scope} item "${key}"`, result);
+        this.shapes.message(where, result);
         this.#collectMessageSurfaces(where, result);
         // Read from the message, not from this.surfaces - a component collected once already
         // does not grow the list, and that is not the same as the click opening nothing.
@@ -341,15 +349,29 @@ export class RuntimeChecks extends Check {
           result?.modalDialogProps?.dialogBodyComponent ?? result?.mediaViewerProps?.component,
         );
       } catch (e) {
+        threw = true;
+
         if (/inside a plugin component/.test(e?.message ?? ""))
           this.error(
             "message",
             `${where} threw: ${e.message}. A class-side callback has no runtime context - read the id it is given, open a modal or a toast through the returned IMessage, and use the hooks inside the component instead`,
           );
-        else this.warn("message", `${where} threw: ${e.message}`);
+        else if (network.attempts > fetchesBefore && (e?.message ?? "").includes(NETWORK_REFUSED))
+          // The sandbox's own refusal escaped the callback, so on the portal any failed request
+          // does the same: nothing wraps a class-side callback.
+          this.error(
+            "message",
+            `${where} threw after its request failed: ${e.message}. Nothing catches a class-side callback, so on the portal this click does nothing and tells the user nothing whenever the request fails - catch it and return an error toast`,
+          );
+        else
+          this.warn(
+            "message",
+            `${where} threw: ${e.message}. If it throws on the portal too, the click does nothing and tells the user nothing - nothing catches a class-side callback`,
+          );
       }
 
-      this.#reportNetworkTruncation(where, network.attempts - fetchesBefore, openedSurface);
+      // A callback that threw took no failure path; its error above is the whole story.
+      if (!threw) this.#reportNetworkTruncation(where, network.attempts - fetchesBefore, openedSurface);
     }
   }
 

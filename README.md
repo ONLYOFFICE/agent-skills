@@ -15,9 +15,10 @@ the list of skills; the plugin manifests only point here.
 | [`plugin-sdk`](skills/plugin-sdk/SKILL.md) | Plugins SDK **3.0.0**, ONLYOFFICE Apps **4.0** | Building, auditing and explaining ONLYOFFICE Apps plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started/) ([`@onlyoffice/docspace-plugin-sdk`](https://github.com/ONLYOFFICE/docspace-plugin-sdk)): React components built from the portal's `@docspace/ui-kit`, the plugin runtime hooks, the eleven scopes, item shapes and filters, actions and payloads, host behaviour, plus offline scripts that scaffold a buildable Vite project and check one against the portal loader contract |
 
 Every skill follows the router pattern: `SKILL.md` holds the decision tables and critical
-rules; details live in `references/` and are loaded on demand. Each skill carries its own
-`evals/` — the same task run with and without the skill, graded against a rubric — and
-those, not intuition, decide whether a change to the skill text stays.
+rules; details live in `references/` and are loaded on demand. The plugin carries an eval
+suite for `claude plugin eval` (`evals/`) and each skill its own A/B protocol — the same task
+run with and without the skill, graded against the same checks — and those, not intuition,
+decide whether a change to the skill text stays.
 
 The plugin also ships an MCP server, `docspace`, over HTTP at
 `https://mcp.onlyoffice.com/mcp` (declared in [`.mcp.json`](.mcp.json)). It gives the
@@ -89,11 +90,13 @@ alike — the one directory to use when a project mixes agents.
 
 ```
 .claude-plugin/          plugin + marketplace manifests
-.claude/skills/          repository-internal skills (sync-sources) — not shipped in the plugin
+.claude/skills/          repository-internal skills, not shipped in the plugin: sync-sources (links and versions),
+                         onlyoffice-docs (navigate the docs site as Markdown, production or the stand, while writing references)
 .mcp.json                MCP servers shipped with the plugin (docspace, HTTP)
-sources.json             the external hosts (docs site, GitHub, raw files, demo) named once for every skill;
+sources.json             the external hosts (docs site and its fallback stand, GitHub, raw files, MCP) named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at a staging or local docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
+evals/                   the `claude plugin eval` suite: one directory per case (prompt.md + graders/), results/ gitignored
 skills/embed-sdk/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
 ├── sources.json         SDK version, which hosts it links to and at which paths, placeholder hosts
@@ -121,11 +124,8 @@ skills/plugin-sdk/
 ## Development
 
 - What a skill directory must contain and how changes are judged: [CONTRIBUTING.md](CONTRIBUTING.md).
-- Validate the plugin before pushing: `claude plugin validate . --strict`; run
-  `node skills/<name>/scripts/test-validator.mjs` for every skill that has a validator.
-- Quality gate: run a skill's evals after substantial content changes
-  ([embed-sdk](skills/embed-sdk/evals/README.md),
-  [plugin-sdk](skills/plugin-sdk/evals/README.md)).
+- How to test — the offline checks after every edit, the behaviour suite after a content
+  change, everything before a release, and the platform limits: [TESTING.md](TESTING.md).
 - Versions, names, what counts as publishing and the release checklist:
   [RELEASING.md](RELEASING.md).
 

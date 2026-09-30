@@ -108,7 +108,10 @@ export const measure = (css) => {
         } catch {
           continue;
         }
-        if (matched.length || (() => { try { return probe.matches(trimmed); } catch { return false; } })())
+        const matches = (element) => { try { return element.matches(trimmed); } catch { return false; } };
+        // `:root`, `html` and `body` are not in the probe, and a rule on them re-themes every page.
+        const reachesPage = matches(document.documentElement) || matches(document.body);
+        if (matched.length || reachesPage || matches(probe))
           observations.leaks.push({ selector: trimmed, hits: matched.length || 1 });
       }
     }

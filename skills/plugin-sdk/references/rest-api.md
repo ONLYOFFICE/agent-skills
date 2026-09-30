@@ -4,6 +4,8 @@ Two callers, two clients ([plugin.md → Two kinds of callback](plugins/plugin.m
 
 Where a feature has both halves — a click that opens a panel — fetch in the component; the click hands over the id.
 
+Contents: [Permissions](#permissions) · [Identifiers](#identifiers) · [Endpoints to start from](#endpoints-to-start-from) · [A file's contents](#a-files-contents-are-not-part-of-the-api) · [A file of your own extension](#creating-a-file-whose-extension-the-portal-does-not-own) · [Uploading a file](#uploading-a-file) · [Third-party origins](#third-party-origins)
+
 ## Permissions
 
 Every file, folder and room in a payload carries a `security` map: PascalCase keys, all optional, `true` when the current user may do that thing. Check it before offering or performing an action; a 403 afterwards is the same fact learned late. Item-level filters (`security` and `itemSecurity` on a [context menu item](items/context-menu-item.md), `fileSecurity` on a [`File` item](items/file-item.md)) do the same declaratively.
@@ -23,7 +25,7 @@ The wire payload is wider than either enum — one shape for files and folders, 
 
 ## Identifiers
 
-An entry the portal stores has an **integer** id; an entry inside a connected third-party storage (a Google Drive folder mounted into a room) has an opaque **string** id. Every id field on the wire — `id`, `folderId`, `parentId`, `rootFolderId`, `destFolderId`, `fileIds[]`, `folderIds[]` — is one or the other by where the entry lives, which is why the SDK types callback and hook ids `number | string` (only the `File`-scope `File` is plain numbers). Users and groups are GUID strings. **A room is a folder**: `GET /files/rooms/{id}` and `GET /files/folder/{id}` describe the same entity, `roomType` marks it, and `roomId` anywhere means that folder id. A file's `folderId` is its immediate parent — the room only at the room's top level; `rootFolderId` is the section root, not the room.
+An entry the portal stores has an **integer** id; an entry inside a connected third-party storage (a Google Drive folder mounted into a room) has an opaque **string** id. Every id field on the wire — `id`, `folderId`, `parentId`, `rootFolderId`, `destFolderId`, `fileIds[]`, `folderIds[]` — is one or the other by where the entry lives, which is why the SDK types callback and hook ids `number | string` (only the `File`-scope `File` and the info panel's `subMenu.onClick` are typed as plain numbers). Users and groups are GUID strings. **A room is a folder**: `GET /files/rooms/{id}` and `GET /files/folder/{id}` describe the same entity, `roomType` marks it, and `roomId` anywhere means that folder id. A file's `folderId` is its immediate parent — the room only at the room's top level; `rootFolderId` is the section root, not the room.
 
 **The JSON type of an id routes the request.** In a URL path an id is text either way, and `/files/folder/6358129` works whatever the variable's type. In a JSON body — `copyas`, `fileops/move|copy|delete`, room quotas — `destFolderId`, `fileIds[]`, `folderIds[]` and `roomIds[]` are dispatched on their JSON type: a number to the portal's storage, a string to the third-party layer. `{ destFolderId: "6358129" }` therefore resolves to no folder and fails with the **security** error (*You don't have enough permission…*) over a folder the user can write to. Check the type before the rights.
 
@@ -33,7 +35,7 @@ An entry the portal stores has an **integer** id; an entry inside a connected th
 
 ## Endpoints to start from
 
-The handful the official plugins reach for. **Everything else is in the [ONLYOFFICE Apps API reference](https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts/)** (sections: Files, Rooms, People, Group, Portal, Settings, Security, ThirdParty, …) — look endpoints and their query parameters up there rather than recalling them; a path remembered from another product answers 404.
+The handful the official plugins reach for, each linked to its page in the [ONLYOFFICE Apps API reference](https://api.onlyoffice.com/docspace/api-backend/get-started/basic-concepts.md). **Everything else is in that reference** (sections: Files, Rooms, People, Group, Portal, Settings, Security, ThirdParty, …) — look endpoints and their query parameters up there rather than recalling them; a path remembered from another product answers 404.
 
 **The API is also typed inside the project.** `@onlyoffice/docspace-api-sdk` is installed as a dependency of the kit — a generated client whose types are the same contract the portal serves:
 
@@ -44,20 +46,20 @@ node_modules/@onlyoffice/docspace-api-sdk/dist/api/<area>/*.d.ts    every endpoi
 
 Read those instead of deciding a shape by feel. They answer the questions that otherwise get guessed: whether a query enum wants the number or the name (`SearchArea` is `Active: 0, Archive: 1, Any: 2, …`), what a field on a payload means, which parameters an endpoint takes and in what order. Do not import from the package — it is not on the portal's externals list, so importing it bundles a second HTTP client into the plugin. It is documentation that happens to compile; the request still goes through `usePluginAPI()`.
 
-| Purpose | Request |
-|---|---|
-| File metadata | `GET /files/file/{id}` |
-| Folder contents / metadata | `GET /files/{folderId}` / `GET /files/folder/{folderId}` |
-| **Create a folder** | `POST /files/folder/{folderId}` `{ title }` — `folderId` is the **parent**; note the shape differs from the create-file path below, which is the usual mix-up |
-| Create a file | `POST /files/{folderId}/file` `{ title }` — plus `enableExternalExt: true` for an extension the portal has no editor for (below) |
-| Rename a file / a folder | `PUT /files/file/{id}` `{ title }` / `PUT /files/folder/{folderId}` `{ title }` |
-| Upload a file in one request | `POST /files/{folderId}/upload`, multipart with the bytes under **`File`** — the generated client's own spelling; the chunked alternative is a session (below) |
-| Replace file contents | `PUT /files/{id}/update`, `FormData` with the bytes (below) |
-| Copy a file into a folder, renaming or converting it on the way | `POST /files/file/{id}/copyas` `{ destFolderId, destTitle }` — the id as a JSON number for a portal folder ([Identifiers](#identifiers)); another extension in `destTitle` converts. Returns the new file |
-| Move / copy in bulk | `PUT /files/fileops/move` / `PUT /files/fileops/copy` `{ folderIds, fileIds, destFolderId, conflictResolveType }` — ids as above; returns operations to poll |
-| Mark as recent | `POST /files/file/{id}/recent` |
-| Current user / people | `GET /people/@self` (a component has `useCurrentUser()`) / `GET /people` |
-| Rooms / members | `GET /files/rooms` / `GET /files/rooms/{id}/share` |
+| Purpose | Request | Reference |
+|---|---|---|
+| File metadata | `GET /files/file/{id}` | [Get file information](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/files/get-file-info.md) |
+| Folder contents / metadata | `GET /files/{folderId}` / `GET /files/folder/{folderId}` | [Get a folder by ID](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/folders/get-folder-by-folder-id.md) / [Get folder information](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/folders/get-folder-info.md) |
+| **Create a folder** | `POST /files/folder/{folderId}` `{ title }` — `folderId` is the **parent**; note the shape differs from the create-file path below, which is the usual mix-up | [Create a folder](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/folders/create-folder.md) |
+| Create a file | `POST /files/{folderId}/file` `{ title }` — plus `enableExternalExt: true` for an extension the portal has no editor for (below) | [Create a file](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/files/create-file.md) |
+| Rename a file / a folder | `PUT /files/file/{id}` `{ title }` / `PUT /files/folder/{folderId}` `{ title }` | [Update a file](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/files/update-file.md) / [Rename a folder](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/folders/rename-folder.md) |
+| Upload a file in one request | `POST /files/{folderId}/upload`, multipart with the bytes under **`File`** — the generated client's own spelling; the chunked alternative is a session (below) | [Upload a file](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/folders/upload-file.md) |
+| Replace file contents | `PUT /files/{id}/update`, `FormData` with the bytes (below) | not in the reference — see [A file's contents](#a-files-contents-are-not-part-of-the-api) |
+| Copy a file into a folder, renaming or converting it on the way | `POST /files/file/{id}/copyas` `{ destFolderId, destTitle }` — the id as a JSON number for a portal folder ([Identifiers](#identifiers)); another extension in `destTitle` converts. Returns the new file | [Copy a file](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/files/copy-file-as.md) |
+| Move / copy in bulk | `PUT /files/fileops/move` / `PUT /files/fileops/copy` `{ folderIds, fileIds, destFolderId, conflictResolveType }` — ids as above; returns operations to poll | [Move](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/operations/move-batch-items.md) / [Copy](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/operations/copy-batch-items.md), polled as [long-running operations](https://api.onlyoffice.com/docspace/api-backend/get-started/how-it-works/long-running-operations.md) |
+| Mark as recent | `POST /files/file/{id}/recent` | [Add a file to Recent](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/files/add-file-to-recent.md) |
+| Current user / people | `GET /people/@self` (a component has `useCurrentUser()`) / `GET /people` | [Get my profile](https://api.onlyoffice.com/docspace/api-backend/usage-api/people/profiles/get-self-profile.md) / [Get all profiles](https://api.onlyoffice.com/docspace/api-backend/usage-api/people/profiles/get-all-profiles.md) |
+| Rooms / members | `GET /files/rooms` / `GET /files/rooms/{id}/share` | [Get rooms](https://api.onlyoffice.com/docspace/api-backend/usage-api/rooms/get-rooms-folder.md) / [Get the room access rights](https://api.onlyoffice.com/docspace/api-backend/usage-api/rooms/get-room-security-info.md) |
 
 **The rows above are correct as written**; anything not in them is looked up in the api-sdk types described above — `dist/api/files/folders-api.js` and `files-api.js` carry the literal URL and every form field the portal accepts, which is where the two `{folderId}` shapes stop being confusable. Where the api-sdk has no method for something (replacing a file's bytes is one), the API reference is the authority and the request is hand-written; a missing method is a missing *method*, never a reason to substitute an endpoint that has types ([below](#which-writes-the-portal-notices)).
 
@@ -75,12 +77,14 @@ Reading `.folders` or `.files` off the second kind gives `undefined` with no err
 Recursion plus paging, the shape almost every plugin that reads or writes a subtree needs. One page at a time, `total` decides whether to ask again, and the relative path is carried down rather than reconstructed:
 
 ```ts
-type TEntry = { id: number; title: string; security?: Partial<Record<Security, boolean>> };
+type TEntry = { id: string | number; title: string; security?: Partial<Record<Security, boolean>> };
 type TFolderPage = { folders: TEntry[]; files: TEntry[]; total: number };
+type TWalked = TEntry & { path: string };
 
 const PAGE = 100;
 
-async function* walkFolder(api: PluginAPIClient, folderId: number, prefix = "", signal?: AbortSignal) {
+// The return type is spelled out: a recursive generator cannot infer its own.
+async function* walkFolder(api: PluginAPIClient, folderId: string | number, prefix = "", signal?: AbortSignal): AsyncGenerator<TWalked> {
   for (let startIndex = 0; ; startIndex += PAGE) {
     const page = await api.get<TFolderPage>(`/files/${folderId}`, { count: PAGE, startIndex }, { signal });
 
@@ -155,7 +159,7 @@ Do not try to predict the 404 from the metadata instead. `GET /files/file/{id}` 
 | Write | In the api-sdk | The open list |
 |---|---|---|
 | `PUT /files/{id}/update` — multipart, field `file` | no generated method | **updates** |
-| `PUT /files/file/{id}/saveediting` — multipart `File`, `FileExtension`, `Forcesave`, with `DownloadUri` in the query | `saveEditingFileFromForm` | **stale** until the user reloads or navigates away and back |
+| [`PUT /files/file/{id}/saveediting`](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/files/save-editing-file-from-form.md) — multipart `File`, `FileExtension`, `Forcesave`, with `DownloadUri` in the query | `saveEditingFileFromForm` | **stale** until the user reloads or navigates away and back |
 
 Both are a `PUT` carrying the bytes as multipart and both write a new version, so the typed one reads like the better answer. Note also that it lives under `files/file/{id}`, not `files/{id}` — the same path confusion the two create endpoints have. Treat any write not in this table as unverified and watch the list the first time you call it.
 
@@ -167,7 +171,7 @@ Both are a `PUT` carrying the bytes as multipart and both write a new version, s
 
 ## Uploading a file
 
-Create a session, then post the bytes to the returned location — a full URL, so plain `fetch`:
+Create a [session](https://api.onlyoffice.com/docspace/api-backend/usage-api/files/operations/create-upload-session.md), then post the bytes to the returned location — a full URL, so plain `fetch`. The chunked protocol behind it is described in [Uploading large files](https://api.onlyoffice.com/docspace/api-backend/get-started/how-it-works/uploading-large-files.md):
 
 ```ts
 const session = await api.post<{ data: { location: string } }>(`/files/${folderId}/upload/create_session`,

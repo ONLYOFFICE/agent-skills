@@ -4,13 +4,13 @@ Class-side code that calls the REST API.
 
 | | |
 |---|---|
-| Types | `IApiPlugin` |
+| Types | [`IApiPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IApiPlugin.md) |
 | The portal calls | `setAPI(origin, proxy, prefix)` as the plugin loads; `getAPI()` is for your own callbacks |
 | Items | none |
 
 `API` exists for class-side callbacks that build URLs from `getAPI()`; a React component reaches the API through `usePluginAPI()` without it ([api.md](../react/api.md)).
 
-`setAPI(origin, proxy, prefix)`/`getAPI()` and the per-part accessors. Gives class-side callbacks the portal's base URLs; there is no token — requests ride the session cookies (`credentials: "include"`). `setAPI` runs before `onLoadCallback`. Endpoints, identifiers, permissions and file bytes are in [rest-api.md](../rest-api.md).
+The scope gives class-side callbacks the portal's base URLs through `getAPI()` (its members are on the docs page); there is no token — requests ride the session cookies (`credentials: "include"`). `setAPI` runs before `onLoadCallback`. Endpoints, identifiers, permissions and file bytes are in [rest-api.md](../rest-api.md).
 
 ## From the class: `getAPI()` and `fetch`
 
@@ -27,7 +27,7 @@ const buildApiUrl = (): string => {
   return url;   // https://portal.example.com/api/2.0
 };
 
-const onFileAction = async (id: number): Promise<IMessage> => {
+const onFileAction = async (id: string | number): Promise<IMessage> => {
   try {
     const res = await fetch(`${buildApiUrl()}/files/file/${id}`, { credentials: "include" });
     const file = (await res.json()).response;                        // the envelope, class-side

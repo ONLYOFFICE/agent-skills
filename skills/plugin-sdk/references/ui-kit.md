@@ -2,9 +2,11 @@
 
 The portal's own component library: it reads theme, accent and direction from contexts the portal fills, so a kit `Button` is the portal's button in either theme. Reach for the kit first — it is the first of the three sources of style a plugin has, and the only one that follows a re-theme on its own ([styles.md](styles.md#where-a-style-can-come-from)). Colors, the portal's measurements and how a stylesheet gets scoped are there too; this file is the kit's own API and the behaviour its types do not state.
 
-**Props are documented in the package itself**, one JSDoc line per prop: `node_modules/@docspace/ui-kit/dist/types/components/<name>/<Name>.types.d.ts` (enums in `<Name>.enums.d.ts`). Read those rather than guessing or casting; this file only records what the types cannot tell you.
+**Props are documented in the package itself**, one JSDoc line per prop, all in one file: `node_modules/@docspace/ui-kit/dist/types/index.d.ts` — some twelve thousand lines, so search it rather than read it: `type FieldContainerProps`, `declare enum ButtonSize`. Read those rather than guessing or casting; this file only records what the types cannot tell you.
 
 **The styles ship too, and they are where layout surprises are answered.** `dist/cjs/components/<name>/<Name>.module.scss.js` carries the component's real CSS, inlined as a string next to its class-name map. When a control collapses, overflows, or draws somewhere you did not put it, read that file before theorising: a `position: absolute` on a label or a `display: inline-block` on a wrapper explains the behaviour that no prop does. It is worth one look **before** writing a surface too, not only after it looks wrong — the trap list below is the handful of components where that look has already been taken, not the extent of the problem. The same goes for what the kit does *not* contain — check the package rather than assuming a component exists or does not.
+
+Contents: [Imports and enums](#imports-and-enums) · [Layout conventions](#layout-conventions) · [Behavioural traps](#behavioural-traps) · [Icons and assets](#icons-and-assets)
 
 ## Imports and enums
 
@@ -46,4 +48,4 @@ Defaults and layout facts the `.d.ts` does not state:
 
 ## Icons and assets
 
-Two mechanisms: **item icons** (`icon`, `fileRowIcon`) are asset **file names** — `"icon-16.svg"` — resolved against the plugin's `assets/` and recolored for menus, but only shapes with an explicit `fill`/`stroke` **attribute** are repainted, so ship monochrome SVGs with `fill` on every shape. **Inside a component** nothing is resolved: use an inline SVG, or the plugin's base URL, which the portal sets on the exported object after load — `${plugin.iconUrl}/assets/logo.svg` (not declared by the SDK; read through a cast). The logo's size is in [portal.md → Limits](portal.md#limits), each item icon's in its scope's fields table ([scopes.md](plugins/scopes.md)).
+Two mechanisms: **item icons** (`icon`, `fileRowIcon`) are asset **file names** — `"icon-16.svg"` — resolved against the plugin's `assets/` and recolored for menus, but only shapes with an explicit `fill`/`stroke` **attribute** are repainted, so ship monochrome SVGs with `fill` on every shape. **Inside a component** nothing is resolved: use an inline SVG, or the plugin's base URL, which the portal sets on the exported object after load — `${plugin.iconUrl}/assets/logo.svg` (not declared by the SDK; read through a cast). The logo's size is in [portal.md → Limits](portal.md#limits), each item icon's on its interface's docs page, linked from the scope's page.

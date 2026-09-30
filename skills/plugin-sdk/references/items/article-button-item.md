@@ -4,7 +4,7 @@ A small persistent control in the sidebar.
 
 | | |
 |---|---|
-| Types | `IArticleButtonItem`, `IArticleButtonPlugin` |
+| Types | [`IArticleButtonItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IArticleButtonItem.md), [`IArticleButtonPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IArticleButtonPlugin.md) |
 | The loader reads | `getArticleButtonItems()`, keyed by `key` |
 | Role filter | `usersTypes` — [the filter field trap](common-fields.md#the-filter-field-trap) |
 | Surface | a 32×32 slot in the sidebar, `overflow: hidden`, `component` |
@@ -13,15 +13,9 @@ A small persistent control in the sidebar.
 
 ## Fields
 
-| Field | Required | Notes |
-|---|---|---|
-| `key` | ✔ | |
-| `component` | ✔* | a **32×32 slot with `overflow: hidden`** — text does not fit; in practice one kit `IconButton size={32}` with its own `onClick` |
-| `usersTypes` | | |
-| `devices` | | |
-| `body`, `onLoad` | deprecated | |
+Each field, with its type and a line, is on [`IArticleButtonItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IArticleButtonItem.md).
 
-The slot has no click handler of its own. Rendered in **two** sidebars (article and apps) from the same map; each shows at most **five** buttons across all plugins, in registration order — the sixth is dropped silently. A natural way to *open* something (`navigate("/p/<key>")`, an aside, a selector), a poor place for the thing itself.
+`component` gets a **32×32 slot with `overflow: hidden`** — text does not fit; in practice one kit `IconButton size={32}` with its own `onClick`. Rendered in the apps sidebar of every section, at most **five** buttons across all plugins, in registration order — the sixth is dropped silently — and while the sidebar is collapsed to icons only the **first** of them is shown. A natural way to *open* something (`navigate("/p/<key>")`, an aside, a selector), a poor place for the thing itself.
 
 ## Example
 

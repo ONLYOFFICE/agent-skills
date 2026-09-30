@@ -22,7 +22,7 @@ That table is the whole list. If the feature has no scope in it, say so and offe
 
 If the target directory already holds a plugin project (`package.json` with `pluginName` and `scopes`), skip the scaffolder — see *Extending* below.
 
-Never run `npx create-docspace-plugin`: it waits on an interactive prompt and hangs the tool call. Use the scaffolder:
+Never run `npx create-docspace-plugin`: it waits on an interactive prompt and hangs the tool call. The manifest fields it would have asked for, and the scopes it offers, are described in [Creating plugin template](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/creating-plugin-template.md); the scaffolder writes the same ones from its flags:
 
 ```sh
 node "$SKILL/scripts/generate-plugin.mjs" --name my-plugin --plugin-name MyPlugin \
@@ -60,7 +60,7 @@ cd <target> && npm install && npm run build && npm run typecheck
 
 No `dist/plugin.zip` means the build failed, whatever the output said. Common causes: the kit's enum where the SDK's was meant (`ButtonSize` exists in both — alias one), a prop the kit does not have (check its `.d.ts` rather than casting), a component file without `.tsx`.
 
-**A `dist/` with JavaScript beside `plugin.js` is a split bundle.** The archive carries `plugin.js` alone and the portal cannot load a chunk, so a library that lazy-loads its parts dies on the portal at first use and works in the preview. The scaffold's config inlines dynamic imports; an older project adds `inlineDynamicImports: true` to `rollupOptions.output`; the validator refuses the build until `dist/` holds one script ([bundling.md](bundling.md)).
+**A `dist/` with JavaScript beside `plugin.js` is a split bundle.** The archive carries `plugin.js` alone and the portal cannot load a chunk, so a library that lazy-loads its parts dies on the portal at first use and works in the preview. The scaffold's config turns code splitting off; an older project adds `codeSplitting: false` to `build.rolldownOptions.output`; the validator refuses the build until `dist/` holds one script ([bundling.md](bundling.md)).
 
 **`npm run build` does not check types** — Vite strips them — so `npm run typecheck` (`tsc --noEmit`, in every scaffolded project) is a separate step and worth running once the feature compiles. A generated project ships `src/css-modules.d.ts`, so `import styles from "./x.module.css"` type-checks; an older project without it needs that declaration before `tsc` agrees.
 
@@ -102,7 +102,7 @@ Mounts the built bundle in Chromium against the **real** UI kit and the **real**
 | `preview-invisible` | text the same colour as what is behind it, in one of the two themes — a literal colour that only works in the other |
 | `preview-unlabelled` | a field with no visible label, no `aria-label` and no placeholder |
 
-Fix what it reports and run it again. Then **look at the screenshots** it writes to `<target>/.plugin-preview/shots/` — they are the two themes of every surface at its real width, and doubled spacing, a broken row of blocks or a dialog that reads as unfinished are judgements no assertion makes for you. The harness directory is deleted on a clean run and kept when there are errors; `--keep` keeps it either way.
+Fix what it reports and run it again. Then **look at the screenshots** it writes to `<target>/.plugin-preview/shots/` — they are the two themes of every surface at its real width, and doubled spacing, a broken row of blocks or a dialog that reads as unfinished are judgements no assertion makes for you. A clean run removes the harness and keeps `shots/`; a run with errors keeps all of it, and `--keep` keeps it either way.
 
 `preview skipped` is a setup step, never a pass: it names what is missing (`npm run build` first, `npm install` first, or `npm i -D playwright && npx playwright install chromium`). A skipped run has measured nothing — do not report the surfaces as checked.
 
@@ -114,7 +114,7 @@ Fix what it reports and run it again. Then **look at the screenshots** it writes
 - anything left as a placeholder — icons especially;
 - every third-party package the plugin now bundles, one line each: what it does, why it was the one to take, **and what it does not handle** — a library's known blind spot ([dependencies.md](dependencies.md)) becomes the plugin's silent bug, so it is part of the decision, not a footnote;
 - what could not be checked offline: a request whose shape only the portal answers, anything behind a real upload, an untested edge in someone else's format, a render path no fixture was pushed through;
-- install: upload the zip in Settings → Integration → Plugins, then **fully reload the page**. No Plugins tab, or no upload control on it → the portal has plugins, or their upload, switched off ([portal.md](portal.md#before-anything-loads-the-switches)); installed, reloaded and still nothing → the [silent-failure table](portal.md#silent-failures); a *Failed to load* or *Failed to initialize* toast after the upload carries the reason ([portal.md → When loading fails](portal.md#when-loading-fails)) — fix it and upload again under a new `version`;
-- bump `version` before every re-upload — the portal caches the bundle and the icons by version.
+- install: upload the zip in Settings → Integration → Plugins ([Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md)), then **fully reload the page**. No Plugins tab, or no upload control on it → the portal has plugins, or their upload, switched off ([portal.md](portal.md#before-anything-loads-the-switches)); installed, reloaded and still nothing → the [silent-failure table](portal.md#silent-failures); a *Failed to load* or *Failed to initialize* toast after the upload carries the reason ([portal.md → When loading fails](portal.md#when-loading-fails)) — fix it and upload again under a new `version`;
+- bump `version` before every re-upload — the portal caches the bundle and the icons by version, and refuses a re-upload of the same one ([the docs' note](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/creating-plugin-template.md)).
 
 If they asked for something the portal cannot do, say so here rather than burying it — but **a limitation needs positive evidence, not an exhausted search.** "No `Actions` member refreshes the file list" is a fact about `Actions`; "the plugin cannot refresh the file list" is a claim about the portal, and it is usually the endpoint that was wrong. Until you have tried the thing that would disprove it, keep it out of the README, the CHANGELOG and the code comments, where a false explanation reads as settled to everyone who comes after.

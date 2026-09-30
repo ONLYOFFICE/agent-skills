@@ -2,6 +2,9 @@
 
 What can and cannot be asserted, based on a working Playwright suite for the SDK.
 
+Contents: What to assert · What NOT to assert · Unit level (host app) · System mode in tests · E2E environment
+checklist · Self-check protocol
+
 ## What to assert
 
 The reliable contract is the **generated `iframe.src` URL**, not the DOM inside the frame:
@@ -42,8 +45,8 @@ try/catch, never as a hard assertion.
 
 ## System mode in tests
 
-A System frame never finishes loading by itself — call
-`window.DocSpace.SDK.frames[frameId].setIsLoaded()` after init or the loader spins forever.
+On client 4.0.0 the System page reports its own load. On an older portal the loader may
+spin until you call `window.DocSpace.SDK.frames[frameId].setIsLoaded()` after init.
 
 ## E2E environment checklist
 
@@ -79,7 +82,8 @@ results in the report. Every step is scriptable; a Playwright run covers 3–6.
    shows the document (`onAppReady` in `/doceditor`); system frame `getUserInfo()` returns the
    expected `email` after login; chat shows a composer, not only "Chat history".
 7. **Auth failure path.** Wrong password → `login()` resolves with `status !== 200` and your
-   UI shows its own error, not a spinner. OAuth: kill the token endpoint → `onAuthError`
+   UI shows its own error, not a spinner; a data call that fails (a folder the user cannot write)
+   rejects with `API_ERROR` and lands in your `catch`. OAuth: kill the token endpoint → `onAuthError`
    fires and your re-login UX appears.
 8. **Report** to the user: portal URL and SDK version, connection method (npm/IIFE), the
    origins that must be on the allow-list (dev and prod), the modes used, what step 6

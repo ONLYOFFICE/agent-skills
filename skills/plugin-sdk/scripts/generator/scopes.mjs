@@ -79,13 +79,15 @@ export const SCOPE_SPECS = {
   // The portal hands the stored settings back as the raw string the plugin saved, and
   // it arrives *after* installation. A component reads them with usePluginSettings()
   // instead; this exists for class-side callbacks that need them, so parse defensively.
-  setAdminPluginSettingsValue = (settings: string | null): void => {
-    if (!settings) return;
+  // Not named "settings": a class field named after a manifest field is overwritten at load.
+  storedSettings: Record<string, unknown> | null = null;
 
+  setAdminPluginSettingsValue = (settings: string | null): void => {
     try {
-      JSON.parse(settings);
+      this.storedSettings = settings ? JSON.parse(settings) : null;
     } catch {
-      // Ignore malformed stored settings rather than breaking installation.
+      // Malformed stored settings are dropped rather than breaking installation.
+      this.storedSettings = null;
     }
   };
 
@@ -122,7 +124,7 @@ export const SCOPE_SPECS = {
   },
 
   EventListener: {
-    note: "eventHandler takes no arguments, and once an event has fired the host honours only item updates and toasts - other actions are ignored",
+    note: "eventHandler takes no arguments and fires when the portal opens the dialog for that operation, not when it completes - nothing exists yet to announce, so keep the returned message to item updates",
   },
 
   File: {

@@ -1,7 +1,8 @@
 # Chat mode (AI chat)
 
 Full-page AI conversation UI. **Requires SDK >= 2.2 on both the package and the portal.**
-No docs-site page exists — this file and the SDK source are the reference. Only `src` is
+No guide page exists: `usage-sdk/classes/SDK.md` documents `initChat`, `type-aliases/TFrameConfig.md` its fields; this
+file covers what the portal's page does with them. Only `src` is
 required: without `agentId` the chat is bound to the current user; with `agentId` it is
 bound to that AI agent room.
 
@@ -20,20 +21,20 @@ sdk.initChat({
 });
 ```
 
-## Preconditions — the page renders an empty chat when any of them fails
+## Preconditions
 
 Verified against the portal's `/sdk/chat` page (client 4.0.0): the composer, toolbar and agent
 context are rendered only when `canUseAi` is true, which requires **a signed-in user who is not
 a guest/visitor**. Otherwise the page still fires `onAppReady`, calls `setIsLoaded()` and shows
-the "no access" state — visually a blank chat with only a "Chat history" control and no input.
-Nothing arrives on `onAppError` or `onNoAccess` in that case.
+the "no access" state — visually a blank chat with only a "Chat history" control and no input —
+and fires `onNoAccess`; nothing arrives on `onAppError`.
 
 Before generating a chat integration, make sure that:
 
 1. The frame's user is a full portal user (not a guest, not anonymous). Public-room tokens do
    not open chat.
-2. AI is enabled on the portal (admin settings → AI); on a portal without a configured AI
-   provider the same empty state appears for everyone.
+2. AI is set up on the portal (admin settings → AI). The page does not check this before it renders
+   the composer — its gate looks only at the user — so confirm it with the admin.
 3. Under OAuth (`getToken`), the token's scopes let the page load the user's profile and
    settings — the OAuth branch fetches them with the token and silently falls back to
    `canUseAi = false` when that request fails. Check the scope list of your OAuth app
@@ -54,7 +55,7 @@ Key points:
 - `threadId` — resume an existing thread (loads its history). The field was named `chatId`
   in unreleased 2.2 builds; 2.2.0 ships `threadId`.
 - `fileId` — attaches the file to the composer so the first message goes with it.
-- Anonymous visitors see a "no access" screen; sign the user in first (see auth below).
+- Anonymous visitors see the "no access" screen and the frame fires `onNoAccess`; sign the user in first (see auth below).
 - Events: `onAppReady`, `onContentReady` (fired after the chat mounts), `onAppError`
   (SDK load errors, plus a failed `fileId` attach / `threadId` resume reported by the
   page). There are no chat-specific instance methods.

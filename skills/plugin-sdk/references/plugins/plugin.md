@@ -1,6 +1,6 @@
 # The plugin class contract
 
-What the class must implement and how the portal uses it. The interfaces themselves are in the installed SDK's types (`@onlyoffice/docspace-plugin-sdk`); this file records what the types do not say. Components are covered in [rendering.md](../react/rendering.md).
+How the portal uses the plugin class. The interfaces themselves — members, signatures, what each method is for — are documented one page each under [Plugin interfaces](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins.md), with the [enums](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums.md) and [`IMessage`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/utils.md#imessage) beside them; this file records what those pages do not say. Components are covered in [rendering.md](../react/rendering.md).
 
 The SDK root contains no runtime logic — enums and types only. Every interface is a shape the portal expects to find on the exported object; nothing enforces it beyond TypeScript.
 
@@ -8,9 +8,9 @@ Contents: [`IPlugin`](#iplugin--always-required) · [How the portal gets the plu
 
 ## `IPlugin` — always required
 
-`status`, `onLoadCallback`, `updateStatus`, `getStatus`, `setOnLoadCallback`; optional `language`/`setLanguage`/`getLanguage` — implement them if the plugin shows any text.
+Members and an example class: [`IPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IPlugin.md). Implement the optional `language`/`setLanguage`/`getLanguage` too if the plugin shows any text ([Localisation](#localisation)).
 
-- `PluginStatus` is `active` or `hide`, and the portal treats it as a **switch it re-reads**, not a one-time gate: after `onLoadCallback`, after the stored settings reach `setAdminPluginSettingsValue`, after every `usePluginSettings().save()` and on every `Actions.updateStatus`. `active` registers every declared scope's items and loads the CSS; `hide` unregisters them and unloads the CSS, and nothing else is torn down. The PostMessage callback is the exception to the re-reads: it is handed over only when the status is `active` right after `onLoadCallback`, so a plugin that turns `active` later — after a save, say — has no callback until it is reloaded or switched off and on. A plugin that reports no status is `active`; the administrator's toggle overrides both. Two uses: **hide until configured** — parse the settings in `setAdminPluginSettingsValue`, set `this.status` from them, and the re-read that follows installs or removes the items by itself, on the first load and after each save; and **a class-side kill switch** — `this.updateStatus(PluginStatus.hide)` followed by `return { actions: [Actions.updateStatus] }`, since the portal does not watch the field. A React component has no status action; its `save()` is the one moment the runtime re-reads it. While the status is `hide` the plugin's settings aside gives it as *Need enter settings* — which is also why catching an unexpected `onLoadCallback` failure and leaving `hide` behind is the wrong report: let that one throw, and the plugin card shows *Failed to initialize* with the message ([portal.md](../portal.md#when-loading-fails)).
+- [`PluginStatus`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Plugins.md#pluginstatus) is `active` or `hide`, and the portal treats it as a **switch it re-reads**, not a one-time gate: after `onLoadCallback`, after the stored settings reach `setAdminPluginSettingsValue`, after every `usePluginSettings().save()` and on every `Actions.updateStatus`. `active` registers every declared scope's items and loads the CSS; `hide` unregisters them and unloads the CSS, and nothing else is torn down. The PostMessage callback is the exception to the re-reads: it is handed over only when the status is `active` right after `onLoadCallback`, so a plugin that turns `active` later — after a save, say — has no callback until it is reloaded or switched off and on. A plugin that reports no status is `active`; the administrator's toggle overrides both. Two uses: **hide until configured** — parse the settings in `setAdminPluginSettingsValue`, set `this.status` from them, and the re-read that follows installs or removes the items by itself, on the first load and after each save; and **a class-side kill switch** — `this.updateStatus(PluginStatus.hide)` followed by `return { actions: [Actions.updateStatus] }`, since the portal does not watch the field. A React component has no status action; its `save()` is the one moment the runtime re-reads it. While the status is `hide` the plugin's settings aside gives it as *Need enter settings* — which is also why catching an unexpected `onLoadCallback` failure and leaving `hide` behind is the wrong report: let that one throw, and the plugin card shows *Failed to initialize* with the message ([portal.md](../portal.md#when-loading-fails)).
 - Write members as **arrow-function class fields**, not methods: the loader calls them from its own code, so `this` has to be bound.
 
 ## How the portal gets the plugin
@@ -41,7 +41,7 @@ Hooks throw outside a rendered component. The two worlds meet at `showModal`: a 
 **A class-side callback carries its own error handling — all of them, not just the ones that await.** The host `await`s each one bare: `onItemClick`, `onClick`, `onGroupClick`, `subMenu.onClick` and `eventHandler` are called with no `try` around them, so a throw or a rejection becomes an unhandled rejection and the `IMessage` never reaches the dispatcher — no modal, no navigation, no toast, and an item that reads as broken. Return an error toast instead, carrying the portal's own words (a `PluginApiError`'s `message`, a `fetch`'s status text) rather than one house phrase for everything: a plugin's failed request does not move the user anywhere the way the portal's own do, so that toast is the entire diagnosis, both for the person clicking and for whoever they report it to.
 
 ```ts
-onItemClick = async (id: number): Promise<IMessage> => {
+onItemClick = async (id: string | number): Promise<IMessage> => {
   try {
     …
     return { actions: [Actions.showModal], modalDialogProps: { … } };
@@ -51,7 +51,7 @@ onItemClick = async (id: number): Promise<IMessage> => {
 };
 ```
 
-**The create dialog's `onSave` is the one exception, and it is not a reprieve.** That call *is* wrapped, and the `catch` awaits the `onError` you supplied — but with no `onError` it swallows the failure and returns, leaving the dialog open over an error nobody hears about. Either supply `onError`, or catch inside `onSave` as above; a bare `onSave` fails more quietly than an unwrapped callback, not less. Inside a component the boundary catches the throw but the outcome is no better — the surface renders as nothing ([rendering.md](../react/rendering.md#errors-loading-language-styling)), and a `catch` that discards the reason turns a fixable 403 into "it does not work".
+**The create dialog's `onSave` is the one exception, and it is not a reprieve.** That call *is* wrapped, and the `catch` awaits the `onError` you supplied — but with no `onError` it swallows the failure and returns, leaving the dialog open over an error nobody hears about. Either supply `onError`, or catch inside `onSave` as above; a bare `onSave` fails more quietly than an unwrapped callback, not less. Inside a component the outcome is no better — a throw in render blanks the surface, and a rejected request in an effect leaves it on its skeleton ([rendering.md](../react/rendering.md#errors-loading-language-styling)), and a `catch` that discards the reason turns a fixable 403 into "it does not work".
 
 ## Localisation
 
@@ -74,13 +74,13 @@ Item labels are captured when the item is built, which is why factories are **fu
 
 `nameLocale`/`descriptionLocale` in the manifest are separate — the portal reads those for the plugin list, under the locale `getLanguage()` returns, or under the interface language when the class has no `getLanguage()`. Components call `t()` at render time and follow the language on their own.
 
-**Key the tables by `PluginLocale`, not by a tag you typed.** The value the portal passes is the enum's own — `PluginLocale.JA_JP` is `"ja-JP"`, `ZH_CN` is `"zh-CN"`, English is `EN_US`/`EN_GB` and never `"en"` — so a table filed under `"ja"` type-checks (the key is a string), installs, and is never found: that language quietly reads English and nobody sees an error. Type the map as `Partial<Record<PluginLocale, TStrings>>` and write the keys as members; the scaffolder does both, and the validator reports a near-miss under `locale`. The full list of 33 values — `"en-US"`, `"ru"`, `"pt-BR"` and the rest — is in the SDK's `PluginLocale`.
+**Key the tables by `PluginLocale`, not by a tag you typed.** The value the portal passes is the enum's own — `PluginLocale.JA_JP` is `"ja-JP"`, `ZH_CN` is `"zh-CN"`, English is `EN_US`/`EN_GB` and never `"en"` — so a table filed under `"ja"` type-checks (the key is a string), installs, and is never found: that language quietly reads English and nobody sees an error. Type the map as `Partial<Record<PluginLocale, TStrings>>` and write the keys as members; the scaffolder does both, and the validator reports a near-miss under `locale`. The full list is [`PluginLocale`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Plugins.md#pluginlocale).
 
 The generated module also carries `tf(key, values)` for strings with placeholders (`"{count} files"`), which is what keeps a sentence translatable — concatenating fragments in JSX puts the word order beyond the translator's reach.
 
 ## Deprecated — do not use in new code
 
-Still compile and render (SDK 2 forms), recognised by the validator and warned about:
+Still compile and render (SDK 2 forms), recognised by the validator and warned about — and struck through in the docs' property tables:
 
 - `IInfoPanelItem.body`/`onLoad`, `IArticleButtonItem.body`/`onLoad`, `IMediaViewer.content`/`onLoad` → `component`
 - `IModalDialog.dialogBody`/`dialogFooter`/`onLoad` → `dialogBodyComponent`

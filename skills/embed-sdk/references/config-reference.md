@@ -3,13 +3,13 @@
 The field list, types and defaults live in the installed package —
 `node_modules/@onlyoffice/docspace-sdk-js/dist/types/main.d.ts` (`TFrameConfig`, `TFrameFilter`,
 `TEditorCustomization`, JSDoc carries each default) — and in the docs reference
-(`usage-sdk/type-aliases/TFrameConfig/`). `scripts/validate-config.mjs` is generated from the
+([TFrameConfig](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameConfig.md), one row per field, defaults included). `scripts/validate-config.mjs` is generated from the
 same types by `scripts/sync-sdk.mjs`, so it knows every key. This file records only what the
 types do not say: which mode reads a field, what a wrong value does, and where the defaults
 surprise.
 
 Contents: Required · Per-mode meaning of `id` · General fields · Manager and `filter` · Selectors ·
-Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs · Iframe paths per mode
+Editor / viewer · Uploader, Forms, Chat, Personal · Script-tag configs · Iframe paths per mode
 
 ## Required
 
@@ -22,9 +22,9 @@ Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs �
 | mode | `id` is | Missing it |
 |---|---|---|
 | editor, viewer | file id | empty `/doceditor`, no error — **required** |
-| public-room | room id (→ `?folder=`) | white "Something went wrong", no event — **required** with `requestToken` |
+| public-room | room id (→ `?folder=`) | the page cannot load the room and renders its invalid-link error, no event — **required** with `requestToken` |
 | uploader | destination folder id | uploads have no target |
-| forms | room id | the gallery has no room |
+| forms | form filling room id | the room configured in the portal's Forms settings is used (client 4.0.0) |
 | manager | start folder; the SDK moves it into `filter.folder` | opens `rootPath` |
 | others | ignored | — |
 
@@ -34,36 +34,37 @@ Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs �
 |---|---|
 | `type` vs `editorType` | `type` is the iframe platform layout (`desktop`/`embedded`/`mobile`; `mobile` sets `position: fixed`); `editorType` is the editor UI layout sent to the backend. Mobile embeds set both |
 | `noLoader` | default `true`, but Manager and System force the loader on |
-| `waiting` | `true` parks the frame until `setConfig`; System renders anyway |
+| `waiting` | `true` keeps the iframe out of the DOM (System renders anyway); a plain `setConfig` then rejects with `DISCONNECTED` — release it with `setConfig({ waiting: false }, true)` or a fresh `init*` |
 | `checkCSP` | `false` only skips the early CSP probe; the portal still enforces the allow-list |
 | `methodTimeout` | ms before a method rejects with `TIMEOUT` (30 000); absent on SDK < 2.2 |
-| `theme` | `"Base"`, `"Dark"`, `"System"` — capitalized; `"dark"` is rejected |
-| `locale` | BCP 47 (`"en-US"`); `null` = portal default |
-| `destroyText` | HTML dropped into the placeholder after `destroyFrame()` |
+| `theme` | `"Base"`, `"Dark"`, `"System"` — capitalized; `"dark"` fails the validator, and the Manager and System pages map any unknown value to `Base`. Those two pages read it **once, from the frame URL at load**: `setConfig({ theme })` without `reload: true` changes nothing (client 4.0.0) |
+| `locale` | BCP 47 (`"en-US"`); `null` = portal default. Applies to the frame and is applied live on `setConfig`. Portals before 4.0.0 also wrote it into the signed-in user's profile language — permanently, on every `setConfig`; client 4.0.0 no longer does |
+| `destroyText` | text of the placeholder after `destroyFrame()` — plain text in 2.2 (`textContent`); 2.1 and earlier inserted it as HTML |
 | `stylesUrl`, `integrationUrl` | SDK 2.2: custom stylesheet inside the frame; host URL to return to from external portal pages |
 | `getToken` / `accessToken` / `tokenExpiresAt` | SDK >= 2.2 only; `getToken` wins when both are set; the SDK does not parse the token |
-| `requestToken` | public-room (required); manager over a shared room (`rootPath: "/rooms/share"`); editor and viewer, where the SDK sends it as `share=<token>&is_file=true` on `/doceditor` so a file of a public room opens without a session (SDK 2.0+). Ignored by the selectors, system, uploader, forms, chat and personal pages |
+| `requestToken` | public-room (required); manager over a shared room (`rootPath: "/rooms/share"`); editor and viewer, where the SDK sends it as `share=<token>&is_file=true` on `/doceditor` so a file of a public room opens without a session (portal script 1.0.1+, npm 1.1.0+). Ignored by the selectors, system, uploader, forms, chat and personal pages |
 | `providerName`, `inviteKey`, `emplType`, `uid` | forms, chat, personal: portal-provider auto sign-in |
 | `headerOffset`, `headerHeight` | forms/personal: header-row inline-start padding / header height; **chat: container insets** (`padding-inline-start` / `padding-block-start`) |
 
 ## Manager and `filter`
 
-- `rootPath` default `/rooms/shared/`; the iframe URL is `{src}{rootPath}?{filter…}`.
-- `viewAs` `row` / `table` / `tile`; `viewTableColumns` default `"Index,Name,Size,Type,Tags"` (embeds
-  often trim to `"Name,Size,Type"`); `showSettings` adds the column picker.
-- `showMenu`, `showFilter`, `showHeader`, `showSettings`, `disableActionButton` default `false`;
-  `showTitle`, `showSignOut`, `infoPanelVisible` default `true`; `showHeaderBanner` `all`/`info`/`none`.
-- `filter.sortBy` takes **API values**: `AZ` (name), `DateAndTime` (modified), `DateAndTimeCreation`
-  (created), `LastOpened`, `Author`, `Room`, `roomType`, `Size`, `Tags`, `Type`, `usedspace`.
-  `filter.sortOrder` `ascending` / `descending`. `count` (default `"100"`) and `page` (`"1"`) are
-  strings; `search`, `withSubfolders` (boolean); `folder` is set from `id` — never by hand.
+- `rootPath` default `/rooms/shared/`; the iframe URL is `{src}{rootPath}filter?{filter…}`, `{src}{rootPath}{id}/filter?…`
+  with an `id`, and `{src}{rootPath}?key={requestToken}&…` over a shared room.
+- The defaults of `viewTableColumns`, the `show*` flags and `showHeaderBanner` are in
+  [TFrameConfig](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameConfig.md). Worth knowing: `viewTableColumns` lists all five columns by
+  default and embeds usually trim it to `"Name,Size,Type"`; it applies in the table layout only and a column set the
+  user saved in the browser takes precedence; `showSettings` adds the column picker. `viewAs` is **deprecated in
+  2.2.0 and ignored by client 4.0.0** — the layout is the one the user last chose; call `setListView("table")` after
+  `onAppReady` instead.
+- `filter.sortBy` takes the **API values**, not the enum key names — `AZ` for the name, `DateAndTime` for the
+  modified date; the full list is [FilterSortBy](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/enumerations/FilterSortBy.md). `sortOrder` is
+  `ascending` / `descending`; `count` and `page` are strings; `folder` is set from `id` — never by hand.
 
 ## Selectors (room-selector / file-selector)
 
-`selectorType` `all` / `roomsOnly` / `userFolderOnly`; `filterParam` (file type filter, default
-`"ALL"`); `roomType` (numeric room type filter); `acceptButtonLabel`, `cancelButtonLabel`,
-`buttonColor` (`"#5299E0"`); `showSelectorCancel`, `showSelectorHeader` default `false`;
-`withSearch`, `withBreadCrumbs`, `withSubtitle` default `true`. Payload shapes differ per selector
+`selectorType` (`all` / `roomsOnly` / `userFolderOnly`), `filterParam` (file type) and `roomType` narrow
+what can be picked; the labels, the colour and the `with*` / `show*` toggles, with their defaults, are in
+[TFrameConfig](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameConfig.md). Payload shapes differ per selector
 — [events](events.md#selectors-room-selector--file-selector).
 
 ## Editor / viewer
@@ -71,38 +72,23 @@ Editor / viewer · Uploader · Forms · Chat · Personal · Script-tag configs �
 - `editorGoBack`: `true` shows "Open file location", `false` hides it, `"event"` fires
   `onEditorCloseCallback` instead of navigating.
 - `downloadToEvent: true` routes downloads to `onDownload(url)`.
-- `editorCustomization` (`TEditorCustomization`): unknown keys are **silently ignored** — take the key
-  list from the types; the validator warns on typos. Notable: `anonymous: { request, label }`
+- `editorCustomization` (`TEditorCustomization`): the portal spreads the whole object into Document Server's
+  `editorConfig.customization`, so a key outside the type is not rejected anywhere — it reaches Document Server,
+  which decides what to do with it. Take the key list from the types; the validator warns on the rest. Notable: `anonymous: { request, label }`
   (prompt anonymous users for a name; `request: false` for embeds), `integrationMode: "embed"`
   (prevents auto-scroll to the frame), `compactToolbar` defaults `false` in edit and `true` in view,
   `hideRulers` defaults `true` for slides, `zoom` `-1` fit page / `-2` fit width, `macros: false`
-  needs Document Server >= 9.0.3, `uiTheme` values are `theme-*` / `default-*` strings.
+  needs Document Server >= 9.0.3, `uiTheme` is a `TTheme` value (`"Base"`, `"Dark"`, `"System"`) — the portal maps
+  only those to editor themes and falls back to `"System"` for any other string, so prefer the frame-level `theme`.
 
-## Uploader
+## Uploader, Forms, Chat, Personal (SDK >= 2.2)
 
-`id` = destination folder; `acceptExtensions` (`".pdf,.docx"`); `isFolderUpload`,
-`isMultipleUpload`; `maxPerUploadSize`, `maxTotalUploadSize` are **strings** of bytes;
-`linkMainText`, `secondaryText`, `extensionsText` are drop-zone texts. No programmatic
-`upload()` here (Forms only).
-
-## Forms
-
-`id` = room; `destination` initial section (`my-forms` default, `in-progress`, `completed-forms`,
-`library`, `settings`); `libraryId` restricts to one library; `showMenu` side panel;
-`headerOffset` / `headerHeight` as above.
-
-## Chat (SDK >= 2.2)
-
-`agentId` (numeric agent room id; omitted → the user's own chat), `entityId` (room/folder context —
-ignored when `agentId` is set), `fileId` (attach to the composer), `threadId` (resume; was `chatId`
-in pre-release builds). Renders a composer only for a signed-in non-guest user with AI enabled —
-[chat](modes/chat.md).
-
-## Personal (SDK >= 2.2)
-
-`personalDestination` initial section (`my-documents` default, `favorites`, `recent`, `trash`,
-`settings`); manager-family display options apply; only `setConfig` and `navigateSection` are
-answered by its page.
+Their fields and defaults are on [TFrameConfig](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/type-aliases/TFrameConfig.md);
+what each page does with them — the upload payload shapes, `upload()` only in Forms and Personal, the Chat gate and
+`onNoAccess`, the `MODE_MISMATCH` of every data method on the Personal page — is in the mode files:
+[uploader](modes/uploader.md), [forms](modes/forms.md), [chat](modes/chat.md), [personal](modes/personal.md).
+Two traps that cross modes: `maxPerUploadSize` / `maxTotalUploadSize` are **strings** of bytes, and `entityId` is
+ignored by Chat when `agentId` is set.
 
 ## Script-tag configs
 
@@ -117,7 +103,7 @@ auto-initializes on load.
 
 | mode | Base path |
 |---|---|
-| manager | `{rootPath}` |
+| manager | `{rootPath}` + `filter?…` (`{id}/filter?…` with an `id`, `?key=…` with a `requestToken`) |
 | editor / viewer | `/doceditor` (viewer adds `action=view`) |
 | room-selector | `/sdk/room-selector` |
 | file-selector | `/sdk/file-selector` |

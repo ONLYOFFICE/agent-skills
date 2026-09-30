@@ -34,6 +34,11 @@ const templatesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..
 const main = () => {
   const argv = process.argv.slice(2);
 
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log(USAGE);
+    return;
+  }
+
   if (argv.length === 0) {
     console.error(USAGE);
     process.exit(1);
@@ -48,7 +53,7 @@ const main = () => {
   console.log(`  ui-kit:       ${result.uiKitTarball}, copied into the project with the tarballs it depends on`);
 
   if (result.sdkTarball)
-    console.log(`  sdk:          ${result.sdkTarball}, installed from the vendored tarball until 3.0.0 is on npm`);
+    console.log(`  sdk:          ${result.sdkTarball}, installed from the vendored tarball`);
 
   console.log(`  placeholders: ${result.iconPaths.join(", ")} - replace these with real icons`);
 

@@ -37,7 +37,7 @@ export const VITE_CONFIG = `
 export default {
   build: {
     lib: { entry: "src/index.ts", formats: ["es"] },
-    rollupOptions: {
+    rolldownOptions: {
       external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@docspace\\/ui-kit(\\/.*)?$/],
     },
   },
@@ -88,7 +88,7 @@ const pluginMembers = `
  * A one-map plugin - the skeleton every map-scope fixture varies: which map, what
  * onLoadCallback does, and whether it is handed over by `export default` or the SDK 2 way.
  */
-const mapScopePlugin = ({
+export const mapScopePlugin = ({
   field = "items",
   adder = "addContextMenuItem",
   getter = "getContextMenuItems",

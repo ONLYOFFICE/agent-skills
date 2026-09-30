@@ -4,7 +4,7 @@ The portal's progress button (downloads, conversions) accepts plugin entries —
 
 | | |
 |---|---|
-| Types | `IFloatingOperationsButton` (`FloatingOperationType`) |
+| Types | [`IFloatingOperationsButton`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/components/IFloatingOperationsButton.md) — the operation row and the `FloatingOperationType` values on the same page |
 | Class side | `Actions.addFloatingOperationsButton` / `updateFloatingOperationsButton` with `floatingOperationsButtonProps`; `Actions.removeFloatingOperationsButton` with `floatingOperationsButtonPropsId`, a bare string |
 | From a component | the same names on `usePluginActions()` |
 
@@ -22,14 +22,13 @@ updateFloatingOperationsButton(op(100, true));   // sets operationsCompleted - t
 ```
 
 - **Add before update.** `add` ignores an id already registered, `update` ignores one that is not — an update sent first is a silent no-op. `update` takes the whole props object again.
-- **Two different `completed` fields, and only the outer one ends the job.** `operations[i].completed` draws that row; **`operationsCompleted` on the button props** is what the portal reads. When it turns true the panel waits 4 seconds, plays its hide animation, and on the animation's end clears every operation the plugin registered — so the button removes *itself*, and the entry stops claiming to be running. Set only the inner `completed` and the button never leaves: the job is over, the label still reads "…ing", and it stays there until the page is reloaded. Nothing catches this — the validator sees a correct add/update sequence and a render pass has no panel — so it is worth re-reading the last `update` you write against this bullet.
+- **Two different `completed` fields, and only the outer one ends the job.** `operations[i].completed` draws that row; **`operationsCompleted` on the button props** is what the portal reads. When it turns true the panel waits 4 seconds, plays its hide animation, and on the animation's end clears every operation the plugin registered — so the button removes *itself*, and the entry stops claiming to be running. Set only the inner `completed` and the button never leaves: the job is over, the label still reads "…ing", and it stays there until the page is reloaded. Nothing catches this — the validator sees a correct add/update sequence and a render pass has no panel — so it is worth re-reading the last `update` you write against this bullet. The panel is shared, too: it dismisses only once **every** entry in it is finished — the portal's own uploads and conversions and every plugin's buttons — and that hide clears every plugin's entries, not only yours.
 - **The finished wording is the portal's, not yours.** At completion it renders your operation `label` inside its own phrase — `"{{label}}: Done"`, or `"{{label}}: Error"` in the error path — so the label wants to be a plain name of the work ("Archiving rooms"), never rewritten to the past tense on the last update.
 - **The 4-second dismissal waits for the user.** It does not run while the pointer is over the button or while the operations dropdown is open, which is deliberate: the completed state is readable before it goes.
 - **`onLoad` is the class's handle on the button.** `IFloatingOperationsButton.onLoad?: (dispatchMessage) => …` is called by the host once the entry appears, and it is handed the same dispatcher a callback's returned `IMessage` goes through. Keep that function and a class-side job can send `updateFloatingOperationsButton` as often as it likes, from its own loop, with nothing mounted — see [below](#work-that-takes-a-while). It fires once per `id` while the Files page is mounted, and again after the entry has been cleared, so treat it as "the button now exists" rather than "start the work here".
 - **Give the button an id nobody else will use** — prefix it with the manifest `name`, as with item keys. The host tracks entries by the bare `id`, so two plugins that both call theirs `export` write over each other's progress.
 - `remove` takes the button `id` as a bare string (`floatingOperationsButtonPropsId` class-side). The normal end of a job needs no `remove` — reach for it to drop the button *early*, or from a cleanup when the surface goes away with the work still unfinished.
-- Operation ids are prefixed by the host with the plugin name; `onCancelOperationFromList(operationId)` hands back your unprefixed id. `cancelOperation` fires for "cancel all". Dismissing the button drops all your operations.
-- `FloatingOperationType`: `Download`, `Convert`, `Copy`, `Upload`, `Backup`, … or `Other`.
+- Operation ids are prefixed by the host with the plugin name; `onCancelOperationFromList(operationId)` hands back your unprefixed id. `cancelOperation` fires for "cancel all". Dismissing the button drops all your operations. With `showCancelButton` the panel's Cancel belongs to the plugins: it cancels plugin work only, never an upload the user started beside it.
 
 ## Work that takes a while
 
@@ -50,7 +49,7 @@ const button = (percent: number, completed = false, alert = false): IFloatingOpe
 const progress = (percent: number, completed = false, alert = false) =>
   dispatch?.({ actions: [Actions.updateFloatingOperationsButton], floatingOperationsButtonProps: button(percent, completed, alert) });
 
-onItemClick = async (id: number): Promise<IMessage> => {
+onItemClick = async (id: string | number): Promise<IMessage> => {
   void (async () => {                                     // the work outlives the message
     try {
       for (const [i, file] of (await listFiles(id)).entries()) { await pack(file); progress(pct(i)); }
@@ -122,7 +121,7 @@ const ExportPanel = () => {
 
 - **The user closing the surface does not stop the work** — only the `AbortController` in the cleanup does, and only for what takes the signal. Decide deliberately which it should be: a half-written archive is worse than a slow one, so a job that writes usually finishes and reports through the toast, while a read-only walk aborts.
 - **Rate-limit the updates.** One `updateFloatingOperationsButton` per file on 400 files is 400 re-renders of the portal's own button; update on whole percents.
-- **Nothing wraps the effect.** An uncaught throw blanks the component ([rendering.md](../react/rendering.md#errors-loading-language-styling)), so the `catch` is what turns a failure into a message instead of an empty panel.
+- **Catch in the effect.** A rejected request escapes the error boundary and leaves the component as it last rendered ([rendering.md](../react/rendering.md#errors-loading-language-styling)) — a "running" row that never ends — so the `catch` is what turns a failure into a message.
 
 **A few named steps on a page: show the step, not a percentage, and make "again" cheap.** Three to ten steps started by hand — pick, copy, fill, upload, open — are too short for the progress button and too long for a merely disabled button. So: a list with one running row and a visible spinner on it, the failed row carrying its error text, and the start button turning into "Run again", which begins from a clean slate so a stale "failed" cannot be read as the new one. State lives on the surface — the user is looking at it, and nothing outlives the page.
 
@@ -160,7 +159,8 @@ const StepRun = ({ steps, run }: { steps: Step[]; run: (report: Report, signal: 
           <div key={step.id} style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 24 }}>
             {s?.status === "running"
               ? <Loader type={LoaderTypes.oval} size="16px" color="var(--accent-main)" label={step.label} />   // the default type draws text, not a spinner
-              : <Text color={s?.status === "failed" ? "var(--input-error-color)" : "var(--text-disable-color)"}>{s?.status === "done" ? "✓" : s?.status === "failed" ? "!" : "·"}</Text>}
+              : <Text color={s?.status === "failed" ? "var(--input-error-color)" : "var(--info-panel-members-subtitle-color)"}>{s?.status === "done" ? "✓" : s?.status === "failed" ? "!" : "·"}</Text>   // not --text-disable-color: it is #5c5c5c on the dark theme (styles.md)
+            }
             <Text>{step.label}</Text>
             {s?.error && <Text color="var(--input-error-color)">{s.error}</Text>}
           </div>

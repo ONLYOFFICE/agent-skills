@@ -25,13 +25,16 @@ requests and prints a report plus recommendations. `--json` prints the raw findi
 the report top to bottom:
 
 - **SDK bundles** — the newest `/static/scripts/sdk/{v}/api.js` that answers 200 is the
-  portal's SDK version; `getToken` in that bundle means OAuth mode exists.
+  portal's SDK version; `getToken` in that bundle means OAuth mode exists. A path is not a build:
+  `docspace.onlyoffice.com` serves a pre-release bundle under `2.2.0` with no `getToken` and `chatId`
+  where the release has `threadId` — read the markers, not only the version in the path.
 - **Frame headers** — per page: status, `X-Frame-Options`, the `frame-ancestors` list and,
   with `--origin`, whether the host origin is in it.
 - **OAuth discovery** — `/.well-known/openid-configuration` answering 200 with a
   `token_endpoint` means the identity service is on.
 - **CSP allow-list API** — `GET /api/2.0/security/csp` answers anonymously on client 4.0.0
-  and lists the allow-listed domains; adding one is `PUT` with an admin session or API key.
+  and lists the allow-listed domains; adding one is `POST` to the same path with an admin session or API key
+  (the `EditPortalSettings` permission) — there is no `PUT`.
 - **Recommendations** — the connection method, the modes the portal can serve, and the
   lines to forward to the portal admin verbatim.
 
@@ -45,27 +48,31 @@ curl -sI -H "Accept: text/html" {portal}/sdk/room-selector | grep -i -E "x-frame
 curl -s  {portal}/.well-known/openid-configuration | head -c 300
 ```
 
-Known bundle versions: 1.0.1, 2.0.0, 2.1.0, 2.2.0. The bundle URL is public — no auth,
+Known bundle versions: 1.0.0, 1.0.1, 2.0.0, 2.1.0, 2.2.0. The bundle URL is public — no auth,
 no CSP check — so it works from CI as well as from a browser.
 
 ## Frame headers — what they mean
 
-Verified on a live client 4.0.0 portal:
+From the portal's nginx config (release/v4.0.0) and live portals:
 
-- The portal's nginx sends `X-Frame-Options: SAMEORIGIN` on `/old-sdk/system` (the page behind
-  `initSystem` and the hash-login flow). The `/sdk/*` pages (selectors, public room, uploader,
-  forms, chat, personal) do not carry it.
+- The portal's nginx sends `X-Frame-Options: SAMEORIGIN` on **every page by default** — the Manager's
+  `/rooms/*`, `/old-sdk/system` (the page behind `initSystem` and the hash-login flow) and the portal's
+  own pages included. The `/sdk/*` pages (selectors, public room, uploader, forms, chat, personal) do not
+  carry it — the `/sdk` location declares its own `add_header`, which by nginx's inheritance rule drops the
+  server-level header. `/doceditor` and `/login` include the static-headers snippet and carry `SAMEORIGIN` too, so
+  the editor and viewer embed under the same `frame-ancestors` rule as the Manager.
 - Every HTML response also gets `Content-Security-Policy: frame-ancestors …` built from the
   portal's CSP allow-list (Developer Tools → Embed SDK). The `Accept` header must contain
   `html` for that middleware to run, hence `-H "Accept: text/html"` above.
-- Browsers let `frame-ancestors` override `X-Frame-Options`. So the system frame embeds from
-  another origin **only while the CSP header is present and lists that origin**.
+- Browsers let `frame-ancestors` override `X-Frame-Options`. So a Manager or System frame embeds
+  from another origin **only while the CSP header is present and lists that origin**.
 - `X-Frame-Options` **without** a `frame-ancestors` header means the allow-list is not
   reaching the response (empty list, CSP cache, a proxy stripping headers). The browser then
   refuses the frame with a "refused to connect / display" message in its console and **no
   SDK event fires**. That is a portal-side fix; report the probe line to the admin.
 - Your origin missing from `frame-ancestors` → the SDK shows its CSP error page inside the
-  frame (`SDKError.code === "CSP_VIOLATION"` on 2.2+). Fix: add the origin to the allow-list.
+  frame and `onAppError` receives the message (the `SDKError` with code `CSP_VIOLATION` is logged to
+  the console only). Fix: add the origin to the allow-list.
   `checkCSP: false` only silences the early check.
 
 Neither header has anything to do with the `401` that a cross-origin frame returns when
@@ -89,10 +96,11 @@ serve. Both look like a blank frame or `TIMEOUT` with no clear error.
 
 | Portal SDK | Modes | Auth | Notes |
 |---|---|---|---|
-| 1.x | manager, editor, viewer, room-selector, file-selector, system | cookie session, hash login | no `SDKError`, no `methodTimeout` — add your own timeouts |
-| 2.0 | + public-room | + `requestToken` | `executeInEditor`, `onEditorOpen`, `onContentReady`, `onNoAccess`, `onNotFound` appear |
+| 1.0.0 | manager, editor, viewer, room-selector, file-selector, system | cookie session, hash login, `requestToken` for a manager over a shared room | no `SDKError`, no `methodTimeout` — add your own timeouts; system and the selectors live under `/sdk/*` |
+| 1.0.1 (npm 1.1.0) | no new modes | + `requestToken` on editor/viewer (`share=`) | `onContentReady`, `onNoAccess`, `onNotFound` appear; system and the selectors move to `/old-sdk/*` |
+| 2.0 | + public-room | | `executeInEditor`, `onEditorOpen` appear; the selectors are back under `/sdk/*`, system stays at `/old-sdk/system` |
 | 2.1 | no new modes | | `onFileManagerClick` appears |
-| 2.2 | + uploader, forms, personal, chat | + OAuth `getToken` / `accessToken` | `SDKError` codes, `methodTimeout`, `upload`, `navigateSection`, `setCustomActions`, external-data bridge |
+| 2.2 | + uploader, forms, personal, chat | + OAuth `getToken` / `accessToken` | `SDKError` codes, `methodTimeout`, `upload` (forms, personal), `navigateSection`, `setCustomActions`, `RoomType`, external-data bridge; with client 4.0.0 API failures reject with `API_ERROR` and 2FA finishes with `login(…, code)` |
 
 ## The React wrapper
 

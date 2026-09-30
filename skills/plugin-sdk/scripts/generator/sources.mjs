@@ -188,7 +188,8 @@ const ${name}: TStrings = {};
  *
  * Add one key per user-visible string as the items are written. t() accepts only
  * keys listed here, which is the point - a label that was never translated fails
- * the build rather than rendering blank in the portal. Components call t() at
+ * npm run typecheck (vite build does not type-check) rather than rendering blank
+ * in the portal. Components call t() at
  * render time, so they pick the current language up on their own.
  */
 export type TStrings = {

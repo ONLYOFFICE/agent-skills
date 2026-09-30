@@ -42,6 +42,9 @@ The callback is serialized with `Function.prototype.toString` and re-created wit
 3. `executeInEditor` is only meaningful in `editor`/`viewer` mode and only once the
    editor is loaded — call it from `onEditorOpen`/`onAppReady`, not immediately after
    `initEditor`.
+4. The call resolves (`{}`) as soon as the page has run your callback — it does not wait for
+   anything the callback starts, and a throw inside it is caught and logged in the frame's
+   console only. Report results back through `postMessage` (below), not through the promise.
 
 ## Creating the connector
 

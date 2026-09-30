@@ -23,7 +23,7 @@ curl -s https://api.npmjs.org/downloads/point/last-week/<pkg>
 
 If nothing well known fits, write the minimum yourself and say so in the report. An unknown package is worse than 200 lines of your own; a popular one is better than 700.
 
-**And nothing at all for what the platform already provides**: `fetch`, `Intl.DateTimeFormat`/`NumberFormat`/`RelativeTimeFormat`, `URL`/`URLSearchParams`, `structuredClone`, `crypto.randomUUID`/`crypto.subtle`, `TextEncoder`/`TextDecoder`, `Blob`/`File`/`FileReader`, `CompressionStream`, `Intl.Collator` for sorting, the `Array`/`Object` methods (no lodash for `groupBy`) — or anything the kit already renders.
+**And nothing at all for what the platform already provides**: `fetch`, `Intl.DateTimeFormat`/`NumberFormat`/`RelativeTimeFormat`, `URL`/`URLSearchParams`, `structuredClone`, `crypto.randomUUID`/`crypto.subtle`, `TextEncoder`/`TextDecoder`, `Blob`/`File`/`FileReader`, `CompressionStream`, `Intl.Collator` for sorting, the `Array`/`Object` methods — or anything the kit already renders. The generated `tsconfig` keeps the SDK template's `lib: ["ES2017", "DOM"]`, so `replaceAll`, `.at()`, `Object.hasOwn` and anything else from ES2021 on fail `npm run typecheck` although they build and run: write the older form (`split().join()`, `arr[arr.length - 1]`), or add the year to `lib` — `"ES2022"` is as far as Vite's default browser target goes, and `Object.groupBy` is past it.
 
 The recurring needs, with the package that is the usual answer. Each is browser-first and has no runtime dependencies of its own — and each has a documented edge it does *not* handle, which is the plugin's job to handle instead, because these are the cases that reach a real user's real file:
 

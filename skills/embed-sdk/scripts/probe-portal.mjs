@@ -222,7 +222,7 @@ function report(f) {
   if (f.hostOrigin) {
     const denied = Object.entries(f.frames).filter(([, r]) => r.frameAncestors && r.hostOriginAllowed === false);
     if (denied.length) {
-      say(`  - Add ${f.hostOrigin} to the portal allow-list (Developer Tools → Embed SDK, or PUT /api/2.0/security/csp): it is missing from frame-ancestors on ${denied.map(([p]) => p).join(", ")}.`);
+      say(`  - Add ${f.hostOrigin} to the portal allow-list (Developer Tools → Embed SDK, or POST /api/2.0/security/csp): it is missing from frame-ancestors on ${denied.map(([p]) => p).join(", ")}.`);
     } else if (Object.values(f.frames).some((r) => r.hostOriginAllowed)) {
       say(`  - ${f.hostOrigin} is allow-listed; CSP is not the problem if the frame still fails — check the token table in SKILL.md (third-party cookies, 2FA).`);
     }

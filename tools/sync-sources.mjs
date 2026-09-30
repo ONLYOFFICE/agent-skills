@@ -5,8 +5,11 @@
  *   node tools/sync-sources.mjs [--skill <name>] --check
  *       every URL in a skill must be built on one of its sources or point at a placeholder
  *       host; every versionPattern must match the manifest version. Exit 1 otherwise.
- *   node tools/sync-sources.mjs [--skill <name>] --verify
- *       --check plus one request per distinct source URL; non-2xx answers exit 1.
+ *   node tools/sync-sources.mjs [--skill <name>] --verify [--fallback]
+ *       --check plus one request per distinct source URL; non-2xx answers exit 1. With
+ *       --fallback every URL built on a host that has a "<host>Fallback" twin in the root
+ *       manifest (apiSite → apiSiteFallback) is requested from the twin instead — the way to
+ *       check links against the docs stand before production serves the pages.
  *   node tools/sync-sources.mjs --host <name>=<url>
  *       point a host at another site for the whole plugin: rewrite it in the root
  *       sources.json and every link built on it in every skill, then re-run --check.
@@ -16,11 +19,14 @@
  *       a source whose path contains {version}.
  *
  * sources.json at the repository root:
- *   hosts     name → origin (or origin plus a fixed prefix), the only place a site is named
+ *   hosts     name → origin (or origin plus a fixed prefix), the only place a site is named.
+ *             A host named "<name>Fallback" is the stand-in for <name> (never a link base):
+ *             --verify --fallback and the internal .claude/skills/onlyoffice-docs script read
+ *             from it when the primary host does not serve a page.
  *   sources   name → { host, path?, verify? } for the links of the repository README
  *
  * sources.json next to a SKILL.md:
- *   version            the SDK version the skill targets
+ *   version            the SDK version the skill targets (absent for skills that pin none)
  *   sources            name → { host, path?, verify? }; the link base is hosts[host] + path,
  *                      and path may contain {version}
  *   placeholderHosts   hosts that are examples, not sources (portal.example.com, localhost)
@@ -51,6 +57,7 @@ const onlySkill = flag("--skill");
 const hostArg = flag("--host");
 const setVersion = flag("--set-version");
 const verify = has("--verify");
+const useFallback = has("--fallback");
 
 function fail(message) {
   console.error(`ERROR: ${message}`);
@@ -161,6 +168,10 @@ function scan(files, manifests) {
 
 function checkVersions(m) {
   const problems = [];
+  if (!m.version) {
+    if (m.versionPatterns?.length) problems.push(`versionPatterns given but the manifest has no "version"`);
+    return problems;
+  }
   for (const vp of m.versionPatterns ?? []) {
     const file = path.join(m.__dir, vp.file);
     if (!existsSync(file)) {
@@ -194,6 +205,14 @@ async function head(url) {
 
 function rel(file) {
   return path.relative(ROOT, file).replaceAll("\\", "/");
+}
+
+/** With --fallback: the same URL on the host's "<name>Fallback" twin, or the URL itself when the host has none. */
+function fallbackUrl(url, hostName) {
+  const twin = hosts[`${hostName}Fallback`];
+  const from = hosts[hostName];
+  if (!useFallback || !twin || !from || !url.startsWith(from)) return url;
+  return twin + url.slice(from.length);
 }
 
 function rewrite(files, from, to) {
@@ -273,6 +292,7 @@ if (hostArg) {
 if (setVersion) {
   if (manifests.length !== 1) fail("--set-version needs exactly one skill (--skill <name>)");
   const m = manifests[0];
+  if (!m.version) fail(`${m.__name}/sources.json pins no version — nothing to set`);
   const old = m.version;
   for (const vp of m.versionPatterns ?? []) {
     const file = path.join(m.__dir, vp.file);
@@ -302,14 +322,14 @@ for (const m of manifests) {
       problems++;
       console.log(`STALE    ${rel(f.file)}:${f.line}  ${f.url}  — built on "${f.source}" with a version other than ${m.version}`);
     } else if (f.kind === "source" && verify && m.sources[f.source].verify !== false) {
-      toVerify.set(f.url, `${rel(f.file)}:${f.line}`);
+      toVerify.set(fallbackUrl(f.url, m.sources[f.source].host), `${rel(f.file)}:${f.line}`);
     }
   }
   for (const p of checkVersions(m)) {
     problems++;
     console.log(`VERSION  ${m.__name}/${p}`);
   }
-  console.log(`${m.__name}: ${findings.length} link(s) scanned, version ${m.version}`);
+  console.log(`${m.__name}: ${findings.length} link(s) scanned${m.version ? `, version ${m.version}` : ""}`);
 }
 
 if (!onlySkill) {
@@ -318,12 +338,16 @@ if (!onlySkill) {
       problems++;
       console.log(`FOREIGN  README.md:${f.line}  ${f.url}  — not built on any source`);
     } else if (f.kind === "source" && verify && f.manifest.sources[f.source].verify !== false) {
-      toVerify.set(f.url, `README.md:${f.line}`);
+      toVerify.set(fallbackUrl(f.url, f.manifest.sources[f.source].host), `README.md:${f.line}`);
     }
   }
 }
 
 if (verify) {
+  if (useFallback) {
+    const twins = Object.keys(hosts).filter((h) => hosts[`${h}Fallback`]);
+    console.log(twins.length ? `verifying on the fallback host(s): ${twins.map((h) => `${h} → ${hosts[`${h}Fallback`]}`).join(", ")}` : "no host has a fallback twin; --fallback changes nothing");
+  }
   for (const [url, where] of toVerify) {
     const status = await head(url);
     const ok = typeof status === "number" && status >= 200 && status < 300;
