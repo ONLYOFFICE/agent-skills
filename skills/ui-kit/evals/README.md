@@ -52,11 +52,22 @@ Setting the kit up is part of what every build scenario is graded on. Its own RE
 single place in this repository that says how the kit is installed; the operator populates
 `node_modules/` before a run, because an install that fails halfway darkens every check.
 
-[`fixtures/audit-snippet/Panel.tsx`](fixtures/audit-snippet/) compiles and is wrong in eight
-ways at once. `node ../../scripts/check-usage.mjs fixtures/audit-snippet` finds all of them,
-which is how the fixture is kept honest — but the scenario is graded on the *answer*, not on
-the validator's output, and an answer that only pastes the validator's findings has not read
-the file.
+[`fixtures/audit-snippet/Panel.tsx`](fixtures/audit-snippet/) is wrong in nine ways the
+assertions grade: `isVisible` on `Aside`, an import from `selectors/`, a `PUBLIC_DIR`
+specifier, the whole-library `styles.css`, a `SearchInput` handler reading `.target.value`, a
+`FieldContainer` without `labelVisible`, a caption attached to no control, a `TextInput`
+without `type`, and a column `gap` doubling the fields' own margin. It does not compile —
+`tsc` against the installed kit reports five errors, among them the missing `type` and the
+handler reading `.target` off a string — and a review that ran the compiler has found part of
+the answer that way. `node ../../scripts/check-usage.mjs fixtures/audit-snippet` reports eight
+of the nine, which is how the fixture is kept honest. The ninth, the caption attached to
+nothing, it reports only once `labelVisible` is added — until then there is no caption, and
+the same container already carries the warning about that. The scenario is graded on the
+*answer*, not on the validator's output, and an answer that only pastes the validator's
+findings has not read the file.
+
+Until iteration 2 the file's first line said "It compiles", which was never true. It now says
+nothing about compiling; no assertion depended on the claim.
 
 **Every scenario gets the consumer app**, including `explain` and `audit`: the snippet is
 dropped into a copy of it at `fixtures/audit-snippet/Panel.tsx`, and the `explain` question is
@@ -113,13 +124,11 @@ transcript for reads outside the project before trusting a result.
 | 0 | 2026-09-23 | Opus 5 | `side-panel-list` | 13/13 | 13/13 |
 | 0 | 2026-09-23 | Opus 5 | `explain-empty-labels` | 7/7 | 2/7 |
 | 0 | 2026-09-23 | Opus 5 | `audit-snippet` | 9/9 | 4/9 |
-
 | 1 | 2026-09-24 | Opus 5 | `settings-form` | 16/18 | 14/18 |
 | 1 | 2026-09-24 | Opus 5 | `confirm-dialog` | 14/14 | 12/14 |
 | 1 | 2026-09-24 | Opus 5 | `side-panel-list` | 15/15 | 14/15 |
 | 1 | 2026-09-24 | Opus 5 | `explain-empty-labels` | 9/10 | **10/10** |
 | 1 | 2026-09-24 | Opus 5 | `audit-snippet` | 13/13 | 10/13 |
-
 | 2 | 2026-09-25 | Opus 5 | `settings-form` | **18/18** | 15/18 |
 | 2 | 2026-09-25 | Opus 5 | `confirm-dialog` | **14/14** | 12/14 |
 | 2 | 2026-09-25 | Opus 5 | `side-panel-list` | **15/15** | 13/15 |

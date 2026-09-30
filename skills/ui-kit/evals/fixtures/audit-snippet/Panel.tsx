@@ -1,4 +1,4 @@
-// A members panel from a branch nobody finished. It compiles.
+// A members panel from a branch nobody finished.
 import { useState } from "react";
 
 import "@onlyoffice/apps-ui-kit/styles.css";
