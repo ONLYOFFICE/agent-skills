@@ -689,6 +689,100 @@ export function Unsized({ on, set }: { on: boolean; set: (value: string) => void
   { code: 0, has: ["W-toggle-wrapper", "W-textarea-width"] },
 );
 
+// --- text that only looks like code ----------------------------------------------------------
+
+// A help string that quotes a portal-internal import, and a `<button>` inside another, used to be
+// an import and a raw control: exit 1 on a file that imports nothing portal-internal at all.
+expect(
+  "code-inside-a-string",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Help.tsx": `import { Button, ButtonSize } from "@onlyoffice/apps-ui-kit/components/button";
+
+const HINT = "do not write import x from '@onlyoffice/apps-ui-kit/billing' in an app";
+const MARKUP = \`<button class="x">\${HINT}</button>\`;
+
+export const Help = () => <Button label={HINT + MARKUP} size={ButtonSize.normal} />;
+`,
+  },
+  { code: 0, lacks: ["E-internal-subpath", "W-raw-controls"] },
+);
+
+// The other half: an apostrophe in JSX text is not a string, or it would hide the rest of its
+// line from every check.
+expect(
+  "apostrophe-in-jsx-text",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Panel.tsx": `import { Aside } from "@onlyoffice/apps-ui-kit/components/aside";
+
+export const Panel = ({ open }: { open: boolean }) => (
+  <div><p>It's the members' panel</p><Aside isVisible={open} onClose={() => {}} /></div>
+);
+`,
+  },
+  { code: 1, has: ["E-visibility-prop"] },
+);
+
+// --- the toggle's wrapper is its parent element ------------------------------------------------
+
+const toggleIn = (wrapper, before = "") => `import { useState } from "react";
+import { ToggleButton } from "@onlyoffice/apps-ui-kit/components/toggle-button";
+${before}
+export function Row() {
+  const [on, setOn] = useState<boolean>(false);
+  return (
+    <section>
+      ${wrapper.replace("@", `<ToggleButton isChecked={on} onChange={(event) => setOn(event.target.checked)} />`)}
+    </section>
+  );
+}
+`;
+
+// A `height` anywhere in the 300 characters above used to count as the wrapper's.
+expect(
+  "toggle-unrelated-height-above",
+  { "src/AppProviders.tsx": PROVIDERS, "src/Row.tsx": toggleIn("<div>@</div>", "const header = { height: 40 };") },
+  { code: 0, has: ["W-toggle-wrapper"] },
+);
+expect(
+  "toggle-tailwind-height",
+  { "src/AppProviders.tsx": PROVIDERS, "src/Row.tsx": toggleIn(`<div className="flex h-5 items-center">@</div>`) },
+  { code: 0, lacks: ["W-toggle-wrapper"] },
+);
+expect(
+  "toggle-inline-height",
+  { "src/AppProviders.tsx": PROVIDERS, "src/Row.tsx": toggleIn("<div style={{ minHeight: 20 }}>@</div>") },
+  { code: 0, lacks: ["W-toggle-wrapper"] },
+);
+expect(
+  "toggle-height-in-a-named-style",
+  { "src/AppProviders.tsx": PROVIDERS, "src/Row.tsx": toggleIn("<div style={row}>@</div>", "const row = { height: 20 };") },
+  { code: 0, lacks: ["W-toggle-wrapper"] },
+);
+// Only the direct parent counts: a sized grandparent does not size the toggle's own row.
+expect(
+  "toggle-sized-grandparent",
+  { "src/AppProviders.tsx": PROVIDERS, "src/Row.tsx": toggleIn(`<div className="h-10"><span>@</span></div>`) },
+  { code: 0, has: ["W-toggle-wrapper"] },
+);
+
+// --- a provider is mounted by its tag ----------------------------------------------------------
+
+expect(
+  "providers-imported-and-never-rendered",
+  {
+    "src/App.tsx": `import { ThemeProvider } from "@onlyoffice/apps-ui-kit/providers/theme";
+import { TranslationProvider } from "@onlyoffice/apps-ui-kit/providers/translation";
+import { Button, ButtonSize } from "@onlyoffice/apps-ui-kit/components/button";
+
+export const providers = [ThemeProvider, TranslationProvider];
+export const App = () => <Button label="Save" size={ButtonSize.normal} />;
+`,
+  },
+  { code: 1, has: ["E-no-theme-provider"] },
+);
+
 // --- the manifest the validator reads --------------------------------------------------------
 
 const allowedVisibility = new Set(["visible", "isOpen", "opened", "open", null]);

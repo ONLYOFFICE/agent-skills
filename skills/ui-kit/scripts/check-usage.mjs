@@ -402,7 +402,7 @@ function checkSpecifier(file, line, specifier, bindings) {
  * own name, and every check below is keyed on that. It used to be keyed on the spelling, so
  * `FieldContainer as FC` switched off every form check at once.
  */
-function checkTag(file, text, lineAt, tag, name, index, component) {
+function checkTag(file, text, lineAt, tag, name, index, component, inString) {
   const attributes = tagAttributes(text, index + tag.length + 1);
   const parsed = parseAttributes(attributes);
   const line = lineAt(index);
@@ -461,12 +461,63 @@ function checkTag(file, text, lineAt, tag, name, index, component) {
     add("error", "E-searchinput-event", file, line, "<SearchInput> handler reads `.target.value`", "its onChange receives the string itself, unlike every other input in the kit, so this is undefined");
   }
   if (name === "ToggleButton") {
-    const above = text.slice(Math.max(0, index - 300), index);
-    const sized = /height/.test(above) || declaresIn(above, /(^|[\s;{])(min-)?height\s*:/);
-    if (!sized) {
+    const parent = parentElement(text, index, inString);
+    // A component of the application's own is opaque from here, and a toggle at the root of
+    // what a component returns is sized by whoever renders it: neither is reported. A DOM
+    // element, or a kit component, is read.
+    const readable = parent && (/^[a-z]/.test(parent.name) || byName.has(parent.name.split(".")[0]));
+    if (readable && !sizedElement(text, parent.attributes)) {
       add("warning", "W-toggle-wrapper", file, line, "<ToggleButton> with no sized wrapper above it", "it occupies no space of its own and overlaps whatever follows; wrap it in an element at least 16px tall");
     }
   }
+}
+
+/**
+ * The JSX element a tag at `index` sits directly inside, as `{ name, attributes }`, or null
+ * at the root. Read by walking every tag from the top of the file with a stack. It used to be
+ * the word `height` anywhere in the 300 characters above the toggle, so an unrelated
+ * `const header = { height: 40 }` passed an unsized wrapper, and a `className="h-5"` wrapper
+ * that really is sized was reported.
+ *
+ * A `<` straight after an identifier, `.` or `)` is a type argument -- `useState<Member[]>` --
+ * not an element.
+ */
+function parentElement(text, index, inString) {
+  const stack = [];
+  const tag = /<(\/?)([A-Za-z][\w.$-]*)?/g;
+  for (let match = tag.exec(text); match && match.index < index; match = tag.exec(text)) {
+    if (inString(match.index) || /[\w$.)\]]/.test(text[match.index - 1] ?? "")) continue;
+    const [, closing, name = ""] = match;
+    // With no name, only `<>` and `</>` are elements; `i < n` is a comparison.
+    if (!name && text[match.index + match[0].length] !== ">") continue;
+    const attributes = tagAttributes(text, match.index + match[0].length);
+    if (closing) {
+      const at = stack.map((open) => open.name).lastIndexOf(name);
+      if (at >= 0) stack.length = at;
+    } else if (!attributes.trimEnd().endsWith("/")) {
+      stack.push({ name, attributes });
+    }
+  }
+  return stack.at(-1) ?? null;
+}
+
+// Tailwind's height utilities: `h-5`, `h-[20px]`, `min-h-4`, `h-px`.
+const HEIGHT_UTILITY = /(^|[\s"'`{])(min-)?h-(\d|\[|px\b)/;
+
+/** Whether an element's own attributes give it a height, inline, by utility class or by stylesheet. */
+function sizedElement(text, attributes) {
+  const style = /\bstyle=\{([\s\S]*)\}/.exec(attributes)?.[1] ?? "";
+  if (/\b(min)?[hH]eight\s*:/.test(style)) return true;
+  // `style={row}` names an object written elsewhere in the file; read that object.
+  const named = /^\s*\{?\s*([A-Za-z_$][\w$]*)(?:\.([A-Za-z_$][\w$]*))?\s*\}?\s*$/.exec(style);
+  if (named) {
+    const key = named[2] ?? named[1];
+    const definition = new RegExp(`\\b${key}\\s*[:=]\\s*\\{([^}]*)\\}`).exec(text);
+    if (definition && /\b(min)?[hH]eight\s*:/.test(definition[1])) return true;
+  }
+  const classes = /\b(?:className)=(?:"[^"]*"|'[^']*'|\{[^}]*\})/.exec(attributes)?.[0] ?? "";
+  if (HEIGHT_UTILITY.test(classes)) return true;
+  return declaresIn(classes, /(^|[\s;{])(min-)?height\s*:/);
 }
 
 // --- running ---------------------------------------------------------------------------------
@@ -489,15 +540,56 @@ const mounted = new Set();
  * included — a portal-internal `selectors` import below it went unreported. A string ends at its newline unless it is a template, so an apostrophe in
  * JSX text costs at most the rest of its own line.
  */
-function withoutComments(text) {
+// Words after which a quote opens a string even though a letter precedes it.
+const BEFORE_EXPRESSION = new Set(["return", "case", "from", "import", "in", "of", "typeof", "void", "throw", "yield", "await", "else", "default", "extends"]);
+
+/**
+ * Whether the quote at `at` opens a string literal, or is a character of JSX text. JSX text is
+ * not a string -- `<p>It's here</p>` -- and treating its apostrophe as one would hide the rest
+ * of the line. A string stands where an expression can: after an operator or an opening
+ * bracket, after `=>`, or after a keyword. After a letter, `)`, `]`, `}` or a bare `>` the
+ * quote is text: `{name}'s`, `</b>"quoted"`.
+ */
+function opensString(text, at) {
+  if (text[at] === "`") return true;
+  let i = at - 1;
+  while (i >= 0 && /\s/.test(text[i])) i -= 1;
+  if (i < 0) return true;
+  const before = text[i];
+  if (before === ">") return text[i - 1] === "=";
+  if (")]}".includes(before)) return false;
+  if (!/[\w$]/.test(before)) return true;
+  let start = i;
+  while (start > 0 && /[\w$]/.test(text[start - 1])) start -= 1;
+  return BEFORE_EXPRESSION.has(text.slice(start, i + 1));
+}
+
+/**
+ * Comments blanked out, newlines kept so every line number still lands, and where every
+ * string literal lies. A file that documents what it does — `<button>` in a JSDoc line
+ * explaining why the kit's Button is used instead — was being reported for the thing it was
+ * explaining; a file holding a help text that *mentions* a portal-internal import was reported
+ * for importing it. Both are matches inside something that is not code.
+ *
+ * One pass, in reading order. It used to be two regexes, block comments first: a line comment
+ * ending in `assets/` plus a star opened a "block" that ran to the next block comment's close
+ * anywhere in the file and blanked every line between, real imports included. A string ends at
+ * its newline unless it is a template, so a misread quote costs at most the rest of its line.
+ */
+function scan(text) {
   const out = [];
+  const strings = [];
   let copied = 0;
   let quote = null;
+  let opened = 0;
   for (let i = 0; i < text.length; i += 1) {
     const char = text[i];
     if (quote) {
       if (char === "\\") i += 1;
-      else if (char === quote || (char === "\n" && quote !== "`")) quote = null;
+      else if (char === quote || (char === "\n" && quote !== "`")) {
+        strings.push([opened, i]);
+        quote = null;
+      }
       continue;
     }
     const next = text[i + 1];
@@ -512,21 +604,42 @@ function withoutComments(text) {
       i = end - 1;
       continue;
     }
-    if (char === '"' || char === "'" || char === "`") quote = char;
+    if ((char === '"' || char === "'" || char === "`") && opensString(text, i)) {
+      quote = char;
+      opened = i;
+    }
   }
+  if (quote) strings.push([opened, text.length]);
   out.push(text.slice(copied));
-  return out.join("");
+
+  /** Whether `index` falls inside a string literal -- its quotes included. */
+  const inString = (index) => {
+    let low = 0;
+    let high = strings.length - 1;
+    while (low <= high) {
+      const middle = (low + high) >> 1;
+      const [from, to] = strings[middle];
+      if (index < from) high = middle - 1;
+      else if (index > to) low = middle + 1;
+      else return true;
+    }
+    return false;
+  };
+  return { text: out.join(""), inString };
 }
 
 for (const file of files) {
   const source = readFileSync(file, "utf8");
-  const text = withoutComments(source);
+  const { text, inString } = scan(source);
   const lineAt = lineIndex(text);
   const shown = path.relative(projectDir, file).split(path.sep).join("/");
-  // How this file spells each kit component it imports (local name → kit name), and the
-  // namespaces it imports the kit under (local name → subpath).
+  // How this file spells each kit component it imports (local name → kit name, and the subpath
+  // it came from), and the namespaces it imports the kit under (local name → subpath).
   const local = new Map();
+  const localSubpath = new Map();
   const namespaces = new Map();
+  // A provider counts once its tag is rendered, not once it is imported: an import alone mounts
+  // nothing, and a file that imports both and renders neither used to pass as fully provided.
   const noteProvider = (name, subpath) => {
     if (name === "ThemeProvider" && subpath !== "components/theme-provider") mounted.add("ThemeProvider");
     if (name === "TranslationProvider") mounted.add("TranslationProvider");
@@ -543,6 +656,7 @@ for (const file of files) {
   for (const [regex, specifierGroup, clauseGroup, binds] of statements) {
     regex.lastIndex = 0;
     for (const match of text.matchAll(regex)) {
+      if (inString(match.index)) continue;
       const specifier = match[specifierGroup];
       const bindings = clauseGroup ? bindingsOf(match[clauseGroup]) : [];
       checkSpecifier(shown, lineAt(match.index), specifier, bindings);
@@ -560,7 +674,7 @@ for (const file of files) {
         const name =
           binding.imported === "default" ? (bySubpath.get(subpath)?.name ?? binding.local) : binding.imported;
         local.set(binding.local, name);
-        noteProvider(name, subpath);
+        localSubpath.set(binding.local, subpath);
       }
     }
   }
@@ -569,11 +683,14 @@ for (const file of files) {
   const tags = [];
   for (const [localName, kitName] of local) {
     for (const match of text.matchAll(new RegExp(`<${escape(localName)}(?=[\\s/>])`, "g"))) {
+      if (inString(match.index)) continue;
       tags.push({ tag: localName, name: kitName, index: match.index });
+      noteProvider(kitName, localSubpath.get(localName));
     }
   }
   for (const [namespace, subpath] of namespaces) {
     for (const match of text.matchAll(new RegExp(`<${escape(namespace)}\\.([A-Za-z_$][\\w$]*)(?=[\\s/>])`, "g"))) {
+      if (inString(match.index)) continue;
       tags.push({ tag: `${namespace}.${match[1]}`, name: match[1], index: match.index });
       noteProvider(match[1], subpath);
     }
@@ -582,11 +699,11 @@ for (const file of files) {
   for (const { tag, name, index } of tags) {
     const component = byName.get(name);
     if (component) usedComponents.add(name);
-    checkTag(shown, text, lineAt, tag, name, index, component);
+    checkTag(shown, text, lineAt, tag, name, index, component, inString);
   }
 
   if (local.size || namespaces.size) {
-    const raw = /<(?:button|input|select|textarea)\b/.exec(text);
+    const raw = [...text.matchAll(/<(?:button|input|select|textarea)\b/g)].find((match) => !inString(match.index));
     if (raw) {
       add("warning", "W-raw-controls", shown, lineAt(raw.index), `a bare <${raw[0].slice(1)}> in a file that uses the kit`, "the kit's own Button, TextInput and Checkbox carry the theme; a bare one does not");
     }
