@@ -41,7 +41,7 @@ console unless it says so.
 |---|---|---|
 | Fields 32px apart in a column with `gap: 16` | `FieldContainer` brings its own `margin: 0 0 16px`, and a gap adds to it | Drop the gap, or pass `removeMargin` on every field |
 | A toggle overlapping the next row | `ToggleButton` occupies no space: its contents are absolutely positioned | Wrap it in an element with an explicit height, ≥ 16px |
-| A textarea that will not fill its field | It has a max-width and no width | `style={{ width: "100%" }}`, plus `flex: 1 1 auto; min-width: 0` in a row |
+| A textarea that will not fill its field | It has a max-width and no width | A class through `wrapperClassName` with `width: 100%`, plus `flex: 1 1 auto; min-width: 0` in a row. Not `style`: it lands on the inner scroller, which is already full width, and changes nothing |
 | An input stuck at 173px | That is `TextInput`'s base width | `scale` |
 | A drop-down list 200px wide under a wide button | `manualWidth` defaults to 200px | `scaledOptions` — and even then the first open can still be 200px |
 | Two footer buttons of different widths | One of them is wrapped in an element of yours, so it is no longer an equal flex item | Put the wrapper's style on the button; `Button` forwards `style` |
@@ -53,7 +53,7 @@ console unless it says so.
 | What you see | Why | Fix |
 |---|---|---|
 | Clicking a label focuses nothing; the field is announced unnamed | `FieldContainer` was given `labelText` but no `labelFor` | `labelFor` on the container, the same string as `id` on the control |
-| A `Textarea` is announced unnamed | `labelFor` cannot reach it: its props type is closed | `aria-labelledby` pointing at the caption, or `aria-label` |
+| A `Textarea` is announced unnamed | Nothing names it: no `labelFor` points at its `id`, and it carries no `aria-label` | `labelFor` on the container and the same string as `id` on the textarea — its `id` lands on the `<textarea>` itself — or `aria-label` when there is no visible caption |
 | A dialog is announced without a name | Nothing was passed to name it | `aria-labelledby` pointing at the header's `id`, or `aria-label` |
 | Tab skips one control | Something passed `tabIndex={-1}`, or it is a `DropDownItem` | Remove the `tabIndex`; on a listbox option the `-1` is correct and the container holds focus |
 | Arrow keys do nothing in a `ComboBox` | Its key handler looks for options by a test id its own options never carry | Click, or build the list yourself |

@@ -93,8 +93,9 @@ If you do pass `withoutBodyScroll` and bring a scroller of your own, give it `fl
 `min-height: 0`. A plain `height: 100%` there resolves against the whole panel and hangs its
 bottom below the edge — which is exactly the shape the old defect had.
 
-`style` is not a way into the panel: `Aside` writes `style={{ zIndex }}` before spreading the
-rest of its props, so a `style` of yours replaces it and lands on the header as well.
+`style` is not a way into the panel either: `Aside` sends `aria-*` to the `<aside>` and every
+other prop it does not read to the header, so a `style` of yours styles the header alone. Reach
+the panel through `className`, and its layer through `zIndex`.
 
 ## Menus
 

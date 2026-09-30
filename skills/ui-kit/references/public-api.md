@@ -22,7 +22,7 @@ down.
 | Subpath | What is in it |
 |---|---|
 | `components/<folder>` | The 98 component folders — the bulk of the value |
-| `providers/theme`, `providers/translation`, `providers/error-boundary` | The three providers an application mounts |
+| `providers/theme`, `providers/translation`, `providers/error-boundary` | The two providers an application must mount, and an optional error boundary |
 | `enums`, `constants`, `types` | Shared enums, constants and type definitions |
 | `hooks` | Eleven hooks, also in the root barrel |
 | `context` | `ThemeContext`, `InterfaceDirectionContext` |

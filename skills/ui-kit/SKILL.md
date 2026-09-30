@@ -52,7 +52,7 @@ missing provider empties every label, and nothing is logged.
 | On or off | `ToggleButton` in a wrapper with a height, or `Checkbox` | `ToggleButton` bare: it takes no space |
 | A list of your own data | your own rows of `Text`/`Avatar` | `Rows`/`Tiles`, which are the portal's file list |
 | A sortable, resizable table | `components/table` | `Rows` |
-| A list is loading | `RectangleSkeleton` | `Loader` without a `type`, which draws nothing |
+| A list is loading | `RectangleSkeleton` | `Loader` without a `type`, which prints its label as text |
 | Nothing to show | `EmptyView` | an empty `<div>` |
 | A transient message | `toastr.*` plus one mounted `<Toast />` | `StatusMessage`, which stays |
 | An icon action | `IconButton` with a URL in `iconName` | an icon name — there is no icon set by name |
@@ -129,7 +129,7 @@ the rule wins and the kit's page is what should be corrected.
     children or they vanish. The footer is a flex row: give both buttons `scale` and wrap
     neither, or the wrapped one stops being an equal item.
 14. **`toastr` needs one `<Toast />` mounted**, and its `timeout` is positional milliseconds
-    where anything below 750 becomes 5000.
+    where `0` means the toast never closes and anything else below 750 becomes 5000.
 15. **Buttons**: one `primary` per screen, `ButtonSize.normal` in dialogs, `isLoading` around
     an `await`, footer order primary then cancel. There is no destructive variant — override
     `--accent-button` on the button itself, never on the dialog around it.

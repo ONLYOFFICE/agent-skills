@@ -141,8 +141,10 @@ immediately; if your handler rejects the change, passing the same value back doe
 it. Its change event does not bubble, so a `<form>` listening at the root never sees it.
 
 **`ToggleButton`** — paints where it would have been and takes no space, so it overlaps the
-next row. Wrap it in an element with an explicit height, at least 16px. `isLoading` animates
-the knob and disables nothing.
+next row. Wrap it in an element with an explicit height, at least 16px. It is fully controlled:
+`isChecked` is the `checked` of a real checkbox input, so pass `onChange` with it and read
+`event.target.checked` there — without one React warns and the switch never moves. `isLoading`
+animates the knob and disables nothing.
 
 ## Validating and submitting
 
