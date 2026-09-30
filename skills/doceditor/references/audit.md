@@ -1,4 +1,4 @@
-# ONLYOFFICE Auditing or Debugging an Existing Integration Guide
+# Auditing or debugging an existing integration
 
 Reviewing or debugging an ONLYOFFICE integration **someone else already wrote** - a portal that "works, sort of", a `/callback` endpoint that never stops retrying, an editor that comes up as a thin strip. The deliverable here is understanding, handed over as findings: what's wrong, why it produces exactly that symptom, and the change each one needs. That is a different job from generating a sample integration (sibling `doceditor-integration` skill) and it's held to different rules - chief among them that a review nobody asked to be a rewrite stays a review.
 

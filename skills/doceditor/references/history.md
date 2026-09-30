@@ -1,4 +1,4 @@
-# ONLYOFFICE Version History, Comparison and Restore Guide
+# Version history, comparison and restore
 
 Read this whenever the request includes version history, comparison or restore. The official pages are [Methods](https://api.onlyoffice.com/docs/docs-api/usage-api/methods.md) (`refreshHistory`, `setHistoryData`) and [Events](https://api.onlyoffice.com/docs/docs-api/usage-api/config/events.md) (`onRequestHistory`, `onRequestHistoryData`, `onRequestRestore`); this page is what they don't say as consequences. There is no static config `history` field.
 

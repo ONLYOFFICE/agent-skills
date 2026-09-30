@@ -1,4 +1,4 @@
-# ONLYOFFICE Error Codes and Retries
+# Error codes and retries
 
 The official table is on the [Document Builder API](https://api.onlyoffice.com/docs/docs-api/additional-api/document-builder-api.md) page.
 

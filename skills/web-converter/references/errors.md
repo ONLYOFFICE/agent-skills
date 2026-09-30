@@ -1,4 +1,4 @@
-# ONLYOFFICE Error Codes and Retries
+# Error codes and retries
 
 The official table is [Error codes](https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/error-codes.md). Check `error` before reading `fileUrl` - an error response carries no `fileUrl` at all.
 

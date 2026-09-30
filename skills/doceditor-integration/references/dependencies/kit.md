@@ -1,4 +1,4 @@
-# ONLYOFFICE `docspace-ui-kit-react` Dependency Guide
+# UI kit `docspace-ui-kit-react` dependency
 
 ## Context & Purpose
 

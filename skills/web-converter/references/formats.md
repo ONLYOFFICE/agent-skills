@@ -1,4 +1,4 @@
-# ONLYOFFICE Format Matrix
+# Format matrix
 
 Read this before writing any code that decides whether a pair is convertible. The human-readable view is [Conversion tables](https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api/conversion-tables.md); the machine-readable source is the file below.
 

@@ -1,4 +1,4 @@
-# ONLYOFFICE Diagnosing and Auditing Conversion Failures
+# Diagnosing and auditing conversion failures
 
 Read this before answering a "conversion error" report or reviewing someone else's converter. The error codes themselves are in [errors.md](errors.md).
 

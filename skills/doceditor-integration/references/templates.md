@@ -1,4 +1,4 @@
-# ONLYOFFICE Document Templates Guide
+# Document templates
 
 ## Context & Purpose
 

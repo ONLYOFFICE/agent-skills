@@ -7,7 +7,7 @@ metadata:
   sdk-version: "8.2.0"
 ---
 
-# ONLYOFFICE Document Editor Integration Examples
+# ONLYOFFICE Document Editor Integration
 
 Knowledge base for **generating a whole ONLYOFFICE Document Editor integration from scratch**: project scaffolding, the backend vs UI scope decision, a UI built on `docspace-ui-kit-react` (or the official framework component), Docker/nginx/compose infrastructure, hexagonal architecture, vendored template and format-table sourcing, and the testing methodology for the result. Built from the official Node.js sample app and ONLYOFFICE's own template/format repos.
 

@@ -1,4 +1,4 @@
-# ONLYOFFICE Integration Example Checklist Guide
+# Integration example checklist
  
 ## Context & Purpose
  

@@ -1,4 +1,4 @@
-# ONLYOFFICE API Testing Guide
+# API testing
 
 ## Context & Purpose
 

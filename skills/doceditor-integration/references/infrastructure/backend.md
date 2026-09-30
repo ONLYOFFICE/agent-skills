@@ -1,4 +1,4 @@
-# ONLYOFFICE Backend-First Generation Skill Guide
+# Backend generation
 
 ## Context & Purpose
 

@@ -1,4 +1,4 @@
-# ONLYOFFICE Writing Builder Script
+# Writing builder script
 
 Read this before writing or reviewing a `.js` builder script. The official pages are [Script file](https://api.onlyoffice.com/docs/document-builder/using-cli/script-file.md), [builder vs builderJS](https://api.onlyoffice.com/docs/document-builder/using-cli/overview.md#builder-vs-builderjs), [Command line arguments](https://api.onlyoffice.com/docs/document-builder/using-cli/command-line-arguments.md) and the [Office JavaScript API](https://api.onlyoffice.com/docs/office-api/get-started/overview.md).
 

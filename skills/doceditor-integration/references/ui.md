@@ -1,4 +1,4 @@
-# ONLYOFFICE UI Design Skill Guide
+# UI design
 
 ## Context & Purpose
 

@@ -1,4 +1,4 @@
-# ONLYOFFICE Node.js Example Skill Guide
+# Node.js example
 
 ## Context & Purpose
 
