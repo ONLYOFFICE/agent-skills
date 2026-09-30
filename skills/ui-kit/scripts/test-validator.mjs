@@ -168,6 +168,20 @@ export const upload = Uploader;
   { code: 1, has: ["E-internal-subpath"] },
 );
 
+// billing re-exports a file of `export const` with `export * from "./constants"`; the sync
+// tool used to look for a folder there and read `export { … }` only, so none of those names
+// reached the manifest and this import passed.
+expect(
+  "portal-internal-constant-through-the-barrel",
+  {
+    "src/Plan.tsx": `import { YEAR_KEY } from "@onlyoffice/apps-ui-kit";
+
+export const period = YEAR_KEY;
+`,
+  },
+  { code: 1, has: ["E-internal-subpath"] },
+);
+
 /**
  * This case used to assert the opposite, and so held the validator to a falsehood. The root
  * barrel re-exports every default-only component by name -- `export { default as Section }` in
@@ -694,6 +708,8 @@ for (const [folder, component] of Object.entries(MANIFEST.components)) {
 check("manifest: every component is accounted for", Object.keys(MANIFEST.components).length >= 98, `${Object.keys(MANIFEST.components).length}`);
 check("manifest: the portal-internal modules were parsed", MANIFEST.portalInternalSubpaths.includes("selectors"));
 check("manifest: the barrel leak is recorded", MANIFEST.portalInternalBarrelNames.includes("Uploader"));
+check("manifest: the leak includes billing's constants file", MANIFEST.portalInternalBarrelNames.includes("YEAR_KEY"));
+check("manifest: the revision is recorded once, in sources.json", !("syncedCommit" in MANIFEST));
 
 // --- the sync tools, offline ------------------------------------------------------------------
 

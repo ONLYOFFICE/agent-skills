@@ -78,7 +78,8 @@ const mode = has("--write") ? "write" : has("--dump") ? "dump" : "check";
 const strict = has("--strict");
 
 let problems = 0;
-const say = (...parts) => console.log(parts.join(""));
+// --dump prints the manifest on stdout for a pipe, so everything said aloud goes to stderr there.
+const say = (...parts) => (mode === "dump" ? console.error : console.log)(parts.join(""));
 /** Said aloud but not fatal: the run still describes the kit as it is. */
 const note = (kind, where, message) => say(`${kind.padEnd(12)} ${where}  — ${message}`);
 const report = (kind, where, message) => {
@@ -120,7 +121,12 @@ function openSource(dir) {
       .sort();
   };
 
-  return { dir, kind, version: pkg.version, read, listDirs };
+  // An installed package keeps only what ships as source at the top -- READMEs, styles, locales
+  // -- and the modules themselves under dist/: `types` has no JavaScript at all, only .d.ts.
+  const hasModule = (name) =>
+    [name, `dist/esm/${name}`, `dist/types/${name}`].some((rel) => existsSync(path.join(dir, ...rel.split("/"))));
+
+  return { dir, kind, version: pkg.version, read, listDirs, hasModule };
 }
 
 /** The commit and branch the pages came from, when the source is a git checkout. */
@@ -250,30 +256,50 @@ function modulesUnder(publicApi, heading) {
   return [...new Set(rows)];
 }
 
-/** Named exports of a module's index, following one level of `export * from "./x"`. */
+/** The text of a module specifier resolved the way the kit's bundler does: a file, then a folder's index. */
+function readModule(src, rel) {
+  for (const candidate of [`${rel}.ts`, `${rel}.tsx`, `${rel}/index.ts`, `${rel}/index.tsx`]) {
+    const text = src.read(candidate) ?? src.read(`dist/types/${candidate.replace(/\.tsx?$/, ".d.ts")}`);
+    if (text) return { rel: candidate.replace(/\.tsx?$/, ""), text };
+  }
+  return null;
+}
+
+/**
+ * Every name a module exports, following each relative `export * from` to the end. The old
+ * reading looked for `<x>/index.ts` only and knew `export { … }` only, so `billing`'s
+ * `export * from "./constants"` -- a file, not a folder, of `export const` -- contributed
+ * nothing, and the manifest listed 17 of the 41 names TypeScript says the root barrel takes
+ * from `billing` and `uploader`.
+ */
 function exportedNames(src, module) {
   const seen = new Set();
-  const collect = (rel, depth) => {
-    const text =
-      src.read(`${rel}/index.ts`) ??
-      src.read(`${rel}/index.tsx`) ??
-      src.read(`dist/types/${rel}/index.d.ts`);
-    if (!text) return;
+  const visited = new Set();
+  const collect = (rel) => {
+    const found = readModule(src, rel);
+    if (!found || visited.has(found.rel)) return;
+    visited.add(found.rel);
+    const text = found.text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
     for (const match of text.matchAll(/export\s+(?:type\s+)?\{([^}]*)\}/g)) {
       for (const part of match[1].split(",")) {
-        const name = part.trim().split(/\s+as\s+/).pop()?.trim();
+        const name = part.trim().replace(/^type\s+/, "").split(/\s+as\s+/).pop()?.trim();
         if (name && name !== "default") seen.add(name);
       }
     }
-    if (depth > 0) {
-      for (const match of text.matchAll(/export\s+\*\s+from\s+"\.\/([^"]+)"/g)) collect(`${rel}/${match[1]}`, depth - 1);
+    const declaration =
+      /export\s+(?:declare\s+)?(?:abstract\s+)?(?:const\s+enum|const|let|var|function\*?|class|enum|type|interface|namespace)\s+([A-Za-z_$][\w$]*)/g;
+    for (const match of text.matchAll(declaration)) seen.add(match[1]);
+    for (const match of text.matchAll(/export\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from/g)) seen.add(match[1]);
+    const base = path.posix.dirname(found.rel);
+    for (const match of text.matchAll(/export\s+(?:type\s+)?\*\s+from\s+["'](\.[^"']+)["']/g)) {
+      collect(path.posix.join(base, match[1]));
     }
   };
-  collect(module, 1);
+  collect(module);
   return [...seen].sort();
 }
 
-function buildManifest(src, pages, metas, revision, repoUrl) {
+function buildManifest(src, pages, metas, repoUrl) {
   const publicApi = src.read("docs/public-api.md");
   const portalInternal = modulesUnder(publicApi, "## Portal-internal");
 
@@ -300,7 +326,7 @@ function buildManifest(src, pages, metas, revision, repoUrl) {
     if (meta.import?.barrel) for (const name of components[folder].exports) barrelNames.add(name);
   }
 
-  const missingTopLevel = PUBLIC_TOP_LEVEL.filter((name) => src.listDirs(".").indexOf(name) < 0);
+  const missingTopLevel = PUBLIC_TOP_LEVEL.filter((name) => !src.hasModule(name));
   for (const name of missingTopLevel) report("TREE", name, "listed as a public top-level module, but the kit has no such directory");
 
   const publicSubpaths = [
@@ -313,8 +339,6 @@ function buildManifest(src, pages, metas, revision, repoUrl) {
   return {
     package: PACKAGE,
     kitVersion: src.version,
-    syncedCommit: revision.commit,
-    syncedBranch: revision.branch,
     syncedFrom: src.kind,
     repo: repoUrl,
     publicSubpaths,
@@ -383,16 +407,23 @@ for (const [upstream] of pages) {
   else note("META-MISSING", upstream, "no ui-kit-doc block; this component is missing from the manifest");
 }
 
+// A link to a kit page this skill does not carry is pinned to a commit, and --check renders
+// with the commit sources.json recorded, not the checkout's HEAD. Otherwise any commit to the
+// kit at all -- in a folder no page comes from -- turned the check red on the two pages that
+// hold such a link, with not a byte of their text changed. --check answers "has the kit's
+// text moved"; a newer HEAD alone is reported and does not fail it.
+const linkCommit = mode === "write" ? revision.commit : (skillSources.syncedCommit ?? revision.commit);
+
 const unmapped = new Set();
 const rendered = new Map();
 for (const [upstream, page] of pages) {
   rendered.set(
     page,
-    renderPage({ upstream, page, text: src.read(upstream), map: pages, version: src.version, commit: revision.commit, repoUrl, unmapped }),
+    renderPage({ upstream, page, text: src.read(upstream), map: pages, version: src.version, commit: linkCommit, repoUrl, unmapped }),
   );
 }
 
-const manifest = buildManifest(src, pages, metas, revision, repoUrl);
+const manifest = buildManifest(src, pages, metas, repoUrl);
 
 if (mode === "dump") {
   console.log(JSON.stringify(manifest, null, 2));
@@ -436,6 +467,12 @@ if (mode === "write") {
   }
   if (existsSync(MANIFEST) && readFileSync(MANIFEST, "utf8") !== `${JSON.stringify(manifest, null, 2)}\n`) {
     report("DRIFT", posix(path.relative(ROOT, MANIFEST)), "the manifest differs from what the kit now says");
+  }
+  if (revision.commit && skillSources.syncedCommit && revision.commit !== skillSources.syncedCommit) {
+    say(
+      `the kit is at ${revision.commit}, the pages were synced at ${skillSources.syncedCommit}` +
+        (problems ? "" : "; the text is the same, so a --write would only move the pinned links"),
+    );
   }
 }
 

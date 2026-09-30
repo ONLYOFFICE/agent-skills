@@ -59,8 +59,9 @@ Each one's page says so in its metadata.
 **Two of them reach you without a subpath.** The root `index.ts` re-exports `./uploader` and
 `./billing`, so `Uploader`, `MainTariff`, `Wallet`, `PaymentMethod`, `BillingRoot`,
 `PaymentStoreProvider` and the rest are importable from `@onlyoffice/apps-ui-kit` itself with
-nothing to warn you. `scripts/data/kit-manifest.json` lists all seventeen names under
-`portalInternalBarrelNames`, and `check-usage.mjs` flags them.
+nothing to warn you — billing's constants too, `ADMIN`, `ROOM` and `YEAR_KEY` among them.
+`scripts/data/kit-manifest.json` lists every one under `portalInternalBarrelNames`, and
+`check-usage.mjs` flags them.
 
 ## The symptom when you get it wrong
 
