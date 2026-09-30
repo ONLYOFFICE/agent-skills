@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
  * Reads a project that uses @onlyoffice/apps-ui-kit and reports the mistakes the kit itself
- * never reports: a visibility prop the component does not read, a portal-internal module
- * imported outside the portal, a form nobody can reach with the keyboard, a provider that was
- * never mounted. Everything it knows about the kit comes from `data/kit-manifest.json`, which
- * `tools/sync-ui-kit.mjs` derives from the kit's own sources.
+ * never reports: a visibility prop the component does not read, a portal-internal module or
+ * component imported outside the portal, a caption attached to no control, a provider that was
+ * never mounted. What it knows about the components comes from `data/kit-manifest.json`, which
+ * `tools/sync-ui-kit.mjs` derives from the kit's own sources; the form traps below are written
+ * here, each with the reason beside it.
  *
  *   node check-usage.mjs <project-dir> [--json] [--manifest <path>] [--kit <dir>]
  *
@@ -66,9 +67,19 @@ if (!existsSync(projectDir) || !statSync(projectDir).isDirectory()) fail(`no suc
 
 const manifestPath = flag("--manifest") ?? DEFAULT_MANIFEST;
 if (!existsSync(manifestPath)) fail(`no manifest at ${manifestPath} — run tools/sync-ui-kit.mjs --from <kit> --write`);
-const kit = JSON.parse(readFileSync(manifestPath, "utf8"));
+// A manifest that does not parse is a manifest that could not be read, which the header
+// promises is exit 2. Left to throw, it was exit 1 -- the code for "your project has errors" --
+// so a broken sync read as a broken project.
+const kit = (() => {
+  try {
+    return JSON.parse(readFileSync(manifestPath, "utf8"));
+  } catch (error) {
+    fail(`the manifest at ${manifestPath} is not valid JSON (${error.message.split("\n")[0]}) — run tools/sync-ui-kit.mjs --from <kit> --write`);
+  }
+})();
 
 const byName = new Map(Object.values(kit.components).map((component) => [component.name, component]));
+const bySubpath = new Map(Object.values(kit.components).map((component) => [component.subpath, component]));
 const publicSubpaths = new Set(kit.publicSubpaths);
 const portalInternalNames = new Set(kit.portalInternalBarrelNames);
 // Two questions that used to share one list, and so went silent together once its answer
@@ -117,7 +128,25 @@ function sourceFiles(dir, out = []) {
   return out;
 }
 
-const lineOf = (text, index) => text.slice(0, index).split("\n").length;
+/**
+ * A line-number lookup for one file. It used to slice and split the whole file for every match,
+ * which made a large project quadratic -- 1500 files took 14 seconds. The line starts are found
+ * once, and each lookup is a binary search.
+ */
+function lineIndex(text) {
+  const starts = [0];
+  for (let at = text.indexOf("\n"); at !== -1; at = text.indexOf("\n", at + 1)) starts.push(at + 1);
+  return (index) => {
+    let low = 0;
+    let high = starts.length - 1;
+    while (low < high) {
+      const middle = (low + high + 1) >> 1;
+      if (starts[middle] <= index) low = middle;
+      else high = middle - 1;
+    }
+    return low + 1;
+  };
+}
 
 /**
  * Class names the project's own stylesheets declare something for, mapped to the declarations.
@@ -182,13 +211,95 @@ function tagAttributes(text, from) {
   return text.slice(from);
 }
 
-const IMPORT_FROM = /import\s+([\s\S]*?)\s+from\s*["']([^"']+)["']/g;
+/** The index just past the `}` that closes the `{` at `at`, stepping over strings inside. */
+function skipBraces(text, at) {
+  let depth = 0;
+  let quote = null;
+  for (let i = at; i < text.length; i += 1) {
+    const char = text[i];
+    if (quote) {
+      if (char === "\\") i += 1;
+      else if (char === quote || (char === "\n" && quote !== "`")) quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === "`") quote = char;
+    else if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return i + 1;
+    }
+  }
+  return text.length;
+}
+
+/**
+ * The attributes of one tag, name → the raw text of its value, or `true` for a bare flag.
+ *
+ * Parsed, because searching the raw text reported names that are not this tag's attributes at
+ * all: `title="click to open it"` read as `open`, and `header={<Tooltip isOpen />}` handed the
+ * nested Tooltip's prop to the Aside around it — both as errors, on correct code. A string value
+ * and a `{…}` expression are stepped over whole, so only a name at the top level counts.
+ */
+function parseAttributes(fragment) {
+  const attributes = new Map();
+  let i = 0;
+  while (i < fragment.length) {
+    const char = fragment[i];
+    if (/[\s/]/.test(char)) {
+      i += 1;
+      continue;
+    }
+    if (char === "{") {
+      i = skipBraces(fragment, i); // a spread: `{...props}`
+      continue;
+    }
+    const name = /^[A-Za-z_$][\w$:.-]*/.exec(fragment.slice(i))?.[0];
+    if (!name) {
+      i += 1;
+      continue;
+    }
+    i += name.length;
+    let at = i;
+    while (/\s/.test(fragment[at] ?? "")) at += 1;
+    if (fragment[at] !== "=") {
+      attributes.set(name, true);
+      continue;
+    }
+    at += 1;
+    while (/\s/.test(fragment[at] ?? "")) at += 1;
+    const start = at;
+    const opener = fragment[at];
+    if (opener === '"' || opener === "'") {
+      at = fragment.indexOf(opener, at + 1);
+      at = at === -1 ? fragment.length : at + 1;
+    } else if (opener === "{") {
+      at = skipBraces(fragment, at);
+    } else {
+      while (at < fragment.length && !/\s/.test(fragment[at])) at += 1;
+    }
+    attributes.set(name, fragment.slice(start, at));
+    i = at;
+  }
+  return attributes;
+}
+
+// A clause never holds a quote or a semicolon. Without that bound the lazy match ran from a
+// side-effect `import "./a.css"` to the `from` of whatever statement came next.
+const IMPORT_FROM = /import\s+([^;"'`]*?)\s+from\s*["']([^"']+)["']/g;
+const EXPORT_FROM = /export\s+(?:type\s+)?(\*(?:\s+as\s+[A-Za-z_$][\w$]*)?|\{[^}]*\})\s*from\s*["']([^"']+)["']/g;
 const IMPORT_BARE = /import\s*["']([^"']+)["']/g;
 const REQUIRE_CALL = /(?:require|import)\(\s*["']([^"']+)["']\s*\)/g;
 
-/** `{ A, B as C }` and a leading default binding, as imported-name → local-name. */
+/**
+ * `{ A, B as C }`, a leading default binding and `* as Kit`, as imported-name → local-name. A
+ * namespace is recorded as imported `*`: its members are only known where they are used, as
+ * `<Kit.FieldContainer>`, and an import of it used to yield no binding at all, so nothing under
+ * it was checked.
+ */
 function bindingsOf(clause) {
   const bindings = [];
+  const namespace = /\*\s*as\s+([A-Za-z_$][\w$]*)/.exec(clause);
+  if (namespace) bindings.push({ imported: "*", local: namespace[1] });
   const braces = /\{([\s\S]*?)\}/.exec(clause);
   const head = clause.slice(0, braces ? braces.index : clause.length).replace(/\btype\b/g, "").trim();
   const defaultName = /^[A-Za-z_$][\w$]*/.exec(head.split(",")[0]?.trim() ?? "");
@@ -247,6 +358,17 @@ function checkSpecifier(file, line, specifier, bindings) {
     return;
   }
 
+  // Rule 5 names components as well as modules, and the manifest carries each one's `status`,
+  // but nothing read it: `import Section from ".../components/section"` passed in silence. A
+  // component is reached either through its own subpath or by name from the root barrel.
+  const internalComponents =
+    subpath === ""
+      ? bindings.map((binding) => byName.get(binding.imported)).filter(Boolean)
+      : [bySubpath.get(subpath)].filter(Boolean);
+  for (const component of internalComponents.filter((c) => c.status === "portal-internal")) {
+    add("error", "E-internal-component", file, line, `\`${component.name}\` is portal-internal`, "it needs portal context — a MobX store, the portal's translations or its device detection — and renders nothing useful outside the portal");
+  }
+
   if (subpath === "") {
     for (const binding of bindings) {
       if (portalInternalNames.has(binding.imported)) {
@@ -274,10 +396,23 @@ function checkSpecifier(file, line, specifier, bindings) {
   }
 }
 
-function checkTag(file, text, name, index, component) {
-  const attributes = tagAttributes(text, index + name.length + 1);
-  const line = lineOf(text, index);
-  const has = (prop) => new RegExp(`(^|\\s)${prop}(\\s|=|/|$)`).test(attributes);
+/**
+ * One tag of a kit component. `tag` is how the file spells it — `FC` for an alias,
+ * `Kit.FieldContainer` under a namespace — and only locates the attributes; `name` is the kit's
+ * own name, and every check below is keyed on that. It used to be keyed on the spelling, so
+ * `FieldContainer as FC` switched off every form check at once.
+ */
+function checkTag(file, text, lineAt, tag, name, index, component) {
+  const attributes = tagAttributes(text, index + tag.length + 1);
+  const parsed = parseAttributes(attributes);
+  const line = lineAt(index);
+  const has = (prop) => parsed.has(prop);
+  const value = (prop) => (typeof parsed.get(prop) === "string" ? parsed.get(prop) : "");
+  // Only the attributes that name classes, so a class on a nested element is not credited here.
+  const classAttributes = ["className", "wrapperClassName"]
+    .filter((prop) => value(prop))
+    .map((prop) => `${prop}=${value(prop)}`)
+    .join(" ");
 
   if (component?.visibilityProp) {
     for (const wrong of VISIBILITY_NAMES) {
@@ -303,7 +438,7 @@ function checkTag(file, text, name, index, component) {
   // warn when one was missing. They default to 0 now, so a `tabIndex={0}` is at
   // best noise and at worst a habit that spreads to a listbox option, where -1
   // is the correct value and 0 breaks the active-descendant pattern.
-  if (TAB_INDEX_UNNEEDED.has(name) && /\btabIndex\s*=\s*\{?\s*0\s*\}?/.test(attributes)) {
+  if (TAB_INDEX_UNNEEDED.has(name) && /^(\{\s*0\s*\}|"0"|'0')$/.test(value("tabIndex"))) {
     add("warning", "W-tabindex-noise", file, line, `<${name} tabIndex={0}>`, "every control in the kit is in the tab order already; `tabIndex` is for taking one out, not for putting it in");
   }
   // A Textarea's `id` lands on the `<textarea>` itself, so a container's `labelFor` names it
@@ -311,8 +446,7 @@ function checkTag(file, text, name, index, component) {
   // pass arbitrary attributes -- hence the three `aria-*` it declares as props of its own. This
   // check used to ignore the pair and warn about every captioned textarea in the repository.
   if (name === "Textarea" && !has("aria-label") && !has("aria-labelledby")) {
-    const id = /\bid=(?:"([^"]*)"|\{([^}]*)\})/.exec(attributes);
-    const token = (id?.[1] ?? id?.[2] ?? "").trim();
+    const token = value("id").replace(/^["'{]\s*|\s*["'}]$/g, "").trim();
     const quoted = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const captioned =
       token !== "" && new RegExp(`labelFor=(?:"${quoted}"|\\{\\s*${quoted}\\s*\\})`).test(text);
@@ -320,10 +454,10 @@ function checkTag(file, text, name, index, component) {
       add("warning", "W-textarea-unnamed", file, line, "<Textarea> named by nothing", "it carries no `aria-label` or `aria-labelledby`, and no FieldContainer's `labelFor` points at an `id` on it, so it is announced unnamed");
     }
   }
-  if (name === "Textarea" && !declaresIn(attributes, /(^|[\s;{])(width|flex)\s*:/)) {
+  if (name === "Textarea" && !declaresIn(classAttributes, /(^|[\s;{])(width|flex)\s*:/)) {
     add("warning", "W-textarea-width", file, line, "<Textarea> whose wrapper is given no width", "it has a max-width and no width of its own, and only `wrapperClassName` reaches the element that carries it — a `style` is spread onto the inner scroller, which is already full width, so it reads as though it worked and changes nothing");
   }
-  if (name === "SearchInput" && /\.target\.value/.test(attributes)) {
+  if (name === "SearchInput" && /\.target\.value/.test(value("onChange"))) {
     add("error", "E-searchinput-event", file, line, "<SearchInput> handler reads `.target.value`", "its onChange receives the string itself, unlike every other input in the kit, so this is undefined");
   }
   if (name === "ToggleButton") {
@@ -348,56 +482,121 @@ const mounted = new Set();
  * Comments blanked out, newlines kept so every line number still lands. A file that
  * documents what it does — `<button>` in a JSDoc line explaining why the kit's Button is
  * used instead — was being reported for the thing it was explaining.
+ *
+ * One pass, in reading order, stepping over strings. It used to be two regexes, block comments
+ * first: a line comment ending in `assets/` plus a star opened a "block" that ran to the next
+ * block comment's close anywhere in the file and blanked every line between, real imports
+ * included — a portal-internal `selectors` import below it went unreported. A string ends at its newline unless it is a template, so an apostrophe in
+ * JSX text costs at most the rest of its own line.
  */
 function withoutComments(text) {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, " "))
-    .replace(/(^|[^:])\/\/[^\n]*/g, (line, before) => before + " ".repeat(line.length - before.length));
+  const out = [];
+  let copied = 0;
+  let quote = null;
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (quote) {
+      if (char === "\\") i += 1;
+      else if (char === quote || (char === "\n" && quote !== "`")) quote = null;
+      continue;
+    }
+    const next = text[i + 1];
+    // `:` before `//` is the scheme of a URL written as JSX text, not a comment.
+    const lineComment = char === "/" && next === "/" && text[i - 1] !== ":";
+    const blockComment = char === "/" && next === "*";
+    if (lineComment || blockComment) {
+      const close = lineComment ? text.indexOf("\n", i) : text.indexOf("*/", i + 2);
+      const end = close === -1 ? text.length : lineComment ? close : close + 2;
+      out.push(text.slice(copied, i), text.slice(i, end).replace(/[^\n]/g, " "));
+      copied = end;
+      i = end - 1;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === "`") quote = char;
+  }
+  out.push(text.slice(copied));
+  return out.join("");
 }
 
 for (const file of files) {
   const source = readFileSync(file, "utf8");
   const text = withoutComments(source);
+  const lineAt = lineIndex(text);
   const shown = path.relative(projectDir, file).split(path.sep).join("/");
+  // How this file spells each kit component it imports (local name → kit name), and the
+  // namespaces it imports the kit under (local name → subpath).
   const local = new Map();
+  const namespaces = new Map();
+  const noteProvider = (name, subpath) => {
+    if (name === "ThemeProvider" && subpath !== "components/theme-provider") mounted.add("ThemeProvider");
+    if (name === "TranslationProvider") mounted.add("TranslationProvider");
+  };
 
-  for (const [regex, specifierGroup, clauseGroup] of [[IMPORT_FROM, 2, 1], [IMPORT_BARE, 1, null], [REQUIRE_CALL, 1, null]]) {
+  // A re-export — `export { X } from "…"` — is checked like an import: a portal-internal module
+  // forwarded from a file of the application's own reaches every file that imports it.
+  const statements = [
+    [IMPORT_FROM, 2, 1, true],
+    [EXPORT_FROM, 2, 1, false],
+    [IMPORT_BARE, 1, null, false],
+    [REQUIRE_CALL, 1, null, false],
+  ];
+  for (const [regex, specifierGroup, clauseGroup, binds] of statements) {
     regex.lastIndex = 0;
     for (const match of text.matchAll(regex)) {
       const specifier = match[specifierGroup];
       const bindings = clauseGroup ? bindingsOf(match[clauseGroup]) : [];
-      checkSpecifier(shown, lineOf(text, match.index), specifier, bindings);
-      if (subpathOf(specifier) === null) continue;
+      checkSpecifier(shown, lineAt(match.index), specifier, bindings);
+      const subpath = subpathOf(specifier);
+      if (subpath === null) continue;
       usesKit = true;
+      if (!binds) continue;
       for (const binding of bindings) {
-        const name = binding.imported === "default" ? binding.local : binding.imported;
+        if (binding.imported === "*") {
+          namespaces.set(binding.local, subpath);
+          continue;
+        }
+        // A default binding is named by the importer, so the component is found by the subpath
+        // it came from, not by what the file chose to call it.
+        const name =
+          binding.imported === "default" ? (bySubpath.get(subpath)?.name ?? binding.local) : binding.imported;
         local.set(binding.local, name);
-        if (name === "ThemeProvider" && subpathOf(specifier) !== "components/theme-provider") mounted.add("ThemeProvider");
-        if (name === "TranslationProvider") mounted.add("TranslationProvider");
+        noteProvider(name, subpath);
       }
     }
   }
 
+  const escape = (name) => name.replace(/[$.]/g, "\\$&");
+  const tags = [];
   for (const [localName, kitName] of local) {
-    const component = byName.get(kitName);
-    if (component) usedComponents.add(kitName);
-    for (const match of text.matchAll(new RegExp(`<${localName}(?=[\\s/>])`, "g"))) {
-      checkTag(shown, text, localName, match.index, component);
+    for (const match of text.matchAll(new RegExp(`<${escape(localName)}(?=[\\s/>])`, "g"))) {
+      tags.push({ tag: localName, name: kitName, index: match.index });
+    }
+  }
+  for (const [namespace, subpath] of namespaces) {
+    for (const match of text.matchAll(new RegExp(`<${escape(namespace)}\\.([A-Za-z_$][\\w$]*)(?=[\\s/>])`, "g"))) {
+      tags.push({ tag: `${namespace}.${match[1]}`, name: match[1], index: match.index });
+      noteProvider(match[1], subpath);
     }
   }
 
-  if (local.size) {
+  for (const { tag, name, index } of tags) {
+    const component = byName.get(name);
+    if (component) usedComponents.add(name);
+    checkTag(shown, text, lineAt, tag, name, index, component);
+  }
+
+  if (local.size || namespaces.size) {
     const raw = /<(?:button|input|select|textarea)\b/.exec(text);
     if (raw) {
-      add("warning", "W-raw-controls", shown, lineOf(text, raw.index), `a bare <${raw[0].slice(1)}> in a file that uses the kit`, "the kit's own Button, TextInput and Checkbox carry the theme; a bare one does not");
+      add("warning", "W-raw-controls", shown, lineAt(raw.index), `a bare <${raw[0].slice(1)}> in a file that uses the kit`, "the kit's own Button, TextInput and Checkbox carry the theme; a bare one does not");
     }
   }
 
-  if (/<FieldContainer/.test(text)) {
+  if (tags.some((found) => found.name === "FieldContainer")) {
     const column = /style=\{\{[^}]*flexDirection:\s*["']column["'][^}]*\}\}/g;
     for (const match of text.matchAll(column)) {
       if (/\bgap\s*:/.test(match[0])) {
-        add("warning", "W-fieldcontainer-gap", shown, lineOf(text, match.index), "a column with a `gap` around FieldContainer fields", "each field already carries margin: 0 0 16px, and the gap adds to it — drop the gap, or pass removeMargin");
+        add("warning", "W-fieldcontainer-gap", shown, lineAt(match.index), "a column with a `gap` around FieldContainer fields", "each field already carries margin: 0 0 16px, and the gap adds to it — drop the gap, or pass removeMargin");
       }
     }
   }

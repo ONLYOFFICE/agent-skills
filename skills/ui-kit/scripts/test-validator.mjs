@@ -179,9 +179,9 @@ expect(
   "a default-only component through the root barrel, by name",
   {
     "src/AppProviders.tsx": PROVIDERS,
-    "src/Layout.tsx": `import { Section } from "@onlyoffice/apps-ui-kit";
+    "src/Upload.tsx": `import { Dropzone } from "@onlyoffice/apps-ui-kit";
 
-export const layout = Section;
+export const upload = Dropzone;
 `,
   },
   { code: 0, lacks: ["E-default-import"] },
@@ -195,13 +195,155 @@ expect(
   "a default-only component by name from its own subpath",
   {
     "src/AppProviders.tsx": PROVIDERS,
-    "src/Layout.tsx": `import { Section } from "@onlyoffice/apps-ui-kit/components/section";
+    "src/Upload.tsx": `import { Dropzone } from "@onlyoffice/apps-ui-kit/components/dropzone";
 
-export const layout = Section;
+export const upload = Dropzone;
 `,
   },
   { code: 1, has: ["E-default-import"] },
 );
+
+/**
+ * Rule 5 names eleven components, and the manifest carries each one's `status`, but nothing read
+ * it: both imports below passed in silence. Each way of reaching a component is covered — its own
+ * subpath under a name the importer chose, and the root barrel by name.
+ */
+expect(
+  "a portal-internal component, by subpath and through the barrel",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Layout.tsx": `import Shell from "@onlyoffice/apps-ui-kit/components/section";
+import { Article } from "@onlyoffice/apps-ui-kit";
+
+export const layout = [Shell, Article];
+`,
+  },
+  { code: 1, has: ["E-internal-component"] },
+);
+check(
+  "a portal-internal component: both imports are reported",
+  run(path.join(workspace, "a portal-internal component, by subpath and through the barrel")).findings.filter(
+    (f) => f.code === "E-internal-component",
+  ).length === 2,
+);
+
+/**
+ * The comment stripper used to run two regexes, block comments first. A line comment ending in
+ * `assets/*` then opened a "block" that ran to the JSDoc below it, and the portal-internal import
+ * between the two was blanked out with it.
+ */
+expect(
+  "a line comment that ends in a star does not swallow the import below it",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Pick.tsx": `// the icons live under assets/*
+import { PeopleSelector } from "@onlyoffice/apps-ui-kit/selectors/People";
+
+/** Picks people. */
+export const pick = PeopleSelector;
+`,
+  },
+  { code: 1, has: ["E-internal-subpath"] },
+);
+
+expect(
+  "a comment marker inside a string is not a comment",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Pick.tsx": `const separator = " // ";
+import { PeopleSelector } from "@onlyoffice/apps-ui-kit/selectors/People";
+
+export const pick = [separator, PeopleSelector];
+`,
+  },
+  { code: 1, has: ["E-internal-subpath"] },
+);
+
+/**
+ * Every check below used to be keyed on how the file spelled the tag, so an alias switched off
+ * the form checks at once and a namespace import yielded no binding at all.
+ */
+expect(
+  "an aliased component is checked under its kit name",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Form.tsx": `import { FieldContainer as FC } from "@onlyoffice/apps-ui-kit/components/field-container";
+import { InputType, TextInput } from "@onlyoffice/apps-ui-kit/components/text-input";
+
+export const Form = () => (
+  <FC labelText="Name">
+    <TextInput type={InputType.text} value="" onChange={() => {}} />
+  </FC>
+);
+`,
+  },
+  { code: 0, has: ["W-fieldcontainer-label"] },
+);
+
+expect(
+  "a component under a namespace import is checked",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Form.tsx": `import * as Field from "@onlyoffice/apps-ui-kit/components/field-container";
+
+export const Form = () => <Field.FieldContainer labelText="Name">x</Field.FieldContainer>;
+`,
+  },
+  { code: 0, has: ["W-fieldcontainer-label"] },
+);
+
+expect(
+  "a re-export is checked like an import",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/kit.ts": `export { PeopleSelector } from "@onlyoffice/apps-ui-kit/selectors/People";
+`,
+  },
+  { code: 1, has: ["E-internal-subpath"] },
+);
+
+/**
+ * Attributes used to be searched as raw text, so a word in a string value and a prop of a nested
+ * element were both read as this tag's attributes — each an error, on correct code.
+ */
+expect(
+  "a visibility word inside a string value is not a prop",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Confirm.tsx": `import { ModalDialog } from "@onlyoffice/apps-ui-kit/components/modal-dialog";
+
+export const Confirm = () => <ModalDialog visible title="click to open it" onClose={() => {}} />;
+`,
+  },
+  { code: 0, lacks: ["E-visibility-prop"] },
+);
+
+expect(
+  "a nested element's prop is not the outer tag's",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Panel.tsx": `import { Aside } from "@onlyoffice/apps-ui-kit/components/aside";
+import { Tooltip } from "@onlyoffice/apps-ui-kit/components/tooltip";
+
+export const Panel = () => <Aside visible header={<Tooltip isOpen />} onClose={() => {}} />;
+`,
+  },
+  { code: 0, lacks: ["E-visibility-prop"] },
+);
+
+/** The header promises exit 2 when the manifest cannot be read; a parse failure threw, exit 1. */
+{
+  const dir = project("an unreadable manifest", { "src/App.tsx": "export const App = 1;\n" });
+  const broken = path.join(dir, "broken-manifest.json");
+  writeFileSync(broken, "{");
+  let code = 0;
+  try {
+    execFileSync(process.execPath, [VALIDATOR, dir, "--manifest", broken], { stdio: "ignore" });
+  } catch (error) {
+    code = error.status;
+  }
+  check("an unreadable manifest: exit 2", code === 2, `exit was ${code}`);
+}
 
 expect(
   "dist-path-and-public-dir",
