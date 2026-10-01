@@ -10,7 +10,7 @@ All from `@onlyoffice/docspace-plugin-sdk/react` — signatures, return types an
 
 | Component rendered as | `useCurrentFile()` |
 |---|---|
-| Info panel tab | the selected file/folder/room, live — tell a room by `isRoom` (a room can also carry `isFolder: true`), and do not compare `roomType` to a constant: its format differs between portal builds, so read the room when the type matters |
+| Info panel tab | the selected file/folder/room, live — a room has `isRoom: true` and `isFolder: false`, and its `roomType` is the SDK's `RoomsType` value (`"custom-room"` for `RoomsType.CustomRoom`), so compare it to the enum; a room type the enum does not list arrives as the portal's number, as a string |
 | Media viewer | `{ id, title, fileExst }` of the file on screen — the one passed as `fileId`, then each file the user pages to ([media-viewer.md](../components/media-viewer.md)) |
 | Modal opened from **another component** via `showModal` | that component's current file |
 | Modal opened from a **class-side callback** (context menu, main button, file click, event) | **`null`** — the message carries no selection |
