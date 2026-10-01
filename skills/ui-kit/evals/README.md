@@ -134,6 +134,13 @@ transcript for reads outside the project before trusting a result.
 | 2 | 2026-09-25 | Opus 5 | `side-panel-list` | **15/15** | 13/15 |
 | 2 | 2026-09-25 | Opus 5 | `explain-empty-labels` | 10/10 | **10/10** |
 | 2 | 2026-09-25 | Opus 5 | `audit-snippet` | **13/13** | 8/13 |
+| 3 | 2026-09-30 | Opus 5 | `settings-form` | 18/18 | — |
+| 3 | 2026-09-30 | Opus 5 | `confirm-dialog` | 14/14 | — |
+| 3 | 2026-09-30 | Opus 5 | `side-panel-list` | 14/15 | — |
+| 3 | 2026-09-30 | Opus 5 | `explain-empty-labels` | 9/10 | — |
+| 3 | 2026-09-30 | Opus 5 | `audit-snippet` | 13/13 | — |
+| 4 | 2026-10-01 | Opus 5 | `side-panel-list` | **15/15** | — |
+| 4 | 2026-10-01 | Opus 5 | `explain-empty-labels` | **10/10** | — |
 
 Iteration 0 totalled 53/54 against 41/54, at 1.5× the wall clock and 1.3× the tokens. Read it
 with the two ties in mind: their checks were answerable from the package's own documentation,
@@ -183,6 +190,22 @@ disagreeing with the documentation in front of them:
   kit's own page and its JSDoc all said otherwise — and `check-usage.mjs` warned
   `W-textarea-unnamed` at a project that had done the naming correctly. The false positive is
   fixed, with a regression case on each side of it.
+
+Iteration 3 ran the skill arm alone, to check that 70/70 survived the review fixes, and it did
+not: **68/70**. Both misses followed the skill's wording, unchanged since iteration 2, which had
+passed them by luck. `references/i18n.md` named the kit's private i18next instance as a
+reassurance and left unsaid that an `I18nextProvider` or `addResourceBundle` on the app's own
+i18next never reaches the kit; and three pages told an agent to pass skeleton colours "when the
+surface is dark", which a run did by choosing a hex in JavaScript. Iteration 4 re-ran those two
+scenarios after the fixes and both came back full, so the suite stands at 70/70 with iteration
+3's other three carried forward. No baseline was run in either: the kit and its shipped pages
+had changed since iteration 2, so 58/70 is no longer a fair comparison.
+
+Iteration 3 also found a fault in the kit through a run that refused to follow rule 9:
+`SearchInput` and `PasswordInput` are out of the tab order unless given `tabIndex`, because
+`InputBlock` kept the `-1` default the other inputs lost, and `SearchInput` puts its `id` on two
+elements. And it found the runs' shared scratch directory carrying one iteration's screenshots
+into the next one's outputs; each run now gets a scratch directory of its own.
 
 ## Adding one
 

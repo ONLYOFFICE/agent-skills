@@ -114,7 +114,10 @@ the rule wins and the kit's page is what should be corrected.
    A control with no visible caption takes `aria-label` instead — `Textarea` among them, whose
    props type is closed, so the three `aria-*` it accepts are props of its own rather than
    attributes you can pass. Do **not** add `tabIndex={0}` to make a control reachable —
-   every control is in the tab order already, and `tabIndex` is for taking one out.
+   every control is in the tab order already, and `tabIndex` is for taking one out. The
+   exceptions are `SearchInput` and `PasswordInput`, built on `InputBlock`, which still
+   defaults to `-1`: pass `tabIndex={0}` to those two. `SearchInput` also cannot be captioned
+   by `labelFor` — its `id` lands on the wrapper as well as the input.
 10. **`TextInput` requires `type` and `value`**, is 173px wide without `scale`, and its
     `onChange` receives the event. `SearchInput.onChange` receives the **string**, is debounced
     by a second, and its clear button does not call it at all.

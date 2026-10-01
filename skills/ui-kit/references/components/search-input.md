@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/search-input/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: 966c06796b7557fbfb89aae245d6e44b1dca7e180eaf7b8d0ff83e342a598b9b -->
+<!-- body-sha256: 319e5d1c5009928bc5b67156b2d60d6e0da15fefd5bc364b91973fe7b1187686 -->
 
 > Synced from the kit's own `components/search-input/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -225,6 +225,14 @@ radius). The gap only shows with the main button.
 - Renders a plain text input; it sets no `role`, no `aria-label` and no `type="search"`, so a
   screen reader announces an unnamed text field. Label it yourself through the surrounding
   markup — the component accepts no `aria-*` props.
+- **It is not in the tab order unless you pass `tabIndex`.** The prop goes straight to
+  [`InputBlock`](input-block.md), whose own default is `-1`, so a search box given no
+  `tabIndex` cannot be reached from the keyboard. Pass `tabIndex={0}`. The default was removed
+  from `TextInput`, `Textarea`, `Checkbox` and `ComboBox`; `InputBlock` kept it.
+- **`id` lands on two elements**, the wrapper `<div>` and the `<input>`, so a `FieldContainer`'s
+  `labelFor` resolves to the wrapper — the first match — and captions nothing. Until that is
+  fixed, the field cannot be named by a visible caption at all; with no `aria-*` props either,
+  the only way to name it is to set `aria-label` on the input element yourself.
 - The clear button is an icon button with no text; nothing gives it an accessible name.
 - Keyboard behaviour is the platform's own. Escape does not clear the field.
 

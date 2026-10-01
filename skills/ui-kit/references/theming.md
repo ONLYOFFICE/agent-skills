@@ -71,8 +71,12 @@ per-tenant accent, and an application of its own has nothing to pass — leave i
 Render once in each theme. Two things go wrong and neither is visible in light:
 
 - **Skeletons.** `RectangleSkeleton` and `CircleSkeleton` default to black at 10% and 15%
-  opacity — fixed, not themed — so on a dark surface they nearly disappear. Pass
-  `backgroundColor` and `foregroundColor` when the surface is dark.
+  opacity — fixed, not themed — so on a dark surface they nearly disappear. Declare the colour
+  as a pair of your own under `.light` / `.dark` and pass the variable:
+  `backgroundColor="var(--members-skeleton)"`. The props become the SVG stops' `stop-color`
+  attribute, where a `var()` resolves against the page, so the skeleton switches with the
+  theme. Do not pick a hex in JavaScript from a dark-mode flag: that is a second copy of the
+  theme, and it is exactly the literal colour the next bullet warns about.
 - **Anything of yours with a literal colour.** A `#fff` background in your own markup stays
   white under `.dark`. Use the kit's variables, or declare a pair of your own under
   `.light` / `.dark` the way the components do.

@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/rectangle/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: b6520cf23107fcf7206f3ef75b7b9c9fa6314ce88a359850931f649fa3b6ae5d -->
+<!-- body-sha256: 0022960c758979b08129c58657e9fae4ba7b3b3ed3c26029045794cd400909fc -->
 
 > Synced from the kit's own `components/rectangle/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -147,10 +147,12 @@ export function StillPlaceholder() {
   rendered and the id resolves to nothing. Give the skeleton that stands for a whole region a
   `title`, or mark the region `aria-busy` as the recipes do.
 - **The colours are fixed, not themed.** `backgroundColor` and `foregroundColor` both default to
-  black at 10% and 15% opacity. On a dark surface that is nearly invisible — pass a light colour
-  yourself when you draw the skeleton on one. It reads no CSS custom property either: the colours
-  are SVG gradient stops filled from these props, so a variable set on a wrapper never reaches
-  them.
+  black at 10% and 15% opacity. On a dark surface that is nearly invisible. The component reads no
+  theme variable of its own, but the props are written as the gradient stops' `stop-color`
+  attribute, and a `var()` there resolves against the page like any other: declare a pair under
+  `.light` and `.dark` and pass `backgroundColor="var(--my-skeleton)"`, and the skeleton follows
+  the theme as it switches. Choosing a hex in JavaScript from a dark-mode flag works too, but it
+  is a second copy of the theme to keep in step.
 - **`width` and `height` size both the element and the rectangle inside it.** The SVG has no
   `viewBox`, so `x`, `y` and `borderRadius` are in the element's own pixels. A skeleton with
   `height="100%"` needs a parent with a height, or it collapses. A percentage `borderRadius` is
