@@ -16,4 +16,4 @@ Each field, with its type and a line, is on [`IProfileMenuItem`](https://api.onl
 
 The menu renders the item and nothing else — there is no canvas here, so whatever the feature shows comes from what `onClick` returns: `showModal` for a form, an aside for a list, or `navigate` to an `ArticleNavigation` page of your own for a whole screen. Nothing about the scope restricts it to the viewer's own data; it is simply the entry point that lives in the profile menu, and it is a normal pairing with a page.
 
-Plugin items open the menu, above the portal's own entries. With several items, do not rely on their order: the portal inserts each one at the top, so two items can come out in reverse registration order, and the undeclared `position` field it may read as an index into the action array (separators included) is not part of the SDK contract.
+Plugin items open the menu, above the portal's own entries, in the order they were registered.

@@ -20,7 +20,7 @@ The skill tracks a portal release, not a range, and carries no history. A plugin
 | Scope | Interface | What the portal calls | Items keyed by | Renders a React component |
 |---|---|---|---|---|
 | [`API`](api-plugin.md) | [`IApiPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IApiPlugin.md) | `setAPI` (`getAPI` is the plugin's own) | — | — |
-| [`Settings`](settings-plugin.md) | [`ISettingsPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/ISettingsPlugin.md) | `setAdminPluginSettingsValue`; `getAdminPluginSettings` while the settings aside is open, possibly on every render | — | `ISettings.component` |
+| [`Settings`](settings-plugin.md) | [`ISettingsPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/ISettingsPlugin.md) | `setAdminPluginSettingsValue`; `getAdminPluginSettings` once each time the settings aside opens | — | `ISettings.component` |
 | [`ContextMenu`](../items/context-menu-item.md) | [`IContextMenuPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IContextMenuPlugin.md) | `getContextMenuItems` | `key` | — (a click may open a modal) |
 | [`InfoPanel`](../items/info-panel-item.md) | [`IInfoPanelPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IInfoPanelPlugin.md) | `getInfoPanelItems` | `key` | `component` |
 | [`MainButton`](../items/main-button-item.md) | [`IMainButtonPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IMainButtonPlugin.md) | `getMainButtonItems` | `key` | — |
