@@ -60,8 +60,9 @@ the tag and registry sources are added there.
 
 Screens built **for the portal itself** are a different job: a plugin gets the kit through
 the portal's shim, which resolves one specifier per package and throws on a subpath import.
-That belongs to [`plugin-sdk`](../plugin-sdk/SKILL.md), which keeps the plugin delta and
-nothing else.
+That belongs to [`plugin-sdk`](../plugin-sdk/SKILL.md). Its `references/ui-kit.md` keeps the
+plugin delta — which of the rules here hold in a plugin and which do not — and sends the
+reader back here for the rest, so a fact about a component is written once.
 
 ## Layout
 

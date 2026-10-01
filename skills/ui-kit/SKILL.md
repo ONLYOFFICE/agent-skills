@@ -35,8 +35,9 @@ missing provider empties every label, and nothing is logged.
 2. Not installed? Ask how it is meant to be — there is no registry, so the answer decides the
    specifier.
 3. A **DocSpace portal plugin** (`@onlyoffice/docspace-plugin-sdk` in `package.json`, or
-   imports of `@docspace/ui-kit`) is a different job: stop and load the `plugin-sdk` skill. The
-   portal's shim resolves one specifier per package and throws on a subpath import.
+   imports of `@docspace/ui-kit`) is the `plugin-sdk` skill's job: the portal decides how a
+   plugin gets the kit, so load that skill — it says which rules below still hold in a plugin
+   (most do).
 4. Prefer what the installed package says over what you remember: its own
    `components/<folder>/README.md`, and `dist/types/**/*.d.ts` for props.
 
