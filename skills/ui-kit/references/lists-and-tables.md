@@ -45,7 +45,9 @@ export function MemberList({ members, isLoading }: { members: Member[]; isLoadin
 `RectangleSkeleton` and `CircleSkeleton` are the two shapes.
 
 - The skeleton colours are **fixed, not themed** — black at 10% and 15% opacity. On a dark
-  surface they are nearly invisible; pass `backgroundColor` and `foregroundColor` yourself.
+  surface they are nearly invisible. Pass a variable you declare under `.light` / `.dark`,
+  `backgroundColor="var(--list-skeleton)"`, rather than a hex chosen in JavaScript — see
+  [`theming.md`](theming.md#checking-dark-mode).
 - A skeleton has no accessible name: its `title` defaults to `""`, so the `aria-labelledby`
   on the SVG resolves to nothing. Mark the region `aria-busy`, or give the skeleton standing
   for the whole region a `title`.

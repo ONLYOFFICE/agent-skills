@@ -771,6 +771,28 @@ expect(
   { code: 0, has: ["W-toggle-wrapper"] },
 );
 
+// --- the two inputs built on InputBlock still need tabIndex ------------------------------------
+
+const searchBox = (attributes) => `import { useState } from "react";
+import { SearchInput } from "@onlyoffice/apps-ui-kit/components/search-input";
+import { InputSize } from "@onlyoffice/apps-ui-kit/components/text-input";
+
+export function Search() {
+  const [query, setQuery] = useState("");
+  return <SearchInput size={InputSize.base} value={query} onChange={setQuery} ${attributes} />;
+}
+`;
+expect(
+  "searchinput-without-tabindex",
+  { "src/AppProviders.tsx": PROVIDERS, "src/Search.tsx": searchBox(`placeholder="Search"`) },
+  { code: 0, has: ["W-tabindex-missing"] },
+);
+expect(
+  "searchinput-with-tabindex",
+  { "src/AppProviders.tsx": PROVIDERS, "src/Search.tsx": searchBox(`placeholder="Search" tabIndex={0}`) },
+  { code: 0, lacks: ["W-tabindex-missing", "W-tabindex-noise"] },
+);
+
 // --- a provider is mounted by its tag ----------------------------------------------------------
 
 expect(

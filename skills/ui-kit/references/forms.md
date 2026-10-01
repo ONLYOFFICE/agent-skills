@@ -70,6 +70,16 @@ what the example above does. Two cases need something else:
 Do not pass `tabIndex={0}` to make a control reachable. Every control here is in the tab order
 already; `tabIndex` is for taking one **out**, which is a deliberate and rare thing to want.
 
+Two exceptions, both built on `InputBlock`, whose `tabIndex` still defaults to `-1`:
+
+- **`PasswordInput`** — pass `tabIndex={0}`, or the field cannot be reached by keyboard.
+  `labelFor` and `id` name it as usual.
+- **`SearchInput`** — pass `tabIndex={0}` for the same reason. It cannot be captioned either:
+  its `id` lands on the wrapper `<div>` as well as the input, so `labelFor` finds the wrapper
+  first, and it takes no `aria-*` props. A search box usually has no visible caption anyway;
+  name it with `aria-label` set on the input element through a ref, and give it a
+  `placeholder`.
+
 ## Spacing: do not add a gap
 
 `FieldContainer` carries `margin: 0 0 16px` of its own. A flex column with `gap: 16` spaces

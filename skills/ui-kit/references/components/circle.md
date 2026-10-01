@@ -1,6 +1,6 @@
 <!-- synced-from: docspace-ui-kit-react 4.0.0 components/circle/README.md -->
 <!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->
-<!-- body-sha256: a5a05c4579b484ea3d421b61996b82a09c652cf07e57ab275e7e0f9fd69e44e2 -->
+<!-- body-sha256: a1674c9f920590439c6b76d35273e9a384c7c8efacd5ca3fb07477ef4976c923 -->
 
 > Synced from the kit's own `components/circle/README.md` at 4.0.0. Where this page and [SKILL.md](../../SKILL.md) disagree, the skill's rule wins until the kit is corrected.
 
@@ -160,10 +160,11 @@ export function MemberListPlaceholder({ rows }: { rows: number }) {
 - **It has no accessible name by default.** The SVG carries `role="img"` and an
   `aria-labelledby` pointing at a `<title>` that is not rendered, because `title` defaults to
   `""`. Pass a `title` or mark the container `aria-busy`.
-- **The colours are fixed, not themed.** Black at 10% and 15% opacity, whatever the theme. On a
-  dark surface pass `backgroundColor` and `foregroundColor` yourself. They are the only way in:
-  the component reads no CSS custom property, and its colours are SVG gradient stops filled from
-  these props, so a variable set on a wrapper never reaches them.
+- **The colours are fixed, not themed.** Black at 10% and 15% opacity, whatever the theme, so on
+  a dark surface it nearly disappears. `backgroundColor` and `foregroundColor` are the way in: they
+  are written as the gradient stops' `stop-color` attribute, and a `var()` there resolves against
+  the page, so a pair declared under `.light` and `.dark` and passed as
+  `backgroundColor="var(--my-skeleton)"` follows the theme as it switches.
 - **It is not safe to server-render.** The underlying library builds its gradient and clip-path
   ids from a random value unless it is given a `uniqueKey`, and this component neither accepts
   one nor supplies a stable one — so SSR and the client produce different markup.

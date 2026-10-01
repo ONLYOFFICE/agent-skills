@@ -34,6 +34,8 @@ const TAB_INDEX_UNNEEDED = new Set([
   "Checkbox",
   "ComboBox",
 ]);
+// Built on InputBlock, which kept the -1 default the four above lost.
+const TAB_INDEX_NEEDED = new Set(["SearchInput", "PasswordInput"]);
 const SKIP_DIRS = new Set(["node_modules", "dist", "build", "out", "coverage", ".next", ".git", ".turbo", ".cache"]);
 const SOURCE_FILE = /\.(?:m|c)?[jt]sx?$/;
 
@@ -440,6 +442,10 @@ function checkTag(file, text, lineAt, tag, name, index, component, inString) {
   // is the correct value and 0 breaks the active-descendant pattern.
   if (TAB_INDEX_UNNEEDED.has(name) && /^(\{\s*0\s*\}|"0"|'0')$/.test(value("tabIndex"))) {
     add("warning", "W-tabindex-noise", file, line, `<${name} tabIndex={0}>`, "every control in the kit is in the tab order already; `tabIndex` is for taking one out, not for putting it in");
+  }
+  // The other half: these two pass their `tabIndex` to InputBlock, whose own default is still -1.
+  if (TAB_INDEX_NEEDED.has(name) && !has("tabIndex")) {
+    add("warning", "W-tabindex-missing", file, line, `<${name}> without \`tabIndex\``, "it is built on InputBlock, whose tabIndex defaults to -1, so the field cannot be reached from the keyboard; pass tabIndex={0}");
   }
   // A Textarea's `id` lands on the `<textarea>` itself, so a container's `labelFor` names it
   // exactly as it names any other control. What its closed props type costs is the ability to
