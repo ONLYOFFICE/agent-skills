@@ -102,7 +102,7 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 
 ### Silent failures in the UI layer
 
-The plugin loaded and rendered, and what the user sees is still wrong. They read as styling bugs and are not — nearly every one is a component default rather than a rule: fixes in [ui-kit.md](ui-kit.md#behavioural-traps) and [modal-dialog.md](components/modal-dialog.md). For the ones that really are the stylesheet, [styles.md](styles.md).
+The plugin loaded and rendered, and what the user sees is still wrong. They read as styling bugs and are not — nearly every one is a component default rather than a rule. The kit's own defaults are the `ui-kit` skill's rules ([ui-kit.md](ui-kit.md) says where they are); the ones only the portal shows are in [ui-kit.md → Behavioural traps](ui-kit.md#behavioural-traps) and [modal-dialog.md](components/modal-dialog.md). For the ones that really are the stylesheet, [styles.md](styles.md).
 
 | Symptom | Cause |
 |---|---|

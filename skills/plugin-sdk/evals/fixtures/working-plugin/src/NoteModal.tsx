@@ -4,6 +4,7 @@ import { usePluginActions } from "@onlyoffice/docspace-plugin-sdk/react";
 import { ToastType } from "@onlyoffice/docspace-plugin-sdk";
 
 import { t } from "./locales";
+import styles from "./NoteModal.module.css";
 
 /** Notes by room id. In memory on purpose - the fixture is not about persistence. */
 export const notes = new Map<string, string>();
@@ -26,8 +27,10 @@ export const NoteModal = () => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%" }}>
       <Textarea
+        wrapperClassName={styles.note}
+        aria-label={t("note.title")}
         value={draft}
         placeholder={t("note.placeholder")}
         heightTextArea={120}
