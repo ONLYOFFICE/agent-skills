@@ -13,7 +13,7 @@ the list of skills; the plugin manifests only point here.
 |---|---|---|
 | [`embed-sdk`](skills/embed-sdk/SKILL.md) | Embed SDK **2.2.0** | Embedding ONLYOFFICE Apps (formerly DocSpace) into web apps with the [Embed SDK](https://api.onlyoffice.com/docspace/javascript-sdk/get-started/) ([`@onlyoffice/docspace-sdk-js`](https://github.com/ONLYOFFICE/docspace-sdk-js)): mode selection, `TFrameConfig`, authentication (password hash flow, OAuth `getToken`, public room tokens), frame events, instance methods, editor automation, troubleshooting |
 | [`plugin-sdk`](skills/plugin-sdk/SKILL.md) | Plugins SDK **3.0.0**, ONLYOFFICE Apps **4.0** | Building, auditing and explaining ONLYOFFICE Apps plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started/) ([`@onlyoffice/docspace-plugin-sdk`](https://github.com/ONLYOFFICE/docspace-plugin-sdk)): React components built from the portal's `@onlyoffice/apps-ui-kit`, the plugin runtime hooks, the eleven scopes, item shapes and filters, actions and payloads, host behaviour, plus offline scripts that scaffold a buildable Vite project and check one against the portal loader contract |
-| [`ui-kit`](skills/ui-kit/SKILL.md) | UI kit **4.0.0** | Building React 19 screens in your own application with the ONLYOFFICE UI kit ([`@onlyoffice/apps-ui-kit`](https://github.com/ONLYOFFICE/docspace-ui-kit-react), the public name of the portal's `@docspace/ui-kit`): setting it up (the two providers, and why the stylesheet needs no import), which of the 98 components fits a job, barrel versus subpath imports, the boundary between the public components and the portal-internal modules, per-component pages synced from the kit's own READMEs, and an offline check of a project's kit usage |
+| [`ui-kit`](skills/ui-kit/SKILL.md) | UI kit **4.0.0** | Building React 19 screens in your own application with the ONLYOFFICE UI kit ([`@onlyoffice/apps-ui-kit`](https://github.com/ONLYOFFICE/docspace-ui-kit-react), the public name of the portal's `@docspace/ui-kit`): setting it up (the two providers, and why the stylesheet needs no import), which of the 98 components fits a job, barrel versus subpath imports, the boundary between the public components and the portal-internal modules, where to read a component's own page (the installed package, or the [UI kit docs](https://api.onlyoffice.com/docspace/ui-kit/)), and an offline check of a project's kit usage |
 
 Every skill follows the router pattern: `SKILL.md` holds the decision tables and critical
 rules; details live in `references/` and are loaded on demand. The plugin carries an eval
@@ -97,7 +97,7 @@ alike — the one directory to use when a project mixes agents.
 sources.json             the external hosts (docs site and its fallback stand, GitHub, raw files, MCP) named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at a staging or local docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
-                         sync-ui-kit.mjs: copies the UI kit's own component READMEs into skills/ui-kit and derives its manifest
+                         sync-ui-kit.mjs: derives skills/ui-kit's component manifest from the UI kit's own metadata
 evals/                   the `claude plugin eval` suite: one directory per case (prompt.md + graders/), results/ gitignored
 skills/embed-sdk/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
@@ -123,9 +123,8 @@ skills/plugin-sdk/
 └── evals/               graded scenarios, the fixture plugin one of them starts from, trigger tests
 skills/ui-kit/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules
-├── sources.json         kit version, the commit the synced pages came from, hosts it links to
+├── sources.json         kit version, hosts it links to (the docs site, the kit's repository)
 ├── references/          setup, choosing, forms, overlays, lists, theming, i18n, testing, public API, troubleshooting
-│   └── components/      115 pages synced from docspace-ui-kit-react — regenerate, never edit
 ├── scripts/             check-usage.mjs + its self-test, and data/kit-manifest.json derived by the sync
 ├── templates/           the entry point and the provider composition, copied into a project
 └── evals/               graded scenarios, the bare Vite app they build on, trigger tests

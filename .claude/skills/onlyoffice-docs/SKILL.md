@@ -5,7 +5,7 @@ description: >
   production has no Markdown pages) while working on the skills of this repository: find the
   page that states a signature, field, default, enum value, endpoint or event, print it or one
   heading of it, and check whether production serves the Markdown docs at all. Use when writing
-  or correcting a reference of embed-sdk or plugin-sdk, when a claim in a skill must be checked
+  or correcting a reference of embed-sdk, plugin-sdk or ui-kit, when a claim in a skill must be checked
   against the docs, when a reference needs a docs link, when deciding whether a passage
   duplicates the docs and can become a pointer, or when someone asks "is the documentation live
   on production", "what does the docs page for X say", "find the docs page about Y".
@@ -30,7 +30,7 @@ node .claude/skills/onlyoffice-docs/scripts/docs.mjs page SDKInstance --toc     
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs                                  # offline self-test of the parsers
 ```
 
-Section aliases for `--section`: `embed-sdk`, `plugins-sdk`, `rest`, `mcp`, `docs-api`,
+Section aliases for `--section`: `embed-sdk`, `plugins-sdk`, `ui-kit`, `rest`, `mcp`, `docs-api`,
 `office-api`, `plugins`, `macros`, `ai`, `document-builder`, `desktop`. `--host <origin>` pins a
 site (a local docs build); `--refresh` bypasses the one-hour cache.
 
@@ -64,5 +64,10 @@ site (a local docs build); `--refresh` bypasses the one-hour cache.
   interface (`IContextMenuItem`) or an enum (`Actions`) is its page name.
 - `docspace/api-backend` (REST API): one page per operation; `find` with the resource and the
   verb (`find rooms create --section rest`).
+- `docspace/ui-kit` (UI kit): `getting-started/*` for installation, themes, translation, hooks,
+  utils, constants and structure; one page per component under `ui/<group>/<slug>`
+  (`ui/overlays/aside`, `ui/form-controls/text-input`) — the group is the Storybook group, so
+  `find` by the component's name rather than guessing it; `components/*` is the portal's
+  composites (selectors, errors, providers), not the components.
 - `docs/*`: the ONLYOFFICE Docs editor family — Docs API, Office API, editor plugins and macros,
   Document Builder, Desktop Editors.

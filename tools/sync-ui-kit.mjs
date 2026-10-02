@@ -1,71 +1,33 @@
 #!/usr/bin/env node
 /**
- * Copies the UI kit's own documentation into skills/ui-kit/references/components/ and derives
- * the skill's component manifest from it. The kit is where a fact about a component is
- * written; every page under references/components/ is a mechanical copy of one, and nothing
- * there is edited by hand.
+ * Derives skills/ui-kit/scripts/data/kit-manifest.json from the UI kit's own metadata: the
+ * ui-kit-doc block of every component README, the portal-internal modules of
+ * docs/public-api.md and the root-barrel snapshot in docs/plugin-surface.json.
  *
- *   node tools/sync-ui-kit.mjs --from <dir> --write   copy the pages and rewrite the manifest
- *   node tools/sync-ui-kit.mjs --from <dir> --check   exit 1 when a copy differs from the source
- *   node tools/sync-ui-kit.mjs --check                offline: exit 1 when a page was hand-edited
+ *   node tools/sync-ui-kit.mjs --from <dir> --write   rewrite the manifest
+ *   node tools/sync-ui-kit.mjs --from <dir> --check   exit 1 when the manifest differs from the kit
  *   node tools/sync-ui-kit.mjs --from <dir> --dump    print the derived manifest and stop
  *
  * <dir> is a checkout of docspace-ui-kit-react, or an installed
- * node_modules/@onlyoffice/apps-ui-kit — the package's `files` ships the READMEs and the
- * cross-cutting docs pages at their source paths, so both trees look the same from here.
+ * node_modules/@onlyoffice/apps-ui-kit: the package ships the READMEs and the docs pages.
  *
- * What travels, and where it lands:
- *   components/<name>/README.md          → <name>.md
- *   components/<parent>/<child>/README.md → <parent>/<child>.md
- *   providers/<name>/README.md           → providers/<name>.md
- *   docs/getting-started.md              → _getting-started.md
- *   docs/components.md                   → README.md (the catalogue)
- *
- * and, into the manifest only: each README's metadata block, the portal-internal modules of
- * docs/public-api.md, and docs/plugin-surface.json -- the kit's checker-written list of every
- * root-barrel name with the module it comes from.
- *
- * Every page keeps a provenance header and a hash of its own body, so a hand edit here is
- * caught offline by --check rather than silently reverted by the next sync. The revision the
- * pages came from is recorded once, in the skill's sources.json, rather than in every header:
- * a header carrying it would make every kit commit rewrite all 115 files.
- *
- * Exit: 0 ok · 1 drift, a hand-edited page, or a missing metadata block under --strict ·
- * 2 usage, or a source tree that cannot be read.
+ * Exit: 0 ok, 1 drift or a missing metadata block under --strict, 2 usage or a source tree
+ * that cannot be read.
  */
 
-import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SKILL = path.join(ROOT, "skills", "ui-kit");
-const PAGES = path.join(SKILL, "references", "components");
 const MANIFEST = path.join(SKILL, "scripts", "data", "kit-manifest.json");
 const SKILL_SOURCES = path.join(SKILL, "sources.json");
 const ROOT_SOURCES = path.join(ROOT, "sources.json");
 
 const PACKAGE = "@onlyoffice/apps-ui-kit";
 const PROVIDER_PAGES = ["theme", "translation", "error-boundary"];
-// `docs/known-defects.md` used to travel here as `_known-defects.md`. The kit emptied and
-// removed it once every entry was fixed: a fault now lives in its own component's README, which
-// is a page this tool already copies, and what a fix means for a consumer is in the kit's
-// CHANGELOG. Nothing replaced it here.
-const DOC_PAGES = {
-  "docs/components.md": "README.md",
-  "docs/getting-started.md": "_getting-started.md",
-};
-
-/**
- * Top-level modules a consumer may import. Listed rather than derived: the kit's folder
- * tree says nothing about tiering, and `docs/public-api.md` is the decision. Checked
- * against the source tree on every run, so a rename here is loud.
- */
 const PUBLIC_TOP_LEVEL = ["assets", "constants", "context", "enums", "errors", "hooks", "locales", "styles", "types", "utils"];
-
-/** Names the barrel exports that no application outside the portal should be reaching for. */
 const LEGACY_NAMES = {
   ThemeProviderComponent: "the older theme provider; use ThemeProvider from providers/theme",
 };
@@ -82,10 +44,8 @@ const mode = has("--write") ? "write" : has("--dump") ? "dump" : "check";
 const strict = has("--strict");
 
 let problems = 0;
-// --dump prints the manifest on stdout for a pipe, so everything said aloud goes to stderr there.
 const say = (...parts) => (mode === "dump" ? console.error : console.log)(parts.join(""));
-/** Said aloud but not fatal: the run still describes the kit as it is. */
-const note = (kind, where, message) => say(`${kind.padEnd(12)} ${where}  — ${message}`);
+const note = (kind, where, message) => say(`${kind.padEnd(12)} ${where}  - ${message}`);
 const report = (kind, where, message) => {
   problems++;
   note(kind, where, message);
@@ -99,10 +59,8 @@ function fail(message) {
 const posix = (p) => p.split(path.sep).join("/");
 const readJson = (file) => JSON.parse(readFileSync(file, "utf8"));
 
-// --- where the source tree is, and what it says about itself -------------------------------
-
 function openSource(dir) {
-  if (!dir) fail("--from <dir> is required for --write, --check against a source, and --dump");
+  if (!dir) fail("--from <dir> is required: a checkout of docspace-ui-kit-react or an installed node_modules/@onlyoffice/apps-ui-kit");
   if (!existsSync(dir)) fail(`no such directory: ${dir}`);
 
   const read = (rel) => {
@@ -111,7 +69,7 @@ function openSource(dir) {
   };
 
   const pkgText = read("package.json");
-  if (!pkgText) fail(`${dir} has no package.json — expected a checkout of docspace-ui-kit-react or an installed ${PACKAGE}`);
+  if (!pkgText) fail(`${dir} has no package.json: expected a checkout of docspace-ui-kit-react or an installed ${PACKAGE}`);
   const pkg = JSON.parse(pkgText);
   if (pkg.name !== PACKAGE) fail(`${dir} is ${pkg.name}, not ${PACKAGE}`);
 
@@ -124,50 +82,21 @@ function openSource(dir) {
       .map((entry) => entry.name)
       .sort();
   };
-
-  // An installed package keeps only what ships as source at the top -- READMEs, styles, locales
-  // -- and the modules themselves under dist/: `types` has no JavaScript at all, only .d.ts.
   const hasModule = (name) =>
     [name, `dist/esm/${name}`, `dist/types/${name}`].some((rel) => existsSync(path.join(dir, ...rel.split("/"))));
 
   return { dir, kind, version: pkg.version, read, listDirs, hasModule };
 }
 
-/** The commit and branch the pages came from, when the source is a git checkout. */
-function revisionOf(dir) {
-  if (!existsSync(path.join(dir, ".git"))) return { commit: null, branch: null };
-  try {
-    const git = (...a) => execFileSync("git", ["-C", dir, ...a], { encoding: "utf8" }).trim();
-    return { commit: git("rev-parse", "--short=8", "HEAD"), branch: git("rev-parse", "--abbrev-ref", "HEAD") };
-  } catch {
-    return { commit: null, branch: null };
-  }
-}
-
-// --- the pages ------------------------------------------------------------------------------
-
-/** Every README the kit ships that this skill copies, as upstream path → page path. */
-function pageMap(src) {
-  const map = new Map();
-
+function componentReadmes(src) {
+  const found = [];
   for (const folder of src.listDirs("components")) {
-    if (src.read(`components/${folder}/README.md`) !== null) map.set(`components/${folder}/README.md`, `${folder}.md`);
+    if (src.read(`components/${folder}/README.md`) !== null) found.push(`components/${folder}/README.md`);
     for (const child of src.listDirs(`components/${folder}`)) {
-      if (src.read(`components/${folder}/${child}/README.md`) !== null) {
-        map.set(`components/${folder}/${child}/README.md`, `${folder}/${child}.md`);
-      }
+      if (src.read(`components/${folder}/${child}/README.md`) !== null) found.push(`components/${folder}/${child}/README.md`);
     }
   }
-
-  for (const name of PROVIDER_PAGES) {
-    if (src.read(`providers/${name}/README.md`) !== null) map.set(`providers/${name}/README.md`, `providers/${name}.md`);
-  }
-
-  for (const [upstream, page] of Object.entries(DOC_PAGES)) {
-    if (src.read(upstream) !== null) map.set(upstream, page);
-  }
-
-  return map;
+  return found;
 }
 
 const META_RE = /<!--\s*ui-kit-doc\s*([\s\S]*?)-->/;
@@ -183,73 +112,6 @@ function metadataOf(text, where) {
   }
 }
 
-/** `](target)` and `](target "title")`, skipping absolute, anchor-only and mail links. */
-const LINK_RE = /\]\((?!https?:|#|mailto:)([^)\s]+)((?:\s+"[^"]*")?)\)/g;
-
-function rewriteLinks(text, upstream, page, map, repoUrl, commit, unmapped) {
-  const fromDir = path.posix.dirname(upstream);
-  const pageDir = path.posix.dirname(page);
-
-  return text.replace(LINK_RE, (whole, target, title) => {
-    const hash = target.indexOf("#");
-    const file = hash >= 0 ? target.slice(0, hash) : target;
-    const anchor = hash >= 0 ? target.slice(hash) : "";
-    if (!file) return whole;
-
-    const resolved = path.posix.normalize(path.posix.join(fromDir, file));
-    const landing = map.get(resolved);
-
-    if (landing) {
-      const relative = path.posix.relative(pageDir === "." ? "" : pageDir, landing);
-      return `](${relative}${anchor}${title})`;
-    }
-
-    unmapped.add(`${upstream} → ${resolved}`);
-    return `](${repoUrl}/blob/${commit ?? "HEAD"}/${resolved}${anchor}${title})`;
-  });
-}
-
-const HASH_MARK = "<!-- body-sha256: ";
-
-function hashOf(body) {
-  return createHash("sha256").update(body).digest("hex");
-}
-
-/** Everything a page claims about itself, plus the body the hash covers. */
-function splitPage(text) {
-  const at = text.indexOf(HASH_MARK);
-  if (at < 0) return null;
-  const end = text.indexOf("\n", at);
-  if (end < 0) return null;
-  const line = text.slice(at, end);
-  const stated = line.slice(HASH_MARK.length).replace(/\s*-->\s*$/, "").trim();
-  return { stated, body: text.slice(end + 1) };
-}
-
-function renderPage({ upstream, page, text, map, version, commit, repoUrl, unmapped }) {
-  const source = text.replace(/\r\n/g, "\n");
-  const rewritten = rewriteLinks(source, upstream, page, map, repoUrl, commit, unmapped);
-  const depth = page.split("/").length - 1;
-  const toSkill = "../".repeat(depth + 2);
-
-  const notice = `> Synced from the kit's own \`${upstream}\` at ${version}. Where this page and [SKILL.md](${toSkill}SKILL.md) disagree, the skill's rule wins until the kit is corrected.`;
-  const body = `\n${notice}\n\n${rewritten.replace(/\n*$/, "\n")}`;
-
-  // The revision is deliberately not in here: it is the same for every page of a
-  // run, and repeating it would rewrite all 115 headers whenever the kit moves,
-  // burying the pages that really changed. `sources.json` records it once.
-  const header = [
-    `<!-- synced-from: docspace-ui-kit-react ${version} ${upstream} -->`,
-    "<!-- do-not-edit: regenerate with `node tools/sync-ui-kit.mjs --from <kit> --write`; correct the text in the kit -->",
-    `${HASH_MARK}${hashOf(body)} -->`,
-  ].join("\n");
-
-  return `${header}\n${body}`;
-}
-
-// --- the manifest ---------------------------------------------------------------------------
-
-/** The `| \`module\` |` first column of the table under a heading of `docs/public-api.md`. */
 function modulesUnder(publicApi, heading) {
   if (!publicApi) return [];
   const start = publicApi.indexOf(heading);
@@ -260,7 +122,6 @@ function modulesUnder(publicApi, heading) {
   return [...new Set(rows)];
 }
 
-/** The text of a module specifier resolved the way the kit's bundler does: a file, then a folder's index. */
 function readModule(src, rel) {
   for (const candidate of [`${rel}.ts`, `${rel}.tsx`, `${rel}/index.ts`, `${rel}/index.tsx`]) {
     const text = src.read(candidate) ?? src.read(`dist/types/${candidate.replace(/\.tsx?$/, ".d.ts")}`);
@@ -269,13 +130,6 @@ function readModule(src, rel) {
   return null;
 }
 
-/**
- * Every name a module exports, following each relative `export * from` to the end. The old
- * reading looked for `<x>/index.ts` only and knew `export { … }` only, so `billing`'s
- * `export * from "./constants"` -- a file, not a folder, of `export const` -- contributed
- * nothing, and the manifest listed 17 of the 41 names TypeScript says the root barrel takes
- * from `billing` and `uploader`.
- */
 function exportedNames(src, module) {
   const seen = new Set();
   const visited = new Set();
@@ -303,13 +157,6 @@ function exportedNames(src, module) {
   return [...seen].sort();
 }
 
-/**
- * The root-barrel names that come from a portal-internal module. The kit's own snapshot,
- * `docs/plugin-surface.json`, is read first: the TypeScript checker wrote it, it credits each
- * name to the module that put it in the barrel, and `pnpm surface:check` keeps it current. The
- * regex reading of `uploader` and `billing` stays for a package packed before the kit shipped
- * the snapshot, and says so.
- */
 function portalInternalBarrelNames(src, portalInternal) {
   const text = src.read("docs/plugin-surface.json");
   if (text) {
@@ -325,20 +172,17 @@ function portalInternalBarrelNames(src, portalInternal) {
   return [...new Set([...exportedNames(src, "uploader"), ...exportedNames(src, "billing")])].sort();
 }
 
-function buildManifest(src, pages, metas, repoUrl) {
+function buildManifest(src, metas, repoUrl) {
   const publicApi = src.read("docs/public-api.md");
   const portalInternal = modulesUnder(publicApi, "## Portal-internal");
 
   const components = {};
   const barrelNames = new Set();
 
-  for (const [upstream, page] of pages) {
-    const meta = metas.get(upstream);
-    if (!meta) continue;
-    const folder = meta.folder?.replace(/^components\//, "") ?? page.replace(/\.md$/, "");
+  for (const [upstream, meta] of metas) {
+    const folder = meta.folder?.replace(/^components\//, "") ?? upstream.replace(/^components\//, "").replace(/\/README\.md$/, "");
     components[folder] = {
       name: meta.name,
-      page: `references/components/${page}`,
       category: meta.category ?? null,
       status: meta.status ?? null,
       subpath: meta.import?.subpath ?? `components/${folder}`,
@@ -376,142 +220,48 @@ function buildManifest(src, pages, metas, repoUrl) {
   };
 }
 
-// --- running it -----------------------------------------------------------------------------
-
 const rootSources = readJson(ROOT_SOURCES);
 const skillSources = readJson(SKILL_SOURCES);
 const repoSource = skillSources.sources?.repo;
 if (!repoSource) fail(`${posix(path.relative(ROOT, SKILL_SOURCES))} declares no "repo" source`);
 const repoUrl = rootSources.hosts[repoSource.host] + (repoSource.path ?? "");
 
-function existingPages() {
-  const out = new Map();
-  const walk = (dir, prefix) => {
-    if (!existsSync(dir)) return;
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-      if (entry.isDirectory()) walk(path.join(dir, entry.name), rel);
-      else if (entry.name.endsWith(".md")) out.set(rel, readFileSync(path.join(dir, entry.name), "utf8"));
-    }
-  };
-  walk(PAGES, "");
-  return out;
-}
-
-/** Offline: every page must still hash to what its own header says. */
-function checkHashes() {
-  const pages = existingPages();
-  if (!pages.size) fail(`no pages under ${posix(path.relative(ROOT, PAGES))} — run --from <kit> --write first`);
-  for (const [page, text] of pages) {
-    const split = splitPage(text);
-    if (!split) {
-      report("NO-HASH", page, "the page carries no body-sha256 header; it did not come from this tool");
-      continue;
-    }
-    if (hashOf(split.body) !== split.stated) {
-      report("EDITED", page, "the body no longer matches its hash — re-sync, or move the correction into the kit");
-    }
-  }
-  say(`${pages.size} page(s) checked offline`);
-}
-
-if (mode === "check" && !from) {
-  checkHashes();
-  process.exit(problems ? 1 : 0);
-}
-
 const src = openSource(from);
-const revision = revisionOf(src.dir);
-const pages = pageMap(src);
-if (!pages.size) fail(`${src.dir} ships no component READMEs — is this the right tree?`);
+const readmes = componentReadmes(src);
+if (!readmes.length) fail(`${src.dir} ships no component READMEs: is this the right tree?`);
 
 const metas = new Map();
-for (const [upstream] of pages) {
-  if (!upstream.startsWith("components/")) continue;
+for (const upstream of readmes) {
   const meta = metadataOf(src.read(upstream), upstream);
   if (meta) metas.set(upstream, meta);
   else note("META-MISSING", upstream, "no ui-kit-doc block; this component is missing from the manifest");
 }
 
-// A link to a kit page this skill does not carry is pinned to a commit, and --check renders
-// with the commit sources.json recorded, not the checkout's HEAD. Otherwise any commit to the
-// kit at all -- in a folder no page comes from -- turned the check red on the two pages that
-// hold such a link, with not a byte of their text changed. --check answers "has the kit's
-// text moved"; a newer HEAD alone is reported and does not fail it.
-const linkCommit = mode === "write" ? revision.commit : (skillSources.syncedCommit ?? revision.commit);
-
-const unmapped = new Set();
-const rendered = new Map();
-for (const [upstream, page] of pages) {
-  rendered.set(
-    page,
-    renderPage({ upstream, page, text: src.read(upstream), map: pages, version: src.version, commit: linkCommit, repoUrl, unmapped }),
-  );
-}
-
-const manifest = buildManifest(src, pages, metas, repoUrl);
+const manifest = buildManifest(src, metas, repoUrl);
+const serialised = `${JSON.stringify(manifest, null, 2)}\n`;
 
 if (mode === "dump") {
-  console.log(JSON.stringify(manifest, null, 2));
+  process.stdout.write(serialised);
   process.exit(0);
 }
 
 if (mode === "write") {
-  rmSync(PAGES, { recursive: true, force: true });
-  for (const [page, text] of rendered) {
-    const file = path.join(PAGES, ...page.split("/"));
-    mkdirSync(path.dirname(file), { recursive: true });
-    writeFileSync(file, text);
-  }
   mkdirSync(path.dirname(MANIFEST), { recursive: true });
-  writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
-
+  writeFileSync(MANIFEST, serialised);
   if (manifest.kitVersion !== skillSources.version) {
-    say(`version ${skillSources.version} → ${manifest.kitVersion}: run \`node tools/sync-sources.mjs --skill ui-kit --set-version ${manifest.kitVersion}\``);
+    say(`version ${skillSources.version} -> ${manifest.kitVersion}: run \`node tools/sync-sources.mjs --skill ui-kit --set-version ${manifest.kitVersion}\``);
   }
-
-  // Edited as text, not re-serialised: sync-sources.mjs writes this file in a
-  // layout of its own -- one line per source and per version pattern -- and a
-  // round trip through JSON.stringify would reformat the whole thing.
-  let sourcesText = readFileSync(SKILL_SOURCES, "utf8");
-  for (const [key, value] of [["syncedCommit", revision.commit], ["syncedBranch", revision.branch]]) {
-    if (!value) continue;
-    const line = `"${key}": ${JSON.stringify(value)}`;
-    sourcesText = new RegExp(`"${key}":\\s*"[^"]*"`).test(sourcesText)
-      ? sourcesText.replace(new RegExp(`"${key}":\\s*"[^"]*"`), line)
-      : sourcesText.replace(/("version":\s*"[^"]*",)/, `$1\n  ${line},`);
-  }
-  writeFileSync(SKILL_SOURCES, sourcesText);
-} else {
-  const onDisk = existingPages();
-  for (const [page, text] of rendered) {
-    if (!onDisk.has(page)) report("MISSING", page, "the kit ships this page and the skill does not carry it");
-    else if (onDisk.get(page) !== text) report("DRIFT", page, "the copy differs from a fresh transformation of the kit's page");
-  }
-  for (const page of onDisk.keys()) {
-    if (!rendered.has(page)) report("STALE", page, "no page in the kit renders to this file any more");
-  }
-  if (existsSync(MANIFEST) && readFileSync(MANIFEST, "utf8") !== `${JSON.stringify(manifest, null, 2)}\n`) {
-    report("DRIFT", posix(path.relative(ROOT, MANIFEST)), "the manifest differs from what the kit now says");
-  }
-  if (revision.commit && skillSources.syncedCommit && revision.commit !== skillSources.syncedCommit) {
-    say(
-      `the kit is at ${revision.commit}, the pages were synced at ${skillSources.syncedCommit}` +
-        (problems ? "" : "; the text is the same, so a --write would only move the pinned links"),
-    );
-  }
+} else if (!existsSync(MANIFEST)) {
+  report("MISSING", posix(path.relative(ROOT, MANIFEST)), "no manifest; run --write");
+} else if (readFileSync(MANIFEST, "utf8") !== serialised) {
+  report("DRIFT", posix(path.relative(ROOT, MANIFEST)), "the manifest differs from what the kit now says; run --write");
 }
 
-for (const link of unmapped) say(`LINK?    ${link}  — no page of this skill lands there; rewritten to the kit on ${repoUrl.split("/").pop()}`);
-
-const missingMeta = [...pages.keys()].filter((u) => u.startsWith("components/") && !metas.has(u)).length;
+const missingMeta = readmes.length - metas.size;
 say(
-  `${pages.size} page(s) ${mode === "write" ? "written" : "compared"} from ${src.kind} ${src.version}${revision.commit ? ` (${revision.commit})` : ""}, ` +
+  `${readmes.length} README(s) read from ${src.kind} ${src.version}, ` +
     `${Object.keys(manifest.components).length} component(s) in the manifest, ${missingMeta} without a metadata block`,
 );
-
-if (strict && missingMeta) {
-  report("STRICT", "metadata", `${missingMeta} page(s) have no ui-kit-doc block`);
-}
+if (strict && missingMeta) report("STRICT", "metadata", `${missingMeta} README(s) have no ui-kit-doc block`);
 
 process.exit(problems ? 1 : 0);

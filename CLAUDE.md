@@ -46,11 +46,14 @@ Two skills describe `@onlyoffice/apps-ui-kit`, and each is kept honest by a diff
   specifier, tarball version, dist paths, component names, prop defaults. Run it from
   `docspace-ui-kit-react` rather than re-deriving the answer. It reads `plugin-sdk` and
   nothing else.
-- **`skills/ui-kit`** documents it for applications of their own. Its component pages and
-  manifest are copies of the kit's READMEs and `docs/`, and `node tools/sync-ui-kit.mjs --from
-  <kit> --check --strict` is what says they have drifted; `sync-ui-kit-reference` does not
-  look at this skill at all. The hand-written `references/*.md` and the rules in `SKILL.md`
-  have no drift check -- verify a claim there against the kit's source before changing it.
+- **`skills/ui-kit`** documents it for applications of their own. It carries no copies of the
+  kit's pages: an agent reads a component's README inside the installed package or its page on
+  the docs site (`https://api.onlyoffice.com/docspace/ui-kit/`). Its manifest
+  (`scripts/data/kit-manifest.json`) is derived from the kit's metadata, and `node
+  tools/sync-ui-kit.mjs --from <kit> --check --strict` is what says it has drifted;
+  `sync-ui-kit-reference` does not look at this skill at all. The hand-written
+  `references/*.md` and the rules in `SKILL.md` have no drift check -- verify a claim there
+  against the kit's source before changing it.
 
 The package specifier is shared with DocSpace-client's plugin shim, which throws on any
 specifier it does not know. All three repositories carry a `feature/ui-kit-separation`

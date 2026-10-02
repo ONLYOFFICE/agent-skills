@@ -9,7 +9,7 @@ change needs. There is no CI yet; this is the protocol it will run.
 |---|---|---|---|
 | Manifests and structure | `claude plugin validate . --strict` **and** `claude plugin validate skills --strict` | a broken `plugin.json` / `marketplace.json` (the first), a skill without frontmatter or with a bad `name` (the second — the first stops at the manifest and never reads a `SKILL.md`) | seconds |
 | Validator self-tests | `node skills/embed-sdk/scripts/test-validator.mjs`, `node skills/plugin-sdk/scripts/test-validator.mjs`, `node skills/ui-kit/scripts/test-validator.mjs` | a rule the validators stopped enforcing; the embed-sdk one also runs `sync-sources --check` and compares the validator's dictionaries with the SDK checkout when `--from` is set; the ui-kit one also runs `sync-ui-kit --check` | seconds |
-| Synced pages | `node tools/sync-ui-kit.mjs --check` | a hand edit to a page copied from the kit (`skills/ui-kit/references/components/`) — the fix belongs upstream, followed by a re-sync | seconds |
+| Kit manifest | `node tools/sync-ui-kit.mjs --from <kit> --check` | a `skills/ui-kit` manifest that no longer matches the kit's metadata — rerun with `--write`; needs a kit checkout or an installed package | seconds |
 | Docs script self-test | `node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs` | the parsers behind the internal docs script, offline | seconds |
 | Links and pins | `node tools/sync-sources.mjs --check` | a link not built on a declared host, a version literal that disagrees with a skill's `sources.json` | seconds |
 | Links, live | `node tools/sync-sources.mjs --verify` (production) or `--verify --fallback` (the stand) | a page the site no longer serves | one request per link |
@@ -29,7 +29,7 @@ node skills/plugin-sdk/scripts/test-validator.mjs
 node skills/ui-kit/scripts/test-validator.mjs
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs
 node tools/sync-sources.mjs --check
-node tools/sync-ui-kit.mjs --check
+node tools/sync-ui-kit.mjs --from <kit> --check     # with a kit checkout or an installed package at hand
 ```
 
 All eight are offline and finish in seconds; a red one blocks the commit.

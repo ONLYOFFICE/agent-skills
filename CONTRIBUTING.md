@@ -20,7 +20,7 @@ the README table, nothing else.
 | `evals/` | yes | The measuring instrument — see below. Not read by agents. |
 | `scripts/` | if useful | Tools an agent runs: validators, generators, probes. Every validator ships with a `test-validator.mjs` that exercises it against known-good and known-bad input and exits non-zero on a mismatch — the validator is what makes a rule mechanical, so it must not silently rot. Node only, no dependencies. No network, with one exception: a script named `probe-*.mjs` may query the portal or site the user named, reads only, and never runs from the self-test. (The repository-internal `.claude/skills/onlyoffice-docs/scripts/docs.mjs` reads the docs site for the people writing references; it is not part of a shipped skill.) |
 | `sources.json` | yes | The skill's external sources: the SDK version it targets (omitted by a skill that pins none), which of the hosts declared in the root `sources.json` it links to and at which paths, the placeholder hosts of its examples, and `skipDirs` — the directories of synced pages the link check leaves alone. A new site is a new host at the root first; a host named `<name>Fallback` there (`apiSiteFallback`, the docs stand) is a stand-in, never a link base — `--verify --fallback` and the internal `onlyoffice-docs` script read from it when the primary host has no page. `node tools/sync-sources.mjs --check` fails when a link or a pinned version is not traceable to it — see `.claude/skills/sync-sources/SKILL.md` for moving a skill to another site or SDK release. |
-| a directory in `skipDirs` | if synced | Pages copied from an upstream repository by a `tools/sync-*.mjs`, each carrying a provenance header and a hash of its body. Never hand-edited: the text is corrected upstream and the sync is run again, and the sync tool's `--check` runs in the skill's self-test to catch an edit made here anyway. `skills/ui-kit/references/components/` is the one today. |
+| a directory in `skipDirs` | if synced | Pages copied from an upstream repository by a `tools/sync-*.mjs`, each carrying a provenance header and a hash of its body. Never hand-edited: the text is corrected upstream and the sync is run again, and the sync tool's `--check` runs in the skill's self-test to catch an edit made here anyway. No skill has one today: `ui-kit` used to copy the kit's component READMEs and now points at the installed package and the docs site instead. |
 | `templates/`, `vendor/` | if needed | Files a generator copies into a project. |
 
 Content language is English throughout: models read it.
@@ -72,7 +72,7 @@ claude plugin validate skills --strict                         # the SKILL.md fi
 node skills/<name>/scripts/test-validator.mjs                  # for every skill that has a validator
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs      # the internal docs script's parsers
 node tools/sync-sources.mjs --check                            # every link and pinned version traces to sources.json
-node tools/sync-ui-kit.mjs --check                             # no synced page was edited here
+node tools/sync-ui-kit.mjs --from <kit> --check                # the ui-kit manifest matches the kit (a checkout or an installed package)
 ```
 
 For a content change, also the cheap behaviour suite — [TESTING.md](TESTING.md) has the full
