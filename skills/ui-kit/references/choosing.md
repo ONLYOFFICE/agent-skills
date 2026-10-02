@@ -1,8 +1,10 @@
 # Choosing a component
 
-The catalogue — [`components/README.md`](components/README.md) — lists all 109 pages with a
-row each, and its *close calls* table settles the common confusions (dialog or aside, text or
-heading, loader or skeleton). This page is the part a catalogue cannot state: which of these
+The kit's catalogue — `docs/components.md`, shipped inside the package — lists all 109
+components with a row each, and its *close calls* table settles the common confusions (dialog
+or aside, text or heading, loader or skeleton); the docs site groups the same components under
+[UI](https://api.onlyoffice.com/docspace/ui-kit/ui.md), one page per group. This page is the
+part a catalogue cannot state: which of these
 components were built for an application like yours, and which are the DocSpace portal's own
 furniture that merely happens to ship.
 

@@ -1,10 +1,11 @@
 # Setting the kit up in an application
 
-**Read [`components/_getting-started.md`](components/_getting-started.md) first.** It is the
-kit's own page, synced from the repository, and it is the authority on installing the package
-(pack with pnpm, never npm), the four required peer dependencies, why no stylesheet is
-imported, both providers with their props, the fonts, the import forms and the public/
-portal-internal boundary.
+**Read the kit's own `docs/getting-started.md` first.** It ships inside the package, and the
+docs site carries it as
+[Installation](https://api.onlyoffice.com/docspace/ui-kit/getting-started/installation.md).
+It is the authority on installing the package, the four required peer dependencies, why no
+stylesheet is imported, both providers with their props, the fonts, the import forms and the
+public/portal-internal boundary.
 
 This page is what that one does not say.
 

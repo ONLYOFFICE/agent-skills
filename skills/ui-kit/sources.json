@@ -1,12 +1,10 @@
 {
   "version": "4.0.0",
-  "syncedCommit": "17af40c6",
-  "syncedBranch": "feature/ui-kit-separation",
   "sources": {
+    "docs": {"host": "apiSite", "path": "/docspace/ui-kit", "verify": true},
     "repo": {"host": "github", "path": "/docspace-ui-kit-react", "verify": true}
   },
   "placeholderHosts": ["localhost", "your-app.example", "portal.example.com"],
-  "skipDirs": ["references/components"],
   "versionPatterns": [
     {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
     {"file": "SKILL.md", "pattern": "apps-ui-kit` \\*\\*{v}\\*\\*"},

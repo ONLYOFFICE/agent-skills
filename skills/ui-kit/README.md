@@ -26,12 +26,12 @@ means this directory, resolved to an absolute path.
 node skills/ui-kit/scripts/check-usage.mjs ./my-app          # findings as text
 node skills/ui-kit/scripts/check-usage.mjs ./my-app --json
 node skills/ui-kit/scripts/test-validator.mjs                # the self-test
-node tools/sync-ui-kit.mjs --from ../docspace-ui-kit-react --write
+node tools/sync-ui-kit.mjs --from ../docspace-ui-kit-react --write   # rebuild the manifest from the kit
 ```
 
 **`check-usage.mjs`** reads a project as text — no build, no network, nothing executed — and
 reports what the kit itself never does. It knows the kit from
-`scripts/data/kit-manifest.json`, which the sync derives from the kit's own sources, so the
+`scripts/data/kit-manifest.json`, which `tools/sync-ui-kit.mjs` derives from the kit's own metadata, so the
 visibility prop it expects for a component, the list of portal-internal modules and which
 components are default exports on their subpath are all facts rather than a hand-kept list —
 which is also why the barrel mistake reached it: the manifest is only as right as the kit's own
@@ -44,19 +44,18 @@ visible label, a caption attached to no control, a column whose `gap` doubles th
 
 **`test-validator.mjs`** builds twenty throwaway projects in the temp directory and asserts
 both what each must report and what it must not, then checks the manifest for internal sense
-and runs the two sync tools offline. 393 expectations; breaking one branch of the validator
-fails it.
+and runs the link check offline; given `--kit-project`, it also compares the manifest with the
+installed kit. Breaking one branch of the validator fails it.
 
 ## What it targets
 
 `@onlyoffice/apps-ui-kit` **4.0.0** — the public name of the library the portal ships as
 `@docspace/ui-kit`, built from
-[`docspace-ui-kit-react`](https://github.com/ONLYOFFICE/docspace-ui-kit-react).
-ESM only, React 19, no registry carries it today: a consumer installs it from a tarball
-packed with `pnpm pack`, or from a checkout. The repository carries no tags either, so
-[`sources.json`](sources.json) pins a branch and a commit rather than a release. When the
-kit is published, the install line moves in one place — the eval fixture's own README — and
-the tag and registry sources are added there.
+[`docspace-ui-kit-react`](https://github.com/ONLYOFFICE/docspace-ui-kit-react) and
+installed from npm. ESM only, React 19. Its documentation is the kit's own: the READMEs and
+`docs/*.md` that ship inside the package, and the same pages on the docs site under
+[`docspace/ui-kit`](https://api.onlyoffice.com/docspace/ui-kit/). The skill links the site
+and copies nothing from it.
 
 Screens built **for the portal itself** are a different job: a plugin gets the kit through
 the portal's shim, which resolves one specifier per package and throws on a subpath import.
@@ -68,9 +67,8 @@ reader back here for the rest, so a fact about a component is written once.
 
 ```
 SKILL.md      the skill: pinned facts, the discovery step, the routing table and the critical rules
-sources.json  the kit version this skill is pinned to, and the commit its synced pages came from
+sources.json  the kit version this skill is pinned to, and the hosts it links to
 references/   the knowledge base, loaded on demand
-  components/   synced from the kit's own component READMEs — regenerate, never edit
 evals/        graded scenarios and the trigger tests for the description — not read by agents
 scripts/      offline checks an agent runs over a project that uses the kit
 templates/    provider composition copied into a project
@@ -80,11 +78,11 @@ templates/    provider composition copied into a project
 
 **Where a fact about the kit is written.** In the kit, not here. Every component's
 behaviour lives in `components/<folder>/README.md` in `docspace-ui-kit-react`, which ships
-inside the package itself, and `references/components/` is a mechanical copy of those pages
-carrying a provenance header and a hash of its own body. Correct the kit's README and
-re-sync; a page edited here is reverted by the next sync and the self-test says so. What is
-written here by hand is the part no component README can hold: which component to choose,
-how the pieces compose, and the rules an agent breaks without being told.
+inside the package itself and is published on the docs site; the skill carries no copy of
+those pages, and `SKILL.md` says in which order an agent reads the package, the site and the
+skill. Correct the kit's README and the site follows. What is written here by hand is the
+part no component README can hold: which component to choose, how the pieces compose, and
+the rules an agent breaks without being told.
 
 **How a rule earns its place in `SKILL.md`.** `SKILL.md` is loaded whole on every trigger, so
 it has a budget of **175 lines**. A new trap goes on the component's page upstream or into a
@@ -96,8 +94,8 @@ eye before a single rule had been measured. Trading a trap that an eval has show
 a round number is a bad exchange; what keeps the file small is the entry condition above, not
 the ceiling.
 
-**Rules the kit's own pages now state as well.** Most of the sixteen are said somewhere under
-`references/components/` too — rules 1, 2, 5 and 6 in `_getting-started.md`, rule 4 in the
+**Rules the kit's own pages now state as well.** Most of the sixteen are said somewhere in
+the kit's pages too — rules 1, 2, 5 and 6 in `docs/getting-started.md`, rule 4 in the
 catalogue's *prop that shows and hides it* table, and rules 7 to 15 on the page of the component
 each is about.
 
@@ -151,7 +149,7 @@ What it does not buy, and should not be claimed:
   fresh sessions with the plugin installed; the run gave three judges the descriptions and the
   messages. `trigger-tests.md` says so in full. Re-run the real thing before a release that
   changes the description.
-- **Prose in the synced pages is checked by nobody.** The kit's validator settles metadata,
+- **Prose in the kit's pages is checked by nobody.** The kit's validator settles metadata,
   generated tables and compiling examples; a sentence that has become false as the component
   changed is caught only by someone re-reading it. Five such sentences have now been found by the
   eval runs and fixed upstream, which is the argument for running these at all — and also the

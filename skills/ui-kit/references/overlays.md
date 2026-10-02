@@ -1,7 +1,9 @@
 # Dialogs, panels, menus and toasts
 
-Everything the kit draws over the page. Each component's own page is under
-`references/components/`; this one is the part that decides between them and the part that
+Everything the kit draws over the page. Each component's own page is its README in the
+installed package or a page under
+[`ui/overlays/`](https://api.onlyoffice.com/docspace/ui-kit/ui/overlays.md) on the docs site;
+this one is the part that decides between them and the part that
 only bites when they are composed.
 
 ## The prop that shows and hides it
