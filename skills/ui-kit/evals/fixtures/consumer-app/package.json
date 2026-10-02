@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@onlyoffice/apps-ui-kit": "^4.0.0",
     "i18next": "^25.5.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

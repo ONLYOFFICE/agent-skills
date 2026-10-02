@@ -11,9 +11,10 @@ probably be deleted.
 
 ## The scenarios
 
-[`evals.json`](evals.json) holds five: three `build` scenarios that extend a real Vite
-application, one `explain` question graded on the transcript, and one `audit` of a planted
-file.
+[`evals.json`](evals.json) holds seven: three `build` scenarios that extend a real Vite
+application, three `explain` questions graded on the transcript, and one `audit` of a planted
+file. Scenarios 5 and 6 have no fixture and no kit installed: the only sources in reach are
+the docs site and the skill, which is the one situation the fixture scenarios cannot measure.
 
 | # | Name | Mode | What it puts under strain |
 |---|---|---|---|
@@ -22,6 +23,8 @@ file.
 | 2 | `side-panel-list` | build | Choosing: `Aside` over a div, plain rows over the portal's `Rows`, `SearchInput`'s string payload and its one-second debounce, skeletons over a bare `Loader`, `EmptyView` over a blank body — and keeping `selectors/*` out |
 | 3 | `explain-empty-labels` | explain | The i18n mechanism, from a symptom: which provider, the Map's shape, the `Common` table inside the package, and why the text is empty rather than the raw key |
 | 4 | `audit-snippet` | audit | Reading someone else's code: a visibility prop the component ignores, a portal-internal import, `PUBLIC_DIR`, an unnecessary 727 KB stylesheet — and **not** inventing faults or asking for a stylesheet that is not needed |
+| 5 | `explain-aside-prop` | explain | A prop question with nothing installed: `visible` on Aside and ModalDialog, `isOpen` on Tooltip, the silent failure of a wrong name — and naming the page it was read from, on the docs site or in the package, rather than answering from memory |
+| 6 | `explain-loader-vs-skeleton` | explain | A choice with nothing installed: skeletons for a list whose shape is known, `Loader` with an explicit `type` for the rest, the label-as-text default, the fixed-colour skeletons in the dark theme — and the page it came from |
 
 Three separate build scenarios rather than one: a build failure darkens every check in a
 scenario at once, and three keep three independent signals.

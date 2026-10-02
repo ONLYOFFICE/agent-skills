@@ -17,7 +17,7 @@ land in `evals/results/` (gitignored).
 
 | Tag | Cases | What they measure |
 |---|---|---|
-| `question` | `embed-2fa-question`, `embed-csp-allowlist-verb`, `embed-theme-switch`, `embed-public-room-events`, `plugin-explain-filter` | Facts the skills carry and the docs do not: the CSP verb, `theme` read once, the public-room events, the `usersTypes` asymmetry, the two-factor flow. Cheap: one short answer per run |
+| `question` | `embed-2fa-question`, `embed-csp-allowlist-verb`, `embed-theme-switch`, `embed-public-room-events`, `plugin-explain-filter`, `ui-kit-explain-aside-prop` | Facts the skills carry and the docs do not: the CSP verb, `theme` read once, the public-room events, the `usersTypes` asymmetry, the two-factor flow — and, for the kit, that the answer is read from the component's page and names it. Cheap: one short answer per run |
 | `trigger` | `no-trigger-editor-plugin` | Neither skill fires on a Document Server editor-plugin task (`min: 0, max: 0`, scored in both arms) |
 | `build` | `embed-public-room-viewer`, `embed-select-then-upload` | Small integrations with fixed file names, graded by `regex` over those files, plus the validator run and a REPORT.md rubric |
 | `build`, `heavy` | `embed-employee-cabinet`, `plugin-sidebar-workspace` | A full React connector and a full plugin build (npm install, Vite, `validate-plugin.mjs`); long and costly, run on demand |
