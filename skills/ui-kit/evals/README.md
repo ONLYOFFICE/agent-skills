@@ -105,6 +105,15 @@ are the ones the skill earns: the prop names, the defaults that are not in the t
 boundary between public and portal-internal, and the composition traps that no single
 component's page states.
 
+Scenarios 5 and 6 have no project, so the line above does not apply. Their baseline is told
+where the documentation is instead:
+
+> The kit's documentation is at `https://api.onlyoffice.com/docspace/ui-kit/`; `llms.txt`
+> there lists every page, and a page is read as Markdown by appending `.md` to its URL.
+
+Both arms may fetch the site; what the skill earns there is reaching the right page without
+guessing its group and naming it, rather than answering from memory.
+
 The `explain` scenario produces no files: save the final answer as `answer.md` in the run's
 outputs and grade that. The `audit` scenario is the same, with the fixture copied in.
 

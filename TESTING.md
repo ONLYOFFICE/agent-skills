@@ -41,7 +41,7 @@ cheap behaviour suite:
 claude plugin eval . --tag question --tag trigger --trust-plugin --no-publish --max-cost-usd 12
 ```
 
-Six cases, two arms, three runs each: about 18 minutes and $4–5. Compare with the last row of
+Seven cases, two arms, three runs each: about 20 minutes and $5–6. Compare with the last row of
 [evals/README.md → Results](evals/README.md#results) and add a row.
 
 **Before a release**, everything above plus the build cases and the live checks
