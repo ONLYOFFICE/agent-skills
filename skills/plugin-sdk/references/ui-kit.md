@@ -2,9 +2,10 @@
 
 The portal's own component library: it reads theme, accent and direction from contexts the portal fills, so a kit `Button` is the portal's button in either theme. Reach for the kit first — it is the first of the three sources of style a plugin has, and the only one that follows a re-theme on its own ([styles.md](styles.md#where-a-style-can-come-from)). Colors, the portal's measurements and how a stylesheet gets scoped are there too.
 
-**The kit's own documentation holds inside a plugin** — everywhere except the rows of [the table below](#what-a-plugin-does-differently). Two places carry it; read both before writing a surface:
+**The kit's own documentation holds inside a plugin** — everywhere except the rows of [the table below](#what-a-plugin-does-differently). Three places carry it; read the first two before writing a surface:
 
 - **the installed package** — `node_modules/@onlyoffice/apps-ui-kit/components/<folder>/README.md` for one component, with `docs/getting-started.md` and `docs/components.md` beside them for the whole kit: the kit's own text, faults included, for exactly the version the project builds against;
+- **the [UI kit docs](https://api.onlyoffice.com/docspace/ui-kit/llms.txt)** — the same pages for the released kit, one per component under `ui/<group>/<slug>` (read as Markdown with `.md` appended), plus the hooks, utils, constants and theming pages the package has no page for; the one source when the kit is not installed yet;
 - **the `ui-kit` skill** — load it by name (`onlyoffice:ui-kit` in the plugin both ship in). Its rules are the failures that render without a word, and its routing table leads to forms, overlays, lists and a symptom index. Installed without it, the package's pages are all there is.
 
 Their examples import from subpaths and mount providers; translate them by the table below. Of those rules, the browser pass measures the ones that show in a box — a collapsed control, a toggle over the next row, a field with no label ([build.md → See it](build.md#7-see-it--the-step-that-catches-what-looks-broken)); the rest are yours to get right. What stays in **this** file is what a plugin does differently, and what the kit's documentation leaves out for a plugin.
