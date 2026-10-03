@@ -86,7 +86,7 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 | A hook "throws outside a component" from a click | hooks called in a class-side callback |
 | Filter by user role ignored | wrong field name — see [the filter field trap](items/common-fields.md#the-filter-field-trap) |
 | Item renders, click does nothing | the returned action has no matching payload field ([actions.md](react/actions.md)) |
-| Items appear only after a manual refresh | registered after `onLoadCallback` resolved |
+| Items added later — from a timer or an un-awaited promise — never appear, not even after a reload; switching the plugin off and on brings them | the getters are read once, when `onLoadCallback` resolves ([step 9](#the-loading-sequence)), and a reload runs the same race again — send the matching `update*Items` action after adding them |
 | Re-upload changes nothing | `version` not bumped — the portal serves the cached bundle, icons are cached as `?hash=<version>`. Uploading a name+version that matches an installed plugin raises a cache-warning dialog |
 | An item vanishes when an unrelated plugin is disabled | two plugins used the same item `key` ([item keys are portal-wide](items/common-fields.md#item-keys-are-portal-wide)) |
 | A sidebar page redirects to the root | the item's `appears` excludes the section the URL is under, or the key is unknown |
@@ -136,7 +136,7 @@ A module plugin runs in the portal's own window — its DOM, cookies and `localS
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
 - **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` or `.card {}` restyles the product itself — in every section, for every user, until the plugin is disabled. Only the browser pass reads the rules, and only against portal-shaped markup ([build.md → 7. See it](build.md#7-see-it--the-step-that-catches-what-looks-broken)), so the fix is a form that cannot go wrong: [styles.md → Scoped CSS](styles.md#scoped-css). The reverse direction — portal rules reaching into your markup — is [what beats your rules](styles.md#what-beats-your-rules).
 - **`cspDomains`** origins are added to the **portal's** CSP, not just yours. List only what you call. (`scpDomains` is a real typo in shipped plugins — it silently does nothing.)
-- **Timers and listeners at module scope or in `onLoadCallback`** keep running after the plugin is disabled, until a full reload; inside a component's effect they clean up with it.
+- **Timers and listeners at module scope or in `onLoadCallback`** keep running after the plugin is disabled. A page reload stops the ones `onLoadCallback` started, but module-scope code runs again on every load, the plugin switched off or not ([above](#the-loading-sequence)). Inside a component's effect they clean up with it.
 
 ## Limits
 

@@ -125,9 +125,9 @@ The uploadable archive is \`dist/plugin.zip\`.
 
 ## Install
 
-Upload \`dist/plugin.zip\` in the portal under Settings → Integration → Plugins,
-then reload the page fully. Bump \`version\` in \`package.json\` before every
-re-upload, otherwise the portal keeps serving the cached bundle and icons.
+Upload \`dist/plugin.zip\` in the portal under Settings → Integration → Plugins.
+Bump \`version\` in \`package.json\` before every re-upload, otherwise the portal
+keeps serving the cached bundle and icons.
 
 ## The UI kit
 
