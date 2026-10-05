@@ -58,4 +58,4 @@ description triggers when the first message is not in English.
 
 | Date | Model | Should (10) | Should not (10) | Notes |
 |---|---|---|---|---|
-| | | | | |
+| 2026-10-05 | sonnet | 10 (each 3/3) | 9 (each 0/3) + "should not" 10 at 3/3 | Description as of `82ff8c7`. "Should not" 10 is the borderline one, counted as neither; the three embedding messages went to `onlyoffice:embed-sdk` |
