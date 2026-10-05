@@ -13,7 +13,7 @@ Webpack build (`webpack && node ./scripts/createZip.js`), `window.Plugins.<Plugi
 | Info panel tab, sidebar button | `body: IBox` + `onLoad` | `component` |
 | Modal dialog | `dialogBody`, `dialogFooter` + `onLoad` | `dialogBodyComponent` (no footer slot — buttons in the body) |
 | Media viewer | `content: IBox` + `onLoad` | `component` |
-| Settings page | `settings: IBox`, `saveButton` + `onLoad` | `component` + `usePluginSettings().setSaveButton` |
+| Settings page | `settings: IBox`, `saveButton` + `onLoad` | `component` + `usePluginSettings().setSaveButton`; a static `saveButton` still works as the fallback |
 | Sidebar page | — | `ArticleNavigation` (new) |
 | Live updates | `updateProps` (self), `updateContext` (sibling by `contextName`) | component state |
 | Data loading | `onLoad` resolving to the new tree | `useEffect` |
