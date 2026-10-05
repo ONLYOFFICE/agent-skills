@@ -1,39 +1,45 @@
 #!/usr/bin/env node
 /**
- * Trigger test for the skill description: sends every message of trigger-tests.md to a fresh
- * `claude -p` session with this repository loaded as a plugin and records whether the Skill
- * tool was called for embed-sdk. Windows-friendly (no select on pipes).
+ * Trigger test for a skill's description: sends every message of
+ * skills/<skill>/evals/trigger-tests.md to a fresh `claude -p` session with this repository
+ * loaded as a plugin and records whether the Skill tool was called for that skill.
+ * Windows-friendly (no select on pipes).
  *
- *   node skills/embed-sdk/evals/run-triggers.mjs [--model sonnet] [--runs 3] [--workers 4] [--out results.json]
+ *   node tools/run-triggers.mjs --skill <name> [--model sonnet] [--runs 3] [--workers 4] [--out results.json]
  *
  * A message counts as triggering when it does so in at least half of its runs. The run
  * directory is a throwaway sandbox under the system temp directory, never this repository.
  */
 
 import { spawn } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const REPO = path.resolve(HERE, "..", "..", "..");
-const SKILL = "embed-sdk";
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : fallback;
 };
+const SKILL = flag("--skill", null);
+const TESTS = SKILL && path.join(REPO, "skills", SKILL, "evals", "trigger-tests.md");
+if (!TESTS || !existsSync(TESTS)) {
+  console.error("usage: node tools/run-triggers.mjs --skill <name> [--model sonnet] [--runs 3] [--workers 4] [--out results.json]");
+  console.error(SKILL ? `no ${path.relative(REPO, TESTS)}` : "--skill is required");
+  process.exit(2);
+}
 const MODEL = flag("--model", "sonnet");
 const RUNS = Number(flag("--runs", 3));
 const WORKERS = Number(flag("--workers", 4));
 const TIMEOUT_MS = Number(flag("--timeout", 120)) * 1000;
 const OUT = flag("--out", null);
-const CWD = mkdtempSync(path.join(os.tmpdir(), "embed-sdk-triggers-"));
+const CWD = mkdtempSync(path.join(os.tmpdir(), `${SKILL}-triggers-`));
 
 function messages() {
-  const text = readFileSync(path.join(HERE, "trigger-tests.md"), "utf8");
+  const text = readFileSync(TESTS, "utf8");
   const section = (heading) => {
     const body = text.split(`## ${heading}`)[1].split("\n## ")[0];
     return [...body.matchAll(/^\d+\. (.+)$/gm)].map((m) => m[1].replace(/\s*\*\([^)]*\)\*\s*$/, "").trim());

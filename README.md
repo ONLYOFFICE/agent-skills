@@ -98,6 +98,7 @@ sources.json             the external hosts (docs site and its fallback stand, G
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at a staging or local docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
                          sync-ui-kit.mjs: derives skills/ui-kit's component manifest from the UI kit's own metadata
+                         run-triggers.mjs: sends a skill's evals/trigger-tests.md through `claude -p` and reports which messages loaded it
 evals/                   the `claude plugin eval` suite: one directory per case (prompt.md + graders/), results/ gitignored
 skills/embed-sdk/
 ├── SKILL.md             router: pinned facts, discovery, routing table, critical rules

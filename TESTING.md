@@ -90,7 +90,7 @@ scenarios with `[C]`/`[Q]` expectations (`evals.json`), the G1 admin-panel task 
 a session — the skill-creator plugin runs the with/without pairs and opens a viewer — and when a
 scenario is too long or too open-ended for a plugin-eval grader. Each directory's `README.md`
 has the steps and the results table; the trigger tests have a runner
-(`node skills/embed-sdk/evals/run-triggers.mjs --model sonnet`) that the plugin suite's
+(`node tools/run-triggers.mjs --skill <name> --model sonnet`) that the plugin suite's
 `tool_used: Skill` graders replace for the cases it covers.
 
 ## Checking a fact against the sources
