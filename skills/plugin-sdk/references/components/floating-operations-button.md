@@ -70,18 +70,14 @@ onItemClick = async (id: string | number): Promise<IMessage> => {
 
 The loop is unguarded by anything — the callback has already returned, so a throw escaping that `catch` is an unhandled rejection and the button stays at whatever percent it reached. And the plugin owns the whole lifetime: nothing unmounts, so nothing cancels for you.
 
-**A surface: the work goes in its effect, and the effect can run twice.** When there *is* something to show — a preview, a per-row log, a form the job reads — the click opens the modal or page and hands over the id, and the component runs the work. React remounts effects (development double-invoke, a re-render with changed deps, the user reopening the panel), and a second run of "pack these 400 files" is duplicated writes rather than a slow render. Guard the start, own the cancellation, and never leave the button behind:
+**A surface: the work goes in its effect, and the effect can run twice.** When there *is* something to show — a preview, a per-row log, a form the job reads — the click opens the modal or page and hands over the id, and the component runs the work. React runs the effect again whenever the surface remounts — the user reopening the panel, a change in its deps, and in development a deliberate second run. The abort in the cleanup is what makes that safe: the earlier run is abandoned and drops its button, the new one does the work. A job that must not be abandoned — one that writes, where a second run is duplicated writes — leaves the abort out and keeps a started flag in module scope instead, cleared when it ends, so reopening the panel does not start it twice. Own the cancellation, and never leave the button behind:
 
 ```tsx
 const ExportPanel = () => {
   const { addFloatingOperationsButton, updateFloatingOperationsButton, removeFloatingOperationsButton, showToast } = usePluginActions();
   const api = usePluginAPI();
-  const started = useRef(false);              // module scope if the work must survive a remount
 
   useEffect(() => {
-    if (started.current) return;              // the second invocation is not a second job
-    started.current = true;
-
     const controller = new AbortController();
     const BUTTON = "my-plugin-export";         // manifest-prefixed: the host keys buttons by bare id
     const button = (percent: number, completed = false, alert = false) => ({
