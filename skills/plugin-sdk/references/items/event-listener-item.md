@@ -1,6 +1,6 @@
 # EventListener
 
-To react to something happening.
+To react when the user starts a portal action — a dialog opening, a column toggled — not when it completes.
 
 | | |
 |---|---|

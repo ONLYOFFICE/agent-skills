@@ -120,17 +120,37 @@ const pickDestination = ({ showModal, showSelector, closeModal, closeSelector }:
 };
 ```
 
-From a class-side callback the same sequence is two messages instead of two calls: return `showSelector` from the click, and return `showModal` from the selector's own `onSubmit`.
+From a class-side callback there are no hooks, so each step is a returned message instead of a call, and one `IMessage` carries several actions, each with its payload: the click returns `showSelector`, and the selector's `onSubmit` returns `closeSelector` and `showModal` together. A menu item that picks people, then opens a dialog about them:
 
 ```ts
-showSelector({
-  type: SelectorType.People,
-  props: {
-    submitButtonLabel: t("notify"),
-    onSubmit: ({ selectedIds }) => { setRecipients(selectedIds); closeSelector(); },
-    withHeader: true,
-    onCancel: () => closeSelector(),
-    headerProps: { label: t("pickPeople"), isCloseable: true, onCloseClick: () => closeSelector() },
+// Module scope: the selector's answer, read by the dialog that opens after it.
+let recipients: (string | number)[] = [];
+
+const notifyDialog = (): IModalDialog => ({
+  dialogHeader: t("notify.title"),
+  dialogBodyComponent: NotifyDialog,     // reads `recipients`
+  autoMaxHeight: true,
+});
+
+const closePicker = (): IMessage => ({ actions: [Actions.closeSelector] });
+
+/** Returned from the menu item's click. */
+const pickRecipients = (): IMessage => ({
+  actions: [Actions.showSelector],
+  selectorProps: {
+    type: SelectorType.People,
+    props: {
+      submitButtonLabel: t("notify.choose"),
+      withHeader: true,                  // without it there is no title and no close cross
+      headerProps: { label: t("notify.pickPeople"), isCloseable: true, onCloseClick: closePicker },
+      withCancelButton: true,            // without it onCancel is never wired
+      onCancel: closePicker,
+      onClose: closePicker,              // a click on the backdrop
+      onSubmit: ({ selectedIds }) => {
+        recipients = selectedIds;
+        return { actions: [Actions.closeSelector, Actions.showModal], modalDialogProps: notifyDialog() };
+      },
+    },
   },
 });
 ```

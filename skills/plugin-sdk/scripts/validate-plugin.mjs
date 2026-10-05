@@ -36,8 +36,19 @@ import { ProjectChecks } from "./validator/project-checks.mjs";
 import { RenderChecks } from "./validator/render-checks.mjs";
 import { RuntimeChecks } from "./validator/runtime-checks.mjs";
 
+const USAGE = "node scripts/validate-plugin.mjs <pluginDir> [--invoke] [--json]";
+
 const parseArgs = (argv) => {
   const flags = new Set(argv.filter((arg) => arg.startsWith("--")));
+
+  if (flags.has("--help")) {
+    console.log(USAGE);
+    process.exit(0);
+  }
+
+  // A mistyped --invoke would otherwise pass without calling a single callback.
+  for (const flag of flags)
+    if (flag !== "--invoke" && flag !== "--json") throw new FatalProjectError(`Unknown flag ${flag}.\n${USAGE}`);
 
   return {
     dir: path.resolve(argv.find((arg) => !arg.startsWith("--")) ?? "."),

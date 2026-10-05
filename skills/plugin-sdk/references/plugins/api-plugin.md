@@ -21,7 +21,7 @@ const buildApiUrl = (): string => {
   const { origin, proxy, prefix } = plugin.getAPI();
   let url = origin.replace(/\/+$/, "");
   for (const part of [proxy, prefix]) {
-    const clean = (part ?? "").trim().replace(/^\/+/, "");
+    const clean = (part ?? "").trim().replace(/^\/+|\/+$/g, "");
     if (clean) url += `/${clean}`;
   }
   return url;   // https://portal.example.com/api/2.0

@@ -426,7 +426,7 @@ export class ShapeChecks extends Check {
     if (viewer.component === undefined && viewer.content === undefined) {
       this.error(
         "message",
-        `${where} opens the media viewer with neither component nor content - it opens on nothing`,
+        `${where} opens the media viewer with neither component nor content - the portal shows the file itself if it is an image or a video, and a bare header otherwise`,
       );
       return;
     }

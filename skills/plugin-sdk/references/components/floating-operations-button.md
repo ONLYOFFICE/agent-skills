@@ -25,7 +25,7 @@ updateFloatingOperationsButton(op(100, true));   // sets operationsCompleted - t
 - **Two different `completed` fields, and only the outer one ends the job.** `operations[i].completed` draws that row; **`operationsCompleted` on the button props** is what the portal reads. When it turns true the panel waits 4 seconds, plays its hide animation, and on the animation's end clears every operation the plugin registered — so the button removes *itself*, and the entry stops claiming to be running. Set only the inner `completed` and the button never leaves: the job is over, the label still reads "…ing", and it stays there until the page is reloaded. Nothing catches this — the validator sees a correct add/update sequence and a render pass has no panel — so it is worth re-reading the last `update` you write against this bullet. The panel is shared, too: it dismisses only once **every** entry in it is finished — the portal's own uploads and conversions and every plugin's buttons — and that hide clears every plugin's entries, not only yours.
 - **The finished wording is the portal's, not yours.** At completion it renders your operation `label` inside its own phrase — `"{{label}}: Done"`, or `"{{label}}: Error"` in the error path — so the label wants to be a plain name of the work ("Archiving rooms"), never rewritten to the past tense on the last update.
 - **The 4-second dismissal waits for the user.** It does not run while the pointer is over the button or while the operations dropdown is open, which is deliberate: the completed state is readable before it goes.
-- **`onLoad` is the class's handle on the button.** `IFloatingOperationsButton.onLoad?: (dispatchMessage) => …` is called by the host once the entry appears, and it is handed the same dispatcher a callback's returned `IMessage` goes through. Keep that function and a class-side job can send `updateFloatingOperationsButton` as often as it likes, from its own loop, with nothing mounted — see [below](#work-that-takes-a-while). It fires once per `id` while the Files page is mounted, and again after the entry has been cleared, so treat it as "the button now exists" rather than "start the work here".
+- **`onLoad` is the class's handle on the button.** `IFloatingOperationsButton.onLoad?: (dispatchMessage) => …` is called by the host once the entry appears, and it is handed the same dispatcher a callback's returned `IMessage` goes through. Keep that function and a class-side job can send `updateFloatingOperationsButton` as often as it likes, from its own loop, with nothing mounted — see [below](#work-that-takes-a-while). It fires once per `id` while the Files page is mounted, and again after the entry has been cleared, so treat it as "the button now exists" rather than "start the work here". It fires only after the entry has rendered, and what it returns is not dispatched: a job that is already further along sends its latest state from there.
 - **Give the button an id nobody else will use** — prefix it with the manifest `name`, as with item keys. The host tracks entries by the bare `id`, so two plugins that both call theirs `export` write over each other's progress.
 - `remove` takes the button `id` as a bare string (`floatingOperationsButtonPropsId` class-side). The normal end of a job needs no `remove` — reach for it to drop the button *early*, or from a cleanup when the surface goes away with the work still unfinished.
 - Operation ids are prefixed by the host with the plugin name; `onCancelOperationFromList(operationId)` hands back your unprefixed id. `cancelOperation` fires for "cancel all". Dismissing the button drops all your operations. With `showCancelButton` the panel's Cancel belongs to the plugins: it cancels plugin work only, never an upload the user started beside it.
@@ -38,18 +38,26 @@ Packing an archive, walking a room, converting a batch: anything past a second o
 
 ```ts
 let dispatch: ((message: IMessage) => void) | null = null;
+let latest: IFloatingOperationsButton | null = null;     // where the job got to, for an onLoad that comes after it
 const BUTTON = "my-plugin-export";                       // manifest-prefixed: the host keys buttons by bare id
+
+const send = (props: IFloatingOperationsButton) =>
+  dispatch?.({ actions: [Actions.updateFloatingOperationsButton], floatingOperationsButtonProps: props });
 
 const button = (percent: number, completed = false, alert = false): IFloatingOperationsButton => ({
   id: BUTTON, operationsCompleted: completed, operationsAlert: alert,
   operations: [{ id: "export", label: t("export.running"), operation: FloatingOperationType.Other, alert, completed, percent }],
-  onLoad: (dispatchMessage) => { dispatch = dispatchMessage; },
+  // The host calls this once the entry has rendered; a job that already finished would otherwise stay at 0%.
+  onLoad: (dispatchMessage) => { dispatch = dispatchMessage; if (latest) send(latest); },
 });
 
-const progress = (percent: number, completed = false, alert = false) =>
-  dispatch?.({ actions: [Actions.updateFloatingOperationsButton], floatingOperationsButtonProps: button(percent, completed, alert) });
+const progress = (percent: number, completed = false, alert = false) => {
+  latest = button(percent, completed, alert);
+  send(latest);
+};
 
 onItemClick = async (id: string | number): Promise<IMessage> => {
+  latest = null;                                          // a new job replays nothing of the last one
   void (async () => {                                     // the work outlives the message
     try {
       for (const [i, file] of (await listFiles(id)).entries()) { await pack(file); progress(pct(i)); }
@@ -62,18 +70,14 @@ onItemClick = async (id: string | number): Promise<IMessage> => {
 
 The loop is unguarded by anything — the callback has already returned, so a throw escaping that `catch` is an unhandled rejection and the button stays at whatever percent it reached. And the plugin owns the whole lifetime: nothing unmounts, so nothing cancels for you.
 
-**A surface: the work goes in its effect, and the effect can run twice.** When there *is* something to show — a preview, a per-row log, a form the job reads — the click opens the modal or page and hands over the id, and the component runs the work. React remounts effects (development double-invoke, a re-render with changed deps, the user reopening the panel), and a second run of "pack these 400 files" is duplicated writes rather than a slow render. Guard the start, own the cancellation, and never leave the button behind:
+**A surface: the work goes in its effect, and the effect can run twice.** When there *is* something to show — a preview, a per-row log, a form the job reads — the click opens the modal or page and hands over the id, and the component runs the work. React runs the effect again whenever the surface remounts — the user reopening the panel, a change in its deps, and in development a deliberate second run. The abort in the cleanup is what makes that safe: the earlier run is abandoned and drops its button, the new one does the work. A job that must not be abandoned — one that writes, where a second run is duplicated writes — leaves the abort out and keeps a started flag in module scope instead, cleared when it ends, so reopening the panel does not start it twice. Own the cancellation, and never leave the button behind:
 
 ```tsx
 const ExportPanel = () => {
   const { addFloatingOperationsButton, updateFloatingOperationsButton, removeFloatingOperationsButton, showToast } = usePluginActions();
   const api = usePluginAPI();
-  const started = useRef(false);              // module scope if the work must survive a remount
 
   useEffect(() => {
-    if (started.current) return;              // the second invocation is not a second job
-    started.current = true;
-
     const controller = new AbortController();
     const BUTTON = "my-plugin-export";         // manifest-prefixed: the host keys buttons by bare id
     const button = (percent: number, completed = false, alert = false) => ({
