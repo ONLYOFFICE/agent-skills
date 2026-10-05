@@ -106,7 +106,14 @@ const resolveVendoredTarballs = (value) => {
   return { kit, sdk: all.find((tarball) => isPluginSdkTarball(path.basename(tarball))), all };
 };
 
+const KNOWN_FLAGS = ["name", "plugin-name", "scopes", "dir", "description", "author", "locales", "ui-kit", "force"];
+
 export const parseCliOptions = (argv) => {
+  // A flag nothing reads is a request dropped in silence: `--version 2.0.0` would leave the default in package.json.
+  for (const argument of argv)
+    if (argument.startsWith("--") && !KNOWN_FLAGS.includes(argument.slice(2)))
+      throw new CliError(`unknown flag ${argument} (known: ${KNOWN_FLAGS.map((flagName) => `--${flagName}`).join(", ")})`);
+
   const name = requireFlag(argv, "name");
   const pluginName = requireFlag(argv, "plugin-name");
   const scopeNames = readList(requireFlag(argv, "scopes"));
