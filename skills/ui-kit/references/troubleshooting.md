@@ -70,11 +70,11 @@ console unless it says so.
 | `PUBLIC_DIR/...` does not resolve | It is a DocSpace client webpack alias, not part of this package | Your own asset, or `@onlyoffice/apps-ui-kit/assets/…` |
 | An icon name renders nothing | `IconButton`'s `iconName` is a URL, not a key into an icon set | Pass a URL, or the imported SVG module |
 
-## When the page says something else
+## When the kit's page says something else
 
-Every page under `references/components/` is a copy of the kit's own README, and its header
-says so. Where one of them contradicts a rule here, the rule here is the one that was checked
-against the source last — and the kit's page is what should be corrected.
+A component's page — its README in the installed package, or its page on the docs site — is
+the kit's own text. Where it contradicts a rule here, the rule is the one that was checked
+against the source last, and the kit's page is what should be corrected.
 
 A fault in a component is described on that component's page, under "Behaviour the types don't
 state" or "Accessibility". There is no separate list of them: the kit kept one until every entry

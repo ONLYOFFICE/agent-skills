@@ -7,7 +7,9 @@
       "mode": "build",
       "prompt": "in the app in this folder add a settings screen for a room: its name, a longer description under it, who can get in (private, anyone with the link, everyone on the portal) and a switch for email notifications. the name can't be empty - say so under the field if it is. while it saves, nothing should be editable and the save button should look busy. half of us run dark so it has to be right there too, and it should look like it came out of docspace.",
       "expected_output": "The fixture app gains a settings screen. Fields are FieldContainer with labelVisible and isVertical, holding TextInput (with type and value), Textarea given a width, and one controlled choice component whose selection lives in the app's state. The switch is ToggleButton inside an element with a height. Validation is the app's own state driving hasError plus errorMessage, on a form with noValidate. Each field ties its caption to its control through labelFor and a matching id (the Textarea through aria-label or aria-labelledby), no control is given a tabIndex, and the fields are stacked without a gap. The tree is wrapped in ThemeProvider from providers/theme (no colorTheme) and TranslationProvider from providers/translation with a Map built from locales/en/Common.json; no stylesheet is imported. Saving puts every control into isReadOnly or isDisabled and the one primary Button into isLoading. The project typechecks and builds, and check-usage.mjs reports nothing.",
-      "files": ["fixtures/consumer-app/"],
+      "files": [
+        "fixtures/consumer-app/"
+      ],
       "assertions": [
         "each field is a FieldContainer carrying `labelVisible` — the default is false, so a container given only `labelText` renders no label at all and reports nothing",
         "the fields are stacked without a `gap` between them, or every container is given `removeMargin`, because FieldContainer's own 16px bottom margin adds to a parent's gap rather than being replaced by it",
@@ -35,7 +37,9 @@
       "mode": "build",
       "prompt": "in the app in this folder: when someone deletes a room we want the usual 'are you sure' box over the page - a title, one line saying it can't be undone, and two buttons of the same width where delete is the loud red one. while the delete is running the box must not be closeable, not by the cross, not by escape, not by clicking outside, and the buttons shouldn't fire twice. it needs to look like docspace.",
       "expected_output": "A dialog component built on ModalDialog. It is rendered conditionally and given `visible`; Header, Body and Footer are direct children. Both footer buttons carry `scale`; the destructive one is `primary` with `--accent-button` set through its own `style`, with no wrapper element. Closing goes through `onClose`, and `isCloseable={false}` while the request is in flight; the confirm button uses `isLoading` and the cancel button `isDisabled`, with a synchronous guard closing the same-tick window. A failed delete leaves the dialog open and says what failed. Providers are mounted, the project builds, and check-usage.mjs reports nothing.",
-      "files": ["fixtures/consumer-app/"],
+      "files": [
+        "fixtures/consumer-app/"
+      ],
       "assertions": [
         "the dialog's visibility is passed as `visible` — not isVisible, isOpen or open, which the component ignores without an error",
         "the dialog is also rendered conditionally rather than always mounted, because `visible` toggles CSS classes and mounts nothing: the body and its effects run while it is invisible",
@@ -59,7 +63,9 @@
       "mode": "build",
       "prompt": "in our vite app (the one in this folder, the onlyoffice bits are installed) add a 'members' button to the page. clicking it slides a panel in from the right listing the people from src/data/members.json with name, email and role, a search box at the top that filters as you type, and a close cross. while the list 'loads' (fake a second of delay) show placeholders, and if the search finds nobody say so nicely. it has to look like docspace in both light and dark",
       "expected_output": "The fixture app is extended in place. The panel is Aside (or ModalDialog with displayType aside) controlled by a boolean in state passed as `visible`, closed through `onClose`, and laid out so its last rows can be reached. The list is not Rows/RowContainer/RowContent but plain rows built from kit primitives or a Table from components/table. The search is SearchInput whose onChange receives the string. RectangleSkeleton rows during the delay, EmptyView when nothing matches, and both reset when the panel is reopened. Both providers wrap the tree; the whole-library stylesheet is not imported; nothing is imported from selectors/, billing or uploader. The project builds and check-usage.mjs reports nothing.",
-      "files": ["fixtures/consumer-app/"],
+      "files": [
+        "fixtures/consumer-app/"
+      ],
       "assertions": [
         "the panel is the kit's Aside or ModalDialog with displayType aside, and its visibility is passed as `visible` — not isVisible, isOpen or open, which the component ignores without an error",
         "closing goes through onClose and the header cross that calls it, not by unmounting the panel with a conditional render alone",
@@ -84,7 +90,9 @@
       "mode": "explain",
       "prompt": "we pulled the onlyoffice components into our app and some of the text is just gone. the toast we show after saving has no title, just a gap where it should be, and the three-dot menus on the cards are blank too. console says something about i18next and a missing key. the buttons we label ourselves are fine. what did we miss?",
       "expected_output": "The answer names TranslationProvider from @onlyoffice/apps-ui-kit/providers/translation as the missing piece, and the shape of what it needs: a Map of language to a Map of namespace to the flat table, built from @onlyoffice/apps-ui-kit/locales/en/Common.json. It explains why only some text is missing — text passed as props is the caller's, while the toast titles and the tile menus are looked up in the Common namespace — and why the result is empty rather than the raw key: the kit's lookup returns an empty string when it can find no instance, and logs one line per key. It says that a provider given no translations installs no context at all, so mounting the element is not the fix; that the provider builds an i18next instance of its own, so the usual I18nextProvider / addResourceBundle advice does not reach the kit's labels; and that the package ships English only, in three namespaces.",
-      "files": ["fixtures/consumer-app/"],
+      "files": [
+        "fixtures/consumer-app/"
+      ],
       "assertions": [
         "names TranslationProvider from @onlyoffice/apps-ui-kit/providers/translation as what is missing",
         "gives the shape of `translations`: a Map of language to a Map of namespace to the key/value table, not a plain object",
@@ -104,7 +112,10 @@
       "mode": "audit",
       "prompt": "someone left this file behind on a branch - fixtures/audit-snippet/Panel.tsx. the panel never opens and I don't trust the rest of it either. what's wrong with it?",
       "expected_output": "A review naming, at minimum: `isVisible` on Aside, which the component does not read (its prop is `visible`), as the reason the panel never opens; the import from selectors/People, which is portal-internal and fetches through the DocSpace REST client, with the generic Selector named as the consumer's replacement; the PUBLIC_DIR specifier, which is a DocSpace client webpack alias that resolves nowhere else; and the whole-library styles.css import, which is unnecessary because each component imports its own CSS and costs 727 KB. It also catches the FieldContainer without labelVisible and without labelFor, the TextInput without its required type, the column gap doubling the field spacing, and the SearchInput handler reading .target.value off a string — and it says what it checked against.",
-      "files": ["fixtures/consumer-app/", "fixtures/audit-snippet/"],
+      "files": [
+        "fixtures/consumer-app/",
+        "fixtures/audit-snippet/"
+      ],
       "assertions": [
         "names `isVisible` on Aside as the reason the panel never opens, and gives `visible` as the prop the component actually reads",
         "states plainly that the import from selectors/ is portal-internal — it fetches through the DocSpace REST client and a portal store, so it cannot work outside the portal — without handing the check back to the reader, and names the generic `Selector` as what a consumer uses instead",
@@ -119,6 +130,39 @@
         "does not treat the styles.css import as necessary: it is not defended, kept or repaired, and no stylesheet import is recommended in its place",
         "at most one finding cannot be pointed at a line of the file, and the review does not frame the file as a DocSpace plugin — nothing in the prompt says it is one, and the advice differs",
         "says what it checked the file against — the kit version it read, and what it could not read — rather than presenting library facts with no source"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "explain-aside-prop",
+      "mode": "explain",
+      "prompt": "quick one before we start - we're about to put a side panel in our app with the onlyoffice ui kit, nothing installed here yet. what's the prop that opens Aside, and is it the same one on ModalDialog and Tooltip? and tell me where you got that from, i don't want a guess",
+      "expected_output": "The answer says Aside opens with `visible`, that ModalDialog reads the same prop, and that Tooltip is different: `isOpen`. It says there is no single name across the kit and that a wrong one is ignored with nothing logged, so `isVisible` opens nothing. It names where it read this — the component's page on the docs site (https://api.onlyoffice.com/docspace/ui-kit/ui/overlays/aside.md and the pages beside it) or the component's README inside the installed package — rather than answering from memory, and it does not build anything.",
+      "files": [],
+      "assertions": [
+        "names `visible` as the prop that opens Aside",
+        "says ModalDialog reads `visible` too, and Tooltip reads `isOpen`, so the name is per component",
+        "says a wrong prop name is ignored silently — nothing is logged, the panel never appears",
+        "does not offer `isVisible`, `open` or `opened` as Aside's prop",
+        "names its source: the component's page on the docs site under docspace/ui-kit, or the README inside the installed package — not memory",
+        "answers the question instead of scaffolding a project or asking for one"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "explain-loader-vs-skeleton",
+      "mode": "explain",
+      "prompt": "building a list screen with the onlyoffice apps ui kit, no project yet, just planning. while the rows are loading should i show Loader or RectangleSkeleton? someone said Loader sometimes renders text instead of a spinner, is that real? point me at the page you read",
+      "expected_output": "The answer picks RectangleSkeleton for a list whose shape is known — placeholders in the shape of the rows, so the layout does not jump — and reserves Loader for a wait of unknown duration with nothing to stand in for. It confirms the Loader behaviour: without an explicit `type` (`LoaderTypes.oval`, `dualRing`, `track`, …) it renders its label as text and no spinner. It warns that the skeletons are fixed-colour and should be looked at in the dark theme. It points at the pages it read — the docs site's skeleton and loader pages under docspace/ui-kit/ui/ (`ui/skeletons/rectangle`, `ui/status-components/loader`), found through llms.txt, or the READMEs inside the package — and names them.",
+      "files": [],
+      "assertions": [
+        "recommends RectangleSkeleton for a loading list and gives the reason: the placeholders have the shape of what is coming, so the layout does not jump",
+        "reserves Loader for a wait with no known shape or duration, rather than treating the two as interchangeable",
+        "confirms that Loader without an explicit `type` renders its label as text and no spinner",
+        "names at least one real `type` value, such as `LoaderTypes.oval`, `dualRing` or `track`",
+        "mentions that the skeletons are fixed-colour and worth checking in the dark theme",
+        "names the page it read on the docs site (a URL under api.onlyoffice.com/docspace/ui-kit/) or the README inside the installed package, rather than citing nothing",
+        "does not invent a component or a prop — no `Skeleton`, `isLoading` on a list, or `spinner` prop"
       ]
     }
   ]

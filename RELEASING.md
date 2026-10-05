@@ -72,13 +72,15 @@ is also stated in `skills/plugin-sdk/references/plugins/scopes.md`. When an SDK 
   `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
   validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.
 - `ui-kit`: the target is a release of the kit itself. Pull `docspace-ui-kit-react` to the
-  revision being described and run `node tools/sync-ui-kit.mjs --from <kit> --write`, which
-  copies its READMEs into `references/components/`, rebuilds
-  `scripts/data/kit-manifest.json` and records the commit in `sources.json`. If the kit's
-  `package.json` version moved, the run prints the `--set-version` command to follow it with.
-  Then read the critical rules in `SKILL.md` against the new pages and drop the ones the kit
-  now states itself — only where the eval assertion behind the rule still passes without it.
-  See `.claude/skills/sync-ui-kit/SKILL.md`.
+  released revision (or install the released package) and run
+  `node tools/sync-ui-kit.mjs --from <kit> --write`, which rebuilds
+  `scripts/data/kit-manifest.json`. If the kit's `package.json` version moved, the run prints
+  the `--set-version` command to follow it with. Then read the critical rules in `SKILL.md`
+  against the kit's pages and drop the ones the kit now states itself — only where the eval
+  assertion behind the rule still passes without it. The skill links the kit's pages on the
+  docs site, so `node .claude/skills/onlyoffice-docs/scripts/docs.mjs status` must show
+  `docspace/ui-kit` served from production before the release. See
+  `.claude/skills/sync-ui-kit/SKILL.md`.
 
 ## Checklist
 
@@ -98,9 +100,9 @@ Before tagging a release:
 2a. `node tools/sync-sources.mjs --verify` passes: every link traces to a `sources.json`,
    every pinned version matches, every source URL answers. For `embed-sdk` also
    `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`; for `ui-kit`,
-   `node tools/sync-ui-kit.mjs --from <kit> --check --strict` — the synced pages must match
-   the revision `sources.json` pins, and `--strict` additionally fails when a component README
-   upstream has lost its metadata block, which would drop that component from the manifest.
+   `node tools/sync-ui-kit.mjs --from <kit> --check --strict` — the manifest must match the
+   released kit, and `--strict` additionally fails when a component README upstream has lost
+   its metadata block, which would drop that component from the manifest.
    The self-test runs the same tool offline, where it can only compare hashes.
    Before the docs site is deployed, `--verify --fallback` checks the same links on the stand
    (`apiSiteFallback`).

@@ -1,7 +1,9 @@
 # Building a form
 
-Each control's own page is under `references/components/`; this page is what only shows up
-when they are put together. Read it before writing a form of more than one field.
+Each control's own page is its README in the installed package
+(`components/<folder>/README.md`) or a page under
+[`ui/form-controls/`](https://api.onlyoffice.com/docspace/ui-kit/ui/form-controls.md) on the
+docs site; this page is what only shows up when they are put together. Read it before writing a form of more than one field.
 
 ## The shape of a field
 
@@ -94,7 +96,7 @@ every control `scale` in a card.
 
 ## Which control
 
-The catalogue's [close calls](components/README.md#the-close-calls) covers the common
+The catalogue's close-calls table (`docs/components.md` in the package) covers the common
 confusions. What it cannot show:
 
 | The field is | Use | Because |

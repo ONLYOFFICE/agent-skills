@@ -490,7 +490,6 @@
   "components": {
     "access-right-select": {
       "name": "AccessRightSelect",
-      "page": "references/components/access-right-select.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/access-right-select",
@@ -510,7 +509,6 @@
     },
     "action-button": {
       "name": "ActionButton",
-      "page": "references/components/action-button.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/action-button",
@@ -528,7 +526,6 @@
     },
     "add-button": {
       "name": "AddButton",
-      "page": "references/components/add-button.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/add-button",
@@ -549,7 +546,6 @@
     },
     "app-loader": {
       "name": "AppLoader",
-      "page": "references/components/app-loader.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/app-loader",
@@ -564,7 +560,6 @@
     },
     "article": {
       "name": "Article",
-      "page": "references/components/article.md",
       "category": "Layout",
       "status": "portal-internal",
       "subpath": "components/article",
@@ -586,7 +581,6 @@
     },
     "aside": {
       "name": "Aside",
-      "page": "references/components/aside.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/aside",
@@ -608,7 +602,6 @@
     },
     "aside/aside-header": {
       "name": "AsideHeader",
-      "page": "references/components/aside/aside-header.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/aside/aside-header",
@@ -631,7 +624,6 @@
     },
     "avatar": {
       "name": "Avatar",
-      "page": "references/components/avatar.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/avatar",
@@ -658,7 +650,6 @@
     },
     "avatar-editor-dialog": {
       "name": "AvatarEditorDialog",
-      "page": "references/components/avatar-editor-dialog.md",
       "category": "Overlays",
       "status": "portal-internal",
       "subpath": "components/avatar-editor-dialog",
@@ -679,7 +670,6 @@
     },
     "backdrop": {
       "name": "Backdrop",
-      "page": "references/components/backdrop.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/backdrop",
@@ -698,7 +688,6 @@
     },
     "badge": {
       "name": "Badge",
-      "page": "references/components/badge.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/badge",
@@ -720,7 +709,6 @@
     },
     "button": {
       "name": "Button",
-      "page": "references/components/button.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/button",
@@ -741,7 +729,6 @@
     },
     "calendar": {
       "name": "Calendar",
-      "page": "references/components/calendar.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/calendar",
@@ -761,7 +748,6 @@
     },
     "card": {
       "name": "Card",
-      "page": "references/components/card.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/card",
@@ -781,7 +767,6 @@
     },
     "category-item": {
       "name": "CategoryItem",
-      "page": "references/components/category-item.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/category-item",
@@ -802,7 +787,6 @@
     },
     "checkbox": {
       "name": "Checkbox",
-      "page": "references/components/checkbox.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/checkbox",
@@ -823,7 +807,6 @@
     },
     "circle": {
       "name": "CircleSkeleton",
-      "page": "references/components/circle.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/circle",
@@ -841,7 +824,6 @@
     },
     "collapsible-card": {
       "name": "CollapsibleCard",
-      "page": "references/components/collapsible-card.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/collapsible-card",
@@ -861,7 +843,6 @@
     },
     "color-input": {
       "name": "ColorInput",
-      "page": "references/components/color-input.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/color-input",
@@ -881,7 +862,6 @@
     },
     "color-picker": {
       "name": "ColorPicker",
-      "page": "references/components/color-picker.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/color-picker",
@@ -901,7 +881,6 @@
     },
     "columnar-info-bar": {
       "name": "ColumnarInfoBar",
-      "page": "references/components/columnar-info-bar.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/columnar-info-bar",
@@ -920,7 +899,6 @@
     },
     "combobox": {
       "name": "ComboBox",
-      "page": "references/components/combobox.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/combobox",
@@ -945,7 +923,6 @@
     },
     "context-menu": {
       "name": "ContextMenu",
-      "page": "references/components/context-menu.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/context-menu",
@@ -973,7 +950,6 @@
     },
     "context-menu-button": {
       "name": "ContextMenuButton",
-      "page": "references/components/context-menu-button.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/context-menu-button",
@@ -995,7 +971,6 @@
     },
     "date-picker": {
       "name": "DatePicker",
-      "page": "references/components/date-picker.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/date-picker",
@@ -1015,7 +990,6 @@
     },
     "date-time-picker": {
       "name": "DateTimePicker",
-      "page": "references/components/date-time-picker.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/date-time-picker",
@@ -1036,7 +1010,6 @@
     },
     "drag-and-drop": {
       "name": "DragAndDrop",
-      "page": "references/components/drag-and-drop.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/drag-and-drop",
@@ -1054,7 +1027,6 @@
     },
     "drop-down": {
       "name": "DropDown",
-      "page": "references/components/drop-down.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/drop-down",
@@ -1073,7 +1045,6 @@
     },
     "drop-down-item": {
       "name": "DropDownItem",
-      "page": "references/components/drop-down-item.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/drop-down-item",
@@ -1094,7 +1065,6 @@
     },
     "dropzone": {
       "name": "Dropzone",
-      "page": "references/components/dropzone.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/dropzone",
@@ -1121,7 +1091,6 @@
     },
     "email-input": {
       "name": "EmailInput",
-      "page": "references/components/email-input.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/email-input",
@@ -1142,7 +1111,6 @@
     },
     "empty-screen-container": {
       "name": "EmptyScreenContainer",
-      "page": "references/components/empty-screen-container.md",
       "category": "Layout",
       "status": "public",
       "subpath": "components/empty-screen-container",
@@ -1162,7 +1130,6 @@
     },
     "empty-view": {
       "name": "EmptyView",
-      "page": "references/components/empty-view.md",
       "category": "Layout",
       "status": "public",
       "subpath": "components/empty-view",
@@ -1188,7 +1155,6 @@
     },
     "error-container": {
       "name": "ErrorContainer",
-      "page": "references/components/error-container.md",
       "category": "Layout",
       "status": "public",
       "subpath": "components/error-container",
@@ -1208,7 +1174,6 @@
     },
     "field-container": {
       "name": "FieldContainer",
-      "page": "references/components/field-container.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/field-container",
@@ -1228,7 +1193,6 @@
     },
     "file-input": {
       "name": "FileInput",
-      "page": "references/components/file-input.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/file-input",
@@ -1248,7 +1212,6 @@
     },
     "filter": {
       "name": "FilterInput",
-      "page": "references/components/filter.md",
       "category": "Navigation",
       "status": "portal-internal",
       "subpath": "components/filter",
@@ -1272,7 +1235,6 @@
     },
     "floating-button": {
       "name": "FloatingButton",
-      "page": "references/components/floating-button.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/floating-button",
@@ -1294,7 +1256,6 @@
     },
     "form-wrapper": {
       "name": "FormWrapper",
-      "page": "references/components/form-wrapper.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/form-wrapper",
@@ -1313,7 +1274,6 @@
     },
     "heading": {
       "name": "Heading",
-      "page": "references/components/heading.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/heading",
@@ -1338,7 +1298,6 @@
     },
     "help-button": {
       "name": "HelpButton",
-      "page": "references/components/help-button.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/help-button",
@@ -1358,7 +1317,6 @@
     },
     "icon-button": {
       "name": "IconButton",
-      "page": "references/components/icon-button.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/icon-button",
@@ -1379,7 +1337,6 @@
     },
     "image-editor": {
       "name": "ImageEditor",
-      "page": "references/components/image-editor.md",
       "category": "Interactive elements",
       "status": "portal-internal",
       "subpath": "components/image-editor",
@@ -1408,7 +1365,6 @@
     },
     "infinite-loader": {
       "name": "InfiniteLoader",
-      "page": "references/components/infinite-loader.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/infinite-loader",
@@ -1427,7 +1383,6 @@
     },
     "input-block": {
       "name": "InputBlock",
-      "page": "references/components/input-block.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/input-block",
@@ -1447,7 +1402,6 @@
     },
     "label": {
       "name": "Label",
-      "page": "references/components/label.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/label",
@@ -1467,7 +1421,6 @@
     },
     "link": {
       "name": "Link",
-      "page": "references/components/link.md",
       "category": "Navigation",
       "status": "public",
       "subpath": "components/link",
@@ -1490,7 +1443,6 @@
     },
     "link-with-dropdown": {
       "name": "LinkWithDropdown",
-      "page": "references/components/link-with-dropdown.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/link-with-dropdown",
@@ -1508,7 +1460,6 @@
     },
     "loader": {
       "name": "Loader",
-      "page": "references/components/loader.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/loader",
@@ -1532,7 +1483,6 @@
     },
     "loader-wrapper": {
       "name": "LoaderWrapper",
-      "page": "references/components/loader-wrapper.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/loader-wrapper",
@@ -1550,7 +1500,6 @@
     },
     "loading-button": {
       "name": "LoadingButton",
-      "page": "references/components/loading-button.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/loading-button",
@@ -1570,7 +1519,6 @@
     },
     "main-button": {
       "name": "MainButton",
-      "page": "references/components/main-button.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/main-button",
@@ -1590,7 +1538,6 @@
     },
     "main-button-mobile": {
       "name": "MainButtonMobile",
-      "page": "references/components/main-button-mobile.md",
       "category": "Interactive elements",
       "status": "public",
       "subpath": "components/main-button-mobile",
@@ -1610,7 +1557,6 @@
     },
     "mcp-icon": {
       "name": "MCPIcon",
-      "page": "references/components/mcp-icon.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/mcp-icon",
@@ -1631,7 +1577,6 @@
     },
     "modal-dialog": {
       "name": "ModalDialog",
-      "page": "references/components/modal-dialog.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/modal-dialog",
@@ -1654,7 +1599,6 @@
     },
     "nav-menu": {
       "name": "NavMenu",
-      "page": "references/components/nav-menu.md",
       "category": "Navigation",
       "status": "public",
       "subpath": "components/nav-menu",
@@ -1678,7 +1622,6 @@
     },
     "navigation": {
       "name": "Navigation",
-      "page": "references/components/navigation.md",
       "category": "Navigation",
       "status": "portal-internal",
       "subpath": "components/navigation",
@@ -1701,7 +1644,6 @@
     },
     "operations-progress-button": {
       "name": "OperationsProgressButton",
-      "page": "references/components/operations-progress-button.md",
       "category": "Feedback",
       "status": "portal-internal",
       "subpath": "components/operations-progress-button",
@@ -1717,7 +1659,6 @@
     },
     "paging": {
       "name": "Paging",
-      "page": "references/components/paging.md",
       "category": "Navigation",
       "status": "public",
       "subpath": "components/paging",
@@ -1741,7 +1682,6 @@
     },
     "password-input": {
       "name": "PasswordInput",
-      "page": "references/components/password-input.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/password-input",
@@ -1761,7 +1701,6 @@
     },
     "portal": {
       "name": "Portal",
-      "page": "references/components/portal.md",
       "category": "Layout",
       "status": "public",
       "subpath": "components/portal",
@@ -1777,7 +1716,6 @@
     },
     "portal-logo": {
       "name": "PortalLogo",
-      "page": "references/components/portal-logo.md",
       "category": "Data display",
       "status": "portal-internal",
       "subpath": "components/portal-logo",
@@ -1795,7 +1733,6 @@
     },
     "progress-bar": {
       "name": "ProgressBar",
-      "page": "references/components/progress-bar.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/progress-bar",
@@ -1820,7 +1757,6 @@
     },
     "public-room-bar": {
       "name": "PublicRoomBar",
-      "page": "references/components/public-room-bar.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/public-room-bar",
@@ -1840,7 +1776,6 @@
     },
     "quantity-picker": {
       "name": "QuantityPicker",
-      "page": "references/components/quantity-picker.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/quantity-picker",
@@ -1857,7 +1792,6 @@
     },
     "quick-actions": {
       "name": "QuickActions",
-      "page": "references/components/quick-actions.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/quick-actions",
@@ -1881,7 +1815,6 @@
     },
     "radio-button": {
       "name": "RadioButton",
-      "page": "references/components/radio-button.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/radio-button",
@@ -1900,7 +1833,6 @@
     },
     "radio-button-group": {
       "name": "RadioButtonGroup",
-      "page": "references/components/radio-button-group.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/radio-button-group",
@@ -1920,7 +1852,6 @@
     },
     "rectangle": {
       "name": "RectangleSkeleton",
-      "page": "references/components/rectangle.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/rectangle",
@@ -1938,7 +1869,6 @@
     },
     "room-icon": {
       "name": "RoomIcon",
-      "page": "references/components/room-icon.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/room-icon",
@@ -1969,7 +1899,6 @@
     },
     "room-logo": {
       "name": "RoomLogo",
-      "page": "references/components/room-logo.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/room-logo",
@@ -1987,7 +1916,6 @@
     },
     "room-logo-cover-dialog": {
       "name": "RoomLogoCoverDialog",
-      "page": "references/components/room-logo-cover-dialog.md",
       "category": "Overlays",
       "status": "portal-internal",
       "subpath": "components/room-logo-cover-dialog",
@@ -2015,7 +1943,6 @@
     },
     "room-type": {
       "name": "RoomType",
-      "page": "references/components/room-type.md",
       "category": "Data display",
       "status": "portal-internal",
       "subpath": "components/room-type",
@@ -2037,7 +1964,6 @@
     },
     "rows": {
       "name": "Rows",
-      "page": "references/components/rows.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/rows",
@@ -2060,7 +1986,6 @@
     },
     "rows/row": {
       "name": "Row",
-      "page": "references/components/rows/row.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/rows/row",
@@ -2080,7 +2005,6 @@
     },
     "rows/row-container": {
       "name": "RowContainer",
-      "page": "references/components/rows/row-container.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/rows/row-container",
@@ -2099,7 +2023,6 @@
     },
     "rows/row-content": {
       "name": "RowContent",
-      "page": "references/components/rows/row-content.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/rows/row-content",
@@ -2121,7 +2044,6 @@
     },
     "scrollbar": {
       "name": "Scrollbar",
-      "page": "references/components/scrollbar.md",
       "category": "Layout",
       "status": "public",
       "subpath": "components/scrollbar",
@@ -2145,7 +2067,6 @@
     },
     "search-input": {
       "name": "SearchInput",
-      "page": "references/components/search-input.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/search-input",
@@ -2165,7 +2086,6 @@
     },
     "section": {
       "name": "Section",
-      "page": "references/components/section.md",
       "category": "Layout",
       "status": "portal-internal",
       "subpath": "components/section",
@@ -2183,7 +2103,6 @@
     },
     "selected-item": {
       "name": "SelectedItem",
-      "page": "references/components/selected-item.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/selected-item",
@@ -2204,7 +2123,6 @@
     },
     "selection-area": {
       "name": "SelectionArea",
-      "page": "references/components/selection-area.md",
       "category": "Layout",
       "status": "public",
       "subpath": "components/selection-area",
@@ -2226,7 +2144,6 @@
     },
     "selector": {
       "name": "Selector",
-      "page": "references/components/selector.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/selector",
@@ -2255,7 +2172,6 @@
     },
     "slider": {
       "name": "Slider",
-      "page": "references/components/slider.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/slider",
@@ -2274,7 +2190,6 @@
     },
     "snackbar": {
       "name": "SnackBar",
-      "page": "references/components/snackbar.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/snackbar",
@@ -2297,7 +2212,6 @@
     },
     "status-message": {
       "name": "StatusMessage",
-      "page": "references/components/status-message.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/status-message",
@@ -2313,7 +2227,6 @@
     },
     "tab-item": {
       "name": "TabItem",
-      "page": "references/components/tab-item.md",
       "category": "Navigation",
       "status": "public",
       "subpath": "components/tab-item",
@@ -2332,7 +2245,6 @@
     },
     "table": {
       "name": "Table",
-      "page": "references/components/table.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/table",
@@ -2365,7 +2277,6 @@
     },
     "tabs": {
       "name": "Tabs",
-      "page": "references/components/tabs.md",
       "category": "Navigation",
       "status": "public",
       "subpath": "components/tabs",
@@ -2385,7 +2296,6 @@
     },
     "tag": {
       "name": "Tag",
-      "page": "references/components/tag.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tag",
@@ -2407,7 +2317,6 @@
     },
     "tags": {
       "name": "Tags",
-      "page": "references/components/tags.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tags",
@@ -2426,7 +2335,6 @@
     },
     "text": {
       "name": "Text",
-      "page": "references/components/text.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/text",
@@ -2445,7 +2353,6 @@
     },
     "text-input": {
       "name": "TextInput",
-      "page": "references/components/text-input.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/text-input",
@@ -2468,7 +2375,6 @@
     },
     "textarea": {
       "name": "Textarea",
-      "page": "references/components/textarea.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/textarea",
@@ -2491,7 +2397,6 @@
     },
     "theme-provider": {
       "name": "ThemeProviderComponent",
-      "page": "references/components/theme-provider.md",
       "category": "Layout",
       "status": "public",
       "subpath": "components/theme-provider",
@@ -2507,7 +2412,6 @@
     },
     "tiles": {
       "name": "Tiles",
-      "page": "references/components/tiles.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tiles",
@@ -2531,7 +2435,6 @@
     },
     "tiles/base-tile": {
       "name": "BaseTile",
-      "page": "references/components/tiles/base-tile.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tiles/base-tile",
@@ -2554,7 +2457,6 @@
     },
     "tiles/file-tile": {
       "name": "FileTile",
-      "page": "references/components/tiles/file-tile.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tiles/file-tile",
@@ -2579,7 +2481,6 @@
     },
     "tiles/folder-tile": {
       "name": "FolderTile",
-      "page": "references/components/tiles/folder-tile.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tiles/folder-tile",
@@ -2603,7 +2504,6 @@
     },
     "tiles/room-tile": {
       "name": "RoomTile",
-      "page": "references/components/tiles/room-tile.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tiles/room-tile",
@@ -2626,7 +2526,6 @@
     },
     "tiles/template-tile": {
       "name": "TemplateTile",
-      "page": "references/components/tiles/template-tile.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tiles/template-tile",
@@ -2649,7 +2548,6 @@
     },
     "tiles/tile-container": {
       "name": "TileContainer",
-      "page": "references/components/tiles/tile-container.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tiles/tile-container",
@@ -2670,7 +2568,6 @@
     },
     "tiles/tile-content": {
       "name": "TileContent",
-      "page": "references/components/tiles/tile-content.md",
       "category": "Data display",
       "status": "public",
       "subpath": "components/tiles/tile-content",
@@ -2686,7 +2583,6 @@
     },
     "time-picker": {
       "name": "TimePicker",
-      "page": "references/components/time-picker.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/time-picker",
@@ -2706,7 +2602,6 @@
     },
     "toast": {
       "name": "Toast",
-      "page": "references/components/toast.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/toast",
@@ -2731,7 +2626,6 @@
     },
     "toggle-button": {
       "name": "ToggleButton",
-      "page": "references/components/toggle-button.md",
       "category": "Form controls",
       "status": "public",
       "subpath": "components/toggle-button",
@@ -2754,7 +2648,6 @@
     },
     "tooltip": {
       "name": "Tooltip",
-      "page": "references/components/tooltip.md",
       "category": "Overlays",
       "status": "public",
       "subpath": "components/tooltip",
@@ -2785,7 +2678,6 @@
     },
     "top-loading-indicator": {
       "name": "TopLoaderService",
-      "page": "references/components/top-loading-indicator.md",
       "category": "Feedback",
       "status": "public",
       "subpath": "components/top-loading-indicator",
@@ -2802,7 +2694,6 @@
     },
     "two-state-toggle": {
       "name": "TwoStateToggle",
-      "page": "references/components/two-state-toggle.md",
       "category": "Navigation",
       "status": "portal-internal",
       "subpath": "components/two-state-toggle",

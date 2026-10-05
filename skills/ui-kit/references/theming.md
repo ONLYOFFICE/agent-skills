@@ -2,7 +2,9 @@
 
 The kit has no theme object you pass around and no styled components. Everything is CSS
 custom properties, and the provider's whole job is to write two attributes and two classes on
-the document.
+the document. The provider's props, the `ThemeKeys` enum, the theme object and the colour
+tokens are on the site's [Themes](https://api.onlyoffice.com/docspace/ui-kit/getting-started/themes.md)
+page; this one is the mechanism, and what goes wrong with it.
 
 ## How the theme reaches a component
 

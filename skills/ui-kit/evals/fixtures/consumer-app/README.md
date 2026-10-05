@@ -6,22 +6,15 @@ scenario is graded on, so the fixture must not do it for the run.
 
 ## Before a run, the operator installs the kit
 
-**This paragraph is the only place in the repository that says how the kit is installed.** It
-is not on npm, so there is nothing to install by name yet:
+`@onlyoffice/apps-ui-kit` is listed in `package.json` at the version the skill targets, so one
+command does it:
 
 ```sh
-# in a checkout of docspace-ui-kit-react, on the branch the skill is pinned to
-pnpm install && pnpm build && pnpm pack      # pnpm, not npm — an npm-packed tarball has no exports map
-
-# here
 npm install
-npm install ../../docspace-ui-kit-react/onlyoffice-apps-ui-kit-4.0.0.tgz
 ```
 
-That second command writes the dependency into `package.json` itself, which is why this file
-does not list it. When the package reaches a registry, add it to `dependencies` here, replace
-the two commands above with `npm install`, and turn on the `verify` flags for the registry
-source in `skills/ui-kit/sources.json`. Nothing else in the skill names an install method.
+To run the scenarios against an unreleased build of the kit, pack it in its checkout
+(`pnpm build && pnpm pack`) and `npm install <path to the .tgz>` here instead.
 
 Hand the run a copy with `node_modules/` already populated: the scenarios are about the code,
 and an install that fails halfway darkens every check at once.

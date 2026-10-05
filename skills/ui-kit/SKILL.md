@@ -10,36 +10,53 @@ metadata:
 # ONLYOFFICE UI kit
 
 The component library ONLYOFFICE DocSpace and ONLYOFFICE Apps are built from, used from your
-own React application. It is the same library the portal ships as `@docspace/ui-kit`; outside
-the portal it is `@onlyoffice/apps-ui-kit`. It fails quietly: a wrong prop name is ignored, a
-missing provider empties every label, and nothing is logged.
+own React application: the portal's `@docspace/ui-kit`, published as `@onlyoffice/apps-ui-kit`.
+It fails quietly: a wrong prop name is ignored, a missing provider empties every label, and
+nothing is logged.
 
 ## Pinned facts
 
-- `@onlyoffice/apps-ui-kit` **4.0.0**, ESM only, React 19. No registry carries it: it is
-  installed from a tarball packed with **pnpm** (an npm-packed one has no `exports` at all).
-- Four required peers: `react`, `react-dom`, `i18next` (^25.5.2), `react-i18next` (^15.7.3).
-  Fifteen more are optional and belong to the portal-internal modules.
+- `@onlyoffice/apps-ui-kit` **4.0.0** from npm, ESM only, React 19. Four required peers:
+  `react`, `react-dom`, `i18next` (^25.5.2), `react-i18next` (^15.7.3); fifteen more are
+  optional and belong to the portal-internal modules.
 - **Each module imports its own CSS.** Nothing is imported by hand;
   `@onlyoffice/apps-ui-kit/styles.css` is the whole library, 727 KB, for builds that cannot
   follow those imports.
-- 98 components, each with a README of its own inside the package. The root barrel carries
-  every one by name, and still is not the way in — see rule 6.
-- Two providers, both mounted by the application: `ThemeProvider` from `providers/theme` and
-  `TranslationProvider` from `providers/translation`.
+- 98 components, each with a README of its own inside the package; the root barrel carries
+  every one by name, and still is not the way in — see rule 6. Two providers, both mounted by
+  the application: `ThemeProvider` from `providers/theme`, `TranslationProvider` from
+  `providers/translation`.
 
 ## Step 0 — find out what you are working against
 
 1. Read `node_modules/@onlyoffice/apps-ui-kit/package.json` and compare its `version` with the
    4.0.0 above. Say in your answer which version you read.
-2. Not installed? Ask how it is meant to be — there is no registry, so the answer decides the
-   specifier.
-3. A **DocSpace portal plugin** (`@onlyoffice/docspace-plugin-sdk` in `package.json`, or
-   imports of `@docspace/ui-kit`) is the `plugin-sdk` skill's job: the portal decides how a
-   plugin gets the kit, so load that skill — it says which rules below still hold in a plugin
-   (most do).
-4. Prefer what the installed package says over what you remember: its own
-   `components/<folder>/README.md`, and `dist/types/**/*.d.ts` for props.
+2. Not installed? `npm install @onlyoffice/apps-ui-kit`, then read the version it brought.
+3. A **DocSpace portal plugin** (`@onlyoffice/docspace-plugin-sdk` in `package.json`, or imports
+   of `@docspace/ui-kit`) is the `plugin-sdk` skill's job: the portal decides how a plugin gets
+   the kit, so load that skill — it says which rules below still hold in a plugin (most do).
+
+## Sources, and which one wins
+
+When two disagree, the higher one wins — say so instead of switching between them.
+
+1. **The installed package.** `components/<folder>/README.md` is the component's own page,
+   faults included; `docs/components.md` the catalogue — the close calls, and the prop that
+   shows and hides each component; `docs/getting-started.md` and `docs/public-api.md` the setup
+   and the public boundary; `dist/types/**/*.d.ts` the exact props. It describes the version the
+   project builds against, so it wins on names, props and defaults.
+2. **The docs site**, `https://api.onlyoffice.com/docspace/ui-kit/`: the same pages for the
+   released kit, plus what the package has no page for — `getting-started/{hooks|utils|
+   constants|themes|translation|structure}`. A component is under `ui/<group>/<slug>`
+   (`ui/overlays/aside`, `ui/form-controls/text-input`); the site's `components/` section is
+   the portal's composites — selectors, errors, providers — not these. Read a page as Markdown
+   by appending `.md`, and look a component up in
+   [`llms.txt`](https://api.onlyoffice.com/docspace/ui-kit/llms.txt), one line per page, rather
+   than guessing its group. Skip the `import` lines and the `<ThemedImage>` and `<APITable>`
+   tags: they are the site's own.
+3. **This skill** — the rules below and the references: what happens when components are
+   composed, and the failures that render without a word. Where a kit page and a rule
+   disagree, the rule was checked against the source last: follow it and say so.
 
 ## Which component for this job
 
@@ -63,20 +80,18 @@ missing provider empties every label, and nothing is logged.
 
 | Question | Read |
 |---|---|
-| Install, providers, CSS, fonts | [references/components/\_getting-started.md](references/components/_getting-started.md), then [references/setup.md](references/setup.md) for the templates, Vite/Next and SSR |
+| Install, providers, CSS, fonts | the package's `docs/getting-started.md` ([Installation](https://api.onlyoffice.com/docspace/ui-kit/getting-started/installation.md) on the site), then [references/setup.md](references/setup.md) for the templates, Vite/Next and SSR |
 | Which component, and what is portal furniture | [references/choosing.md](references/choosing.md) |
 | A form: fields, spacing, validation, submit | [references/forms.md](references/forms.md) |
 | Dialogs, panels, menus, toasts | [references/overlays.md](references/overlays.md) |
 | Loading, empty and paged lists | [references/lists-and-tables.md](references/lists-and-tables.md) |
-| Dark mode, CSS variables, RTL | [references/theming.md](references/theming.md) |
-| Translations and why labels are blank | [references/i18n.md](references/i18n.md) |
+| Dark mode, CSS variables, RTL | [references/theming.md](references/theming.md); the theme object and the tokens on [Themes](https://api.onlyoffice.com/docspace/ui-kit/getting-started/themes.md) |
+| Translations and why labels are blank | [references/i18n.md](references/i18n.md); the provider's props on [Translation](https://api.onlyoffice.com/docspace/ui-kit/getting-started/translation.md) |
+| Hooks, utils, constants and enums | [Hooks](https://api.onlyoffice.com/docspace/ui-kit/getting-started/hooks.md), [Utils](https://api.onlyoffice.com/docspace/ui-kit/getting-started/utils.md) and [Constants](https://api.onlyoffice.com/docspace/ui-kit/getting-started/constants.md) on the site — the package carries no page for them |
 | Testing a screen built on it | [references/testing.md](references/testing.md) |
 | Public versus portal-internal | [references/public-api.md](references/public-api.md) |
 | A symptom with no error | [references/troubleshooting.md](references/troubleshooting.md) |
-| One component in detail, faults in it included | [references/components/\<name\>.md](references/components/README.md) — synced from the kit |
-
-The component pages are copies of the kit's own READMEs. Where one contradicts a rule below,
-the rule wins and the kit's page is what should be corrected.
+| One component in detail, faults in it included | its `README.md` in the package, or its `ui/<group>/<slug>.md` page on the site — find it in `llms.txt` |
 
 ## Rules
 
@@ -150,9 +165,9 @@ the rule wins and the kit's page is what should be corrected.
 - Run `node $SKILL/scripts/check-usage.mjs <project>`: leave no errors, and no warning you
   cannot explain. The warnings are the silent half — a toggle that occupies no space, a caption
   attached to no control, a textarea that never fills its field — and every one of them renders
-  without complaining. It reads the project as text and knows the kit from the synced
-  manifest: wrong visibility props, portal-internal imports, a missing provider, the form
-  traps that fail quietly.
+  without complaining. It reads the project as text and knows the kit from a manifest derived
+  from the kit's own metadata: wrong visibility props, portal-internal imports, a missing
+  provider, the form traps that fail quietly.
 
 ## Not covered
 

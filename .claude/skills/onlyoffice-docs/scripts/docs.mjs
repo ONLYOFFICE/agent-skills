@@ -43,6 +43,8 @@ export const SECTION_ALIASES = {
   "js-sdk": "docspace/javascript-sdk",
   "plugins-sdk": "docspace/plugins-sdk",
   "plugin-sdk": "docspace/plugins-sdk",
+  "ui-kit": "docspace/ui-kit",
+  kit: "docspace/ui-kit",
   rest: "docspace/api-backend",
   "api-backend": "docspace/api-backend",
   "rest-api": "docspace/api-backend",

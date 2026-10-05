@@ -17,7 +17,7 @@ land in `evals/results/` (gitignored).
 
 | Tag | Cases | What they measure |
 |---|---|---|
-| `question` | `embed-2fa-question`, `embed-csp-allowlist-verb`, `embed-theme-switch`, `embed-public-room-events`, `plugin-explain-filter` | Facts the skills carry and the docs do not: the CSP verb, `theme` read once, the public-room events, the `usersTypes` asymmetry, the two-factor flow. Cheap: one short answer per run |
+| `question` | `embed-2fa-question`, `embed-csp-allowlist-verb`, `embed-theme-switch`, `embed-public-room-events`, `plugin-explain-filter`, `ui-kit-explain-aside-prop` | Facts the skills carry and the docs do not: the CSP verb, `theme` read once, the public-room events, the `usersTypes` asymmetry, the two-factor flow — and, for the kit, that the answer is read from the component's page and names it. Cheap: one short answer per run |
 | `trigger` | `no-trigger-editor-plugin` | Neither skill fires on a Document Server editor-plugin task (`min: 0, max: 0`, scored in both arms) |
 | `build` | `embed-public-room-viewer`, `embed-select-then-upload` | Small integrations with fixed file names, graded by `regex` over those files, plus the validator run and a REPORT.md rubric |
 | `build`, `heavy` | `embed-employee-cabinet`, `plugin-sidebar-workspace` | A full React connector and a full plugin build (npm install, Vite, `validate-plugin.mjs`); long and costly, run on demand |
@@ -54,6 +54,7 @@ and should be sharpened or dropped.
 |---|---|---|---|---|---|---|
 | 2026-09-28 | default (sonnet), judge default | `question` + `trigger`, 3 runs per arm | 6/6 at 1.00 | 2fa 0.00 · public-room-events 0.50 · explain-filter 0.60 · csp-verb 1.00 · theme-switch 1.00 | mean 0.32 | $4.23, 18 min. The 2FA flow, the public-room events and the `usersTypes` asymmetry are knowledge the model lacks without the skill; the CSP verb and the theme reload it answers on its own, so those two cases are regression guards, not discriminators |
 | 2026-09-28 | default (sonnet) | `embed-select-then-upload`, 1 run, `--allow-tools Write Edit`, no baseline | 0.92 | — | — | every file grader passed; `config-validated` cannot pass without a shell grant (Windows) |
+| 2026-10-02 | sonnet, judge sonnet | `question` + `trigger`, 3 runs per arm, `-j 2`, `--allow-tools WebFetch`; `apiSite` pointed at the stand for the run, since production had no UI kit section yet | 4/7 passed, 0.91 overall: 2fa 1.00 · csp-verb 0.93 · public-room-events 0.67 · theme-switch 1.00 · no-trigger 1.00 · explain-filter 1.00 · ui-kit-aside 0.75 | 2fa 0.00 · csp-verb 0.80 · public-room-events 0.33 · theme-switch 1.00 · no-trigger 1.00 · explain-filter 0.20 · ui-kit-aside 0.33 | mean 0.38 | $3.33, 9 min. A with-arm answer costs $0.05–0.12, a baseline $0.04–0.14. The sonnet judge is stricter than haiku on the two embed cases: `public-room-events` on the revoked-link answer, `csp-verb` on one run that admitted not knowing the POST body. `ui-kit-aside`: two runs fetched the component pages and named them, one answered from rule 4 without fetching and failed both source graders, which is what the case is for; the baseline wandered, 14 turns and 53 s against 6 and 26 |
 
 ## Adding a case
 

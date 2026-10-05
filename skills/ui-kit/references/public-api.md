@@ -2,7 +2,9 @@
 
 The kit ships the whole DocSpace front end, not a curated subset. Everything in it resolves
 and imports cleanly; only part of it is meant for an application of your own. The kit's own
-account is `docs/public-api.md` in its repository — this is the part a consumer acts on.
+account is `docs/public-api.md`, shipped inside the package, and
+[Structure](https://api.onlyoffice.com/docspace/ui-kit/getting-started/structure.md) on the
+docs site — this is the part a consumer acts on.
 
 ## Three tiers
 

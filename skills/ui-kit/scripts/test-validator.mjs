@@ -5,9 +5,9 @@
  * report and what it must not — a checker that fires on everything is as useless as one that
  * fires on nothing.
  *
- * It also checks the manifest the validator reads for internal sense, and runs the two sync
- * tools offline, so that a hand-edited synced page or an untraceable link fails here rather
- * than in a release.
+ * It also checks the manifest the validator reads for internal sense, runs the link check
+ * offline, and compares the manifest with the kit when a project with the kit installed is
+ * named, so that a stale manifest or an untraceable link fails here rather than in a release.
  *
  * The two templates are read too: through check-usage always, and through `tsc` when a project
  * with the kit installed is named, since their types come from the kit.
@@ -879,12 +879,7 @@ for (const [folder, component] of Object.entries(MANIFEST.components)) {
     allowedVisibility.has(component.visibilityProp),
     `${component.visibilityProp}`,
   );
-  check(`manifest: ${folder} names a page`, typeof component.page === "string" && component.page.length > 0);
-  check(
-    `manifest: ${folder}'s page exists`,
-    (await import("node:fs")).existsSync(path.join(REPO, "skills", "ui-kit", component.page.replace(/^references\//, "references/"))),
-    component.page,
-  );
+  check(`manifest: ${folder} carries no page path`, !("page" in component));
 }
 check("manifest: every component is accounted for", Object.keys(MANIFEST.components).length >= 98, `${Object.keys(MANIFEST.components).length}`);
 check("manifest: the portal-internal modules were parsed", MANIFEST.portalInternalSubpaths.includes("selectors"));
@@ -892,14 +887,14 @@ check("manifest: the barrel leak is recorded", MANIFEST.portalInternalBarrelName
 check("manifest: the leak includes billing's constants file", MANIFEST.portalInternalBarrelNames.includes("YEAR_KEY"));
 check("manifest: the revision is recorded once, in sources.json", !("syncedCommit" in MANIFEST));
 
-// --- the sync tools, offline ------------------------------------------------------------------
+// --- the sync tools ---------------------------------------------------------------------------
 
-for (const [what, argv] of [
-  // Offline, so no --strict: the metadata count is known only when a kit tree is
-  // open, which is the release check (`--from <kit> --check --strict`).
-  ["no synced page was hand-edited", ["tools/sync-ui-kit.mjs", "--check"]],
-  ["every link and version traces to sources.json", ["tools/sync-sources.mjs", "--skill", "ui-kit", "--check"]],
-]) {
+const syncChecks = [["every link and version traces to sources.json", ["tools/sync-sources.mjs", "--skill", "ui-kit", "--check"]]];
+if (kitProjectAt > 0) {
+  const kit = path.join(path.resolve(process.argv[kitProjectAt + 1] ?? ""), "node_modules", "@onlyoffice", "apps-ui-kit");
+  syncChecks.push(["the manifest matches the installed kit", ["tools/sync-ui-kit.mjs", "--from", kit, "--check"]]);
+}
+for (const [what, argv] of syncChecks) {
   try {
     execFileSync(process.execPath, argv.map((a) => (a.startsWith("tools/") ? path.join(REPO, a) : a)), { cwd: REPO, encoding: "utf8" });
     check(what, true);
