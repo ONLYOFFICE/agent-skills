@@ -153,9 +153,8 @@ export const saved = () => toastr.success("Room settings saved");
   it is truthy — so the toast arrives with no title line at all, not with a blank one. Passing
   `null` deliberately reaches the same result, which is what makes a missing provider read as
   a design decision.
-- **The container renders into `#root`**, falling back to `document.body`. An application
-  whose root element has another id gets its toasts on the body — outside the element the
-  theme class is written on, so the colours go with it.
+- **The container renders into `#root`**, falling back to `document.body`. Either way the
+  toasts keep the theme: the class is written on `<body>` itself.
 
 `Snackbar` and `ColumnarInfoBar` are the banners that stay until closed; `StatusMessage` is
 the one that stays until the state changes and has no close control.
@@ -163,11 +162,16 @@ the one that stays until the state changes and has no close control.
 ## Tooltips
 
 `Tooltip` is `isOpen`, and most components that want one take `title`/tooltip props of their
-own through a wrapper the kit applies — `Button` among them. Reach for the component directly
-only when the tooltip is not attached to a kit control.
+own through a wrapper the kit applies — `Button` among them. That wrapper removes the native
+`title` and shows its own tooltip through `<RootTooltip />` from `components/tooltip`, so
+without one `RootTooltip` mounted near the root, `title` on a kit control shows **nothing**,
+not even the browser's tooltip. Reach for the component directly only when the tooltip is not
+attached to a kit control.
 
 ## Backdrop and Portal
 
 `Backdrop` is the dimming layer and `Portal` is the escape hatch to `document.body`; both take
-`visible`. `ModalDialog` and `Aside` bring their own, so mount these two only when building an
+`visible`. `ModalDialog` brings its own. `Aside` does not: it has no backdrop and does not close
+on Escape, so a panel that should dim the page or close on a key needs a `Backdrop` and a
+`keydown` handler of yours beside it. Otherwise mount these two only when building an
 overlay of your own.

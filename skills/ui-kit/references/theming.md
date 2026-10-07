@@ -52,21 +52,23 @@ export function DeleteButton({ onClick }: { onClick: () => void }) {
 }
 ```
 
-**The shared accent.** `--accent-button` is not declared by the kit anywhere — it is read with
-a fallback (`var(--accent-button, #{$light-second-main})`) by everything that paints an accent:
-primary buttons, the floating button, the add button, the calendar's selection, the avatar's
-badge. Setting it recolours all of them at once, which is why it belongs on the element that
-should change and not on a panel or a dialog — putting it on a dialog recolours the close
-button too.
+**The button accent.** `--accent-button` is not declared by the kit anywhere — it is read with
+a fallback (`var(--accent-button, #{$light-second-main})`) by `Button`, primary and tinted, and
+by `Avatar`'s badge, and by nothing else. Set it on the element that should change and not on a
+panel or a dialog — putting it on a dialog recolours every button inside it. The floating
+button, the add button, the calendar's selection and `IconButton`'s hover read
+`--color-scheme-main-accent` instead (below), so `--accent-button` leaves them as they were.
 
-`--font-family` is the same kind of knob: declared by the provider on `<body>`, overridable on
-`:root`.
+`--font-family` is set by the provider as an inline style on `<body>`, so a rule on `:root`
+or `body` loses to it. Declare it on an element of your own inside the body — the app's
+root — and everything below inherits that.
 
 **The portal's palette.** `colorTheme` is a different mechanism: the provider writes
 `--color-scheme-main-accent`, `--color-scheme-text-accent`, `--color-scheme-main-buttons` and
 `--color-scheme-text-buttons` from it, and thirteen components read those. It is the portal's
 per-tenant accent, and an application of its own has nothing to pass — leave it out and use
-`--accent-button`.
+`--accent-button` for buttons. To recolour the components that read the palette instead,
+declare `--color-scheme-main-accent` on an element above them.
 
 ## Checking dark mode
 
@@ -82,10 +84,6 @@ Render once in each theme. Two things go wrong and neither is visible in light:
 - **Anything of yours with a literal colour.** A `#fff` background in your own markup stays
   white under `.dark`. Use the kit's variables, or declare a pair of your own under
   `.light` / `.dark` the way the components do.
-
-The toast container is the one place where the theme can be lost through no fault of yours:
-it renders into `#root`, and an application whose root element has another id gets the toasts
-on `document.body` — outside the element the class is written on.
 
 ## Direction
 
