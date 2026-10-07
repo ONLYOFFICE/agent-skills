@@ -209,7 +209,6 @@ function buildManifest(src, metas, repoUrl) {
   return {
     package: PACKAGE,
     kitVersion: src.version,
-    syncedFrom: src.kind,
     repo: repoUrl,
     publicSubpaths,
     portalInternalSubpaths: portalInternal,

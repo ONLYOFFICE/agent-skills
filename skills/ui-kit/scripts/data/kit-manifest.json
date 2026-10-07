@@ -1,7 +1,6 @@
 {
   "package": "@onlyoffice/apps-ui-kit",
   "kitVersion": "4.0.0",
-  "syncedFrom": "checkout",
   "repo": "https://github.com/ONLYOFFICE/docspace-ui-kit-react",
   "publicSubpaths": [
     "assets",
