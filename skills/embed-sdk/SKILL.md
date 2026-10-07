@@ -56,7 +56,9 @@ When sources disagree, the higher one wins — say so to the user instead of swi
    listed in `https://api.onlyoffice.com/docspace/javascript-sdk/llms.txt`; the root
    `https://api.onlyoffice.com/llms.txt` lists the sections.
 3. **The SDK sources** at the matching tag: `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/v2.2.0/src/types/index.ts`,
-   `…/src/enums/index.ts`, `…/src/constants/index.ts`.
+   `…/src/enums/index.ts`, `…/src/constants/index.ts`. **That tag is not cut yet**: the skill describes 2.2.0
+   because the behaviour it documents is 2.2.0's, but `v2.1.0` is the newest tag GitHub resolves, so those three
+   URLs answer 404 until the release lands. Read the installed package's own sources in the meantime.
 4. **This skill** — the process, the traps and the portal behaviours the types cannot express. Facts marked
    "client 4.0.0" were verified against the client's `release/v4.0.0` branch.
 

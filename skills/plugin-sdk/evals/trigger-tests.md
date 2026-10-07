@@ -1,7 +1,8 @@
 # Trigger tests for the `description`
 
 Twenty first messages, each sent to a fresh session with the plugin installed and nothing
-else said. Record whether the agent loaded `onlyoffice:plugin-sdk` before answering. Target:
+else said. Record whether the agent loaded `onlyoffice:plugin-sdk` before answering —
+`node tools/run-triggers.mjs --skill plugin-sdk --model sonnet` does that through `claude -p`. Target:
 every "should" triggers, no "should not" does, on each model the evals run on. Run three
 times per message; a message counts as triggering when it does so in at least two runs.
 When a "should" misses, add the missing situation to the description; when a "should not"
@@ -57,4 +58,4 @@ description triggers when the first message is not in English.
 
 | Date | Model | Should (10) | Should not (10) | Notes |
 |---|---|---|---|---|
-| | | | | |
+| 2026-10-05 | sonnet | 10 (each 3/3) | 9 (each 0/3) + "should not" 10 at 3/3 | Description as of `82ff8c7`. "Should not" 10 is the borderline one, counted as neither; the three embedding messages went to `onlyoffice:embed-sdk` |

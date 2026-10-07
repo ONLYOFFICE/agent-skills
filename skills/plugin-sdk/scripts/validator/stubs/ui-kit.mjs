@@ -9,7 +9,7 @@
  */
 
 /*
- * The host's @docspace/ui-kit, for a bundle loaded in the validator. Every export is a
+ * The host's @onlyoffice/apps-ui-kit, for a bundle loaded in the validator. Every export is a
  * component nothing renders, and every enum member reads as its own name - which is what
  * the kit's string enums resolve to (ButtonSize.normal === "normal"), so a module-scope
  * constant built from one keeps a plausible value.
@@ -90,5 +90,5 @@ const kit = new Proxy(
 );
 
 // Named exports cannot be produced dynamically from an ES module; the loader rewrites
-// `import { Button } from "@docspace/ui-kit"` into a namespace import over this default.
+// `import { Button } from "@onlyoffice/apps-ui-kit"` into a namespace import over this default.
 export default kit;

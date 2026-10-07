@@ -1,0 +1,160 @@
+# ONLYOFFICE UI kit skill
+
+A skill that teaches an AI coding agent to build screens in your own React application out
+of the component library ONLYOFFICE DocSpace and ONLYOFFICE Apps are made of. Describe the
+screen ("a settings form like the portal's", "a side panel listing the members of a room")
+and the agent produces it with the kit's own components, its two providers mounted, and the
+prop names the kit actually reads.
+
+The kit fails quietly. A panel given `isVisible` never opens and reports nothing, because
+the prop it reads is `visible`; a label passed to a `FieldContainer` is invisible until
+`labelVisible` is set, and its default is `false`; a `Textarea` in a flex row collapses; a
+column `gap` adds to the 16px margin every field already carries. None of that is in the
+type definitions, and an agent that guesses gets code that compiles and looks broken. The
+body is [`SKILL.md`](SKILL.md); every supported agent is pointed at that one file.
+
+## Installing it
+
+As part of the `onlyoffice` plugin — see [Install](../../README.md#install) in the root
+README. On its own: copy or symlink this directory to where your agent scans for skills
+(for example `~/.claude/skills/ui-kit/`), or hand it `SKILL.md`. `$SKILL` in the skill body
+means this directory, resolved to an absolute path.
+
+## Tools
+
+```sh
+node skills/ui-kit/scripts/check-usage.mjs ./my-app          # findings as text
+node skills/ui-kit/scripts/check-usage.mjs ./my-app --json
+node skills/ui-kit/scripts/test-validator.mjs                # the self-test
+node tools/sync-ui-kit.mjs --from ../docspace-ui-kit-react --write   # rebuild the manifest from the kit
+```
+
+**`check-usage.mjs`** reads a project as text — no build, no network, nothing executed — and
+reports what the kit itself never does. It knows the kit from
+`scripts/data/kit-manifest.json`, which `tools/sync-ui-kit.mjs` derives from the kit's own metadata, so the
+visibility prop it expects for a component, the list of portal-internal modules and which
+components are default exports on their subpath are all facts rather than a hand-kept list —
+which is also why the barrel mistake reached it: the manifest is only as right as the kit's own
+README validator, and that validator once rebuilt the barrel's names by hand. Errors are
+things that are already broken: a value import from the root barrel, which does not build
+outside the portal, a visibility prop the component ignores, a portal-internal import,
+`Providers`, a path into `dist/`, `PUBLIC_DIR`, a missing provider, a `SearchInput` handler
+reading `.target.value` off a string. Warnings are the silent traps: a field with no
+visible label, a caption attached to no control, a column whose `gap` doubles the spacing, a
+`Loader` with no type, the whole-library stylesheet.
+
+**`test-validator.mjs`** builds twenty throwaway projects in the temp directory and asserts
+both what each must report and what it must not, then checks the manifest for internal sense
+and runs the link check offline; given `--kit-project`, it also compares the manifest with the
+installed kit. Breaking one branch of the validator fails it.
+
+## What it targets
+
+`@onlyoffice/apps-ui-kit` **4.0.0** — the public name of the library the portal ships as
+`@docspace/ui-kit`, built from
+[`docspace-ui-kit-react`](https://github.com/ONLYOFFICE/docspace-ui-kit-react) and
+installed from npm. ESM only, React 19. Its documentation is the kit's own: the READMEs and
+`docs/*.md` that ship inside the package, and the same pages on the docs site under
+[`docspace/ui-kit`](https://api.onlyoffice.com/docspace/ui-kit/). The skill links the site
+and copies nothing from it.
+
+Screens built **for the portal itself** are a different job: a plugin gets the kit through
+the portal's shim, which resolves one specifier per package and throws on a subpath import.
+That belongs to [`plugin-sdk`](../plugin-sdk/SKILL.md). Its `references/ui-kit.md` keeps the
+plugin delta — which of the rules here hold in a plugin and which do not — and sends the
+reader back here for the rest, so a fact about a component is written once.
+
+## Layout
+
+```
+SKILL.md      the skill: pinned facts, the discovery step, the routing table and the critical rules
+sources.json  the kit version this skill is pinned to, and the hosts it links to
+references/   the knowledge base, loaded on demand
+evals/        graded scenarios and the trigger tests for the description — not read by agents
+scripts/      offline checks an agent runs over a project that uses the kit
+templates/    provider composition copied into a project
+```
+
+## Maintaining it
+
+**Where a fact about the kit is written.** In the kit, not here. Every component's
+behaviour lives in `components/<folder>/README.md` in `docspace-ui-kit-react`, which ships
+inside the package itself and is published on the docs site; the skill carries no copy of
+those pages, and `SKILL.md` says in which order an agent reads the package, the site and the
+skill. Correct the kit's README and the site follows. What is written here by hand is the
+part no component README can hold: which component to choose, how the pieces compose, and
+the rules an agent breaks without being told.
+
+**How a rule earns its place in `SKILL.md`.** `SKILL.md` is loaded whole on every trigger, so
+it has a budget of **175 lines**. A new trap goes on the component's page upstream or into a
+reference; it reaches `SKILL.md` only with an eval assertion behind it.
+
+The budget was 150 and was raised deliberately once it started binding. It exists to stop the
+file growing without limit, not because any particular number is right, and 150 was chosen by
+eye before a single rule had been measured. Trading a trap that an eval has shown to matter for
+a round number is a bad exchange; what keeps the file small is the entry condition above, not
+the ceiling.
+
+**Rules the kit's own pages now state as well.** Most of the sixteen are said somewhere in
+the kit's pages too — rules 1, 2, 5 and 6 in `docs/getting-started.md`, rule 4 in the
+catalogue's *prop that shows and hides it* table, and rules 7 to 15 on the page of the component
+each is about.
+
+**That is not, by itself, a reason to cut them, and three eval iterations have not settled
+it.** Both arms of every scenario had the kit installed, so both could read those pages and the
+package's own `.d.ts`; what the ties show is that the pages are *sufficient once read*. They say
+nothing about whether an agent would go and read them unprompted, which is exactly what a rule
+in `SKILL.md` buys: it names the trap before the agent decides what to open. No run so far has
+separated those two things.
+
+Iteration 2 is the nearest thing to evidence either way, and it points the other direction. The
+kit gained `labelFor` and the fixed `Aside` the day before, and both are documented on the kit's
+own pages — yet the baseline attached two captions to nothing and hand-rebuilt the panel layout
+the component now brings, while the with-skill arm did neither. The facts were in `node_modules`
+in both arms. Only one arm was told to look.
+
+Separating them needs a third arm — the skill with one rule removed, against the same scenario —
+and until that is run, a rule with a passing assertion behind it stays. An argument from "the
+page says it too" is not evidence.
+
+Two are not candidates at all. **Rule 16 cannot move upstream**: the kit's own validator
+forbids the string `PUBLIC_DIR` in any README, even in a sentence telling the reader not to use
+it, so the kit is structurally unable to warn about the alias its own client defines. And
+**rule 3** is only half-said upstream — `providers/README.md` explains what the composed
+`Providers` is, but that page is not one this skill copies.
+
+## What the evidence says, and what it does not
+
+Both instruments have been run. [`evals/`](evals/README.md) carries five iterations — **70/70
+against a baseline's 58/70** in the third, every scenario built and typechecked, and two more
+with the skill alone after later corrections — and
+[`trigger-tests.md`](evals/trigger-tests.md) carries ten of ten and none of ten across three
+orders.
+
+What that buys: the skill's value is concentrated where the package cannot answer for itself —
+explaining a symptom with no project to read, auditing someone else's file without inventing
+findings, and the composition traps no single component page states. It also shows in the
+discipline the scenarios grade rather than the knowledge: the failure path of a dialog, colours
+declared for both themes, a review that names its source, and not hand-rolling what a fixed
+component already does.
+
+The one persistent tie is `explain-empty-labels`, 10/10 both arms in two iterations running.
+That is the kit vendoring its own READMEs and hand-annotated `.d.ts` into `node_modules` —
+workstream A working, not this skill failing.
+
+What it does not buy, and should not be claimed:
+
+- **No rule has been shown to be individually load-bearing.** Measuring that needs the third arm
+  described above. The run tells you the skill as a whole beats no skill; it does not rank the
+  rules inside it.
+- **The trigger figure is from a routing-judgement method, not the protocol.** The protocol wants
+  fresh sessions with the plugin installed; the run gave three judges the descriptions and the
+  messages. `trigger-tests.md` says so in full. Re-run the real thing before a release that
+  changes the description.
+- **Prose in the kit's pages is checked by nobody.** The kit's validator settles metadata,
+  generated tables and compiling examples; a sentence that has become false as the component
+  changed is caught only by someone re-reading it. Five such sentences have now been found by the
+  eval runs and fixed upstream, which is the argument for running these at all — and also the
+  measure of how they were found. The last two were a day old: a page written the same week the
+  component changed said `initialTheme` needs a remount and that `labelFor` cannot reach a
+  `Textarea`, and both were wrong. Freshly written is not the same as checked.

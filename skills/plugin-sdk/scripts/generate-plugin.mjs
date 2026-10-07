@@ -50,7 +50,7 @@ const main = () => {
   console.log(`Scaffolded ${options.pluginName} (${options.name}) in ${result.targetDir}`);
   console.log(`  scopes:       ${options.scopeNames.join(", ")}`);
   console.log(`  runtime:      module - the portal imports dist/plugin.js and reads its default export`);
-  console.log(`  ui-kit:       ${result.uiKitTarball}, copied into the project with the tarballs it depends on`);
+  console.log(`  ui-kit:       ${result.uiKitTarball}, copied into the project`);
 
   if (result.sdkTarball)
     console.log(`  sdk:          ${result.sdkTarball}, installed from the vendored tarball`);

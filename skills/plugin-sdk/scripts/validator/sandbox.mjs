@@ -30,7 +30,7 @@ import * as path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { HOST_PROVIDED_SPECIFIERS, UI_KIT_PACKAGE } from "../contract.mjs";
+import { HOST_PROVIDED_SPECIFIERS, LEGACY_UI_KIT_PACKAGE, UI_KIT_PACKAGE } from "../contract.mjs";
 
 /** Long enough for a slow onLoadCallback, short enough that a hang is reported. */
 export const CALLBACK_TIMEOUT_MS = 10_000;
@@ -104,15 +104,16 @@ export const bareImportsOf = (code) => {
   return [...specifiers];
 };
 
-export const isHostProvided = (specifier) => HOST_PROVIDED_SPECIFIERS.includes(specifier);
+export const isHostProvided = (specifier) =>
+  HOST_PROVIDED_SPECIFIERS.includes(specifier) || specifier === LEGACY_UI_KIT_PACKAGE;
 
 /**
  * Where each host-provided specifier is sent: the copy installed in the project, except the
- * ui-kit, which is always the stub. A missing one is reported rather than faked.
+ * ui-kit, which is always the stub - under either name. A missing one is reported rather than faked.
  */
 export const resolveHostModules = (project) => {
   const require = createRequire(project.packageJsonPath);
-  const urls = { [UI_KIT_PACKAGE]: UI_KIT_STUB_URL };
+  const urls = { [UI_KIT_PACKAGE]: UI_KIT_STUB_URL, [LEGACY_UI_KIT_PACKAGE]: UI_KIT_STUB_URL };
   const missing = [];
 
   for (const specifier of HOST_PROVIDED_SPECIFIERS) {
@@ -161,7 +162,7 @@ const rewriteImports = (code, { urls }) => {
       const url = urls[specifier];
       if (!url) return match;
 
-      if (specifier === UI_KIT_PACKAGE) {
+      if (url === UI_KIT_STUB_URL) {
         const kit = rewriteKitClause(keyword, clause, url, kitImports++);
         if (kit) return `${before}${space}${kit}`;
       }

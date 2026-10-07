@@ -46,6 +46,15 @@ The interesting failures only show up on a real portal, and a portal keys an ins
 
 The model is not deterministic; one run is one sample. For the scenario a change was meant to affect, give a variant several run directories (`with_skill`, `with_skill-2`, …) and compare the spread before reading one changed check as a regression. Baselines are reusable across iterations while the prompt and model are unchanged — copy them forward. Run only the scenarios a change could touch.
 
+## Results
+
+Assertions passed per scenario, in the order of the table above; one sample per arm. A row is a snapshot, not a trend: the assertions and the baseline's docs hint change between rows. The analysis of each run is in its `benchmark.md` under the gitignored `skills/plugin-sdk-workspace/`.
+
+| Date | Model | Scenarios | with_skill | without_skill | Notes |
+|---|---|---|---|---|---|
+| 2026-09-24 | claude-sonnet-5 | 0–3 | 83/92 (25 · 27 · 25 · 6) | 47/92 (6 · 14 · 22 · 5) | iteration-0, `2eb74a8`; no docs hint, the baseline built on npm's SDK 2.1.1 |
+| 2026-10-05 | sonnet, graders sonnet | 0–3 | 87/92 (28 · 27 · 25 · 7) | 70/92 (19 · 21 · 24 · 6) | iteration-2, `82ff8c7`, docs on the stand; the baseline had its `llms.txt`, so scenarios 2 and 3 barely discriminate |
+
 ## Adding one
 
 The best scenarios come from real failures: turn the report into a scenario, watch it fail, fix, watch it pass. An entry needs a `name`, a `mode` (`build`, `audit`, `explain`), a prompt written as a person would ask, and assertions a grader can settle by looking at the project — "the File map is keyed by the extension with its leading dot", with the reason in the same sentence where the reason is the point.

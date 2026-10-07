@@ -5,7 +5,7 @@
     "restDocs": {"host": "apiSite", "path": "/docspace/api-backend", "verify": true},
     "llms": {"host": "apiSite", "path": "/llms.txt", "verify": true},
     "repo": {"host": "github", "path": "/docspace-sdk-js", "verify": true},
-    "raw": {"host": "raw", "path": "/docspace-sdk-js/v{version}", "verify": true}
+    "raw": {"host": "raw", "path": "/docspace-sdk-js/v{version}", "verify": false}
   },
   "placeholderHosts": ["portal.example.com", "portal", "host", "localhost", "admin.internal.example.com", "your-host.example", "www.apache.org", "www.w3.org"],
   "versionPatterns": [

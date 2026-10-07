@@ -2,7 +2,7 @@
 
 Twenty first messages, each sent to a fresh session with the plugin installed and nothing
 else said. Record whether the agent loaded `onlyoffice:embed-sdk` before answering.
-`node skills/embed-sdk/evals/run-triggers.mjs --model sonnet` does exactly that through `claude -p`
+`node tools/run-triggers.mjs --skill embed-sdk --model sonnet` does exactly that through `claude -p`
 with this repository as `--plugin-dir`, three runs per message, and prints the misses. Target:
 every "should" triggers, no "should not" does, on each model in `evals.json` → `models`.
 Run three times per message; a message counts as triggering when it does so in at least two

@@ -132,11 +132,10 @@ keeps serving the cached bundle and icons.
 ## The UI kit
 
 \`${UI_KIT_PACKAGE}\` is not published to npm, so it is installed from \`${uiKitTarball}\`, a
-packed copy of the kit from an ONLYOFFICE Apps client checkout (\`libs/ui-kit\`: \`pnpm build &&
-pnpm pack\`). It is a build-time dependency only: the bundle keeps the kit external and
-the portal supplies its own copy at load time. The kit depends on tarballs of its own
-(\`file:\` entries in its \`package.json\`), which is why they sit next to this file too -
-npm resolves those paths against the project, not against the kit.
+packed copy of the kit from a \`docspace-ui-kit-react\` checkout (\`pnpm build && pnpm pack\`).
+It is a build-time dependency only: the bundle keeps the kit external and the portal
+supplies its own copy at load time, which is why a second copy must never be bundled.
+Everything the kit itself needs resolves from the registry.
 ${
   sdkTarball
     ? `

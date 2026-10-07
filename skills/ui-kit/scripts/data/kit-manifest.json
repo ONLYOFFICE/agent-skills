@@ -1,0 +1,2712 @@
+{
+  "package": "@onlyoffice/apps-ui-kit",
+  "kitVersion": "4.0.0",
+  "repo": "https://github.com/ONLYOFFICE/docspace-ui-kit-react",
+  "publicSubpaths": [
+    "assets",
+    "components/access-right-select",
+    "components/action-button",
+    "components/add-button",
+    "components/app-loader",
+    "components/article",
+    "components/aside",
+    "components/aside/aside-header",
+    "components/avatar",
+    "components/avatar-editor-dialog",
+    "components/backdrop",
+    "components/badge",
+    "components/button",
+    "components/calendar",
+    "components/card",
+    "components/category-item",
+    "components/checkbox",
+    "components/circle",
+    "components/collapsible-card",
+    "components/color-input",
+    "components/color-picker",
+    "components/columnar-info-bar",
+    "components/combobox",
+    "components/context-menu",
+    "components/context-menu-button",
+    "components/date-picker",
+    "components/date-time-picker",
+    "components/drag-and-drop",
+    "components/drop-down",
+    "components/drop-down-item",
+    "components/dropzone",
+    "components/email-input",
+    "components/empty-screen-container",
+    "components/empty-view",
+    "components/error-container",
+    "components/field-container",
+    "components/file-input",
+    "components/filter",
+    "components/floating-button",
+    "components/form-wrapper",
+    "components/heading",
+    "components/help-button",
+    "components/icon-button",
+    "components/image-editor",
+    "components/infinite-loader",
+    "components/input-block",
+    "components/label",
+    "components/link",
+    "components/link-with-dropdown",
+    "components/loader",
+    "components/loader-wrapper",
+    "components/loading-button",
+    "components/main-button",
+    "components/main-button-mobile",
+    "components/mcp-icon",
+    "components/modal-dialog",
+    "components/nav-menu",
+    "components/navigation",
+    "components/operations-progress-button",
+    "components/paging",
+    "components/password-input",
+    "components/portal",
+    "components/portal-logo",
+    "components/progress-bar",
+    "components/public-room-bar",
+    "components/quantity-picker",
+    "components/quick-actions",
+    "components/radio-button",
+    "components/radio-button-group",
+    "components/rectangle",
+    "components/room-icon",
+    "components/room-logo",
+    "components/room-logo-cover-dialog",
+    "components/room-type",
+    "components/rows",
+    "components/rows/row",
+    "components/rows/row-container",
+    "components/rows/row-content",
+    "components/scrollbar",
+    "components/search-input",
+    "components/section",
+    "components/selected-item",
+    "components/selection-area",
+    "components/selector",
+    "components/slider",
+    "components/snackbar",
+    "components/status-message",
+    "components/tab-item",
+    "components/table",
+    "components/tabs",
+    "components/tag",
+    "components/tags",
+    "components/text",
+    "components/text-input",
+    "components/textarea",
+    "components/theme-provider",
+    "components/tiles",
+    "components/tiles/base-tile",
+    "components/tiles/file-tile",
+    "components/tiles/folder-tile",
+    "components/tiles/room-tile",
+    "components/tiles/template-tile",
+    "components/tiles/tile-container",
+    "components/tiles/tile-content",
+    "components/time-picker",
+    "components/toast",
+    "components/toggle-button",
+    "components/tooltip",
+    "components/top-loading-indicator",
+    "components/two-state-toggle",
+    "constants",
+    "context",
+    "enums",
+    "errors",
+    "hooks",
+    "locales",
+    "providers/error-boundary",
+    "providers/theme",
+    "providers/translation",
+    "styles",
+    "styles.css",
+    "types",
+    "utils"
+  ],
+  "portalInternalSubpaths": [
+    "ai-agent",
+    "billing",
+    "selectors",
+    "uploader",
+    "document-editor",
+    "api",
+    "providers/api",
+    "utils/socket"
+  ],
+  "barrelNames": [
+    "AccessRightSelect",
+    "ActionButton",
+    "ActionButtonProps",
+    "AddButton",
+    "AddButtonProps",
+    "ArticleHideMenuIcon",
+    "ArticleProfile",
+    "ArticleProfileProps",
+    "ArticleProps",
+    "Aside",
+    "AsideHeader",
+    "AsideHeaderProps",
+    "Avatar",
+    "AvatarActionKeys",
+    "AvatarEditorDialog",
+    "AvatarEditorDialogProps",
+    "AvatarProps",
+    "AvatarPure",
+    "AvatarRole",
+    "AvatarSize",
+    "Backdrop",
+    "Badge",
+    "BadgeProps",
+    "BarConfig",
+    "BaseTile",
+    "BaseTileItemProps",
+    "BaseTileProps",
+    "BreadCrumbsLoader",
+    "Button",
+    "ButtonDelete",
+    "ButtonProps",
+    "ButtonSize",
+    "Calendar",
+    "CalendarProps",
+    "Card",
+    "CardProps",
+    "CatalogSettingsPaymentIcon",
+    "CategoryItem",
+    "Checkbox",
+    "CheckboxProps",
+    "CircleSkeleton",
+    "CircleSkeletonProps",
+    "CollapsibleCard",
+    "CollapsibleCardProps",
+    "ColorInput",
+    "ColorPicker",
+    "ColumnarInfoBar",
+    "ColumnarInfoBarColumn",
+    "ColumnarInfoBarProps",
+    "ComboBox",
+    "ComboBoxDisplayType",
+    "ComboBoxSize",
+    "ComboButton",
+    "CommonTileProps",
+    "ContextMenu",
+    "ContextMenuButton",
+    "ContextMenuButtonDisplayType",
+    "ContextMenuButtonProps",
+    "ContextMenuModel",
+    "ContextMenuProps",
+    "ContextMenuRefType",
+    "ContextMenuType",
+    "ContextMenuTypeOnClick",
+    "DatePicker",
+    "DatePickerProps",
+    "DateTimePicker",
+    "DateTimePickerProps",
+    "DateTimePickerTranslations",
+    "DialogAsideSkeleton",
+    "DialogModalSkeleton",
+    "DialogReassignmentSkeleton",
+    "DragAndDrop",
+    "DragAndDropProps",
+    "DropDown",
+    "DropDownItem",
+    "DropDownItemProps",
+    "DropzoneProps",
+    "EmailInput",
+    "EmailInputProps",
+    "EmptyScreenContainer",
+    "EmptyScreenContainerProps",
+    "EmptyView",
+    "EmptyViewButtonType",
+    "EmptyViewItemType",
+    "EmptyViewLinkType",
+    "EmptyViewOptionsType",
+    "EmptyViewProps",
+    "EmptyViewSeparatorType",
+    "ErrorContainer",
+    "ErrorContainerProps",
+    "FieldContainer",
+    "FieldContainerProps",
+    "FileChildProps",
+    "FileInput",
+    "FileItem",
+    "FileItemType",
+    "FileTile",
+    "FileTileProps",
+    "FilterInput",
+    "FilterProps",
+    "FloatingButton",
+    "FloatingButtonIcons",
+    "FolderChildProps",
+    "FolderItem",
+    "FolderTile",
+    "FolderTileProps",
+    "FormWrapper",
+    "HeaderType",
+    "Heading",
+    "HeadingLevel",
+    "HeadingProps",
+    "HeadingPure",
+    "HeadingSize",
+    "HeadingType",
+    "HeadingWithTooltip",
+    "HelpButton",
+    "HelpButtonProps",
+    "ICategoryItemProps",
+    "ICover",
+    "IconButton",
+    "IconButtonProps",
+    "ImageEditor",
+    "ImageEditorProps",
+    "IndexIconButtons",
+    "InfiniteLoaderComponent",
+    "InputBlock",
+    "InputBlockProps",
+    "InputSize",
+    "InputType",
+    "Label",
+    "Link",
+    "LinkProps",
+    "LinkTarget",
+    "LinkType",
+    "LinkUi",
+    "LinkWithDropDownProps",
+    "LinkWithDropdown",
+    "Loader",
+    "LoaderTypes",
+    "LoaderWrapper",
+    "LoaderWrapperProps",
+    "LoadingButton",
+    "LoadingButtonProps",
+    "MCPIcon",
+    "MCPIconProps",
+    "MCPIconSize",
+    "MainButton",
+    "MainButtonMobile",
+    "ModalDialog",
+    "ModalDialogType",
+    "NavMenu",
+    "NavMenuGroup",
+    "NavMenuItem",
+    "NavMenuLinkData",
+    "NavMenuProps",
+    "NavSubItem",
+    "OmitTooltipProps",
+    "Paging",
+    "PagingProps",
+    "PasswordInput",
+    "PasswordInputHandle",
+    "Portal",
+    "PortalLogo",
+    "PortalLogoProps",
+    "PortalProps",
+    "PreparationPortalProgress",
+    "PreparationPortalProgressProps",
+    "ProgressBar",
+    "ProgressBarProps",
+    "PublicRoomBarProps",
+    "QuickActionItem",
+    "QuickActions",
+    "QuickActionsProps",
+    "RadioButton",
+    "RadioButtonGroup",
+    "RectangleSkeleton",
+    "RectangleSkeletonProps",
+    "RoomIcon",
+    "RoomIconProps",
+    "RoomItem",
+    "RoomLogo",
+    "RoomLogoCover",
+    "RoomLogoCoverDialog",
+    "RoomLogoCoverDialogProps",
+    "RoomLogoCoverProps",
+    "RoomLogoProps",
+    "RoomTile",
+    "RoomTileProps",
+    "RoomTypeProps",
+    "RootTooltip",
+    "Row",
+    "RowContainer",
+    "RowContent",
+    "RowLoader",
+    "RowSkeleton",
+    "RowsSkeleton",
+    "Scrollbar",
+    "ScrollbarContext",
+    "ScrollbarProps",
+    "ScrollbarType",
+    "SearchInput",
+    "SearchLoader",
+    "SectionProps",
+    "SelectOption",
+    "SelectedItem",
+    "SelectedItemProps",
+    "SelectedItemPure",
+    "SelectionArea",
+    "SelectionAreaProps",
+    "Selector",
+    "SelectorAccessRightsMode",
+    "SelectorProps",
+    "SeparatorType",
+    "Slider",
+    "SnackBar",
+    "SnackbarProps",
+    "SpaceQuotaProps",
+    "StatusMessage",
+    "StatusMessageProps",
+    "SvgIconComponent",
+    "TArrayTypes",
+    "TAvatarModel",
+    "TChangeImage",
+    "TComboboxProps",
+    "TData",
+    "TFallbackAxisSideDirection",
+    "TGetContextMenuModel",
+    "TGetTooltipContent",
+    "TGroupItem",
+    "TGroupMenuItem",
+    "TImage",
+    "TItem",
+    "TModel",
+    "TNavigationItem",
+    "TNavigationProps",
+    "TOnMove",
+    "TOption",
+    "TSelectorItem",
+    "TSetPreview",
+    "TTabItem",
+    "TTableColumn",
+    "TTitles",
+    "TTooltipPlace",
+    "TValidate",
+    "TabItem",
+    "TableBody",
+    "TableCell",
+    "TableContainer",
+    "TableGroupMenu",
+    "TableHeader",
+    "TableRow",
+    "Tabs",
+    "TabsProps",
+    "TabsTypes",
+    "Tag",
+    "TagClickEvent",
+    "TagProps",
+    "TagType",
+    "Tags",
+    "TemplateItem",
+    "TemplateTile",
+    "TemplateTileProps",
+    "Text",
+    "TextAlignValue",
+    "TextInput",
+    "TextInputProps",
+    "TextInputPure",
+    "TextProps",
+    "TextUi",
+    "Textarea",
+    "TextareaProps",
+    "ThemeProviderComponent",
+    "ThemeProviderProps",
+    "TileChildProps",
+    "TileContainer",
+    "TileContainerProps",
+    "TileContent",
+    "TileContentProps",
+    "TileItem",
+    "TileItemProps",
+    "TimePicker",
+    "TimePickerProps",
+    "Toast",
+    "ToastProps",
+    "ToastType",
+    "ToggleButton",
+    "Tooltip",
+    "TooltipContainer",
+    "TooltipProps",
+    "TopLoaderService",
+    "TwoStateToggle",
+    "TwoStateToggleProps",
+    "WithTooltipProps",
+    "beautifyJSON",
+    "encodeToBase64",
+    "getRoomTitle",
+    "isJSON",
+    "jsonify",
+    "omitTooltipProps",
+    "toastr",
+    "withTooltip"
+  ],
+  "portalInternalBarrelNames": [
+    "ADMIN",
+    "AI_ENUM",
+    "AI_PAYWALL_START_AMOUNT",
+    "AI_SEARCH",
+    "AI_SEARCH_ENUM",
+    "AI_TOOLS",
+    "BACKUP_SERVICE",
+    "BillingOverview",
+    "BillingRoot",
+    "DISK_STORAGE",
+    "DOCS_CONNECT",
+    "DOCS_CONNECT_DEVPACK_PRODUCT",
+    "DOCS_CONNECT_DEVPACK_SERVICE",
+    "DOCS_CONNECT_PRODUCT",
+    "DOCS_CONNECT_ROUTE",
+    "DOCS_CONNECT_SERVICE",
+    "FREE_BACKUP",
+    "MANAGER",
+    "MainTariff",
+    "PaymentMethod",
+    "PaymentStoreProvider",
+    "ROOM",
+    "STORAGE_DEACTIVATION_VISITED",
+    "STORAGE_ENUM",
+    "STORAGE_PREVIOUS_SUBSCRIPTION_REMOVED",
+    "STORAGE_TARIFF_DEACTIVATED",
+    "ServicesList",
+    "ServicesStoreProvider",
+    "TAiToolsPrices",
+    "TOTAL_SIZE",
+    "TPaymentNavigationEvent",
+    "TServiceFeatureWithPrice",
+    "Uploader",
+    "Usage",
+    "WEB_SEARCH",
+    "Wallet",
+    "YEAR_KEY",
+    "createChunks",
+    "runWithConcurrency",
+    "usePaymentStore",
+    "useServicesStore"
+  ],
+  "legacyNames": {
+    "ThemeProviderComponent": "the older theme provider; use ThemeProvider from providers/theme"
+  },
+  "components": {
+    "access-right-select": {
+      "name": "AccessRightSelect",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/access-right-select",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "AccessRightSelect"
+      ],
+      "testIds": [
+        "access_right_option_"
+      ]
+    },
+    "action-button": {
+      "name": "ActionButton",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/action-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "ActionButton",
+        "ActionButtonProps"
+      ],
+      "testIds": []
+    },
+    "add-button": {
+      "name": "AddButton",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/add-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "AddButton",
+        "AddButtonProps"
+      ],
+      "testIds": [
+        "selector-add-button",
+        "selector-add-button-container"
+      ]
+    },
+    "app-loader": {
+      "name": "AppLoader",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/app-loader",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [],
+      "testIds": [
+        "app-loader"
+      ]
+    },
+    "article": {
+      "name": "Article",
+      "category": "Layout",
+      "status": "portal-internal",
+      "subpath": "components/article",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "ArticleProfile",
+        "ArticleProfileProps",
+        "ArticleProps"
+      ],
+      "testIds": [
+        "article"
+      ]
+    },
+    "aside": {
+      "name": "Aside",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/aside",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "visible",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Aside",
+        "AsideHeader",
+        "AsideHeaderProps"
+      ],
+      "testIds": [
+        "aside",
+        "aside-header"
+      ]
+    },
+    "aside/aside-header": {
+      "name": "AsideHeader",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/aside/aside-header",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "AsideHeader",
+        "AsideHeaderProps"
+      ],
+      "testIds": [
+        "aside-header",
+        "aside_header_back_icon_button",
+        "aside_header_close_icon_button",
+        "icons-container"
+      ]
+    },
+    "avatar": {
+      "name": "Avatar",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/avatar",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Avatar",
+        "AvatarPure",
+        "AvatarProps",
+        "TAvatarModel",
+        "AvatarRole",
+        "AvatarSize",
+        "AvatarActionKeys"
+      ],
+      "testIds": [
+        "avatar",
+        "edit_avatar_icon_button",
+        "file-input"
+      ]
+    },
+    "avatar-editor-dialog": {
+      "name": "AvatarEditorDialog",
+      "category": "Overlays",
+      "status": "portal-internal",
+      "subpath": "components/avatar-editor-dialog",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "visible",
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "AvatarEditorDialog",
+        "AvatarEditorDialogProps"
+      ],
+      "testIds": [
+        "modal"
+      ]
+    },
+    "backdrop": {
+      "name": "Backdrop",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/backdrop",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "visible",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Backdrop"
+      ],
+      "testIds": [
+        "backdrop"
+      ]
+    },
+    "badge": {
+      "name": "Badge",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/badge",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Badge",
+        "BadgeProps"
+      ],
+      "testIds": [
+        "badge",
+        "badge-inner",
+        "badge-text"
+      ]
+    },
+    "button": {
+      "name": "Button",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Button",
+        "ButtonSize",
+        "ButtonProps"
+      ],
+      "testIds": [
+        "button"
+      ]
+    },
+    "calendar": {
+      "name": "Calendar",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/calendar",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Calendar",
+        "CalendarProps"
+      ],
+      "testIds": [
+        "calendar"
+      ]
+    },
+    "card": {
+      "name": "Card",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/card",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Card",
+        "CardProps"
+      ],
+      "testIds": [
+        "card"
+      ]
+    },
+    "category-item": {
+      "name": "CategoryItem",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/category-item",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "CategoryItem",
+        "ICategoryItemProps"
+      ],
+      "testIds": [
+        "link",
+        "text"
+      ]
+    },
+    "checkbox": {
+      "name": "Checkbox",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/checkbox",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Checkbox",
+        "CheckboxProps"
+      ],
+      "testIds": [
+        "checkbox",
+        "checkbox-help-button"
+      ]
+    },
+    "circle": {
+      "name": "CircleSkeleton",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/circle",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "CircleSkeleton",
+        "CircleSkeletonProps"
+      ],
+      "testIds": [
+        "circle-skeleton"
+      ]
+    },
+    "collapsible-card": {
+      "name": "CollapsibleCard",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/collapsible-card",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "isOpen",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "CollapsibleCard",
+        "CollapsibleCardProps"
+      ],
+      "testIds": [
+        "collapsible-card"
+      ]
+    },
+    "color-input": {
+      "name": "ColorInput",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/color-input",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "ColorInput"
+      ],
+      "testIds": [
+        "color-input"
+      ]
+    },
+    "color-picker": {
+      "name": "ColorPicker",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/color-picker",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "ColorPicker"
+      ],
+      "testIds": [
+        "color-picker"
+      ]
+    },
+    "columnar-info-bar": {
+      "name": "ColumnarInfoBar",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/columnar-info-bar",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "ColumnarInfoBar",
+        "ColumnarInfoBarProps",
+        "ColumnarInfoBarColumn"
+      ],
+      "testIds": []
+    },
+    "combobox": {
+      "name": "ComboBox",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/combobox",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "opened",
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "ComboBox",
+        "ComboButton",
+        "ComboBoxDisplayType",
+        "ComboBoxSize",
+        "TOption",
+        "TComboboxProps"
+      ],
+      "testIds": [
+        "combobox"
+      ]
+    },
+    "context-menu": {
+      "name": "ContextMenu",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/context-menu",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "ContextMenu",
+        "ContextMenuProps",
+        "ContextMenuModel",
+        "ContextMenuType",
+        "SeparatorType",
+        "HeaderType",
+        "ContextMenuRefType",
+        "ContextMenuTypeOnClick",
+        "TGetContextMenuModel"
+      ],
+      "testIds": [
+        "context-menu"
+      ]
+    },
+    "context-menu-button": {
+      "name": "ContextMenuButton",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/context-menu-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "opened",
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "ContextMenuButton",
+        "ContextMenuButtonProps",
+        "ContextMenuButtonDisplayType"
+      ],
+      "testIds": [
+        "context-menu-button"
+      ]
+    },
+    "date-picker": {
+      "name": "DatePicker",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/date-picker",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "DatePicker",
+        "DatePickerProps"
+      ],
+      "testIds": [
+        "date-picker"
+      ]
+    },
+    "date-time-picker": {
+      "name": "DateTimePicker",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/date-time-picker",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "DateTimePicker",
+        "DateTimePickerProps",
+        "DateTimePickerTranslations"
+      ],
+      "testIds": [
+        "date-time-picker"
+      ]
+    },
+    "drag-and-drop": {
+      "name": "DragAndDrop",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/drag-and-drop",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "DragAndDrop",
+        "DragAndDropProps"
+      ],
+      "testIds": []
+    },
+    "drop-down": {
+      "name": "DropDown",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/drop-down",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "open",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "DropDown"
+      ],
+      "testIds": [
+        "dropdown"
+      ]
+    },
+    "drop-down-item": {
+      "name": "DropDownItem",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/drop-down-item",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "DropDownItem",
+        "DropDownItemProps"
+      ],
+      "testIds": [
+        "drop-down-item"
+      ]
+    },
+    "dropzone": {
+      "name": "Dropzone",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/dropzone",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "DropzoneProps",
+        "SvgIconComponent"
+      ],
+      "testIds": [
+        "dropzone",
+        "dropzone-input-area",
+        "dropzone-input",
+        "dropzone-icon",
+        "dropzone-text",
+        "dropzone-main-text",
+        "dropzone-secondary-text",
+        "dropzone-file-types"
+      ]
+    },
+    "email-input": {
+      "name": "EmailInput",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/email-input",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "EmailInput",
+        "EmailInputProps",
+        "TValidate"
+      ],
+      "testIds": [
+        "email-input"
+      ]
+    },
+    "empty-screen-container": {
+      "name": "EmptyScreenContainer",
+      "category": "Layout",
+      "status": "public",
+      "subpath": "components/empty-screen-container",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "EmptyScreenContainer",
+        "EmptyScreenContainerProps"
+      ],
+      "testIds": [
+        "empty-screen-container"
+      ]
+    },
+    "empty-view": {
+      "name": "EmptyView",
+      "category": "Layout",
+      "status": "public",
+      "subpath": "components/empty-view",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "EmptyView",
+        "EmptyViewProps",
+        "EmptyViewButtonType",
+        "EmptyViewItemType",
+        "EmptyViewLinkType",
+        "EmptyViewOptionsType",
+        "EmptyViewSeparatorType"
+      ],
+      "testIds": [
+        "empty-view",
+        "empty-view-body"
+      ]
+    },
+    "error-container": {
+      "name": "ErrorContainer",
+      "category": "Layout",
+      "status": "public",
+      "subpath": "components/error-container",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "ErrorContainer",
+        "ErrorContainerProps"
+      ],
+      "testIds": [
+        "ErrorContainer"
+      ]
+    },
+    "field-container": {
+      "name": "FieldContainer",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/field-container",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "FieldContainer",
+        "FieldContainerProps"
+      ],
+      "testIds": [
+        "field-container"
+      ]
+    },
+    "file-input": {
+      "name": "FileInput",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/file-input",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "FileInput"
+      ],
+      "testIds": [
+        "file-input"
+      ]
+    },
+    "filter": {
+      "name": "FilterInput",
+      "category": "Navigation",
+      "status": "portal-internal",
+      "subpath": "components/filter",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "FilterInput",
+        "FilterProps",
+        "TItem",
+        "TGroupItem"
+      ],
+      "testIds": [
+        "filter_container",
+        "filter_clear_all_link"
+      ]
+    },
+    "floating-button": {
+      "name": "FloatingButton",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/floating-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "FloatingButton",
+        "FloatingButtonIcons"
+      ],
+      "testIds": [
+        "floating-button",
+        "floating-button-progress",
+        "floating-button-alert"
+      ]
+    },
+    "form-wrapper": {
+      "name": "FormWrapper",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/form-wrapper",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "FormWrapper"
+      ],
+      "testIds": [
+        "form-wrapper"
+      ]
+    },
+    "heading": {
+      "name": "Heading",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/heading",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Heading",
+        "HeadingPure",
+        "HeadingWithTooltip",
+        "HeadingLevel",
+        "HeadingSize",
+        "HeadingProps",
+        "HeadingType"
+      ],
+      "testIds": [
+        "heading"
+      ]
+    },
+    "help-button": {
+      "name": "HelpButton",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/help-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "isOpen",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "HelpButton",
+        "HelpButtonProps"
+      ],
+      "testIds": [
+        "help-button"
+      ]
+    },
+    "icon-button": {
+      "name": "IconButton",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/icon-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "IconButton",
+        "IconButtonProps"
+      ],
+      "testIds": [
+        "icon-button",
+        "icon-button-svg"
+      ]
+    },
+    "image-editor": {
+      "name": "ImageEditor",
+      "category": "Interactive elements",
+      "status": "portal-internal",
+      "subpath": "components/image-editor",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "ImageEditor",
+        "ButtonDelete",
+        "ImageEditorProps",
+        "TImage",
+        "TChangeImage",
+        "TSetPreview"
+      ],
+      "testIds": [
+        "image-cropper",
+        "change_image_button",
+        "zoom_in_icon_button",
+        "zoom_out_icon_button",
+        "cropper_delete_button"
+      ]
+    },
+    "infinite-loader": {
+      "name": "InfiniteLoader",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/infinite-loader",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "InfiniteLoaderComponent"
+      ],
+      "testIds": [
+        "infinite-loader-container-list"
+      ]
+    },
+    "input-block": {
+      "name": "InputBlock",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/input-block",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "InputBlock",
+        "InputBlockProps"
+      ],
+      "testIds": [
+        "input-block"
+      ]
+    },
+    "label": {
+      "name": "Label",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/label",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Label"
+      ],
+      "testIds": [
+        "label",
+        "required-mark"
+      ]
+    },
+    "link": {
+      "name": "Link",
+      "category": "Navigation",
+      "status": "public",
+      "subpath": "components/link",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Link",
+        "LinkUi",
+        "LinkProps",
+        "LinkType",
+        "LinkTarget"
+      ],
+      "testIds": [
+        "link"
+      ]
+    },
+    "link-with-dropdown": {
+      "name": "LinkWithDropdown",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/link-with-dropdown",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "isOpen",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "LinkWithDropdown",
+        "LinkWithDropDownProps"
+      ],
+      "testIds": []
+    },
+    "loader": {
+      "name": "Loader",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/loader",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Loader",
+        "LoaderTypes"
+      ],
+      "testIds": [
+        "loader",
+        "oval-loader",
+        "dual-ring-loader",
+        "rombs-loader",
+        "track-loader"
+      ]
+    },
+    "loader-wrapper": {
+      "name": "LoaderWrapper",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/loader-wrapper",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "LoaderWrapper",
+        "LoaderWrapperProps"
+      ],
+      "testIds": [
+        "loader-wrapper"
+      ]
+    },
+    "loading-button": {
+      "name": "LoadingButton",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/loading-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "LoadingButton",
+        "LoadingButtonProps"
+      ],
+      "testIds": [
+        "loading-button-container"
+      ]
+    },
+    "main-button": {
+      "name": "MainButton",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/main-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "MainButton"
+      ],
+      "testIds": [
+        "main-button"
+      ]
+    },
+    "main-button-mobile": {
+      "name": "MainButtonMobile",
+      "category": "Interactive elements",
+      "status": "public",
+      "subpath": "components/main-button-mobile",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "opened",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "MainButtonMobile"
+      ],
+      "testIds": [
+        "main-button-mobile",
+        "dropdown"
+      ]
+    },
+    "mcp-icon": {
+      "name": "MCPIcon",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/mcp-icon",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "MCPIcon",
+        "MCPIconSize",
+        "MCPIconProps"
+      ],
+      "testIds": [
+        "mcp-icon"
+      ]
+    },
+    "modal-dialog": {
+      "name": "ModalDialog",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/modal-dialog",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "visible",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "ModalDialog",
+        "ModalDialogType",
+        "DialogAsideSkeleton",
+        "DialogModalSkeleton",
+        "DialogReassignmentSkeleton"
+      ],
+      "testIds": [
+        "modal"
+      ]
+    },
+    "nav-menu": {
+      "name": "NavMenu",
+      "category": "Navigation",
+      "status": "public",
+      "subpath": "components/nav-menu",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "NavMenu",
+        "NavMenuProps",
+        "NavMenuGroup",
+        "NavMenuItem",
+        "NavSubItem",
+        "NavMenuLinkData",
+        "ArticleHideMenuIcon",
+        "CatalogSettingsPaymentIcon"
+      ],
+      "testIds": []
+    },
+    "navigation": {
+      "name": "Navigation",
+      "category": "Navigation",
+      "status": "portal-internal",
+      "subpath": "components/navigation",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "TTitles",
+        "TNavigationItem",
+        "TNavigationProps"
+      ],
+      "testIds": [
+        "navigation_button",
+        "plus-button",
+        "ai-chat-button"
+      ]
+    },
+    "operations-progress-button": {
+      "name": "OperationsProgressButton",
+      "category": "Feedback",
+      "status": "portal-internal",
+      "subpath": "components/operations-progress-button",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [],
+      "testIds": []
+    },
+    "paging": {
+      "name": "Paging",
+      "category": "Navigation",
+      "status": "public",
+      "subpath": "components/paging",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Paging",
+        "PagingProps"
+      ],
+      "testIds": [
+        "paging",
+        "paging_previous_button",
+        "paging_next_button",
+        "paging_page_items_combobox",
+        "paging_count_items_combobox"
+      ]
+    },
+    "password-input": {
+      "name": "PasswordInput",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/password-input",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "PasswordInput",
+        "PasswordInputHandle"
+      ],
+      "testIds": [
+        "password-input"
+      ]
+    },
+    "portal": {
+      "name": "Portal",
+      "category": "Layout",
+      "status": "public",
+      "subpath": "components/portal",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "visible",
+      "providers": [],
+      "exports": [
+        "Portal",
+        "PortalProps"
+      ],
+      "testIds": []
+    },
+    "portal-logo": {
+      "name": "PortalLogo",
+      "category": "Data display",
+      "status": "portal-internal",
+      "subpath": "components/portal-logo",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "PortalLogo",
+        "PortalLogoProps"
+      ],
+      "testIds": []
+    },
+    "progress-bar": {
+      "name": "ProgressBar",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/progress-bar",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "ProgressBar",
+        "PreparationPortalProgress",
+        "ProgressBarProps",
+        "PreparationPortalProgressProps"
+      ],
+      "testIds": [
+        "progress-bar",
+        "progress-bar-percent",
+        "progress-bar-animation",
+        "preparation-portal-progress"
+      ]
+    },
+    "public-room-bar": {
+      "name": "PublicRoomBar",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/public-room-bar",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "PublicRoomBarProps"
+      ],
+      "testIds": [
+        "public_room_bar",
+        "icon-button"
+      ]
+    },
+    "quantity-picker": {
+      "name": "QuantityPicker",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/quantity-picker",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [],
+      "testIds": [
+        "quantity_picker_input"
+      ]
+    },
+    "quick-actions": {
+      "name": "QuickActions",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/quick-actions",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "QuickActions",
+        "QuickActionItem",
+        "QuickActionsProps"
+      ],
+      "testIds": [
+        "quick-actions-track",
+        "quick-actions-prev",
+        "quick-actions-next",
+        "quick-actions-close"
+      ]
+    },
+    "radio-button": {
+      "name": "RadioButton",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/radio-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "RadioButton"
+      ],
+      "testIds": [
+        "radio-button"
+      ]
+    },
+    "radio-button-group": {
+      "name": "RadioButtonGroup",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/radio-button-group",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "RadioButtonGroup"
+      ],
+      "testIds": [
+        "radio-button-group",
+        "radio-button-group_text"
+      ]
+    },
+    "rectangle": {
+      "name": "RectangleSkeleton",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/rectangle",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "RectangleSkeleton",
+        "RectangleSkeletonProps"
+      ],
+      "testIds": [
+        "rectangle-skeleton"
+      ]
+    },
+    "room-icon": {
+      "name": "RoomIcon",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/room-icon",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "RoomIcon",
+        "RoomIconProps",
+        "TModel",
+        "getRoomTitle",
+        "encodeToBase64"
+      ],
+      "testIds": [
+        "room-icon",
+        "room-title",
+        "room-icon-cover",
+        "room-icon-image",
+        "empty-icon",
+        "hover-container",
+        "hover-image",
+        "badge-container",
+        "customFileInput"
+      ]
+    },
+    "room-logo": {
+      "name": "RoomLogo",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/room-logo",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "RoomLogo",
+        "RoomLogoProps"
+      ],
+      "testIds": [
+        "room-logo"
+      ]
+    },
+    "room-logo-cover-dialog": {
+      "name": "RoomLogoCoverDialog",
+      "category": "Overlays",
+      "status": "portal-internal",
+      "subpath": "components/room-logo-cover-dialog",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "visible",
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "RoomLogoCoverDialog",
+        "RoomLogoCover",
+        "RoomLogoCoverDialogProps",
+        "RoomLogoCoverProps",
+        "ICover"
+      ],
+      "testIds": [
+        "room_logo_cover_dialog",
+        "room_logo_cover_apply_button",
+        "room_logo_cover_cancel_button",
+        "room_logo_cover_without_icon",
+        "color_item_add_custom"
+      ]
+    },
+    "room-type": {
+      "name": "RoomType",
+      "category": "Data display",
+      "status": "portal-internal",
+      "subpath": "components/room-type",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "RoomTypeProps"
+      ],
+      "testIds": [
+        "room-type-list-item",
+        "room-type-dropdown-button",
+        "room-type-dropdown-item"
+      ]
+    },
+    "rows": {
+      "name": "Rows",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/rows",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "Row",
+        "RowContent",
+        "RowContainer",
+        "IndexIconButtons",
+        "RowSkeleton",
+        "RowsSkeleton"
+      ],
+      "testIds": []
+    },
+    "rows/row": {
+      "name": "Row",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/rows/row",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "Row"
+      ],
+      "testIds": [
+        "row"
+      ]
+    },
+    "rows/row-container": {
+      "name": "RowContainer",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/rows/row-container",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "RowContainer"
+      ],
+      "testIds": [
+        "row-container"
+      ]
+    },
+    "rows/row-content": {
+      "name": "RowContent",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/rows/row-content",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "RowContent"
+      ],
+      "testIds": [
+        "row-content",
+        "main-container-wrapper",
+        "side-container",
+        "tablet-side-info"
+      ]
+    },
+    "scrollbar": {
+      "name": "Scrollbar",
+      "category": "Layout",
+      "status": "public",
+      "subpath": "components/scrollbar",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Scrollbar",
+        "ScrollbarProps",
+        "ScrollbarType",
+        "ScrollbarContext"
+      ],
+      "testIds": [
+        "scrollbar",
+        "scroller",
+        "scroll-body"
+      ]
+    },
+    "search-input": {
+      "name": "SearchInput",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/search-input",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "SearchInput"
+      ],
+      "testIds": [
+        "search-input",
+        "main-button"
+      ]
+    },
+    "section": {
+      "name": "Section",
+      "category": "Layout",
+      "status": "portal-internal",
+      "subpath": "components/section",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "SectionProps"
+      ],
+      "testIds": []
+    },
+    "selected-item": {
+      "name": "SelectedItem",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/selected-item",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "SelectedItem",
+        "SelectedItemPure",
+        "SelectedItemProps"
+      ],
+      "testIds": [
+        "selected-item"
+      ]
+    },
+    "selection-area": {
+      "name": "SelectionArea",
+      "category": "Layout",
+      "status": "public",
+      "subpath": "components/selection-area",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "SelectionArea",
+        "SelectionAreaProps",
+        "TOnMove",
+        "TArrayTypes"
+      ],
+      "testIds": [
+        "selection-area"
+      ]
+    },
+    "selector": {
+      "name": "Selector",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/selector",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "Selector",
+        "SelectorProps",
+        "TSelectorItem",
+        "SelectorAccessRightsMode",
+        "RowLoader",
+        "SearchLoader",
+        "BreadCrumbsLoader"
+      ],
+      "testIds": [
+        "selector",
+        "selector_search_input",
+        "selector_submit_button",
+        "selector_cancel_button"
+      ]
+    },
+    "slider": {
+      "name": "Slider",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/slider",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Slider"
+      ],
+      "testIds": [
+        "slider"
+      ]
+    },
+    "snackbar": {
+      "name": "SnackBar",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/snackbar",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "SnackBar",
+        "SnackbarProps",
+        "BarConfig",
+        "TextAlignValue"
+      ],
+      "testIds": [
+        "snackbar-container",
+        "snackbar-message"
+      ]
+    },
+    "status-message": {
+      "name": "StatusMessage",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/status-message",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "StatusMessage",
+        "StatusMessageProps"
+      ],
+      "testIds": []
+    },
+    "tab-item": {
+      "name": "TabItem",
+      "category": "Navigation",
+      "status": "public",
+      "subpath": "components/tab-item",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "TabItem"
+      ],
+      "testIds": [
+        "tab-item"
+      ]
+    },
+    "table": {
+      "name": "Table",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/table",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "TableContainer",
+        "TableHeader",
+        "TableBody",
+        "TableRow",
+        "TableCell",
+        "TableGroupMenu",
+        "TTableColumn",
+        "TGroupMenuItem"
+      ],
+      "testIds": [
+        "table-container",
+        "table-header",
+        "table-body",
+        "table-row",
+        "table-cell",
+        "table-group-menu",
+        "table-settings"
+      ]
+    },
+    "tabs": {
+      "name": "Tabs",
+      "category": "Navigation",
+      "status": "public",
+      "subpath": "components/tabs",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Tabs",
+        "TabsTypes",
+        "TTabItem",
+        "TabsProps"
+      ],
+      "testIds": []
+    },
+    "tag": {
+      "name": "Tag",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tag",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Tag",
+        "TagProps",
+        "TagType",
+        "TagClickEvent"
+      ],
+      "testIds": [
+        "tag_item"
+      ]
+    },
+    "tags": {
+      "name": "Tags",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tags",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Tags"
+      ],
+      "testIds": [
+        "tags"
+      ]
+    },
+    "text": {
+      "name": "Text",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/text",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "Text",
+        "TextUi",
+        "TextProps"
+      ],
+      "testIds": [
+        "text"
+      ]
+    },
+    "text-input": {
+      "name": "TextInput",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/text-input",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "TextInput",
+        "TextInputPure",
+        "TextInputProps",
+        "InputType",
+        "InputSize"
+      ],
+      "testIds": [
+        "text-input"
+      ]
+    },
+    "textarea": {
+      "name": "Textarea",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/textarea",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Textarea",
+        "TextareaProps",
+        "isJSON",
+        "beautifyJSON",
+        "jsonify"
+      ],
+      "testIds": [
+        "textarea"
+      ]
+    },
+    "theme-provider": {
+      "name": "ThemeProviderComponent",
+      "category": "Layout",
+      "status": "public",
+      "subpath": "components/theme-provider",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "ThemeProviderComponent",
+        "ThemeProviderProps"
+      ],
+      "testIds": []
+    },
+    "tiles": {
+      "name": "Tiles",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tiles",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "TileContainer",
+        "TileContent",
+        "BaseTile",
+        "FileTile",
+        "FolderTile",
+        "RoomTile",
+        "TemplateTile"
+      ],
+      "testIds": []
+    },
+    "tiles/base-tile": {
+      "name": "BaseTile",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tiles/base-tile",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "BaseTile",
+        "BaseTileProps",
+        "BaseTileItemProps",
+        "TileChildProps"
+      ],
+      "testIds": [
+        "tile"
+      ]
+    },
+    "tiles/file-tile": {
+      "name": "FileTile",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tiles/file-tile",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "FileTile",
+        "FileTileProps",
+        "FileItem",
+        "FileItemType",
+        "FileChildProps"
+      ],
+      "testIds": [
+        "tile",
+        "file-thumbnail"
+      ]
+    },
+    "tiles/folder-tile": {
+      "name": "FolderTile",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tiles/folder-tile",
+      "import": "barrel or subpath",
+      "default": true,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "FolderTile",
+        "FolderTileProps",
+        "FolderItem",
+        "FolderChildProps"
+      ],
+      "testIds": [
+        "tile",
+        "file-thumbnail"
+      ]
+    },
+    "tiles/room-tile": {
+      "name": "RoomTile",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tiles/room-tile",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "RoomTile",
+        "RoomTileProps",
+        "RoomItem",
+        "SelectOption"
+      ],
+      "testIds": [
+        "tile"
+      ]
+    },
+    "tiles/template-tile": {
+      "name": "TemplateTile",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tiles/template-tile",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "TemplateTile",
+        "TemplateTileProps",
+        "TemplateItem",
+        "SpaceQuotaProps"
+      ],
+      "testIds": [
+        "tile"
+      ]
+    },
+    "tiles/tile-container": {
+      "name": "TileContainer",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tiles/tile-container",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "TileContainer",
+        "TileContainerProps",
+        "TileItem",
+        "TileItemProps",
+        "CommonTileProps"
+      ],
+      "testIds": []
+    },
+    "tiles/tile-content": {
+      "name": "TileContent",
+      "category": "Data display",
+      "status": "public",
+      "subpath": "components/tiles/tile-content",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "TileContent",
+        "TileContentProps"
+      ],
+      "testIds": []
+    },
+    "time-picker": {
+      "name": "TimePicker",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/time-picker",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "TimePicker",
+        "TimePickerProps"
+      ],
+      "testIds": [
+        "time-picker"
+      ]
+    },
+    "toast": {
+      "name": "Toast",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/toast",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider",
+        "TranslationProvider"
+      ],
+      "exports": [
+        "Toast",
+        "toastr",
+        "ToastType",
+        "ToastProps",
+        "TData"
+      ],
+      "testIds": [
+        "toast",
+        "toast-content"
+      ]
+    },
+    "toggle-button": {
+      "name": "ToggleButton",
+      "category": "Form controls",
+      "status": "public",
+      "subpath": "components/toggle-button",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "ToggleButton"
+      ],
+      "testIds": [
+        "toggle-button",
+        "toggle-button-container",
+        "toggle-button-input",
+        "toggle-button-icon",
+        "toggle-button-label"
+      ]
+    },
+    "tooltip": {
+      "name": "Tooltip",
+      "category": "Overlays",
+      "status": "public",
+      "subpath": "components/tooltip",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": "isOpen",
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "Tooltip",
+        "TooltipProps",
+        "TooltipContainer",
+        "RootTooltip",
+        "withTooltip",
+        "WithTooltipProps",
+        "omitTooltipProps",
+        "OmitTooltipProps",
+        "TTooltipPlace",
+        "TFallbackAxisSideDirection",
+        "TGetTooltipContent"
+      ],
+      "testIds": [
+        "tooltip",
+        "system-tooltip-container",
+        "info-tooltip-container"
+      ]
+    },
+    "top-loading-indicator": {
+      "name": "TopLoaderService",
+      "category": "Feedback",
+      "status": "public",
+      "subpath": "components/top-loading-indicator",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [],
+      "exports": [
+        "TopLoaderService"
+      ],
+      "testIds": [
+        "top-loader"
+      ]
+    },
+    "two-state-toggle": {
+      "name": "TwoStateToggle",
+      "category": "Navigation",
+      "status": "portal-internal",
+      "subpath": "components/two-state-toggle",
+      "import": "barrel or subpath",
+      "default": false,
+      "visibilityProp": null,
+      "providers": [
+        "ThemeProvider"
+      ],
+      "exports": [
+        "TwoStateToggle",
+        "TwoStateToggleProps"
+      ],
+      "testIds": []
+    }
+  }
+}

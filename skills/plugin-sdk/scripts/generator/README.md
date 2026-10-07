@@ -4,7 +4,7 @@ The layers behind [`../generate-plugin.mjs`](../generate-plugin.mjs), which scaf
 
 | File | What it does |
 |---|---|
-| [`options.mjs`](options.mjs) | argv in, validated options out; resolves `--ui-kit` to the packed kit and the tarballs it depends on, and refuses a `--locales` tag `PluginLocale` does not have (naming the near ones, since `ja` for `ja-JP` compiles and never shows) |
+| [`options.mjs`](options.mjs) | argv in, validated options out; resolves `--ui-kit` to the packed kit (and the packed SDK beside it), and refuses a `--locales` tag `PluginLocale` does not have (naming the near ones, since `ja` for `ja-JP` compiles and never shows) |
 | [`scopes.mjs`](scopes.mjs) | `SCOPE_SPECS` — what each declared scope adds to the generated code |
 | [`sources.mjs`](sources.mjs) | renders `src/index.ts` (the class, ending in `export default plugin`) and `src/locales.ts` — one typed table per requested language, keyed by the `PluginLocale` member so the portal's `setLanguage` value finds it, plus `t()` and `tf()` |
 | [`project-files.mjs`](project-files.mjs) | the manifest with `runtime: "module"`, pinned versions, placeholder icons, markdown |

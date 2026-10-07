@@ -58,7 +58,7 @@ A plugin that never becomes a plugin is reported — to the administrator. The u
 
 | The card says | The reason reads | Cause |
 |---|---|---|
-| **Failed to load** — the toggle is off and locked; the plugin stays in the list so it can be deleted | *The bundle imports "lodash-es", which the portal does not provide …* — the portal's own sentence, naming the specifier | a bare import outside the five specifiers: a library that should have been bundled, the SDK **root** marked external, a `@docspace/ui-kit/…` subpath |
+| **Failed to load** — the toggle is off and locked; the plugin stays in the list so it can be deleted | *The bundle imports "lodash-es", which the portal does not provide …* — the portal's own sentence, naming the specifier | a bare import outside the five specifiers: a library that should have been bundled, the SDK **root** marked external, a `@onlyoffice/apps-ui-kit/…` subpath |
 | | *The plugin module has no default export* | still assigning `window.Plugins.X` instead of `export default plugin` |
 | | the exception's own message | module-scope code threw, or the bundle is not valid JavaScript for the browser |
 | | *process is not defined* | the build does not `define` `process.env` ([bundling.md](bundling.md)) |
@@ -82,7 +82,7 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 | A tab, page or modal **never leaves its skeleton**; console *Uncaught (in promise)* | a request in an effect rejected with no `catch` — a rejected promise escapes the error boundary, so nothing replaces the loading state ([rendering.md](react/rendering.md#errors-loading-language-styling)) |
 | Every component blank; `usePluginRuntime must be used inside a plugin component` | a second React or SDK React entry in the bundle — fix the `external` list |
 | A surface that needs a lazily loaded module opens **blank** on the portal and worked in the preview; a `TypeError` about `./chunk-….js` in the console | the build split the bundle: the archive carries `plugin.js` alone and a blob-URL module cannot resolve a relative `import()` — `codeSplitting: false` ([bundling.md](bundling.md)) |
-| Components render light and LTR on a dark/RTL portal | a bundled `@docspace/ui-kit` |
+| Components render light and LTR on a dark/RTL portal | a bundled `@onlyoffice/apps-ui-kit` |
 | A hook "throws outside a component" from a click | hooks called in a class-side callback |
 | Filter by user role ignored | wrong field name — see [the filter field trap](items/common-fields.md#the-filter-field-trap) |
 | Item renders, click does nothing | the returned action has no matching payload field ([actions.md](react/actions.md)) |
@@ -101,7 +101,7 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 
 ### Silent failures in the UI layer
 
-The plugin loaded and rendered, and what the user sees is still wrong. They read as styling bugs and are not — nearly every one is a component default rather than a rule: fixes in [ui-kit.md](ui-kit.md#behavioural-traps) and [modal-dialog.md](components/modal-dialog.md). For the ones that really are the stylesheet, [styles.md](styles.md).
+The plugin loaded and rendered, and what the user sees is still wrong. They read as styling bugs and are not — nearly every one is a component default rather than a rule. The kit's own defaults are the `ui-kit` skill's rules ([ui-kit.md](ui-kit.md) says where they are); the ones only the portal shows are in [ui-kit.md → Behavioural traps](ui-kit.md#behavioural-traps) and [modal-dialog.md](components/modal-dialog.md). For the ones that really are the stylesheet, [styles.md](styles.md).
 
 | Symptom | Cause |
 |---|---|

@@ -22,7 +22,13 @@
  */
 
 export const SDK_PACKAGE = "@onlyoffice/docspace-plugin-sdk";
-export const UI_KIT_PACKAGE = "@docspace/ui-kit";
+export const UI_KIT_PACKAGE = "@onlyoffice/apps-ui-kit";
+/**
+ * The kit's name before the rename. The portal still resolves it to the same kit - SDK 3.0.0's
+ * own template and JSDoc still write it - but leaves it out of the list its errors offer, so a
+ * plugin importing it loads and is told to rename.
+ */
+export const LEGACY_UI_KIT_PACKAGE = "@docspace/ui-kit";
 
 export const SDK_REACT_ENTRY = `${SDK_PACKAGE}/react`;
 const SDK_MAJOR = 3;

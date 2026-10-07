@@ -20,14 +20,10 @@
     "format": "npx prettier --write ."
   },
   "dependencies": {
-    "@docspace/ui-kit": "file:../../../vendor/docspace-ui-kit-0.0.1.tgz",
+    "@onlyoffice/apps-ui-kit": "file:../../../vendor/onlyoffice-apps-ui-kit-4.0.0.tgz",
     "@onlyoffice/docspace-plugin-sdk": "file:../../../vendor/onlyoffice-docspace-plugin-sdk-3.0.0.tgz",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
-  },
-  "overrides": {
-    "@onlyoffice/docspace-api-sdk": "file:../../../vendor/onlyoffice-docspace-api-sdk-3.7.0.tgz",
-    "@onlyoffice/ai-chat": "file:../../../vendor/onlyoffice-ai-chat-0.5.82.tgz"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

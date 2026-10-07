@@ -35,7 +35,7 @@ export default defineConfig({
         "react-dom",
         "react/jsx-runtime",
         "@onlyoffice/docspace-plugin-sdk/react",
-        /^@docspace\/ui-kit(\/.*)?$/,
+        /^@onlyoffice\/apps-ui-kit(\/.*)?$/,
       ],
       output: {
         // One file: the archive carries plugin.js alone, so a chunk is never reachable.

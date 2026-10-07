@@ -7,8 +7,9 @@ change needs. There is no CI yet; this is the protocol it will run.
 
 | Layer | Command | Catches | Cost |
 |---|---|---|---|
-| Manifests and structure | `claude plugin validate . --strict` | a broken `plugin.json` / `marketplace.json`, a skill without frontmatter, a bad `name` | seconds |
-| Validator self-tests | `node skills/embed-sdk/scripts/test-validator.mjs`, `node skills/plugin-sdk/scripts/test-validator.mjs` | a rule the validators stopped enforcing; the embed-sdk one also runs `sync-sources --check` and compares the validator's dictionaries with the SDK checkout when `--from` is set | seconds |
+| Manifests and structure | `claude plugin validate . --strict` **and** `claude plugin validate skills --strict` | a broken `plugin.json` / `marketplace.json` (the first), a skill without frontmatter or with a bad `name` (the second — the first stops at the manifest and never reads a `SKILL.md`) | seconds |
+| Validator self-tests | `node skills/embed-sdk/scripts/test-validator.mjs`, `node skills/plugin-sdk/scripts/test-validator.mjs`, `node skills/ui-kit/scripts/test-validator.mjs` | a rule the validators stopped enforcing; the embed-sdk one also runs `sync-sources --check` and compares the validator's dictionaries with the SDK checkout when `--from` is set; the ui-kit one also runs `sync-ui-kit --check` | seconds |
+| Kit manifest | `node tools/sync-ui-kit.mjs --from <kit> --check` | a `skills/ui-kit` manifest that no longer matches the kit's metadata — rerun with `--write`; needs a kit checkout or an installed package | seconds |
 | Docs script self-test | `node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs` | the parsers behind the internal docs script, offline | seconds |
 | Links and pins | `node tools/sync-sources.mjs --check` | a link not built on a declared host, a version literal that disagrees with a skill's `sources.json` | seconds |
 | Links, live | `node tools/sync-sources.mjs --verify` (production) or `--verify --fallback` (the stand) | a page the site no longer serves | one request per link |
@@ -22,22 +23,26 @@ change needs. There is no CI yet; this is the protocol it will run.
 
 ```sh
 claude plugin validate . --strict
+claude plugin validate skills --strict
 node skills/embed-sdk/scripts/test-validator.mjs
 node skills/plugin-sdk/scripts/test-validator.mjs
+node skills/ui-kit/scripts/test-validator.mjs
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs
 node tools/sync-sources.mjs --check
+node tools/sync-ui-kit.mjs --from <kit> --check     # with a kit checkout or an installed package at hand
 ```
 
-All five are offline and finish in seconds; a red one blocks the commit.
+All eight are offline and finish in seconds; a red one blocks the commit.
 
 **After a content change** to a skill (a rule, a reference passage, a description), add the
 cheap behaviour suite:
 
 ```sh
-claude plugin eval . --tag question --tag trigger --trust-plugin --no-publish --max-cost-usd 12
+claude plugin eval . --tag question --tag trigger --trust-plugin --no-publish --max-cost-usd 12 --allow-tools WebFetch
 ```
 
-Six cases, two arms, three runs each: about 18 minutes and $4–5. Compare with the last row of
+`WebFetch` is for `ui-kit-explain-aside-prop`, which is graded on naming the docs page it read;
+without the grant it cannot pass. Seven cases, two arms, three runs each: about 20 minutes and $5–6. Compare with the last row of
 [evals/README.md → Results](evals/README.md#results) and add a row.
 
 **Before a release**, everything above plus the build cases and the live checks
@@ -86,7 +91,7 @@ scenarios with `[C]`/`[Q]` expectations (`evals.json`), the G1 admin-panel task 
 a session — the skill-creator plugin runs the with/without pairs and opens a viewer — and when a
 scenario is too long or too open-ended for a plugin-eval grader. Each directory's `README.md`
 has the steps and the results table; the trigger tests have a runner
-(`node skills/embed-sdk/evals/run-triggers.mjs --model sonnet`) that the plugin suite's
+(`node tools/run-triggers.mjs --skill <name> --model sonnet`) that the plugin suite's
 `tool_used: Skill` graders replace for the cases it covers.
 
 ## Checking a fact against the sources

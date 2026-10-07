@@ -42,10 +42,10 @@ Options:
   --locales       comma separated PluginLocale tags, e.g. ru,pt-BR,ja-JP
                   (en-US is always present; a tag the enum does not have is rejected -
                   "ja" is not "ja-JP" and would never be selected by the portal)
-  --ui-kit        a packed @docspace/ui-kit (docspace-ui-kit-*.tgz) or a directory
-                  holding it together with the tarballs it depends on - and, while the
-                  SDK is unpublished, the packed SDK; defaults to the copies vendored
-                  in this skill's vendor/ directory
+  --ui-kit        a packed @onlyoffice/apps-ui-kit (onlyoffice-apps-ui-kit-*.tgz), copied
+                  alone, or a directory holding it, copied whole - with the packed SDK
+                  while it is unpublished, else the vendored one is used; defaults to
+                  this skill's vendor/ directory
   --force         write into a non-empty directory`;
 
 const readFlag = (argv, flagName) => {
@@ -65,15 +65,20 @@ const requireFlag = (argv, flagName) => {
   return value;
 };
 
-const isUiKitTarball = (fileName) => /^docspace-ui-kit-.*\.tgz$/.test(fileName);
+const isUiKitTarball = (fileName) => /^onlyoffice-apps-ui-kit(-.*)?\.tgz$/.test(fileName);
 const isPluginSdkTarball = (fileName) => /^onlyoffice-docspace-plugin-sdk-.*\.tgz$/.test(fileName);
 
 const VENDOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "vendor");
 
 /**
- * The packed kit and its neighbours: every tarball next to the kit travels with it (the kit's
- * own package.json names `file:` tarballs npm resolves against the project), and `sdk` is the
- * packed SDK if one is vendored - only while 3.0.0 is unpublished.
+ * The packed kit and what travels with it. Given a directory, every tarball in it travels into
+ * the project: the kit named `file:` tarballs of its own until 4.0.0 (they had to sit in the
+ * project root, because npm resolves nested `file:` specs against the project, not against the
+ * package), and `sdk` is the packed SDK while 3.0.0 is unpublished. Since 4.0.0 the kit names
+ * none, so in practice only the two travel -- but the copying stays general, so a kit that
+ * vendors something again does not need this code changed. Given a single tarball, it travels
+ * alone, with the vendored SDK when nothing else supplies one: a kit that needs siblings is
+ * given as the directory holding them.
  * @returns {{ kit: string, sdk: string | undefined, all: string[] }}
  */
 const resolveVendoredTarballs = (value) => {
@@ -89,19 +94,32 @@ const resolveVendoredTarballs = (value) => {
   const isDir = fs.statSync(given).isDirectory();
   const dir = isDir ? given : path.dirname(given);
 
-  const tarballs = fs
-    .readdirSync(dir)
-    .filter((fileName) => fileName.endsWith(".tgz"))
-    .map((fileName) => path.join(dir, fileName));
+  // A directory is a vendor directory and travels whole. A single tarball travels alone: its
+  // neighbours are whatever else sits in Downloads, and an old SDK tarball among them would
+  // have been installed in place of the vendored one.
+  const tarballs = isDir
+    ? fs
+        .readdirSync(dir)
+        .filter((fileName) => fileName.endsWith(".tgz"))
+        .map((fileName) => path.join(dir, fileName))
+    : [given];
 
   const kit = isDir ? tarballs.find((tarball) => isUiKitTarball(path.basename(tarball))) : given;
 
   if (!kit || !isUiKitTarball(path.basename(kit)))
     throw new CliError(
-      `${value ? `--ui-kit ${value}` : given} holds no docspace-ui-kit-*.tgz - pack the kit from libs/ui-kit in an ONLYOFFICE Apps client checkout (pnpm build && pnpm pack)`,
+      `${value ? `--ui-kit ${value}` : given} holds no onlyoffice-apps-ui-kit-*.tgz - pack the kit from a docspace-ui-kit-react checkout (pnpm build && pnpm pack)`,
     );
 
   const all = tarballs.includes(kit) ? tarballs : [kit, ...tarballs];
+
+  // A kit given on its own -- a tarball in Downloads -- brings no packed SDK, and the
+  // fallback range names a 3.x that npm does not have yet, so the install would fail. The SDK
+  // vendored with this skill is used instead.
+  if (!all.some((tarball) => isPluginSdkTarball(path.basename(tarball))) && fs.existsSync(VENDOR_DIR)) {
+    const vendoredSdk = fs.readdirSync(VENDOR_DIR).find(isPluginSdkTarball);
+    if (vendoredSdk) all.push(path.join(VENDOR_DIR, vendoredSdk));
+  }
 
   return { kit, sdk: all.find((tarball) => isPluginSdkTarball(path.basename(tarball))), all };
 };

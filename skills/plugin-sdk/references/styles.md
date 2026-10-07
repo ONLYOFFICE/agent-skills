@@ -47,9 +47,9 @@ Traps: `--error-color`, `--success-color` and `--border-color` **do not exist** 
 
 The portal's own secondary lines — the info panel's member subtitles — use `--info-panel-members-subtitle-color`, which the theme root declares as `#a3a9ae` in **both** themes, ~5.3:1 on the dark background. Use it for a caption, a subtitle or a metadata line, and keep `--text-disable-color` for what its name says.
 
-**Read both themes before trusting any colour.** A variable's value is a pair, declared by the theme root (`components/theme-provider/ThemeProvider.scss.js`), page-wide by some other kit stylesheet on `.light`/`.dark`, or by the component the rule sits in under `.dark .<hash>` and `.<hash>` — search the kit's `dist/esm/**/*.scss.js` for `--the-name:` and read every declaration ([ui-kit.md](ui-kit.md)).
+**Read both themes before trusting any colour.** A variable's value is a pair, declared by the theme root (`components/theme-provider/ThemeProvider.scss/index.css`), page-wide by some other kit stylesheet on `.light`/`.dark`, or by the component the rule sits in under `.dark .<hash>` and `.<hash>` — search the kit's `dist/esm/**/*.scss/index.css` for `--the-name:` and read every declaration ([ui-kit.md](ui-kit.md)).
 
-**A kit `color` prop is a CSS value, not a token** — with one exception. `Text` puts `color` straight into the element's inline `style`, so `color="accent"` is invalid CSS and the text silently inherits whatever colour surrounds it: pass `color="var(--accent-main)"`. `Link` is the exception — it maps the literal `"accent"` to `var(--accent-main)` itself, so both spellings work there. When a kit prop takes a colour and its `.d.ts` says `string`, assume the value reaches `style` unchanged and give it a real CSS value; the component's `.module.scss.js` settles it in one look.
+**A kit `color` prop is a CSS value, not a token** — with one exception. `Text` puts `color` straight into the element's inline `style`, so `color="accent"` is invalid CSS and the text silently inherits whatever colour surrounds it: pass `color="var(--accent-main)"`. `Link` is the exception — it maps the literal `"accent"` to `var(--accent-main)` itself, so both spellings work there. When a kit prop takes a colour and its `.d.ts` says `string`, assume the value reaches `style` unchanged and give it a real CSS value; the component's `.module.scss/index.css` settles it in one look.
 
 When the theme is needed as a **fact** — a whole palette for generated markup, an asset in two versions, a canvas — `useTheme()` from the kit returns `{ theme, isBase, currentColorScheme }`; `isBase` (`true` = light) is already resolved, there is no `prefers-color-scheme` to consult.
 
@@ -65,7 +65,7 @@ Only the **leftmost** selector has to carry the scope; descendants inside a root
 ```css
 .archive-manager-tree { display: grid; gap: 4px; }
 .archive-manager-tree pre { white-space: pre; }
-.archive-manager-row:hover { background: var(--button-background-hover); }
+.archive-manager-row:hover { background: var(--background-service-color); }
 ```
 
 Custom properties go on your own root, never `:root`. Keyframe names are global too — prefix them. Reviewing a plugin, run the browser pass and then read whatever it could not reach against this section; a `css` warning from the validator only means the stylesheet is in a form static checks cannot judge.

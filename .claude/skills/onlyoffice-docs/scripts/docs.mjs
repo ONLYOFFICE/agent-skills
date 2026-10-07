@@ -43,6 +43,8 @@ export const SECTION_ALIASES = {
   "js-sdk": "docspace/javascript-sdk",
   "plugins-sdk": "docspace/plugins-sdk",
   "plugin-sdk": "docspace/plugins-sdk",
+  "ui-kit": "docspace/ui-kit",
+  kit: "docspace/ui-kit",
   rest: "docspace/api-backend",
   "api-backend": "docspace/api-backend",
   "rest-api": "docspace/api-backend",
@@ -295,12 +297,22 @@ function sourceLine(hosts, res) {
   return `source: ${res.origin} (production)`;
 }
 
+/**
+ * The sections the repository's skills link into. Each is checked even when the root llms.txt
+ * leaves it out, so a section missing from the index fails `status` instead of going unchecked.
+ */
+const SKILL_SECTIONS = ["docspace/javascript-sdk", "docspace/plugins-sdk", "docspace/ui-kit"];
+
 async function loadSections(origin, refresh) {
   const root = await fetchText(`${origin}/llms.txt`, { refresh });
   if (!looksLikeMarkdown(root.status, root.text)) return null;
-  return parseIndex(root.text)
+  const sections = parseIndex(root.text)
     .filter((e) => e.url.endsWith("/llms.txt"))
     .map((e) => ({ id: sectionIdOf(e.url), name: e.title, description: e.summary, group: e.group, url: e.url }));
+  for (const id of SKILL_SECTIONS)
+    if (!sections.some((s) => s.id === id))
+      sections.push({ id, name: id, description: "not listed in the root llms.txt", group: null, url: `${origin}/${id}/llms.txt` });
+  return sections;
 }
 
 async function loadSectionEntries(section, origin, refresh, knownOrigins) {
@@ -366,7 +378,10 @@ async function cmdStatus(hosts, opts) {
           : "verdict: neither host serves the Markdown docs — only the installed packages' types remain as a source",
     );
   }
-  process.exit(verdict === "production" ? 0 : verdict === "fallback" ? 1 : 2);
+  // Not process.exit(): the sockets of the last requests are still closing, and on Windows
+  // Node aborts the process with a libuv assertion instead of exiting -- the code reads as 127
+  // rather than 0, 1 or 2, and the release checklist cannot tell the three apart.
+  process.exitCode = verdict === "production" ? 0 : verdict === "fallback" ? 1 : 2;
 }
 
 async function withHost(hosts, opts, fn) {
