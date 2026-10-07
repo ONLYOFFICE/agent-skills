@@ -297,12 +297,22 @@ function sourceLine(hosts, res) {
   return `source: ${res.origin} (production)`;
 }
 
+/**
+ * The sections the repository's skills link into. Each is checked even when the root llms.txt
+ * leaves it out, so a section missing from the index fails `status` instead of going unchecked.
+ */
+const SKILL_SECTIONS = ["docspace/javascript-sdk", "docspace/plugins-sdk", "docspace/ui-kit"];
+
 async function loadSections(origin, refresh) {
   const root = await fetchText(`${origin}/llms.txt`, { refresh });
   if (!looksLikeMarkdown(root.status, root.text)) return null;
-  return parseIndex(root.text)
+  const sections = parseIndex(root.text)
     .filter((e) => e.url.endsWith("/llms.txt"))
     .map((e) => ({ id: sectionIdOf(e.url), name: e.title, description: e.summary, group: e.group, url: e.url }));
+  for (const id of SKILL_SECTIONS)
+    if (!sections.some((s) => s.id === id))
+      sections.push({ id, name: id, description: "not listed in the root llms.txt", group: null, url: `${origin}/${id}/llms.txt` });
+  return sections;
 }
 
 async function loadSectionEntries(section, origin, refresh, knownOrigins) {
