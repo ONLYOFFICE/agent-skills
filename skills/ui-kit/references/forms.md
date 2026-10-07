@@ -105,8 +105,10 @@ the fields **32px** apart, because the gap adds to the margin instead of replaci
 - pass `removeMargin` on every container and own the spacing yourself.
 
 `FormWrapper` — the portal's white card — adds 32px of padding on top of that, and centres
-its children, so a control without a width of its own shrinks to its content inside it. Give
-every control `scale` in a card.
+its children (`align-items: center`), so each `FieldContainer` in it shrinks to its content —
+a `Textarea` there stays a few dozen pixels wide however its wrapper is styled. Give the
+containers `style={{ width: "100%" }}` in a card, and `scale` to every `TextInput`. A flex row
+does the same to a `FieldContainer` placed in it.
 
 ## Which control
 
@@ -116,7 +118,7 @@ confusions. What it cannot show:
 | The field is | Use | Because |
 |---|---|---|
 | One line of text | `TextInput` inside `FieldContainer` | `type` and `value` are required; 173px wide unless `scale` |
-| Several lines | `Textarea` with `wrapperClassName` giving `width: 100%` | It has a max-width and no width, so it does not fill its field |
+| Several lines | `Textarea` inside `FieldContainer` | It fills the field by itself; a width of your own goes through `wrapperClassName`, never `style` |
 | A choice from a short list | `ComboBox` | Not a native `<select>`: it renders a button and a drop-down |
 | A search box over a list | `SearchInput` | Its `onChange` receives the **string**, unlike every other input here |
 | On or off, one setting | `ToggleButton` in a wrapper with a height | It occupies no space of its own and overlaps what follows |
@@ -129,11 +131,13 @@ confusions. What it cannot show:
 **`TextInput`** — `onChange` receives the `ChangeEvent`. Without `scale` it is 173px whatever
 its container is. `maxLength` defaults to 255.
 
-**`Textarea`** — no width of its own, a max-width of 1200px. The width goes on the outer
-wrapper and `wrapperClassName` is the only way to it: the `style` you pass is spread onto the
-inner `Scrollbar`, whose own rule is already `width: 100% !important`, so a `style` reads as
-though it worked and changes nothing. In a flex row put `flex: 1 1 auto; min-width: 0` in the
-same class, or it refuses to shrink.
+**`Textarea`** — a block-level wrapper with a max-width of 1200px, so inside a `FieldContainer`
+it fills the field with nothing added. A width of your own goes on that wrapper, and
+`wrapperClassName` is the only way to it: the `style` you pass is spread onto the inner
+`Scrollbar`, whose own rule is already `width: 100% !important`, so a `style` reads as though it
+worked and changes nothing. Placed directly in a flex row, put `flex: 1 1 auto; min-width: 0`
+in that class. When it is narrow inside a `FieldContainer`, the container is what shrank — see
+`FormWrapper` above.
 
 **`ComboBox`** — selects nothing by itself: `onSelect` hands you the option, `selectedOption`
 is yours to store and pass back. The match is by **label**, not key, so two options reading

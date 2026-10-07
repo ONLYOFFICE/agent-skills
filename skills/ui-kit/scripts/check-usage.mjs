@@ -415,11 +415,6 @@ function checkTag(file, text, lineAt, tag, name, index, component, inString) {
   const line = lineAt(index);
   const has = (prop) => parsed.has(prop);
   const value = (prop) => (typeof parsed.get(prop) === "string" ? parsed.get(prop) : "");
-  // Only the attributes that name classes, so a class on a nested element is not credited here.
-  const classAttributes = ["className", "wrapperClassName"]
-    .filter((prop) => value(prop))
-    .map((prop) => `${prop}=${value(prop)}`)
-    .join(" ");
 
   if (component?.visibilityProp) {
     for (const wrong of VISIBILITY_NAMES) {
@@ -465,8 +460,16 @@ function checkTag(file, text, lineAt, tag, name, index, component, inString) {
       add("warning", "W-textarea-unnamed", file, line, "<Textarea> named by nothing", "it carries no `aria-label` or `aria-labelledby`, and no FieldContainer's `labelFor` points at an `id` on it, so it is announced unnamed");
     }
   }
-  if (name === "Textarea" && !declaresIn(classAttributes, /(^|[\s;{])(width|flex)\s*:/)) {
-    add("warning", "W-textarea-width", file, line, "<Textarea> whose wrapper is given no width", "it has a max-width and no width of its own, and only `wrapperClassName` reaches the element that carries it — a `style` is spread onto the inner scroller, which is already full width, so it reads as though it worked and changes nothing");
+  // A Textarea fills the field it sits in by itself, so a missing width is not the trap. The
+  // trap is a width written where it cannot land: `style` is spread onto the inner scroller,
+  // which is already full width. Only `wrapperClassName` reaches the wrapper.
+  const wrapperClass = value("wrapperClassName") ? `wrapperClassName=${value("wrapperClassName")}` : "";
+  if (
+    name === "Textarea" &&
+    /\b(width|flex)\b/.test(value("style")) &&
+    !declaresIn(wrapperClass, /(^|[\s;{])(width|flex)\s*:/)
+  ) {
+    add("warning", "W-textarea-width", file, line, "<Textarea> sized through `style`", "the style is spread onto the inner scroller, which is already full width, so it reads as though it worked and changes nothing; the wrapper is reached only through `wrapperClassName`");
   }
   if (name === "SearchInput" && /\.target\.value/.test(value("onChange"))) {
     add("error", "E-searchinput-event", file, line, "<SearchInput> handler reads `.target.value`", "its onChange receives the string itself, unlike every other input in the kit, so this is undefined");

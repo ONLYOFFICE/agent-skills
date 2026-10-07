@@ -41,7 +41,7 @@ console unless it says so.
 |---|---|---|
 | Fields 32px apart in a column with `gap: 16` | `FieldContainer` brings its own `margin: 0 0 16px`, and a gap adds to it | Drop the gap, or pass `removeMargin` on every field |
 | A toggle overlapping the next row | `ToggleButton` occupies no space: its contents are absolutely positioned | Wrap it in an element with an explicit height, ≥ 16px |
-| A textarea that will not fill its field | It has a max-width and no width | A class through `wrapperClassName` with `width: 100%`, plus `flex: 1 1 auto; min-width: 0` in a row. Not `style`: it lands on the inner scroller, which is already full width, and changes nothing |
+| A textarea that will not fill its field | Inside a `FieldContainer`, the container shrank: a `FormWrapper` or a flex row centres or shrink-wraps it. Placed directly in a flex row, the textarea itself shrinks | Give the `FieldContainer` `width: 100%`; a textarea that is itself a flex item takes a class through `wrapperClassName` with `flex: 1 1 auto; min-width: 0`. Not `style`: it lands on the inner scroller, which is already full width, and changes nothing |
 | An input stuck at 173px | That is `TextInput`'s base width | `scale` |
 | A drop-down list 200px wide under a wide button | `manualWidth` defaults to 200px | `scaledOptions` — and even then the first open can still be 200px |
 | Two footer buttons of different widths | One of them is wrapped in an element of yours, so it is no longer an equal flex item | Put the wrapper's style on the button; `Button` forwards `style` |

@@ -693,6 +693,24 @@ export function Unsized({ on, set }: { on: boolean; set: (value: string) => void
   { code: 0, has: ["W-toggle-wrapper", "W-textarea-width"] },
 );
 
+// A Textarea fills its field with nothing added; only a width put in `style` is the trap.
+expect(
+  "textarea-in-a-field-with-no-width",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Notes.tsx": `import { FieldContainer } from "@onlyoffice/apps-ui-kit/components/field-container";
+import { Textarea } from "@onlyoffice/apps-ui-kit/components/textarea";
+
+export const Notes = () => (
+  <FieldContainer labelVisible labelText="Notes" labelFor="notes" isVertical>
+    <Textarea id="notes" value="" onChange={() => {}} />
+  </FieldContainer>
+);
+`,
+  },
+  { code: 0, lacks: ["W-textarea-width"] },
+);
+
 // --- text that only looks like code ----------------------------------------------------------
 
 // A help string that quotes a portal-internal import, and a `<button>` inside another, used to be
