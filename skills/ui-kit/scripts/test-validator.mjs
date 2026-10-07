@@ -503,6 +503,13 @@ expect(
   { code: 1, has: ["E-legacy-theme-provider", "E-internal-subpath", "W-root-barrel"] },
 );
 
+// `Providers` named from a kit subpath is that error alone, not a cascade of subpath errors too.
+expect(
+  "Providers from a kit subpath",
+  { "src/Root.ts": `import { Providers } from "@onlyoffice/apps-ui-kit/providers";\nexport default Providers;\n` },
+  { code: 1, has: ["E-composite-providers"], lacks: ["E-unknown-subpath"] },
+);
+
 // A path under a component's folder is not a subpath because the folder is.
 expect(
   "a made-up path under a real component",
@@ -1176,6 +1183,26 @@ export const App = () => (
   },
   { code: 1, has: ["E-no-theme-provider"] },
 );
+
+// Forwarded providers reached through a path alias, under another local name, or as a namespace
+// all count; a dependency's ThemeProvider still does not.
+{
+  const pkg = JSON.stringify({ dependencies: { react: "^19", "styled-components": "^6", "@onlyoffice/apps-ui-kit": "4.0.0" } });
+  const forward = `export { ThemeProvider } from "@onlyoffice/apps-ui-kit/providers/theme";\n`;
+  const body = (open, close) => `import { Button, ButtonSize } from "@onlyoffice/apps-ui-kit/components/button";\n${open}\nexport const App = () => (\n  ${close[0]}<Button label="Save" size={ButtonSize.normal} />${close[1]}\n);\n`;
+  for (const [label, main, code] of [
+    ["through a path alias", body(`import { ThemeProvider } from "@app/providers";`, ["<ThemeProvider>", "</ThemeProvider>"]), 0],
+    ["under another local name", body(`import { ThemeProvider as KitTheme } from "./providers";`, ["<KitTheme>", "</KitTheme>"]), 0],
+    ["as a namespace", body(`import * as P from "./providers";`, ["<P.ThemeProvider>", "</P.ThemeProvider>"]), 0],
+    ["from a declared dependency", body(`import { ThemeProvider } from "styled-components";`, ["<ThemeProvider theme={{}}>", "</ThemeProvider>"]), 1],
+  ]) {
+    expect(
+      `a forwarded ThemeProvider ${label}`,
+      { "package.json": pkg, "src/providers.ts": forward, "src/main.tsx": main },
+      code ? { code: 1, has: ["E-no-theme-provider"] } : { code: 0, lacks: ["E-no-theme-provider"] },
+    );
+  }
+}
 
 // --- the templates the skill tells a project to copy ------------------------------------------
 

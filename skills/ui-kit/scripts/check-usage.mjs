@@ -415,11 +415,11 @@ function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
   // barrel, the other names in the same statement are still checked below.
   if (subpath === "providers/Providers" || bindings.some((b) => b.imported === "Providers")) {
     add("error", "E-composite-providers", file, line, "`Providers` is the portal's composed root", "it fetches portal settings through the REST API; compose ThemeProvider and TranslationProvider yourself");
-    if (subpath === "providers/Providers") return;
+    if (subpath !== "") return;
   }
   if (subpath === "components/theme-provider" || bindings.some((b) => b.imported === "ThemeProviderComponent")) {
     add("error", "E-legacy-theme-provider", file, line, "`ThemeProviderComponent` is the layer underneath the provider", "it expects a resolved theme object; mount ThemeProvider from providers/theme");
-    if (subpath === "components/theme-provider") return;
+    if (subpath !== "") return;
   }
 
   const internal = kit.portalInternalSubpaths.find((mod) => subpath === mod || subpath.startsWith(`${mod}/`));
@@ -623,8 +623,22 @@ const PROVIDER_SUBPATHS = { ThemeProvider: "providers/theme", TranslationProvide
 // TranslationProvider without `translations` installs no i18n context, so it mounts nothing; a
 // spread may carry the prop, and is given the benefit of the doubt.
 const providesTranslations = (attributes) => parseAttributes(attributes).has("translations") || attributes.includes("{...");
-// A module of the application's own: relative, or behind a path alias.
-const isLocalModule = (specifier) => /^(\.|\/|@\/|~\/|#)/.test(specifier);
+// The packages the project declares. A specifier naming none of them is a module of the
+// project's own -- relative, or behind whatever path alias or baseUrl it configures
+// (`@app/providers`, `src/providers`) -- while styled-components or MUI is a dependency.
+const declaredPackages = (() => {
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(projectDir, "package.json"), "utf8"));
+    return new Set(["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"].flatMap((field) => Object.keys(pkg[field] ?? {})));
+  } catch {
+    return null;
+  }
+})();
+const packageNameOf = (specifier) => specifier.split("/").slice(0, specifier.startsWith("@") ? 2 : 1).join("/");
+const isLocalModule = (specifier) =>
+  /^(\.|\/|#)/.test(specifier) ||
+  (!specifier.startsWith("node:") && declaredPackages !== null && !declaredPackages.has(packageNameOf(specifier))) ||
+  (declaredPackages === null && /^(@\/|~\/)/.test(specifier));
 const reexportedProviders = new Set();
 const providerTagsElsewhere = [];
 
@@ -737,8 +751,10 @@ for (const file of files) {
       mounted.add("TranslationProvider");
     }
   };
-  // Provider names this file imports from a module of its own, which may forward the kit's.
-  const providersFromLocal = new Set();
+  // Provider names this file imports from a module of its own, which may forward the kit's:
+  // local spelling -> provider, and namespaces imported from such a module.
+  const providersFromLocal = new Map();
+  const localNamespaces = new Set();
 
   // A re-export — `export { X } from "…"` — is checked like an import: a portal-internal module
   // forwarded from a file of the application's own reaches every file that imports it.
@@ -759,7 +775,8 @@ for (const file of files) {
       if (subpath === null) {
         if (regex === IMPORT_FROM && isLocalModule(specifier)) {
           for (const binding of bindings) {
-            if (binding.imported in PROVIDER_SUBPATHS && binding.local === binding.imported) providersFromLocal.add(binding.imported);
+            if (binding.imported === "*") localNamespaces.add(binding.local);
+            else if (binding.imported in PROVIDER_SUBPATHS) providersFromLocal.set(binding.local, binding.imported);
           }
         }
         continue;
@@ -806,11 +823,15 @@ for (const file of files) {
 
   // Only a tag whose name came from a module of the project's own: styled-components' or MUI's
   // ThemeProvider is not the kit's, however the name is spelled.
-  for (const provider of providersFromLocal) {
-    if (local.has(provider)) continue;
-    for (const match of text.matchAll(new RegExp(`<${provider}(?=[\\s/>])`, "g"))) {
+  const spellings = [...providersFromLocal];
+  for (const namespace of localNamespaces) {
+    for (const provider of Object.keys(PROVIDER_SUBPATHS)) spellings.push([`${namespace}.${provider}`, provider]);
+  }
+  for (const [spelling, provider] of spellings) {
+    if (local.has(spelling)) continue;
+    for (const match of text.matchAll(new RegExp(`<${escape(spelling)}(?=[\\s/>])`, "g"))) {
       if (inString(match.index)) continue;
-      const attributes = tagAttributes(text, match.index + provider.length + 1);
+      const attributes = tagAttributes(text, match.index + spelling.length + 1);
       if (provider !== "TranslationProvider" || providesTranslations(attributes)) providerTagsElsewhere.push(provider);
     }
   }
