@@ -14,8 +14,9 @@ docs site — this is the part a consumer acts on.
 | Portal-internal | Ships in the package and resolves, but is not part of the contract | Nothing. It may move or change in any release |
 | Private | Implementation detail | Does not resolve at all |
 
-There is no mechanical boundary between the first two. The `exports` map is one wildcard —
-`./*` — serving every module subpath, public and portal-internal alike, so nothing stops the
+There is no mechanical boundary between the first two. Beside the root, `styles.css`,
+`package.json` and the `locales/*` and `styles/*` files, the `exports` map serves every module
+subpath through one wildcard — `./*` — public and portal-internal alike, so nothing stops the
 wrong import from working. The distinction is editorial, and this page is where it is written
 down.
 
@@ -42,12 +43,12 @@ The root barrel re-exports the component folders, `utils`, `hooks`, `context`, `
 
 | Subpath | Why it will not work for you |
 |---|---|
-| `selectors` | The People, Room, Files, Groups and MCP pickers. They fetch through the DocSpace REST client and a MobX store |
+| `selectors` | The People, Room, Files, Groups, AI-agent and MCP-server pickers. They fetch through the DocSpace REST client and a MobX store |
 | `billing` | Portal tariff and payment flows, on the same API layer and stores |
 | `uploader` | Depends on `selectors/Files` and `providers/api` |
 | `ai-agent` | Depends on `@onlyoffice/ai-chat`, which is not publishable |
 | `api` | The portal REST client |
-| `providers/api` | The portal API provider, and the only importer of `axios` |
+| `providers/api` | The portal API provider; it and `selectors/People` are the importers of `axios` |
 | `providers/Providers` | The composed root: it mounts the API provider and fetches portal settings |
 | `document-editor` | A wrapper around `@onlyoffice/document-editor-react` — use that package directly |
 | `utils/socket` | The portal's socket client |

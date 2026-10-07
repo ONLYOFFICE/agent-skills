@@ -7,7 +7,7 @@ console unless it says so.
 
 | What you see | Why | Fix |
 |---|---|---|
-| Every component unstyled | The bundler is not following the CSS each module imports — the kit excluded from transformation, or marked external | Stop excluding it. `styles.css` is the fallback for builds that genuinely cannot, and it ships 727 KB |
+| Every component unstyled | The bundler is not following the CSS each module imports — the kit excluded from transformation, or marked external | Stop excluding it. `styles.css` is the fallback for builds that genuinely cannot, and it ships ~730 KB |
 | Colours wrong, or nothing has a background | No `ThemeProvider`, so `<body>` carries no `light`/`dark` class and the components' variables are never declared | Mount it — [`setup.md`](setup.md) |
 | Skeletons invisible on a dark surface | Their colours are fixed black at 10%/15% opacity, not themed | Pass `backgroundColor` and `foregroundColor` |
 | A component's own `style` also restyles its error text | `FieldContainer` spreads `style` onto the container **and** the error message | Style a wrapper of your own instead |

@@ -20,7 +20,7 @@ nothing is logged.
   `react`, `react-dom`, `i18next` (^25.5.2), `react-i18next` (^15.7.3); fifteen more are
   optional and belong to the portal-internal modules.
 - **Each module imports its own CSS.** Nothing is imported by hand;
-  `@onlyoffice/apps-ui-kit/styles.css` is the whole library, 727 KB, for builds that cannot
+  `@onlyoffice/apps-ui-kit/styles.css` is the whole library, ~730 KB, for builds that cannot
   follow those imports.
 - 98 components, each with a README of its own inside the package; the root barrel carries
   every one by name, and still is not the way in — see rule 6. Two providers, both mounted by
@@ -96,7 +96,7 @@ When two disagree, the higher one wins — say so instead of switching between t
 ## Rules
 
 1. **Do not import a stylesheet.** Every module brings its own CSS. Importing `styles.css`
-   ships 727 KB of the library the application does not use; unstyled components mean the
+   ships ~730 KB of the library the application does not use; unstyled components mean the
    bundler is not following those imports, not that a stylesheet is missing.
 2. **Mount both providers, from their own subpaths.** `ThemeProvider` from `providers/theme`,
    `TranslationProvider` from `providers/translation` with a

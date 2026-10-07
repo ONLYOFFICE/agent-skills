@@ -33,7 +33,7 @@ That message is how the symptom is recognised; [`i18n.md`](i18n.md) covers the r
 
 - **Vite** — nothing to configure. Import SVGs of your own with `?url` or a plugin; the kit's
   own icons are already React components inside the package — JSX, not URLs.
-- **Next** — most of the kit's modules do **not** carry `"use client"`: 62 of the 1240 in the
+- **Next** — most of the kit's modules do **not** carry `"use client"`: 61 of the 1240 in the
   built package do. Both providers are among them, so `ThemeProvider` and
   `TranslationProvider` can be rendered from a Server Component layout; `Button`,
   `ModalDialog`, `TextInput` and `ComboBox` are not, and imported into a Server Component a

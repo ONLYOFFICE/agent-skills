@@ -408,7 +408,7 @@ function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
     return;
   }
   if (subpath === "styles.css") {
-    add("warning", "W-whole-library-css", file, line, "the whole library's stylesheet is imported", "every component imports its own CSS; this file is 727 KB and is only for bundlers that cannot follow those imports");
+    add("warning", "W-whole-library-css", file, line, "the whole library's stylesheet is imported", "every component imports its own CSS; this file is ~730 KB and is only for bundlers that cannot follow those imports");
     return;
   }
   // Reached by its own subpath, the statement is about that module alone; named from the root

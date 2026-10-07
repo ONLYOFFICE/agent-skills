@@ -1,7 +1,8 @@
 # Choosing a component
 
 The kit's catalogue — `docs/components.md`, shipped inside the package — lists all 109
-components with a row each, and its *close calls* table settles the common confusions (dialog
+components with a row each (the 98 component folders, plus eleven nested ones such as `Row`,
+`AsideHeader` and the tiles), and its *close calls* table settles the common confusions (dialog
 or aside, text or heading, loader or skeleton); the docs site groups the same components under
 [UI](https://api.onlyoffice.com/docspace/ui-kit/ui.md), one page per group. This page is the
 part a catalogue cannot state: which of these
@@ -16,7 +17,7 @@ DocSpace at all: `Article`, `Section`, `Navigation`, `FilterInput` (`components/
 `TwoStateToggle`. They read a portal store, a device type they are told about, or a
 translation function the portal passes down.
 
-Many of the remaining 98 are public only in the sense that they resolve and render. `Rows`,
+Many of the rest are public only in the sense that they resolve and render. `Rows`,
 `Tiles` and `Table` are the portal's file listing in three shapes; `Selector` is its picker;
 `Badge`, `RoomIcon` and `RoomLogo` describe rooms. Nothing stops you using them, but they ask
 for the portal's data shapes and carry the portal's behaviour, and a plain element of your own
@@ -54,13 +55,14 @@ What makes them portal furniture rather than list components:
 
 - **`Rows`** reads its children by position and by prop name — `RowContent` takes its columns
   as indexed children, and anything past the second is hidden below a breakpoint — and the
-  virtual container measures itself through a literal element id, so two of them on a page
-  fight over it.
+  virtual container measures itself through an element id that defaults to `rowContainer`,
+  so two of them on a page fight over it unless each is given its own `id`.
 - **`Tiles`** decides where a child goes by reading that child's `item` prop, and **silently
   drops any child without one**. Your own markup between the tiles does not appear. Its
   skeletons are not re-exported and live at `components/tiles/sub-components/skeletons`.
-- **`Table`** persists column widths in `localStorage` under ids that are literals, measures
-  the container and rewrites a CSS grid on every resize. One per page.
+- **`Table`** persists column widths in `localStorage` under the keys you pass as
+  `columnStorageName` and `columnInfoPanelStorageName`, measures the container and rewrites a
+  CSS grid on every resize. Two tables that share a key share their widths.
 
 None of the tiles is keyboard-operable: each is a `div` with click handlers.
 
