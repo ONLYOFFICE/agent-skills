@@ -59,7 +59,18 @@ Four things in that block are not optional, and three of them are silent when mi
 ## Naming the field
 
 `labelFor` paired with the control's `id` is the whole of it for a single-line field, and it is
-what the example above does. Two cases need something else:
+what the example above does. It reaches only a control whose `id` lands on the focusable
+element — the `TextInput` family and `Textarea`. Four controls put it elsewhere, so `<label for>`
+captions nothing and `getByLabelText` throws:
+
+| Control | Where `id` lands | Caption it with |
+|---|---|---|
+| `ComboBox` | the outer `<div>` | nothing reaches it from `FieldContainer`; the caption is visual only |
+| `RadioButtonGroup` | the outer `<div>` | the options' own `label`s; the group caption is visual only |
+| `ToggleButton` | the outer `<div>` **and** the inner `<label>` | its own `label` prop |
+| `Checkbox` | the wrapping `<label>` | its own `label` prop |
+
+Two more cases need something else:
 
 - **A control with no visible caption** — a search box, a field in a toolbar — takes
   `aria-label` of its own.

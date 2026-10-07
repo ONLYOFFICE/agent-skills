@@ -48,7 +48,8 @@ knowing as a test of the screen rather than of the kit:
 
 - `getByLabelText` finds a field only when `FieldContainer` was given `labelFor` and the control
   the matching `id`. Finding nothing usually means the screen forgot the pair, not that the
-  query is wrong.
+  query is wrong — unless the control is `ComboBox`, `RadioButtonGroup`, `ToggleButton` or
+  `Checkbox`, whose `id` is not on a labelable element and which the pair never reaches.
 - `getByRole("dialog", { name })` matches when `ModalDialog` was given `aria-labelledby` or
   `aria-label`. The role is on the dialog surface, not on the click-to-close layer.
 - `Checkbox` is the exception: the focusable element is the SVG icon, and the input beneath it
