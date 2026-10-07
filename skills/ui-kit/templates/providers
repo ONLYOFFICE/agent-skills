@@ -8,8 +8,10 @@ import { TranslationProvider } from "@onlyoffice/apps-ui-kit/providers/translati
 import common from "@onlyoffice/apps-ui-kit/locales/en/Common.json";
 
 // Map<language, Map<namespace, resources>>. "Common" holds the kit's own
-// labels — the toast titles, the tile menus, the back button in Article. Add
-// namespaces of your own to the inner map; the kit reads only this one.
+// labels — the toast titles, the tile menus, the back button in Article. The
+// provider takes over react-i18next below it: put your own namespaces in the
+// inner map, or mount your own I18nextProvider inside TranslationProvider —
+// otherwise your useTranslation() returns raw keys.
 const translations = new Map([["en", new Map([["Common", common]])]]);
 
 type AppProvidersProps = {
