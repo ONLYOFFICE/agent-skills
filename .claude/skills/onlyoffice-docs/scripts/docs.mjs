@@ -378,7 +378,10 @@ async function cmdStatus(hosts, opts) {
           : "verdict: neither host serves the Markdown docs — only the installed packages' types remain as a source",
     );
   }
-  process.exit(verdict === "production" ? 0 : verdict === "fallback" ? 1 : 2);
+  // Not process.exit(): the sockets of the last requests are still closing, and on Windows
+  // Node aborts the process with a libuv assertion instead of exiting -- the code reads as 127
+  // rather than 0, 1 or 2, and the release checklist cannot tell the three apart.
+  process.exitCode = verdict === "production" ? 0 : verdict === "fallback" ? 1 : 2;
 }
 
 async function withHost(hosts, opts, fn) {
