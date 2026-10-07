@@ -349,6 +349,105 @@ export const Panel = () => <Aside visible header={<Tooltip isOpen />} onClose={(
   { code: 0, lacks: ["E-visibility-prop"] },
 );
 
+// --- every way in, every way out -------------------------------------------------------------
+//
+// README promises that breaking one branch of the validator fails this suite. These cases hold
+// the branches nothing else reached: the two call forms of a specifier, the version check, the
+// text report and the usage exits.
+
+for (const [label, statement] of [
+  ["require()", `const selectors = require("@onlyoffice/apps-ui-kit/selectors");`],
+  ["import()", `const selectors = await import("@onlyoffice/apps-ui-kit/selectors");`],
+]) {
+  expect(
+    `a portal-internal module reached through ${label}`,
+    { "src/Load.ts": `${statement}\nexport default selectors;\n` },
+    { code: 1, has: ["E-internal-subpath"] },
+  );
+}
+
+for (const [version, reported] of [
+  ["0.0.1", true],
+  [MANIFEST.kitVersion, false],
+]) {
+  expect(
+    `the installed kit is ${version}`,
+    {
+      "src/AppProviders.tsx": PROVIDERS,
+      "node_modules/@onlyoffice/apps-ui-kit/package.json": JSON.stringify({ name: "@onlyoffice/apps-ui-kit", version }),
+    },
+    reported ? { code: 0, has: ["W-version-skew"] } : { code: 0, lacks: ["W-version-skew"] },
+  );
+}
+
+// Every control on each list, one tag apiece, so trimming a list fails a named case.
+for (const [name, folder, attributes] of [
+  ["TextInput", "text-input", `type="text" value=""`],
+  ["Textarea", "textarea", `aria-label="Notes" value=""`],
+  ["Checkbox", "checkbox", `label="Yes"`],
+  ["ComboBox", "combobox", `options={[]} selectedOption={{ key: 0, label: "" }}`],
+]) {
+  expect(
+    `${name} tabIndex={0} is noise`,
+    {
+      "src/AppProviders.tsx": PROVIDERS,
+      "src/Field.tsx": `import { ${name} } from "@onlyoffice/apps-ui-kit/components/${folder}";\n\nexport const Field = () => <${name} ${attributes} tabIndex={0} />;\n`,
+    },
+    { code: 0, has: ["W-tabindex-noise"] },
+  );
+}
+for (const [name, folder] of [
+  ["InputBlock", "input-block"],
+  ["SearchInput", "search-input"],
+  ["PasswordInput", "password-input"],
+]) {
+  expect(
+    `${name} without tabIndex is unreachable`,
+    {
+      "src/AppProviders.tsx": PROVIDERS,
+      "src/Field.tsx": `import { ${name} } from "@onlyoffice/apps-ui-kit/components/${folder}";\n\nexport const Field = () => <${name} value="" />;\n`,
+    },
+    { code: 0, has: ["W-tabindex-missing"] },
+  );
+}
+
+/** The text report, which is what a person reads: an error is labelled as one, and exits 1. */
+{
+  const dir = project("the text report", {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Panel.tsx": `import { Aside } from "@onlyoffice/apps-ui-kit/components/aside";
+import { Loader } from "@onlyoffice/apps-ui-kit/components/loader";
+
+export const Panel = ({ open }: { open: boolean }) => <Aside isVisible={open}><Loader /></Aside>;
+`,
+  });
+  let code = 0;
+  let stdout = "";
+  try {
+    stdout = execFileSync(process.execPath, [VALIDATOR, dir], { encoding: "utf8" });
+  } catch (error) {
+    code = error.status;
+    stdout = `${error.stdout ?? ""}`;
+  }
+  check("the text report: exit 1 on an error", code === 1, `exit was ${code}`);
+  check("the text report: the error is labelled ERROR", /^ERROR\b.*\n.*E-visibility-prop/m.test(stdout), stdout.split("\n")[0]);
+  check("the text report: the warning is labelled WARNING", /^WARNING\b.*\n.*W-loader-type/m.test(stdout), stdout.split("\n")[0]);
+}
+
+/** A project that cannot be read is exit 2, never a clean pass. */
+for (const [label, argv] of [
+  ["no project argument", []],
+  ["a project that does not exist", [path.join(workspace, "no-such-project")]],
+]) {
+  let code = 0;
+  try {
+    execFileSync(process.execPath, [VALIDATOR, ...argv], { stdio: "ignore" });
+  } catch (error) {
+    code = error.status;
+  }
+  check(`${label}: exit 2`, code === 2, `exit was ${code}`);
+}
+
 /** The header promises exit 2 when the manifest cannot be read; a parse failure threw, exit 1. */
 {
   const dir = project("an unreadable manifest", { "src/App.tsx": "export const App = 1;\n" });
