@@ -62,7 +62,7 @@ specifier, the whole-library `styles.css`, a `SearchInput` handler reading `.tar
 without `type`, and a column `gap` doubling the fields' own margin. It does not compile —
 `tsc` against the installed kit reports five errors, among them the missing `type` and the
 handler reading `.target` off a string — and a review that ran the compiler has found part of
-the answer that way. `node ../../scripts/check-usage.mjs fixtures/audit-snippet` reports eight
+the answer that way. `node ../scripts/check-usage.mjs fixtures/audit-snippet` reports eight
 of the nine, which is how the fixture is kept honest. The ninth, the caption attached to
 nothing, it reports only once `labelVisible` is added — until then there is no caption, and
 the same container already carries the warning about that. The scenario is graded on the

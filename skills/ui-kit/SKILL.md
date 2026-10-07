@@ -101,7 +101,7 @@ When two disagree, the higher one wins — say so instead of switching between t
 2. **Mount both providers, from their own subpaths.** `ThemeProvider` from `providers/theme`,
    `TranslationProvider` from `providers/translation` with a
    `Map<lang, Map<namespace, table>>` built from `locales/en/Common.json` — the package ships
-   `en` and nothing else, so every other language is the application's to supply. Leave
+   32 languages under `locales/<lang>/`, so each further language is one more entry. Leave
    `colorTheme` out: it is the portal's palette, and without it the kit's own accent is used —
    nothing is fetched. A provider given no `translations` installs no context at all.
 3. **Never `providers/Providers`** (the portal's composed root: it reaches the REST API) and

@@ -38,10 +38,11 @@ All eight are offline and finish in seconds; a red one blocks the commit.
 cheap behaviour suite:
 
 ```sh
-claude plugin eval . --tag question --tag trigger --trust-plugin --no-publish --max-cost-usd 12
+claude plugin eval . --tag question --tag trigger --trust-plugin --no-publish --max-cost-usd 12 --allow-tools WebFetch
 ```
 
-Seven cases, two arms, three runs each: about 20 minutes and $5–6. Compare with the last row of
+`WebFetch` is for `ui-kit-explain-aside-prop`, which is graded on naming the docs page it read;
+without the grant it cannot pass. Seven cases, two arms, three runs each: about 20 minutes and $5–6. Compare with the last row of
 [evals/README.md → Results](evals/README.md#results) and add a row.
 
 **Before a release**, everything above plus the build cases and the live checks

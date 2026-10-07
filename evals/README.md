@@ -18,15 +18,15 @@ land in `evals/results/` (gitignored).
 | Tag | Cases | What they measure |
 |---|---|---|
 | `question` | `embed-2fa-question`, `embed-csp-allowlist-verb`, `embed-theme-switch`, `embed-public-room-events`, `plugin-explain-filter`, `ui-kit-explain-aside-prop` | Facts the skills carry and the docs do not: the CSP verb, `theme` read once, the public-room events, the `usersTypes` asymmetry, the two-factor flow — and, for the kit, that the answer is read from the component's page and names it. Cheap: one short answer per run |
-| `trigger` | `no-trigger-editor-plugin` | Neither skill fires on a Document Server editor-plugin task (`min: 0, max: 0`, scored in both arms) |
+| `trigger` | `no-trigger-editor-plugin` | None of the three skills fires on a Document Server editor-plugin task (`min: 0, max: 0`, scored in both arms) |
 | `build` | `embed-public-room-viewer`, `embed-select-then-upload` | Small integrations with fixed file names, graded by `regex` over those files, plus the validator run and a REPORT.md rubric |
 | `build`, `heavy` | `embed-employee-cabinet`, `plugin-sidebar-workspace` | A full React connector and a full plugin build (npm install, Vite, `validate-plugin.mjs`); long and costly, run on demand |
 
 ## Running
 
 ```sh
-claude plugin eval . --tag question --tag trigger --runs 1 --ablation none   # smoke: format and graders, ~6 short runs
-claude plugin eval . --tag question --tag trigger                             # the cheap suite, 3 runs per arm
+claude plugin eval . --tag question --tag trigger --runs 1 --ablation none --allow-tools WebFetch   # smoke: format and graders, ~6 short runs
+claude plugin eval . --tag question --tag trigger --allow-tools WebFetch                             # the cheap suite, 3 runs per arm
 claude plugin eval . --tag build --allow-tools Write Edit Bash WebFetch       # builds need the write and shell grants
 claude plugin eval . --json evals/results/last.json --threshold 0.8 --trust-plugin --no-publish --max-cost-usd 20
 ```
