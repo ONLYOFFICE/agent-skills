@@ -24,7 +24,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { UI_KIT_PACKAGE } from "../contract.mjs";
+import { HOST_PROVIDED_SPECIFIERS, UI_KIT_PACKAGE } from "../contract.mjs";
 
 const IMPORT_FROM_RE = /(?:import|export)\s+([^;'"]*?)\s*from\s*["']([^"']+)["']/g;
 const IDENTIFIER_RE = /^[A-Za-z_$][\w$]*$/;
@@ -49,7 +49,22 @@ const namedBindings = (clause) => {
     .filter((name) => IDENTIFIER_RE.test(name) && name !== "default");
 };
 
-const packageDir = (projectDir, packageName) => path.join(projectDir, "node_modules", ...packageName.split("/"));
+/**
+ * Where a package is installed for the project, found the way Node finds it: the nearest
+ * node_modules up from the project. Only the project's own was looked at, so in a workspace,
+ * where react is hoisted to the root, react itself was reported missing and stubbed.
+ */
+export const packageDir = (projectDir, packageName) => {
+  for (let dir = path.resolve(projectDir); ; dir = path.dirname(dir)) {
+    const candidate = path.join(dir, "node_modules", ...packageName.split("/"));
+    if (fs.existsSync(path.join(candidate, "package.json"))) return candidate;
+    if (path.dirname(dir) === dir) return null;
+  }
+};
+
+/** A package the harness bundles for real: React and the SDK's React entry are never stubs. */
+const isHostProvided = (peer) =>
+  HOST_PROVIDED_SPECIFIERS.some((specifier) => specifier === peer || specifier.startsWith(`${peer}/`));
 
 /**
  * The kit's peers the project has not installed, each with the names the kit imports from it.
@@ -57,12 +72,11 @@ const packageDir = (projectDir, packageName) => path.join(projectDir, "node_modu
  */
 export const collectPeerStubs = (projectDir) => {
   const kitDir = packageDir(projectDir, UI_KIT_PACKAGE);
-  const manifestPath = path.join(kitDir, "package.json");
-  if (!fs.existsSync(manifestPath)) return [];
+  if (!kitDir) return [];
 
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  const manifest = JSON.parse(fs.readFileSync(path.join(kitDir, "package.json"), "utf8"));
   const missing = Object.keys(manifest.peerDependencies ?? {}).filter(
-    (peer) => !fs.existsSync(packageDir(projectDir, peer)),
+    (peer) => !isHostProvided(peer) && !packageDir(projectDir, peer),
   );
   if (missing.length === 0) return [];
 

@@ -38,6 +38,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { LEGACY_UI_KIT_PACKAGE, UI_KIT_PACKAGE } from "./contract.mjs";
 import { Findings } from "./validator/findings.mjs";
 import {
   FatalProjectError,
@@ -48,7 +49,7 @@ import {
   harnessHtml,
   harnessViteConfig,
 } from "./preview/harness-files.mjs";
-import { collectPeerStubs, peerStubFileName, peerStubSource } from "./preview/peer-stubs.mjs";
+import { collectPeerStubs, packageDir, peerStubFileName, peerStubSource } from "./preview/peer-stubs.mjs";
 import { measureSource } from "./preview/browser-checks.mjs";
 
 const HARNESS_DIR = ".plugin-preview";
@@ -480,6 +481,10 @@ const main = async () => {
     skipped = `dist/ holds ${project.distChunks.length} chunk file(s) beside plugin.js - the archive cannot carry them, and this pass would resolve them and show the plugin working; set build.rolldownOptions.output.codeSplitting: false and build again (validate-plugin.mjs has the detail)`;
   else if (!project.hasNodeModules)
     skipped = "no node_modules - run npm install first";
+  // The harness mounts the kit by its current name. A project still on the old one loads on the
+  // portal (validate-plugin.mjs warns), but here every import of the kit would fail to resolve.
+  else if (!packageDir(project.dir, UI_KIT_PACKAGE) && packageDir(project.dir, LEGACY_UI_KIT_PACKAGE))
+    skipped = `the kit is installed as "${LEGACY_UI_KIT_PACKAGE}", its name before "${UI_KIT_PACKAGE}" - rename the dependency, the imports and the build's external together, install, build, and run the preview again`;
 
   const playwright = skipped ? null : await loadPlaywright(project);
   if (!skipped && !playwright)

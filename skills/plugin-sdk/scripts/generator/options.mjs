@@ -91,10 +91,15 @@ const resolveVendoredTarballs = (value) => {
   const isDir = fs.statSync(given).isDirectory();
   const dir = isDir ? given : path.dirname(given);
 
-  const tarballs = fs
-    .readdirSync(dir)
-    .filter((fileName) => fileName.endsWith(".tgz"))
-    .map((fileName) => path.join(dir, fileName));
+  // A directory is a vendor directory and travels whole. A single tarball travels alone: its
+  // neighbours are whatever else sits in Downloads, and an old SDK tarball among them would
+  // have been installed in place of the vendored one.
+  const tarballs = isDir
+    ? fs
+        .readdirSync(dir)
+        .filter((fileName) => fileName.endsWith(".tgz"))
+        .map((fileName) => path.join(dir, fileName))
+    : [given];
 
   const kit = isDir ? tarballs.find((tarball) => isUiKitTarball(path.basename(tarball))) : given;
 
@@ -105,7 +110,7 @@ const resolveVendoredTarballs = (value) => {
 
   const all = tarballs.includes(kit) ? tarballs : [kit, ...tarballs];
 
-  // A kit given on its own -- a tarball in Downloads -- has no packed SDK beside it, and the
+  // A kit given on its own -- a tarball in Downloads -- brings no packed SDK, and the
   // fallback range names a 3.x that npm does not have yet, so the install would fail. The SDK
   // vendored with this skill is used instead.
   if (!all.some((tarball) => isPluginSdkTarball(path.basename(tarball))) && fs.existsSync(VENDOR_DIR)) {

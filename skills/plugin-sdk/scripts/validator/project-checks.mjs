@@ -408,10 +408,13 @@ export class ProjectChecks extends Check {
       text.includes(`'${specifier}'`) ||
       text.includes(specifier.replace(/\//g, "\\/"));
 
-    // The kit under its old name is still resolved by the portal: warned about, not missing.
+    // The kit under its old name is still resolved by the portal: warned about, not missing --
+    // unless the sources already import the new name, which that external does not cover, so
+    // the kit is bundled.
     const keepsLegacyKit = mentions(LEGACY_UI_KIT_PACKAGE) && !mentions(UI_KIT_PACKAGE);
+    const importsNewKit = new RegExp(`["']${UI_KIT_PACKAGE}["']`).test(project.sourceText);
     const missing = REQUIRED_EXTERNALS.filter(
-      (specifier) => !mentions(specifier) && !(specifier === UI_KIT_PACKAGE && keepsLegacyKit),
+      (specifier) => !mentions(specifier) && !(specifier === UI_KIT_PACKAGE && keepsLegacyKit && !importsNewKit),
     );
 
     if (!/external/.test(text))
