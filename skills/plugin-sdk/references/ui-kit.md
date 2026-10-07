@@ -24,6 +24,7 @@ Contents: [What a plugin does differently](#what-a-plugin-does-differently) · [
 | `toastr` with one mounted `<Toast />` | `showToast` from `usePluginActions()` |
 | The generic `Selector` in a `ModalDialog`; the ready-made pickers are portal-internal | The SDK's selector — files, rooms, people, groups, or a list of your own ([selector.md](components/selector.md)) |
 | Portal-internal modules and components do not work outside the portal | Inside it the barrel carries some of them — the `uploader` and `billing` names, and all eleven portal-internal components (`ui-kit` rule 5; each one's README says so in its metadata) — and the kit promises nothing about them: they may change or move in any release, and with the barrel as a plugin's whole API that change breaks the plugin with no compile error anywhere |
+| Before handing over, run `check-usage.mjs` (the `ui-kit` skill's last step) | Not on a plugin. It checks an application of its own, so on a plugin it reports the two things this table tells you to do — no `ThemeProvider` mounted (`E-no-theme-provider`), imports from the root barrel (`W-root-barrel`) — and its fix for the first is the one the provider row forbids. `validate-plugin.mjs` is the plugin's check |
 | `ButtonSize` from the kit | The SDK exports a `ButtonSize` too — the kit's is for the kit's `Button`, the SDK's for the `ButtonGroup` passed to `setSaveButton`. Alias one when both meet in a file (`import { ButtonSize as SdkButtonSize } from "@onlyoffice/docspace-plugin-sdk"`) |
 
 ## Layout conventions

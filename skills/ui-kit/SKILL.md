@@ -168,7 +168,8 @@ When two disagree, the higher one wins — say so instead of switching between t
   page.
 - Render once in the dark theme: skeletons are fixed-colour and literal colours of your own do
   not switch.
-- Run `node $SKILL/scripts/check-usage.mjs <project>`: leave no errors, and no warning you
+- Run `node $SKILL/scripts/check-usage.mjs <project>` — on an application, not a DocSpace
+  plugin, where it reports the portal's providers as missing: leave no errors, and no warning you
   cannot explain. The warnings are the silent half — a toggle that occupies no space, a caption
   attached to no control, a textarea that never fills its field — and every one of them renders
   without complaining. It reads the project as text and knows the kit from a manifest derived
