@@ -159,14 +159,41 @@ function lineIndex(text) {
  * with `height: 20px` in `app.css` is correct, and an eval grader caught this reporting it — the
  * reader is sent to fix something that is not broken, which is worse than saying nothing.
  */
+/**
+ * Every block of a stylesheet with its own declarations, nested blocks left out of them. A
+ * flat `selector { body }` match used to see only the innermost block, so a rule holding
+ * `&:hover { … }` or `@media … { … }` lost every declaration of its own.
+ */
+function blocksOf(sheet) {
+  const blocks = [];
+  const stack = [{ selector: "", body: "" }];
+  let pending = "";
+  for (const char of sheet.replace(/\/\*[\s\S]*?\*\//g, "")) {
+    if (char === "{") {
+      stack.push({ selector: pending.trim(), body: "" });
+      pending = "";
+    } else if (char === "}") {
+      const block = stack.length > 1 ? stack.pop() : stack[0];
+      block.body += pending;
+      pending = "";
+      blocks.push(block);
+    } else if (char === ";") {
+      stack[stack.length - 1].body += `${pending};`;
+      pending = "";
+    } else {
+      pending += char;
+    }
+  }
+  return blocks;
+}
+
 function styleRules(dir, out = new Map()) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const at = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (!SKIP_DIRS.has(entry.name)) styleRules(at, out);
     } else if (/\.(css|scss|sass|less)$/.test(entry.name)) {
-      const sheet = readFileSync(at, "utf8");
-      for (const [, selector, body] of sheet.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      for (const { selector, body } of blocksOf(readFileSync(at, "utf8"))) {
         for (const [, name] of selector.matchAll(/\.([A-Za-z_][\w-]*)/g)) {
           out.set(name, `${out.get(name) ?? ""};${body}`);
         }
@@ -212,6 +239,29 @@ function tagAttributes(text, from) {
     else if (char === ">" && depth === 0) return text.slice(from, i);
   }
   return text.slice(from);
+}
+
+/**
+ * The span of the element whose opening tag contains `at`: from the end of that tag to the start
+ * of its closing tag. Null for a self-closing element or one that cannot be read.
+ */
+function elementSpan(text, at) {
+  const open = text.lastIndexOf("<", at);
+  const name = /^<([A-Za-z][\w.]*)/.exec(text.slice(open))?.[1];
+  if (!name) return null;
+  const attributes = tagAttributes(text, open + 1 + name.length);
+  if (attributes.trimEnd().endsWith("/")) return null;
+  const start = open + 1 + name.length + attributes.length + 1;
+  const escaped = name.replace(/\./g, "\\.");
+  const tag = new RegExp(`<(/?)${escaped}(?=[\\s/>])`, "g");
+  tag.lastIndex = start;
+  let depth = 1;
+  for (let match = tag.exec(text); match; match = tag.exec(text)) {
+    if (match[1]) depth -= 1;
+    else if (!tagAttributes(text, match.index + match[0].length).trimEnd().endsWith("/")) depth += 1;
+    if (depth === 0) return [start, match.index];
+  }
+  return null;
 }
 
 /** The index just past the `}` that closes the `{` at `at`, stepping over strings inside. */
@@ -734,7 +784,16 @@ for (const file of files) {
   if (tags.some((found) => found.name === "FieldContainer")) {
     const column = /style=\{\{[^}]*flexDirection:\s*["']column["'][^}]*\}\}/g;
     for (const match of text.matchAll(column)) {
-      if (/\bgap\s*:/.test(match[0])) {
+      // Only a column that holds a FieldContainer still carrying its margin: a gapped list
+      // elsewhere in the file, or fields that all pass removeMargin, are not the trap.
+      const inside = elementSpan(text, match.index);
+      const fields = tags.filter(
+        (found) => found.name === "FieldContainer" && inside && found.index > inside[0] && found.index < inside[1],
+      );
+      const withMargin = fields.filter(
+        (found) => !parseAttributes(tagAttributes(text, found.index + found.tag.length + 1)).has("removeMargin"),
+      );
+      if (/\bgap\s*:/.test(match[0]) && withMargin.length) {
         add("warning", "W-fieldcontainer-gap", shown, lineAt(match.index), "a column with a `gap` around FieldContainer fields", "each field already carries margin: 0 0 16px, and the gap adds to it — drop the gap, or pass removeMargin");
       }
     }

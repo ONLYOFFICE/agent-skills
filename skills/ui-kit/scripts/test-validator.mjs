@@ -711,6 +711,76 @@ export const Notes = () => (
   { code: 0, lacks: ["W-textarea-width"] },
 );
 
+// A gap is the trap only on a column holding fields that still carry their margin.
+expect(
+  "a gapped column of fields that all pass removeMargin",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Form.tsx": `import { FieldContainer } from "@onlyoffice/apps-ui-kit/components/field-container";
+
+export const Form = () => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <FieldContainer removeMargin labelVisible labelText="A" />
+    <FieldContainer removeMargin labelVisible labelText="B" />
+  </div>
+);
+`,
+  },
+  { code: 0, lacks: ["W-fieldcontainer-gap"] },
+);
+expect(
+  "a gapped list beside the fields, not around them",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Form.tsx": `import { FieldContainer } from "@onlyoffice/apps-ui-kit/components/field-container";
+
+export const Form = () => (
+  <div>
+    <ul style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <li>One</li>
+    </ul>
+    <FieldContainer labelVisible labelText="A" />
+  </div>
+);
+`,
+  },
+  { code: 0, lacks: ["W-fieldcontainer-gap"] },
+);
+
+// A rule's own declarations survive a nested block -- \`&:hover\`, \`@media\`.
+expect(
+  "size-declared-beside-a-nested-block",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Sized.scss": `.toggle-row {
+  height: 20px;
+  &:hover { opacity: 0.8; }
+}
+.description-field {
+  @media (max-width: 600px) { padding: 0; }
+  width: 100%;
+}
+`,
+    "src/Sized.tsx": `import { Textarea } from "@onlyoffice/apps-ui-kit/components/textarea";
+import { ToggleButton } from "@onlyoffice/apps-ui-kit/components/toggle-button";
+
+import "./Sized.scss";
+
+export function Sized({ on }: { on: boolean }) {
+  return (
+    <div>
+      <Textarea wrapperClassName="description-field" style={{ width: "100%" }} value="" onChange={() => {}} />
+      <div className="toggle-row">
+        <ToggleButton isChecked={on} onChange={() => {}} label="Notify me" />
+      </div>
+    </div>
+  );
+}
+`,
+  },
+  { code: 0, lacks: ["W-toggle-wrapper", "W-textarea-width"] },
+);
+
 // --- text that only looks like code ----------------------------------------------------------
 
 // A help string that quotes a portal-internal import, and a `<button>` inside another, used to be
