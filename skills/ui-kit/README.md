@@ -36,9 +36,10 @@ visibility prop it expects for a component, the list of portal-internal modules 
 components are default exports on their subpath are all facts rather than a hand-kept list —
 which is also why the barrel mistake reached it: the manifest is only as right as the kit's own
 README validator, and that validator once rebuilt the barrel's names by hand. Errors are
-things that are already broken: a visibility prop the component ignores, a portal-internal
-import, `Providers`, a path into `dist/`, `PUBLIC_DIR`, a missing provider, a `SearchInput`
-handler reading `.target.value` off a string. Warnings are the silent traps: a field with no
+things that are already broken: a value import from the root barrel, which does not build
+outside the portal, a visibility prop the component ignores, a portal-internal import,
+`Providers`, a path into `dist/`, `PUBLIC_DIR`, a missing provider, a `SearchInput` handler
+reading `.target.value` off a string. Warnings are the silent traps: a field with no
 visible label, a caption attached to no control, a column whose `gap` doubles the spacing, a
 `Loader` with no type, the whole-library stylesheet.
 

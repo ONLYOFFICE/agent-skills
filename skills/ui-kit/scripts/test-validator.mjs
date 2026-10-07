@@ -19,7 +19,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -202,7 +202,7 @@ expect(
 export const upload = Dropzone;
 `,
   },
-  { code: 0, lacks: ["E-default-import"] },
+  { code: 1, has: ["E-root-barrel"], lacks: ["E-default-import"] },
 );
 
 /**
@@ -500,7 +500,7 @@ expect(
   {
     "src/Mixed.ts": `import { ThemeProviderComponent, Uploader } from "@onlyoffice/apps-ui-kit";\nexport default [ThemeProviderComponent, Uploader];\n`,
   },
-  { code: 1, has: ["E-legacy-theme-provider", "E-internal-subpath", "W-root-barrel"] },
+  { code: 1, has: ["E-legacy-theme-provider", "E-internal-subpath", "E-root-barrel"] },
 );
 
 // `Providers` named from a kit subpath is that error alone, not a cascade of subpath errors too.
@@ -1088,17 +1088,44 @@ export const Panel = ({ open }: { open: boolean }) => <Aside isVisible={open} />
 // --- the root barrel ---------------------------------------------------------------------------
 
 // A value import from the root pulls billing and uploader into the module graph, and with them
-// optional peers the application does not install. A type-only import is erased first.
-expect(
-  "a value import from the root barrel",
-  {
+// optional peers the application does not install. Verified by building: a Vite project on the
+// packed 4.0.0 stops on `"makeAutoObservable" is not exported by "__vite-optional-peer-dep:mobx"`,
+// and the same component from `components/button` builds -- so this is an error, not a trap. The
+// message names the subpath for every binding it can place. A type-only import is erased first.
+{
+  const dir = project("a value import from the root barrel", {
     "src/AppProviders.tsx": PROVIDERS,
-    "src/Save.tsx": `import { Button } from "@onlyoffice/apps-ui-kit";
+    "src/Save.tsx": `import { Button, ButtonSize } from "@onlyoffice/apps-ui-kit";
 
-export const Save = () => <Button label="Save" />;
+export const Save = () => <Button label="Save" size={ButtonSize.normal} />;
+`,
+  });
+  const result = run(dir);
+  const barrel = result.findings.filter((f) => f.code === "E-root-barrel");
+  check("a value import from the root barrel: exit 1", result.code === 1, `exit was ${result.code}`);
+  check("a value import from the root barrel: reported once per statement", barrel.length === 1, `${barrel.length}`);
+  check(
+    "a value import from the root barrel: names the subpath",
+    barrel.some((f) => `${f.fix ?? ""}`.includes(`Button from "@onlyoffice/apps-ui-kit/components/button"`)),
+    JSON.stringify(barrel[0] ?? null),
+  );
+}
+expect(
+  "the providers through the root barrel",
+  {
+    "src/AppProviders.tsx": `import type { ReactNode } from "react";
+import { ThemeProvider, TranslationProvider } from "@onlyoffice/apps-ui-kit";
+
+export function AppProviders({ children }: { children: ReactNode }) {
+  return (
+    <ThemeProvider>
+      <TranslationProvider locale="en" translations={new Map()}>{children}</TranslationProvider>
+    </ThemeProvider>
+  );
+}
 `,
   },
-  { code: 0, has: ["W-root-barrel"] },
+  { code: 1, has: ["E-root-barrel"], lacks: ["E-no-theme-provider", "E-no-translation-provider"] },
 );
 expect(
   "type-only imports from the root barrel",
@@ -1111,7 +1138,7 @@ export type { ComboBoxProps } from "@onlyoffice/apps-ui-kit";
 export type Props = ButtonProps & TextInputProps;
 `,
   },
-  { code: 0, lacks: ["W-root-barrel"] },
+  { code: 0, lacks: ["E-root-barrel"] },
 );
 
 // --- a provider is mounted by its tag ----------------------------------------------------------
@@ -1284,10 +1311,20 @@ check("manifest: carries no revision of the kit, which would differ on every com
 
 // --- the sync tools ---------------------------------------------------------------------------
 
+// The manifest check needs a kit to compare with, and the two kinds of source the tool accepts
+// have failed independently of each other -- a field written from one and not the other -- so
+// each runs when it is at hand: an installed package through `--kit-project`, and a checkout of
+// `docspace-ui-kit-react` beside this repository, where the release checklist expects it.
 const syncChecks = [["every link and version traces to sources.json", ["tools/sync-sources.mjs", "--skill", "ui-kit", "--check"]]];
 if (kitProjectAt > 0) {
   const kit = path.join(path.resolve(process.argv[kitProjectAt + 1] ?? ""), "node_modules", "@onlyoffice", "apps-ui-kit");
   syncChecks.push(["the manifest matches the installed kit", ["tools/sync-ui-kit.mjs", "--from", kit, "--check"]]);
+}
+const kitCheckout = path.resolve(REPO, "..", "docspace-ui-kit-react");
+if (existsSync(path.join(kitCheckout, "docs", "public-api.md"))) {
+  syncChecks.push(["the manifest matches the kit checkout", ["tools/sync-ui-kit.mjs", "--from", kitCheckout, "--check", "--strict"]]);
+} else {
+  console.log(`skip  the manifest vs the kit checkout (no ${kitCheckout})`);
 }
 for (const [what, argv] of syncChecks) {
   try {

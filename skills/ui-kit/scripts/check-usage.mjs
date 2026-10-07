@@ -440,8 +440,27 @@ function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
   }
 
   if (subpath === "") {
+    // Rule 6, and a build failure rather than a trap: Vite stops on
+    // `"makeAutoObservable" is not exported by "__vite-optional-peer-dep:mobx"`. A type-only
+    // import is erased before the bundler sees it, so that one is fine.
     if (!typeOnly && !(bindings.length && bindings.every((b) => b.type))) {
-      add("warning", "W-root-barrel", file, line, `a value import from the root barrel \`${PACKAGE}\``, "the barrel re-exports billing and uploader, which import mobx, mobx-react, react-router and axios; a bundler resolves those before it drops what is unused, so the build fails without them. Import each component from its subpath");
+      const subpathFor = (name) => {
+        if (name === "ThemeProvider") return "providers/theme";
+        if (name === "TranslationProvider") return "providers/translation";
+        return byName.get(name)?.subpath ?? null;
+      };
+      const moves = bindings
+        .filter((b) => !b.type && b.imported !== "*" && b.imported !== "default")
+        .map((b) => (subpathFor(b.imported) ? `${b.imported} from "${PACKAGE}/${subpathFor(b.imported)}"` : null))
+        .filter(Boolean);
+      add(
+        "error",
+        "E-root-barrel",
+        file,
+        line,
+        `a value import from the root barrel \`${PACKAGE}\``,
+        `the barrel re-exports billing and uploader, which import mobx, mobx-react, react-router and axios; a bundler resolves those before it drops what is unused, so the build stops on \`"makeAutoObservable" is not exported by "__vite-optional-peer-dep:mobx"\`. Import each module from its own subpath${moves.length ? `: ${moves.join(", ")}` : " (components/<folder>, providers/theme, providers/translation, enums, hooks)"}`,
+      );
     }
     for (const binding of bindings) {
       if (portalInternalNames.has(binding.imported)) {

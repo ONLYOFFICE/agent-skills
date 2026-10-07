@@ -173,8 +173,8 @@ When two disagree, the higher one wins — say so instead of switching between t
   cannot explain. The warnings are the silent half — a toggle that occupies no space, a caption
   attached to no control, a textarea that never fills its field — and every one of them renders
   without complaining. It reads the project as text and knows the kit from a manifest derived
-  from the kit's own metadata: wrong visibility props, portal-internal imports, a missing
-  provider, the form traps that fail quietly.
+  from the kit's own metadata: an import from the root barrel, wrong visibility props,
+  portal-internal imports, a missing provider, the form traps that fail quietly.
 
 ## Not covered
 
