@@ -94,6 +94,7 @@ const kit = (() => {
 const byName = new Map(Object.values(kit.components).map((component) => [component.name, component]));
 const bySubpath = new Map(Object.values(kit.components).map((component) => [component.subpath, component]));
 const publicSubpaths = new Set(kit.publicSubpaths);
+const topLevelModules = kit.publicSubpaths.filter((sub) => !sub.includes("/") && sub !== "styles.css");
 const portalInternalNames = new Set(kit.portalInternalBarrelNames);
 // Two questions that used to share one list, and so went silent together once its answer
 // changed. Whether the root barrel carries a component is `import.barrel`, which the kit's
@@ -165,14 +166,6 @@ function lineIndex(text) {
 }
 
 /**
- * Class names the project's own stylesheets declare something for, mapped to the declarations.
- *
- * Two of the checks below ask whether an element has been given a size, and the answer lives in
- * a stylesheet as often as in an inline `style`. A wrapper written `<div className="toggle-row">`
- * with `height: 20px` in `app.css` is correct, and an eval grader caught this reporting it — the
- * reader is sent to fix something that is not broken, which is worse than saying nothing.
- */
-/**
  * Every block of a stylesheet with its own declarations, nested blocks left out of them. A
  * flat `selector { body }` match used to see only the innermost block, so a rule holding
  * `&:hover { … }` or `@media … { … }` lost every declaration of its own.
@@ -200,6 +193,14 @@ function blocksOf(sheet) {
   return blocks;
 }
 
+/**
+ * Class names the project's own stylesheets declare something for, mapped to the declarations.
+ *
+ * Two of the checks below ask whether an element has been given a size, and the answer lives in
+ * a stylesheet as often as in an inline `style`. A wrapper written `<div className="toggle-row">`
+ * with `height: 20px` in `app.css` is correct, and an eval grader caught this reporting it — the
+ * reader is sent to fix something that is not broken, which is worse than saying nothing.
+ */
 function styleRules(dir, out = new Map()) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const at = path.join(dir, entry.name);
@@ -410,13 +411,15 @@ function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
     add("warning", "W-whole-library-css", file, line, "the whole library's stylesheet is imported", "every component imports its own CSS; this file is 727 KB and is only for bundlers that cannot follow those imports");
     return;
   }
+  // Reached by its own subpath, the statement is about that module alone; named from the root
+  // barrel, the other names in the same statement are still checked below.
   if (subpath === "providers/Providers" || bindings.some((b) => b.imported === "Providers")) {
     add("error", "E-composite-providers", file, line, "`Providers` is the portal's composed root", "it fetches portal settings through the REST API; compose ThemeProvider and TranslationProvider yourself");
-    return;
+    if (subpath === "providers/Providers") return;
   }
   if (subpath === "components/theme-provider" || bindings.some((b) => b.imported === "ThemeProviderComponent")) {
     add("error", "E-legacy-theme-provider", file, line, "`ThemeProviderComponent` is the layer underneath the provider", "it expects a resolved theme object; mount ThemeProvider from providers/theme");
-    return;
+    if (subpath === "components/theme-provider") return;
   }
 
   const internal = kit.portalInternalSubpaths.find((mod) => subpath === mod || subpath.startsWith(`${mod}/`));
@@ -460,12 +463,13 @@ function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
   }
 
   // The exports map: `./locales/*` and `./styles/*` are files, `./*` is `dist/esm/*/index.js`.
-  // Checked against the installed copy when there is one; otherwise against the manifest, where
-  // only the wildcard roots take a deeper path -- `components/button/anything` used to pass.
+  // Checked against the installed copy when there is one. Without it, against the manifest: a
+  // component is one folder deep, so `components/button/anything` is not a subpath, while the
+  // top-level modules (`utils/get-text-color`, `context/ThemeContext`) nest freely.
   const fileWildcard = /^(locales|styles)\//.test(subpath);
   const resolves = installedBuild
     ? existsSync(path.join(installed.dir, ...(fileWildcard ? [] : ["dist", "esm"]), ...subpath.split("/"), ...(fileWildcard ? [] : ["index.js"])))
-    : publicSubpaths.has(subpath) || /^(assets|locales|styles)\//.test(subpath);
+    : publicSubpaths.has(subpath) || topLevelModules.some((top) => subpath.startsWith(`${top}/`));
   if (!resolves) {
     add("error", "E-unknown-subpath", file, line, `\`${subpath}\` is not a subpath of this package`, "check the component's folder name; every component resolves at components/<folder>");
   }
@@ -616,20 +620,14 @@ const mounted = new Set();
 // "@onlyoffice/apps-ui-kit/providers/theme"` in src/providers.ts -- and rendered elsewhere
 // through that module. The tag is credited once the whole project has been read.
 const PROVIDER_SUBPATHS = { ThemeProvider: "providers/theme", TranslationProvider: "providers/translation" };
+// TranslationProvider without `translations` installs no i18n context, so it mounts nothing; a
+// spread may carry the prop, and is given the benefit of the doubt.
+const providesTranslations = (attributes) => parseAttributes(attributes).has("translations") || attributes.includes("{...");
+// A module of the application's own: relative, or behind a path alias.
+const isLocalModule = (specifier) => /^(\.|\/|@\/|~\/|#)/.test(specifier);
 const reexportedProviders = new Set();
 const providerTagsElsewhere = [];
 
-/**
- * Comments blanked out, newlines kept so every line number still lands. A file that
- * documents what it does — `<button>` in a JSDoc line explaining why the kit's Button is
- * used instead — was being reported for the thing it was explaining.
- *
- * One pass, in reading order, stepping over strings. It used to be two regexes, block comments
- * first: a line comment ending in `assets/` plus a star opened a "block" that ran to the next
- * block comment's close anywhere in the file and blanked every line between, real imports
- * included — a portal-internal `selectors` import below it went unreported. A string ends at its newline unless it is a template, so an apostrophe in
- * JSX text costs at most the rest of its own line.
- */
 // Words after which a quote opens a string even though a letter precedes it.
 const BEFORE_EXPRESSION = new Set(["return", "case", "from", "import", "in", "of", "typeof", "void", "throw", "yield", "await", "else", "default", "extends"]);
 
@@ -733,15 +731,14 @@ for (const file of files) {
   const namespaces = new Map();
   // A provider counts once its tag is rendered, not once it is imported: an import alone mounts
   // nothing, and a file that imports both and renders neither used to pass as fully provided.
-  // TranslationProvider without `translations` installs no i18n context at all, so it mounts
-  // nothing; a spread may carry the prop, and is given the benefit of the doubt.
   const noteProvider = (name, subpath, tag, index) => {
     if (name === "ThemeProvider" && subpath !== "components/theme-provider") mounted.add("ThemeProvider");
-    if (name === "TranslationProvider") {
-      const attributes = tagAttributes(text, index + tag.length + 1);
-      if (parseAttributes(attributes).has("translations") || attributes.includes("{...")) mounted.add("TranslationProvider");
+    if (name === "TranslationProvider" && providesTranslations(tagAttributes(text, index + tag.length + 1))) {
+      mounted.add("TranslationProvider");
     }
   };
+  // Provider names this file imports from a module of its own, which may forward the kit's.
+  const providersFromLocal = new Set();
 
   // A re-export — `export { X } from "…"` — is checked like an import: a portal-internal module
   // forwarded from a file of the application's own reaches every file that imports it.
@@ -759,7 +756,14 @@ for (const file of files) {
       const bindings = clauseGroup ? bindingsOf(match[clauseGroup]) : [];
       checkSpecifier(shown, lineAt(match.index), specifier, bindings, /^(?:import|export)\s+type\s/.test(match[0]));
       const subpath = subpathOf(specifier);
-      if (subpath === null) continue;
+      if (subpath === null) {
+        if (regex === IMPORT_FROM && isLocalModule(specifier)) {
+          for (const binding of bindings) {
+            if (binding.imported in PROVIDER_SUBPATHS && binding.local === binding.imported) providersFromLocal.add(binding.imported);
+          }
+        }
+        continue;
+      }
       usesKit = true;
       if (regex === EXPORT_FROM) {
         for (const [provider, home] of Object.entries(PROVIDER_SUBPATHS)) {
@@ -800,13 +804,14 @@ for (const file of files) {
     }
   }
 
-  for (const provider of Object.keys(PROVIDER_SUBPATHS)) {
+  // Only a tag whose name came from a module of the project's own: styled-components' or MUI's
+  // ThemeProvider is not the kit's, however the name is spelled.
+  for (const provider of providersFromLocal) {
     if (local.has(provider)) continue;
     for (const match of text.matchAll(new RegExp(`<${provider}(?=[\\s/>])`, "g"))) {
       if (inString(match.index)) continue;
       const attributes = tagAttributes(text, match.index + provider.length + 1);
-      const provides = provider !== "TranslationProvider" || parseAttributes(attributes).has("translations") || attributes.includes("{...");
-      if (provides) providerTagsElsewhere.push(provider);
+      if (provider !== "TranslationProvider" || providesTranslations(attributes)) providerTagsElsewhere.push(provider);
     }
   }
 

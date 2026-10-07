@@ -484,6 +484,25 @@ export const Ignored = () => <Aside isOpen />;
   check("build/ at the root is still skipped", !result.findings.some((f) => f.file.startsWith("build/")), result.findings.map((f) => f.file).join(", "));
 }
 
+// Top-level modules nest: utils/<name> and context/<name> resolve through ./* with no install.
+expect(
+  "a nested top-level module, with nothing installed",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Color.ts": `import { getTextColor } from "@onlyoffice/apps-ui-kit/utils/get-text-color";\nexport default getTextColor;\n`,
+  },
+  { code: 0, lacks: ["E-unknown-subpath"] },
+);
+
+// One name in a root-barrel import that has its own error must not hide the others beside it.
+expect(
+  "ThemeProviderComponent beside a portal-internal name in one import",
+  {
+    "src/Mixed.ts": `import { ThemeProviderComponent, Uploader } from "@onlyoffice/apps-ui-kit";\nexport default [ThemeProviderComponent, Uploader];\n`,
+  },
+  { code: 1, has: ["E-legacy-theme-provider", "E-internal-subpath", "W-root-barrel"] },
+);
+
 // A path under a component's folder is not a subpath because the folder is.
 expect(
   "a made-up path under a real component",
@@ -1138,6 +1157,24 @@ export const App = ({ children }: { children: ReactNode }) => (
 `,
   },
   { code: 0, lacks: ["E-no-theme-provider", "E-no-translation-provider"] },
+);
+
+// Another library's ThemeProvider is not the kit's, even beside a re-export of the kit's.
+expect(
+  "a styled-components ThemeProvider beside a re-export of the kit's",
+  {
+    "src/kit.ts": `export { ThemeProvider } from "@onlyoffice/apps-ui-kit/providers/theme";\n`,
+    "src/main.tsx": `import { ThemeProvider } from "styled-components";
+import { Button, ButtonSize } from "@onlyoffice/apps-ui-kit/components/button";
+
+export const App = () => (
+  <ThemeProvider theme={{}}>
+    <Button label="Save" size={ButtonSize.normal} />
+  </ThemeProvider>
+);
+`,
+  },
+  { code: 1, has: ["E-no-theme-provider"] },
 );
 
 // --- the templates the skill tells a project to copy ------------------------------------------
