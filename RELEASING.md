@@ -103,7 +103,7 @@ Before tagging a release:
    `node tools/sync-ui-kit.mjs --from <kit> --check --strict` — the manifest must match the
    released kit, and `--strict` additionally fails when a component README upstream has lost
    its metadata block, which would drop that component from the manifest.
-   The self-test runs the same tool offline, where it can only compare hashes.
+   The self-test runs the same check when it is given `--kit-project <dir with the kit installed>`.
    Before the docs site is deployed, `--verify --fallback` checks the same links on the stand
    (`apiSiteFallback`).
 2b. `node .claude/skills/onlyoffice-docs/scripts/docs.mjs status` exits 0: production serves

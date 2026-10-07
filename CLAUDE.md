@@ -15,12 +15,12 @@ against a column gap".
 
 ## Before committing
 
-Both are required by `CONTRIBUTING.md`, and both are fast:
+The full list is "Before opening a pull request" in `CONTRIBUTING.md`; every line of it is
+fast. The two that are easy to get wrong:
 
 ```bash
 claude plugin validate . --strict        # the marketplace manifest, and only that
 claude plugin validate skills --strict   # the SKILL.md files; the line above never reads them
-node skills/<name>/scripts/test-validator.mjs   # for every skill that has one
 ```
 
 Both forms are needed because `validate` picks its mode from the path: given a directory that
@@ -56,5 +56,8 @@ Two skills describe `@onlyoffice/apps-ui-kit`, and each is kept honest by a diff
   against the kit's source before changing it.
 
 The package specifier is shared with DocSpace-client's plugin shim, which throws on any
-specifier it does not know. All three repositories carry a `feature/ui-kit-separation`
-branch and those branches land together; merging one alone breaks every plugin.
+specifier it does not know. The client's `feature/ui-kit-separation` landed in
+`release/v4.0.0` on its own (PR !753, 2 October 2026), and its shim maps both
+`@onlyoffice/apps-ui-kit` and the old `@docspace/ui-kit` to the portal's kit, so a plugin
+built against either name loads. Removing the old name from the shim is what would break
+plugins now; `plugin-sdk`'s validator warns on it for that reason.
