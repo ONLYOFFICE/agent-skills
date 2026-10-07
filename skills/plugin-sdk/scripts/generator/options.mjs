@@ -105,6 +105,14 @@ const resolveVendoredTarballs = (value) => {
 
   const all = tarballs.includes(kit) ? tarballs : [kit, ...tarballs];
 
+  // A kit given on its own -- a tarball in Downloads -- has no packed SDK beside it, and the
+  // fallback range names a 3.x that npm does not have yet, so the install would fail. The SDK
+  // vendored with this skill is used instead.
+  if (!all.some((tarball) => isPluginSdkTarball(path.basename(tarball))) && fs.existsSync(VENDOR_DIR)) {
+    const vendoredSdk = fs.readdirSync(VENDOR_DIR).find(isPluginSdkTarball);
+    if (vendoredSdk) all.push(path.join(VENDOR_DIR, vendoredSdk));
+  }
+
   return { kit, sdk: all.find((tarball) => isPluginSdkTarball(path.basename(tarball))), all };
 };
 
