@@ -7,11 +7,13 @@
  *
  *   node tools/run-triggers.mjs --skill <name> [--model sonnet] [--runs 3] [--workers 4] [--out results.json]
  *
- * A message counts as triggering when it does so in at least half of its runs. The run
- * directory is a throwaway sandbox under the system temp directory, never this repository.
+ * A message counts as triggering when it does so in at least half of its runs. A run counts only
+ * when the session triggered or reached its `result` event: one that crashed, timed out or was
+ * refused (a 401, a missing binary) is an error, not a miss, and any error makes the exit 2. The
+ * run directory is a throwaway sandbox under the system temp directory, never this repository.
  */
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -41,8 +43,14 @@ const CWD = mkdtempSync(path.join(os.tmpdir(), `${SKILL}-triggers-`));
 function messages() {
   const text = readFileSync(TESTS, "utf8");
   const section = (heading) => {
-    const body = text.split(`## ${heading}`)[1].split("\n## ")[0];
-    return [...body.matchAll(/^\d+\. (.+)$/gm)].map((m) => m[1].replace(/\s*\*\([^)]*\)\*\s*$/, "").trim());
+    const body = text.split(`## ${heading}`)[1]?.split("\n## ")[0];
+    // Numbered or bulleted: a list in the other style used to read as no messages and pass 0/0.
+    const items = [...(body ?? "").matchAll(/^(?:\d+\.|[-*]) (.+)$/gm)].map((m) => m[1].replace(/\s*\*\([^)]*\)\*\s*$/, "").trim());
+    if (!items.length) {
+      console.error(`${path.relative(REPO, TESTS)}: no messages under "## ${heading}"`);
+      process.exit(2);
+    }
+    return items;
   };
   return [
     ...section("Should trigger").map((query) => ({ query, should_trigger: true })),
@@ -59,14 +67,23 @@ function runOnce(query) {
       ? spawn("cmd.exe", ["/c", ...cli], { cwd: CWD, env, windowsHide: true })
       : spawn(cli[0], cli.slice(1), { cwd: CWD, env });
     let triggered = false;
+    let result = null;
     const skills = [];
     let buffer = "";
     let done = false;
     const finish = (reason) => {
       if (done) return;
       done = true;
-      try { child.kill(); } catch {}
-      resolve({ triggered, skills, reason });
+      // On Windows the child is cmd.exe; killing it alone leaves claude.exe running.
+      try {
+        if (process.platform === "win32") spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true });
+        else child.kill();
+      } catch {}
+      // A session that never reached its result -- refused, crashed, timed out -- says nothing
+      // about the description. Neither does one whose result is an error other than the turn cap.
+      const failed = result?.is_error && result.subtype !== "error_max_turns";
+      const error = triggered ? null : !result ? reason : failed ? `result: ${String(result.result ?? result.subtype).slice(0, 80)}` : null;
+      resolve({ triggered, skills, reason, error });
     };
     const timer = setTimeout(() => finish("timeout"), TIMEOUT_MS);
     child.stdout.on("data", (chunk) => {
@@ -78,6 +95,7 @@ function runOnce(query) {
         if (!line) continue;
         let event;
         try { event = JSON.parse(line); } catch { continue; }
+        if (event.type === "result") result = event;
         for (const block of event.message?.content ?? []) {
           if (block.type !== "tool_use" || block.name !== "Skill") continue;
           const name = String(block.input?.skill ?? "");
@@ -102,21 +120,25 @@ async function worker() {
     const { qi, r } = jobs[next++];
     const res = await runOnce(queries[qi].query);
     results[qi].runs[r] = res;
-    console.error(`[${qi + 1}/${queries.length} run ${r + 1}] ${res.triggered ? "TRIGGERED" : "no"} (${res.reason}) ${JSON.stringify([...new Set(res.skills)])} :: ${queries[qi].query.slice(0, 70)}`);
+    console.error(`[${qi + 1}/${queries.length} run ${r + 1}] ${res.error ? `ERROR ${res.error}` : res.triggered ? "TRIGGERED" : "no"} (${res.reason}) ${JSON.stringify([...new Set(res.skills)])} :: ${queries[qi].query.slice(0, 70)}`);
   }
 }
 await Promise.all(Array.from({ length: WORKERS }, worker));
 
 let should = 0, shouldNot = 0;
+const errors = results.reduce((sum, r) => sum + r.runs.filter((x) => x.error).length, 0);
 for (const r of results) {
-  r.rate = r.runs.filter((x) => x.triggered).length / RUNS;
-  r.pass = r.should_trigger ? r.rate >= 0.5 : r.rate < 0.5;
+  // The rate is over the runs that said something; a message with none of those passes nothing.
+  const counted = r.runs.filter((x) => !x.error);
+  r.rate = counted.length ? counted.filter((x) => x.triggered).length / counted.length : null;
+  r.pass = r.rate !== null && (r.should_trigger ? r.rate >= 0.5 : r.rate < 0.5);
   if (r.should_trigger && r.pass) should++;
   if (!r.should_trigger && r.pass) shouldNot++;
 }
 const shouldTotal = results.filter((r) => r.should_trigger).length;
 const shouldNotTotal = results.length - shouldTotal;
 console.log(`model ${MODEL}, ${RUNS} runs per message: should ${should}/${shouldTotal}, should not ${shouldNot}/${shouldNotTotal}`);
-for (const r of results.filter((x) => !x.pass)) console.log(`  MISS ${r.should_trigger ? "should" : "should-not"} rate=${r.rate} :: ${r.query}`);
-if (OUT) writeFileSync(OUT, JSON.stringify({ model: MODEL, runs: RUNS, should, shouldTotal, shouldNot, shouldNotTotal, results }, null, 2));
-process.exit(should === shouldTotal && shouldNot === shouldNotTotal ? 0 : 1);
+for (const r of results.filter((x) => !x.pass)) console.log(`  ${r.rate === null ? "ERROR" : "MISS "} ${r.should_trigger ? "should" : "should-not"} rate=${r.rate} :: ${r.query}`);
+if (errors) console.log(`${errors} of ${jobs.length} run(s) failed before a result and were not counted -- the table above is not a result`);
+if (OUT) writeFileSync(OUT, JSON.stringify({ model: MODEL, runs: RUNS, should, shouldTotal, shouldNot, shouldNotTotal, errors, results }, null, 2));
+process.exit(errors ? 2 : should === shouldTotal && shouldNot === shouldNotTotal ? 0 : 1);
