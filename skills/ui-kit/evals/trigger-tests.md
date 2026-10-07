@@ -54,6 +54,7 @@ message is not in English. Do not "fix" either.
 | Date | Model | Should (10) | Should not (10) | Notes |
 |---|---|---|---|---|
 | 2026-09-24 | Opus 5 | 10/10 | 10/10 | Three runs, routing-judgement method (below); 30/30 and 0/30 across them |
+| 2026-10-07 | sonnet | 10/10 | 10/10 | The protocol itself, through `node tools/run-triggers.mjs --skill ui-kit --model sonnet --runs 1`: twenty fresh `claude -p` sessions with the plugin installed, one run per message, no errors. Description as of `ecf2f56`. The two "should not" messages about the DocSpace plugin and the portal loaded `plugin-sdk`, the embedding one loaded `embed-sdk`, the other seven loaded nothing |
 
 **Method, and how it differs from the protocol above.** The protocol asks for twenty fresh
 sessions with the plugin installed. This run could not install the plugin into fresh sessions,
