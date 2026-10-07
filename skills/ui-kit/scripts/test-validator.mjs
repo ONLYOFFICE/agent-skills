@@ -434,10 +434,12 @@ export const Panel = ({ open }: { open: boolean }) => <Aside isVisible={open}><L
   check("the text report: the warning is labelled WARNING", /^WARNING\b.*\n.*W-loader-type/m.test(stdout), stdout.split("\n")[0]);
 }
 
-/** A project that cannot be read is exit 2, never a clean pass. */
+/** A project that cannot be read, or a command line that cannot be, is exit 2, never a clean pass. */
 for (const [label, argv] of [
   ["no project argument", []],
   ["a project that does not exist", [path.join(workspace, "no-such-project")]],
+  ["an unknown option", [path.join(workspace, "known-good"), "--jsno"]],
+  ["two project directories", [path.join(workspace, "known-good"), path.join(workspace, "known-good")]],
 ]) {
   let code = 0;
   try {
@@ -447,6 +449,50 @@ for (const [label, argv] of [
   }
   check(`${label}: exit 2`, code === 2, `exit was ${code}`);
 }
+
+// `labelVisible={false}` is the default written out: the label is hidden, not shown.
+expect(
+  "labelVisible written as false",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Field.tsx": `import { FieldContainer } from "@onlyoffice/apps-ui-kit/components/field-container";
+
+export const Field = () => <FieldContainer labelVisible={false} labelText="Name" />;
+`,
+  },
+  { code: 0, has: ["W-fieldcontainer-label"], lacks: ["W-label-unattached"] },
+);
+
+// Output directories are skipped at the root only; deeper, a folder named build is source.
+expect(
+  "a source folder named build",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/pages/build/Panel.tsx": `import { Aside } from "@onlyoffice/apps-ui-kit/components/aside";
+
+export const Panel = ({ open }: { open: boolean }) => <Aside isVisible={open} />;
+`,
+    "build/Ignored.tsx": `import { Aside } from "@onlyoffice/apps-ui-kit/components/aside";
+
+export const Ignored = () => <Aside isOpen />;
+`,
+  },
+  { code: 1, has: ["E-visibility-prop"] },
+);
+{
+  const result = run(path.join(workspace, "a source folder named build"));
+  check("build/ at the root is still skipped", !result.findings.some((f) => f.file.startsWith("build/")), result.findings.map((f) => f.file).join(", "));
+}
+
+// A path under a component's folder is not a subpath because the folder is.
+expect(
+  "a made-up path under a real component",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Deep.ts": `import { Button } from "@onlyoffice/apps-ui-kit/components/button/no-such-thing";\nexport default Button;\n`,
+  },
+  { code: 1, has: ["E-unknown-subpath"] },
+);
 
 /** The header promises exit 2 when the manifest cannot be read; a parse failure threw, exit 1. */
 {
@@ -1069,6 +1115,29 @@ export const App = () => <Button label="Save" size={ButtonSize.normal} />;
 `,
   },
   { code: 1, has: ["E-no-theme-provider"] },
+);
+
+// Providers forwarded through a module of the application's own still count once rendered.
+expect(
+  "providers re-exported from a local module",
+  {
+    "src/providers.ts": `export { ThemeProvider } from "@onlyoffice/apps-ui-kit/providers/theme";
+export * from "@onlyoffice/apps-ui-kit/providers/translation";
+`,
+    "src/App.tsx": `import type { ReactNode } from "react";
+import { Toast } from "@onlyoffice/apps-ui-kit/components/toast";
+import { ThemeProvider, TranslationProvider } from "./providers";
+
+const translations = new Map([["en", new Map()]]);
+
+export const App = ({ children }: { children: ReactNode }) => (
+  <ThemeProvider locale="en">
+    <TranslationProvider locale="en" translations={translations}><Toast />{children}</TranslationProvider>
+  </ThemeProvider>
+);
+`,
+  },
+  { code: 0, lacks: ["E-no-theme-provider", "E-no-translation-provider"] },
 );
 
 // --- the templates the skill tells a project to copy ------------------------------------------

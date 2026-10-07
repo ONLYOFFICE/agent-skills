@@ -37,7 +37,13 @@ const TAB_INDEX_UNNEEDED = new Set([
 // InputBlock kept the -1 default the four above lost, and SearchInput and PasswordInput are
 // built on it. InputBlock is public and in the barrel, so it is used directly too.
 const TAB_INDEX_NEEDED = new Set(["InputBlock", "SearchInput", "PasswordInput"]);
-const SKIP_DIRS = new Set(["node_modules", "dist", "build", "out", "coverage", ".next", ".git", ".turbo", ".cache"]);
+// Skipped at any depth: never the project's own source.
+const SKIP_DIRS = new Set(["node_modules", ".git"]);
+// Skipped only at the project root, where they are output. Deeper they can be source --
+// `src/pages/build/` is a page, and was never read.
+const SKIP_ROOT_DIRS = new Set(["dist", "build", "out", "coverage", ".next", ".turbo", ".cache"]);
+const skipped = (dir, name) =>
+  SKIP_DIRS.has(name) || (SKIP_ROOT_DIRS.has(name) && path.resolve(dir) === path.resolve(projectDir));
 const SOURCE_FILE = /\.(?:m|c)?[jt]sx?$/;
 
 const args = process.argv.slice(2);
@@ -47,23 +53,27 @@ const flag = (name) => {
 };
 const asJson = args.includes("--json");
 
-// The first argument that is neither a flag nor a flag's value.
-const projectDir = (() => {
-  const takesValue = new Set(["--manifest", "--kit"]);
-  for (let i = 0; i < args.length; i += 1) {
-    if (args[i].startsWith("--")) {
-      if (takesValue.has(args[i])) i += 1;
-      continue;
-    }
-    return args[i];
-  }
-  return null;
-})();
-
 function fail(message) {
   console.error(`ERROR: ${message}`);
   process.exit(2);
 }
+
+// The one argument that is neither a flag nor a flag's value. An unknown flag or a second
+// directory used to be ignored in silence, so a typo checked something other than was asked.
+const projectDir = (() => {
+  const takesValue = new Set(["--manifest", "--kit"]);
+  const positional = [];
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i].startsWith("--")) {
+      if (takesValue.has(args[i])) i += 1;
+      else if (args[i] !== "--json") fail(`unknown option ${args[i]}`);
+      continue;
+    }
+    positional.push(args[i]);
+  }
+  if (positional.length > 1) fail(`one project directory, not ${positional.length}: ${positional.join(", ")}`);
+  return positional[0] ?? null;
+})();
 
 if (!projectDir) fail("usage: node check-usage.mjs <project-dir> [--json] [--manifest <path>] [--kit <dir>]");
 if (!existsSync(projectDir) || !statSync(projectDir).isDirectory()) fail(`no such directory: ${projectDir}`);
@@ -115,6 +125,9 @@ const installed = (() => {
   }
 })();
 
+// An installed copy that has its build, so the exports map can be resolved against real files.
+const installedBuild = installed && existsSync(path.join(installed.dir, "dist", "esm"));
+
 const findings = [];
 const add = (severity, code, file, line, message, fix) => findings.push({ severity, code, file, line, message, fix });
 
@@ -123,7 +136,7 @@ const add = (severity, code, file, line, message, fix) => findings.push({ severi
 function sourceFiles(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (entry.isDirectory()) {
-      if (!SKIP_DIRS.has(entry.name)) sourceFiles(path.join(dir, entry.name), out);
+      if (!skipped(dir, entry.name)) sourceFiles(path.join(dir, entry.name), out);
     } else if (SOURCE_FILE.test(entry.name)) {
       out.push(path.join(dir, entry.name));
     }
@@ -191,7 +204,7 @@ function styleRules(dir, out = new Map()) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const at = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (!SKIP_DIRS.has(entry.name)) styleRules(at, out);
+      if (!skipped(dir, entry.name)) styleRules(at, out);
     } else if (/\.(css|scss|sass|less)$/.test(entry.name)) {
       for (const { selector, body } of blocksOf(readFileSync(at, "utf8"))) {
         for (const [, name] of selector.matchAll(/\.([A-Za-z_][\w-]*)/g)) {
@@ -446,9 +459,14 @@ function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
     }
   }
 
-  const known = publicSubpaths.has(subpath) || [...publicSubpaths].some((pub) => subpath.startsWith(`${pub}/`));
-  const reallyThere = installed && existsSync(path.join(installed.dir, "dist", "esm", ...subpath.split("/"), "index.js"));
-  if (!known && !reallyThere) {
+  // The exports map: `./locales/*` and `./styles/*` are files, `./*` is `dist/esm/*/index.js`.
+  // Checked against the installed copy when there is one; otherwise against the manifest, where
+  // only the wildcard roots take a deeper path -- `components/button/anything` used to pass.
+  const fileWildcard = /^(locales|styles)\//.test(subpath);
+  const resolves = installedBuild
+    ? existsSync(path.join(installed.dir, ...(fileWildcard ? [] : ["dist", "esm"]), ...subpath.split("/"), ...(fileWildcard ? [] : ["index.js"])))
+    : publicSubpaths.has(subpath) || /^(assets|locales|styles)\//.test(subpath);
+  if (!resolves) {
     add("error", "E-unknown-subpath", file, line, `\`${subpath}\` is not a subpath of this package`, "check the component's folder name; every component resolves at components/<folder>");
   }
 }
@@ -474,10 +492,12 @@ function checkTag(file, text, lineAt, tag, name, index, component, inString) {
     }
   }
 
-  if (name === "FieldContainer" && !has("labelVisible")) {
+  // `labelVisible={false}` is the default written out, not a label shown.
+  const labelShown = has("labelVisible") && !/^\{\s*false\s*\}$/.test(value("labelVisible"));
+  if (name === "FieldContainer" && !labelShown) {
     add("warning", "W-fieldcontainer-label", file, line, "<FieldContainer> without `labelVisible`", "the default is false and the whole label block is behind it, so labelText renders nothing");
   }
-  if (name === "FieldContainer" && has("labelVisible") && !has("labelFor")) {
+  if (name === "FieldContainer" && labelShown && !has("labelFor")) {
     add("warning", "W-label-unattached", file, line, "<FieldContainer labelVisible> without `labelFor`", "the caption then captions nothing: clicking it focuses no field and a screen reader announces the control unnamed. Pass the control's id as `labelFor` and the same string as its `id`");
   }
   if (name === "Loader" && !has("type")) {
@@ -592,6 +612,12 @@ if (!files.length) fail(`no source files under ${projectDir}`);
 const usedComponents = new Set();
 let usesKit = false;
 const mounted = new Set();
+// A provider forwarded from a module of the application's own -- `export { ThemeProvider } from
+// "@onlyoffice/apps-ui-kit/providers/theme"` in src/providers.ts -- and rendered elsewhere
+// through that module. The tag is credited once the whole project has been read.
+const PROVIDER_SUBPATHS = { ThemeProvider: "providers/theme", TranslationProvider: "providers/translation" };
+const reexportedProviders = new Set();
+const providerTagsElsewhere = [];
 
 /**
  * Comments blanked out, newlines kept so every line number still lands. A file that
@@ -735,6 +761,12 @@ for (const file of files) {
       const subpath = subpathOf(specifier);
       if (subpath === null) continue;
       usesKit = true;
+      if (regex === EXPORT_FROM) {
+        for (const [provider, home] of Object.entries(PROVIDER_SUBPATHS)) {
+          const named = bindings.some((b) => b.imported === provider);
+          if (named || (subpath === home && /^\*$/.test(match[1].trim()))) reexportedProviders.add(provider);
+        }
+      }
       if (!binds) continue;
       for (const binding of bindings) {
         if (binding.imported === "*") {
@@ -765,6 +797,16 @@ for (const file of files) {
       if (inString(match.index)) continue;
       tags.push({ tag: `${namespace}.${match[1]}`, name: match[1], index: match.index });
       noteProvider(match[1], subpath, `${namespace}.${match[1]}`, match.index);
+    }
+  }
+
+  for (const provider of Object.keys(PROVIDER_SUBPATHS)) {
+    if (local.has(provider)) continue;
+    for (const match of text.matchAll(new RegExp(`<${provider}(?=[\\s/>])`, "g"))) {
+      if (inString(match.index)) continue;
+      const attributes = tagAttributes(text, match.index + provider.length + 1);
+      const provides = provider !== "TranslationProvider" || parseAttributes(attributes).has("translations") || attributes.includes("{...");
+      if (provides) providerTagsElsewhere.push(provider);
     }
   }
 
@@ -799,6 +841,8 @@ for (const file of files) {
     }
   }
 }
+
+for (const provider of providerTagsElsewhere) if (reexportedProviders.has(provider)) mounted.add(provider);
 
 if (usesKit) {
   const needs = (provider) => [...usedComponents].some((name) => (byName.get(name)?.providers ?? []).includes(provider));
