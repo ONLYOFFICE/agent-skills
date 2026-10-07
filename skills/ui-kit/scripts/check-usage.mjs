@@ -34,8 +34,9 @@ const TAB_INDEX_UNNEEDED = new Set([
   "Checkbox",
   "ComboBox",
 ]);
-// Built on InputBlock, which kept the -1 default the four above lost.
-const TAB_INDEX_NEEDED = new Set(["SearchInput", "PasswordInput"]);
+// InputBlock kept the -1 default the four above lost, and SearchInput and PasswordInput are
+// built on it. InputBlock is public and in the barrel, so it is used directly too.
+const TAB_INDEX_NEEDED = new Set(["InputBlock", "SearchInput", "PasswordInput"]);
 const SKIP_DIRS = new Set(["node_modules", "dist", "build", "out", "coverage", ".next", ".git", ".turbo", ".cache"]);
 const SOURCE_FILE = /\.(?:m|c)?[jt]sx?$/;
 
@@ -307,10 +308,11 @@ function bindingsOf(clause) {
   const defaultName = /^[A-Za-z_$][\w$]*/.exec(head.split(",")[0]?.trim() ?? "");
   if (defaultName) bindings.push({ imported: "default", local: defaultName[0] });
   for (const part of braces ? braces[1].split(",") : []) {
+    const type = /^\s*type\s/.test(part);
     const clean = part.replace(/\btype\b/g, "").trim();
     if (!clean) continue;
     const [imported, local] = clean.split(/\s+as\s+/).map((s) => s.trim());
-    bindings.push({ imported, local: local ?? imported });
+    bindings.push({ imported, local: local ?? imported, type });
   }
   return bindings;
 }
@@ -324,7 +326,7 @@ function subpathOf(specifier) {
   return null;
 }
 
-function checkSpecifier(file, line, specifier, bindings) {
+function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
   if (specifier.includes("PUBLIC_DIR")) {
     add("error", "E-public-dir", file, line, `\`${specifier}\` uses PUBLIC_DIR`, "PUBLIC_DIR is a DocSpace client webpack alias and resolves nowhere else; import your own asset, or one of the kit's under assets/");
     return;
@@ -372,6 +374,9 @@ function checkSpecifier(file, line, specifier, bindings) {
   }
 
   if (subpath === "") {
+    if (!typeOnly && !(bindings.length && bindings.every((b) => b.type))) {
+      add("warning", "W-root-barrel", file, line, `a value import from the root barrel \`${PACKAGE}\``, "the barrel re-exports billing and uploader, which import mobx, mobx-react, react-router and axios; a bundler resolves those before it drops what is unused, so the build fails without them. Import each component from its subpath");
+    }
     for (const binding of bindings) {
       if (portalInternalNames.has(binding.imported)) {
         add("error", "E-internal-subpath", file, line, `\`${binding.imported}\` is portal-internal, reached through the root barrel`, "the root index re-exports uploader and billing, so these names resolve with no warning");
@@ -445,7 +450,7 @@ function checkTag(file, text, lineAt, tag, name, index, component, inString) {
   }
   // The other half: these two pass their `tabIndex` to InputBlock, whose own default is still -1.
   if (TAB_INDEX_NEEDED.has(name) && !has("tabIndex")) {
-    add("warning", "W-tabindex-missing", file, line, `<${name}> without \`tabIndex\``, "it is built on InputBlock, whose tabIndex defaults to -1, so the field cannot be reached from the keyboard; pass tabIndex={0}");
+    add("warning", "W-tabindex-missing", file, line, `<${name}> without \`tabIndex\``, `${name === "InputBlock" ? "its" : "it is built on InputBlock, whose"} tabIndex defaults to -1, so the field cannot be reached from the keyboard; pass tabIndex={0}`);
   }
   // A Textarea's `id` lands on the `<textarea>` itself, so a container's `labelFor` names it
   // exactly as it names any other control. What its closed props type costs is the ability to
@@ -646,9 +651,14 @@ for (const file of files) {
   const namespaces = new Map();
   // A provider counts once its tag is rendered, not once it is imported: an import alone mounts
   // nothing, and a file that imports both and renders neither used to pass as fully provided.
-  const noteProvider = (name, subpath) => {
+  // TranslationProvider without `translations` installs no i18n context at all, so it mounts
+  // nothing; a spread may carry the prop, and is given the benefit of the doubt.
+  const noteProvider = (name, subpath, tag, index) => {
     if (name === "ThemeProvider" && subpath !== "components/theme-provider") mounted.add("ThemeProvider");
-    if (name === "TranslationProvider") mounted.add("TranslationProvider");
+    if (name === "TranslationProvider") {
+      const attributes = tagAttributes(text, index + tag.length + 1);
+      if (parseAttributes(attributes).has("translations") || attributes.includes("{...")) mounted.add("TranslationProvider");
+    }
   };
 
   // A re-export — `export { X } from "…"` — is checked like an import: a portal-internal module
@@ -665,7 +675,7 @@ for (const file of files) {
       if (inString(match.index)) continue;
       const specifier = match[specifierGroup];
       const bindings = clauseGroup ? bindingsOf(match[clauseGroup]) : [];
-      checkSpecifier(shown, lineAt(match.index), specifier, bindings);
+      checkSpecifier(shown, lineAt(match.index), specifier, bindings, /^(?:import|export)\s+type\s/.test(match[0]));
       const subpath = subpathOf(specifier);
       if (subpath === null) continue;
       usesKit = true;
@@ -691,14 +701,14 @@ for (const file of files) {
     for (const match of text.matchAll(new RegExp(`<${escape(localName)}(?=[\\s/>])`, "g"))) {
       if (inString(match.index)) continue;
       tags.push({ tag: localName, name: kitName, index: match.index });
-      noteProvider(kitName, localSubpath.get(localName));
+      noteProvider(kitName, localSubpath.get(localName), localName, match.index);
     }
   }
   for (const [namespace, subpath] of namespaces) {
     for (const match of text.matchAll(new RegExp(`<${escape(namespace)}\\.([A-Za-z_$][\\w$]*)(?=[\\s/>])`, "g"))) {
       if (inString(match.index)) continue;
       tags.push({ tag: `${namespace}.${match[1]}`, name: match[1], index: match.index });
-      noteProvider(match[1], subpath);
+      noteProvider(match[1], subpath, `${namespace}.${match[1]}`, match.index);
     }
   }
 

@@ -83,7 +83,10 @@ Two more cases need something else:
 Do not pass `tabIndex={0}` to make a control reachable. Every control here is in the tab order
 already; `tabIndex` is for taking one **out**, which is a deliberate and rare thing to want.
 
-Two exceptions, both built on `InputBlock`, whose `tabIndex` still defaults to `-1`:
+Three exceptions: `InputBlock`, whose `tabIndex` still defaults to `-1`, and the two built on it.
+
+- **`InputBlock`** — public and in the barrel; used directly, it needs `tabIndex={0}` like the
+  two below.
 
 - **`PasswordInput`** — pass `tabIndex={0}`, or the field cannot be reached by keyboard.
   `labelFor` and `id` name it as usual.

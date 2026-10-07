@@ -55,7 +55,7 @@ console unless it says so.
 | Clicking a label focuses nothing; the field is announced unnamed | `FieldContainer` was given `labelText` but no `labelFor` | `labelFor` on the container, the same string as `id` on the control |
 | A `Textarea` is announced unnamed | Nothing names it: no `labelFor` points at its `id`, and it carries no `aria-label` | `labelFor` on the container and the same string as `id` on the textarea — its `id` lands on the `<textarea>` itself — or `aria-label` when there is no visible caption |
 | A dialog is announced without a name | Nothing was passed to name it | `aria-labelledby` pointing at the header's `id`, or `aria-label` |
-| Tab skips one control | Something passed `tabIndex={-1}`, or it is a `DropDownItem` | Remove the `tabIndex`; on a listbox option the `-1` is correct and the container holds focus |
+| Tab skips one control | Something passed `tabIndex={-1}`; or it is `InputBlock`, `SearchInput` or `PasswordInput`, which default to `-1`; or it is a `DropDownItem` | Remove the `tabIndex`, or pass `tabIndex={0}` to the three `InputBlock` controls; on a listbox option the `-1` is correct and the container holds focus |
 | Arrow keys do nothing in a `ComboBox` | Its key handler looks for options by a test id its own options never carry | Click, or build the list yourself |
 
 ## Imports

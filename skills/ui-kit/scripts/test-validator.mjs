@@ -793,7 +793,62 @@ expect(
   { code: 0, lacks: ["W-tabindex-missing", "W-tabindex-noise"] },
 );
 
+// InputBlock is public and in the barrel, and itself defaults tabIndex to -1.
+expect(
+  "inputblock-without-tabindex",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Field.tsx": `import { InputBlock } from "@onlyoffice/apps-ui-kit/components/input-block";
+
+export const Field = () => <InputBlock value="" onChange={() => {}} />;
+`,
+  },
+  { code: 0, has: ["W-tabindex-missing"] },
+);
+
+// --- the root barrel ---------------------------------------------------------------------------
+
+// A value import from the root pulls billing and uploader into the module graph, and with them
+// optional peers the application does not install. A type-only import is erased first.
+expect(
+  "a value import from the root barrel",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Save.tsx": `import { Button } from "@onlyoffice/apps-ui-kit";
+
+export const Save = () => <Button label="Save" />;
+`,
+  },
+  { code: 0, has: ["W-root-barrel"] },
+);
+expect(
+  "type-only imports from the root barrel",
+  {
+    "src/AppProviders.tsx": PROVIDERS,
+    "src/Types.ts": `import type { ButtonProps } from "@onlyoffice/apps-ui-kit";
+import { type TextInputProps } from "@onlyoffice/apps-ui-kit";
+export type { ComboBoxProps } from "@onlyoffice/apps-ui-kit";
+
+export type Props = ButtonProps & TextInputProps;
+`,
+  },
+  { code: 0, lacks: ["W-root-barrel"] },
+);
+
 // --- a provider is mounted by its tag ----------------------------------------------------------
+
+// Without \`translations\` the provider installs no i18n context, so it is not mounted at all.
+expect(
+  "translation-provider-without-translations",
+  {
+    "src/AppProviders.tsx": PROVIDERS.replace(" translations={translations}", ""),
+    "src/Notify.tsx": `import { Toast } from "@onlyoffice/apps-ui-kit/components/toast";
+
+export const Notify = () => <Toast />;
+`,
+  },
+  { code: 1, has: ["E-no-translation-provider"] },
+);
 
 expect(
   "providers-imported-and-never-rendered",
