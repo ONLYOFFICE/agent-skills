@@ -80,18 +80,47 @@ export const collectPeerStubs = (projectDir) => {
   );
   if (missing.length === 0) return [];
 
-  const namesByPeer = new Map(missing.map((peer) => [peer, new Set()]));
+  const namesByPeer = peerImports(projectDir, kitDir, manifest);
+  return missing.map((peer) => ({ peer, names: namesByPeer[peer] ?? [] }));
+};
 
+/**
+ * What the kit imports from each of its peers, read from every module of its dist -- some
+ * 1,240 files. That only changes with the installed kit, so it is kept in the project's
+ * node_modules/.cache, keyed by the kit's version and the time its package.json was written:
+ * a reinstall, or a repacked tarball that keeps the version, rewrites it and misses the cache.
+ * @returns {Record<string, string[]>}
+ */
+const peerImports = (projectDir, kitDir, manifest) => {
+  const cacheFile = path.join(projectDir, "node_modules", ".cache", "onlyoffice-plugin-preview", "peer-imports.json");
+  const key = `${manifest.version}:${fs.statSync(path.join(kitDir, "package.json")).mtimeMs}:${kitDir}`;
+
+  try {
+    const cached = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+    if (cached.key === key) return cached.peers;
+  } catch {
+    // No cache yet, or an unreadable one: read the kit.
+  }
+
+  const peers = Object.keys(manifest.peerDependencies ?? {});
+  const namesByPeer = new Map(peers.map((peer) => [peer, new Set()]));
   for (const file of walkJavaScript(path.join(kitDir, "dist"))) {
     const source = fs.readFileSync(file, "utf8");
     for (const [, clause, specifier] of source.matchAll(IMPORT_FROM_RE)) {
-      const peer = missing.find((name) => specifier === name || specifier.startsWith(`${name}/`));
+      const peer = peers.find((name) => specifier === name || specifier.startsWith(`${name}/`));
       if (!peer) continue;
       for (const name of namedBindings(clause)) namesByPeer.get(peer).add(name);
     }
   }
+  const result = Object.fromEntries([...namesByPeer].map(([peer, names]) => [peer, [...names].sort()]));
 
-  return missing.map((peer) => ({ peer, names: [...namesByPeer.get(peer)].sort() }));
+  try {
+    fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+    fs.writeFileSync(cacheFile, JSON.stringify({ key, peers: result }));
+  } catch {
+    // A read-only node_modules only costs the next run the same scan.
+  }
+  return result;
 };
 
 export const peerStubFileName = (peer) => `${peer.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "")}.js`;
