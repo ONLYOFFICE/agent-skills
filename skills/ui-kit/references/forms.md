@@ -188,6 +188,9 @@ not a `<form>`. Use a `<form>` of your own around the fields.
 - Native `required` and the browser's own validation block the submit event before your
   handler runs, and with it the error state the container needs. Put `noValidate` on the
   `<form>` and validate in the handler.
+- `Button` renders `type="button"` unless you pass `type="submit"`, so a kit button inside a
+  `<form>` does **not** submit it. Pass `type="submit"` and handle `onSubmit`, or drop the
+  `<form>` and call the handler from `onClick`.
 - Make the submit button `primary` and put one primary button on a screen. In a dialog
   footer, primary first and cancel second; both `scale`, both direct children of the footer.
 

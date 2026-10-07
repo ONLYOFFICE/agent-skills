@@ -20,8 +20,9 @@ and once for dark — and then uses them. So:
 - A component rendered **outside** the provider is not merely unthemed: the document has no
   `light`/`dark` class at all, the component's variables are never declared, and every
   `var(--button-…)` in its stylesheet resolves to nothing.
-- Switching the theme is switching one class. Nothing re-renders, no context updates, and a
-  component that hard-codes a colour of its own keeps it.
+- Switching the theme switches one class, and the CSS does the rest. `ThemeContext` updates as
+  well, so a component that reads it re-renders — but a component that hard-codes a colour of
+  its own keeps it.
 
 Set the starting theme with `initialTheme` — `ThemeKeys.BaseStr` (light), `ThemeKeys.DarkStr`,
 or `ThemeKeys.SystemStr` to follow the operating system. `System` keeps following it: the

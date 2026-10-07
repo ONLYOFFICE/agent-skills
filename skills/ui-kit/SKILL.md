@@ -112,7 +112,7 @@ When two disagree, the higher one wins — say so instead of switching between t
    `DropDown`. Never guess `isVisible`: a wrong name is ignored and nothing appears.
 5. **Portal-internal modules do not work outside the portal**: `selectors`, `billing`,
    `uploader`, `ai-agent`, `api`, `providers/api`, `document-editor`, `utils/socket`, and
-   eleven components including `Section`, `Article`, `Navigation` and `Filter`. The root barrel
+   eleven components including `Section`, `Article`, `Navigation` and `FilterInput`. The root barrel
    re-exports `uploader` and `billing`, so those names reach you with no warning.
 6. **Import from the subpath, not the root barrel.** The barrel also re-exports `billing` and
    `uploader`, which import `mobx`, `mobx-react`, `react-router` and `axios` — optional peers

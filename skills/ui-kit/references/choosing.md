@@ -11,7 +11,7 @@ furniture that merely happens to ship.
 ## Most of the kit is a file manager
 
 Of the 109 documented components, 11 are marked portal-internal and will not work outside
-DocSpace at all: `Article`, `Section`, `Navigation`, `Filter`, `RoomType`, `PortalLogo`,
+DocSpace at all: `Article`, `Section`, `Navigation`, `FilterInput` (`components/filter`), `RoomType`, `PortalLogo`,
 `ImageEditor`, `AvatarEditorDialog`, `RoomLogoCoverDialog`, `OperationsProgressButton` and
 `TwoStateToggle`. They read a portal store, a device type they are told about, or a
 translation function the portal passes down.

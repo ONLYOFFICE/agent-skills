@@ -54,7 +54,7 @@ The root barrel re-exports the component folders, `utils`, `hooks`, `context`, `
 
 Eleven **components** are portal-internal as well, for the same reason — they read a portal
 store, a device type they are told about, or a translation function the portal supplies:
-`Article`, `Section`, `Navigation`, `Filter`, `RoomType`, `PortalLogo`, `ImageEditor`,
+`Article`, `Section`, `Navigation`, `FilterInput`, `RoomType`, `PortalLogo`, `ImageEditor`,
 `AvatarEditorDialog`, `RoomLogoCoverDialog`, `OperationsProgressButton`, `TwoStateToggle`.
 Each one's page says so in its metadata.
 
