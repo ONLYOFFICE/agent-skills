@@ -125,8 +125,9 @@ it, so the kit is structurally unable to warn about the alias its own client def
 
 ## What the evidence says, and what it does not
 
-Both instruments have been run. [`evals/`](evals/README.md) carries three iterations — **70/70
-against a baseline's 58/70** in the third, every scenario built and typechecked — and
+Both instruments have been run. [`evals/`](evals/README.md) carries five iterations — **70/70
+against a baseline's 58/70** in the third, every scenario built and typechecked, and two more
+with the skill alone after later corrections — and
 [`trigger-tests.md`](evals/trigger-tests.md) carries ten of ten and none of ten across three
 orders.
 

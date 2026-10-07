@@ -9,5 +9,6 @@ skills/*-workspace/
 # claude plugin eval writes its runs here
 evals/results/
 
-# eval fixture installs: the kit arrives as a tarball whose path is the operator's own
+# eval fixture installs: the fixture installs the kit from npm, but a run against an unreleased
+# build installs it from a packed tarball, and the lockfile then carries the operator's own path
 skills/ui-kit/evals/fixtures/consumer-app/package-lock.json
