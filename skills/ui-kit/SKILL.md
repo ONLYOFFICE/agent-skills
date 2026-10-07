@@ -73,7 +73,7 @@ When two disagree, the higher one wins — say so instead of switching between t
 | A list is loading | `RectangleSkeleton` | `Loader` without a `type`, which prints its label as text |
 | Nothing to show | `EmptyView` | an empty `<div>` |
 | A transient message | `toastr.*` plus one mounted `<Toast />` | `StatusMessage`, which stays |
-| An icon action | `IconButton` with a URL in `iconName` | an icon name — there is no icon set by name |
+| An icon action | `IconButton` with the icon as JSX in `iconNode`, or a URL in `iconName` | an icon name, or a kit asset in `iconName` |
 | Picking from a long, fetched list | generic `Selector` in a `ModalDialog` | `selectors/*`, which are portal-internal |
 
 ## Where to read more
@@ -157,8 +157,9 @@ When two disagree, the higher one wins — say so instead of switching between t
     an `await`, footer order primary then cancel. There is no destructive variant — override
     `--accent-button` on the button itself, never on the dialog around it.
 16. **No `PUBLIC_DIR`, no path into `dist/`.** `PUBLIC_DIR` is a DocSpace client alias. Icons
-    come from `@onlyoffice/apps-ui-kit/assets/…` or your own SVG, and `IconButton.iconName` is
-    a URL.
+    come from `@onlyoffice/apps-ui-kit/assets/…` or your own SVG. The kit's assets are React
+    components, not URLs: `iconNode={<CrossIcon />}`. `IconButton.iconName` takes a URL only —
+    a kit asset there type-checks against Vite's `*.svg` declaration and renders nothing.
 
 ## Before handing over
 

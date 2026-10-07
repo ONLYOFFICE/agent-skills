@@ -32,7 +32,7 @@ down.
 | `errors` | Error page components (401, 403, 404 …) |
 | `styles/*` | The raw Sass sources, for extending the design system |
 | `locales/*` | The vendored translation tables |
-| `assets/*` | The icon set as modules — subpath-only on purpose, since a barrel would defeat tree-shaking |
+| `assets/*` | The icon set as React components (SVGR), not URLs — render one or pass it to `iconNode`; the kit ships no types for them, so Vite's `*.svg` → `string` declaration applies and hides the mistake. Subpath-only on purpose, since a barrel would defeat tree-shaking |
 | `styles.css` | The whole library's CSS in one file. Only for builds that cannot follow the per-module imports |
 
 The root barrel re-exports the component folders, `utils`, `hooks`, `context`, `enums`,

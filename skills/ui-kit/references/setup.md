@@ -32,7 +32,7 @@ That message is how the symptom is recognised; [`i18n.md`](i18n.md) covers the r
 ## Vite, Next and the first paint
 
 - **Vite** — nothing to configure. Import SVGs of your own with `?url` or a plugin; the kit's
-  own icons are already modules inside the package.
+  own icons are already React components inside the package — JSX, not URLs.
 - **Next** — most of the kit's modules do **not** carry `"use client"`: 59 of the 1231 in the
   built package do, and `Button`, `ModalDialog`, `TextInput`, `ComboBox` and both providers are
   not among them. Imported into a Server Component, a component that uses hooks fails the

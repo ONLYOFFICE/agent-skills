@@ -91,7 +91,8 @@ A few things the kit deliberately does not have, so that looking for them stops 
 - **No toast without a mount point.** `toastr.*` does nothing until one `<Toast />` is
   rendered somewhere in the tree.
 - **No icon component with a name.** `IconButton`'s `iconName` is a URL, not a key into a
-  set. The kit's own icons are modules under `@onlyoffice/apps-ui-kit/assets/`.
+  set. The kit's own icons under `@onlyoffice/apps-ui-kit/assets/` are React components:
+  pass one as JSX to `iconNode`, never to `iconName`.
 
 ## When the component you want is portal-internal
 

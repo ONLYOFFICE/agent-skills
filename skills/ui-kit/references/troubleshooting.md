@@ -68,7 +68,7 @@ console unless it says so.
 | Portal-internal names importable from the root with no warning | The root barrel re-exports `./uploader` and `./billing` | Do not use them; `check-usage.mjs` flags them |
 | A path into `dist/` stops resolving after an upgrade | The `exports` map is the public surface; build paths are not covered | Import the subpath |
 | `PUBLIC_DIR/...` does not resolve | It is a DocSpace client webpack alias, not part of this package | Your own asset, or `@onlyoffice/apps-ui-kit/assets/…` |
-| An icon name renders nothing | `IconButton`'s `iconName` is a URL, not a key into an icon set | Pass a URL, or the imported SVG module |
+| An icon name renders nothing | `IconButton`'s `iconName` is a URL, not a key into an icon set — and a kit asset is a component, not a URL, though it type-checks there | `iconNode={<CrossIcon />}` for a kit asset; `iconName` only for a URL of your own |
 
 ## When the kit's page says something else
 
