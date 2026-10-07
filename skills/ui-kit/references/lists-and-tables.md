@@ -26,7 +26,20 @@ export function MemberList({ members, isLoading }: { members: Member[]; isLoadin
   }
 
   if (members.length === 0) {
-    return <EmptyView title="No members yet" description="Invite someone to get started." />;
+    // `icon` and `options` are required; `null` is an empty state with nothing to do.
+    return (
+      <EmptyView
+        icon={
+          <svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true">
+            <circle cx="48" cy="36" r="16" fill="none" stroke="currentColor" />
+            <path d="M20 84c4-16 16-24 28-24s24 8 28 24" fill="none" stroke="currentColor" />
+          </svg>
+        }
+        title="No members yet"
+        description="Invite someone to get started."
+        options={null}
+      />
+    );
   }
 
   return (
