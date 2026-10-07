@@ -62,9 +62,11 @@ export const packageDir = (projectDir, packageName) => {
   }
 };
 
-/** A package the harness bundles for real: React and the SDK's React entry are never stubs. */
-const isHostProvided = (peer) =>
-  HOST_PROVIDED_SPECIFIERS.some((specifier) => specifier === peer || specifier.startsWith(`${peer}/`));
+/**
+ * A package the harness bundles for real: React and React DOM are never stubs. Exact names only
+ * -- `@onlyoffice/docspace-plugin-sdk` is a prefix of the host's `/react` entry, not one of them.
+ */
+const isHostProvided = (peer) => HOST_PROVIDED_SPECIFIERS.includes(peer);
 
 /**
  * The kit's peers the project has not installed, each with the names the kit imports from it.
@@ -92,7 +94,9 @@ export const collectPeerStubs = (projectDir) => {
  * @returns {Record<string, string[]>}
  */
 const peerImports = (projectDir, kitDir, manifest) => {
-  const cacheFile = path.join(projectDir, "node_modules", ".cache", "onlyoffice-plugin-preview", "peer-imports.json");
+  // Beside the kit, in whichever node_modules holds it: a hoisted workspace has none of its own.
+  const modulesDir = path.resolve(kitDir, ...UI_KIT_PACKAGE.split("/").map(() => ".."));
+  const cacheFile = path.join(modulesDir, ".cache", "onlyoffice-plugin-preview", "peer-imports.json");
   const key = `${manifest.version}:${fs.statSync(path.join(kitDir, "package.json")).mtimeMs}:${kitDir}`;
 
   try {

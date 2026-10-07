@@ -159,6 +159,21 @@ export default ({ workspace, check }) => {
     legacyExternalNewImports.messageSummary,
   );
 
+  // The same through a subpath, the form the kit's own examples import in.
+  const legacyExternalNewSubpath = workspace.validateProject("legacy-external-new-subpath", {
+    ...contextMenuProject("throw", "FixtureThrow", {
+      bundle: contextMenuPlugin({ imports: `import { jsx } from "react/jsx-runtime";` }),
+      src: `import { Button } from "@onlyoffice/apps-ui-kit/components/button";\n${contextMenuSource()}`,
+    }),
+    viteConfig: `export default { build: { rolldownOptions: { external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@docspace\\/ui-kit(\\/.*)?$/] } } };`,
+  });
+
+  check(
+    "an old-name external with imports renamed through a subpath is the missing-external error",
+    legacyExternalNewSubpath.errorsMention(`does not list @onlyoffice/apps-ui-kit`),
+    legacyExternalNewSubpath.messageSummary,
+  );
+
   const legacyKitSubpath = workspace.validateProject(
     "legacy-kit-subpath",
     throwProject(contextMenuPlugin({ imports: `import { Button } from "@docspace/ui-kit/components/button";\nimport { jsx } from "react/jsx-runtime";` })),

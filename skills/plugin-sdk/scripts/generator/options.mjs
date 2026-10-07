@@ -42,9 +42,10 @@ Options:
   --locales       comma separated PluginLocale tags, e.g. ru,pt-BR,ja-JP
                   (en-US is always present; a tag the enum does not have is rejected -
                   "ja" is not "ja-JP" and would never be selected by the portal)
-  --ui-kit        a packed @onlyoffice/apps-ui-kit (onlyoffice-apps-ui-kit-*.tgz) or a
-                  directory holding it - and, while the SDK is unpublished, the packed
-                  SDK; defaults to the copies vendored in this skill's vendor/ directory
+  --ui-kit        a packed @onlyoffice/apps-ui-kit (onlyoffice-apps-ui-kit-*.tgz), copied
+                  alone, or a directory holding it, copied whole - with the packed SDK
+                  while it is unpublished, else the vendored one is used; defaults to
+                  this skill's vendor/ directory
   --force         write into a non-empty directory`;
 
 const readFlag = (argv, flagName) => {
@@ -70,12 +71,14 @@ const isPluginSdkTarball = (fileName) => /^onlyoffice-docspace-plugin-sdk-.*\.tg
 const VENDOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "vendor");
 
 /**
- * The packed kit and anything vendored beside it. Every tarball in the directory still travels
- * into the project: the kit named `file:` tarballs of its own until 4.0.0 (they had to sit in
- * the project root, because npm resolves nested `file:` specs against the project, not against
- * the package), and `sdk` is the packed SDK while 3.0.0 is unpublished. Since 4.0.0 the kit
- * names none, so in practice only the two travel -- but the copying stays general, so a kit
- * that vendors something again does not need this code changed.
+ * The packed kit and what travels with it. Given a directory, every tarball in it travels into
+ * the project: the kit named `file:` tarballs of its own until 4.0.0 (they had to sit in the
+ * project root, because npm resolves nested `file:` specs against the project, not against the
+ * package), and `sdk` is the packed SDK while 3.0.0 is unpublished. Since 4.0.0 the kit names
+ * none, so in practice only the two travel -- but the copying stays general, so a kit that
+ * vendors something again does not need this code changed. Given a single tarball, it travels
+ * alone, with the vendored SDK when nothing else supplies one: a kit that needs siblings is
+ * given as the directory holding them.
  * @returns {{ kit: string, sdk: string | undefined, all: string[] }}
  */
 const resolveVendoredTarballs = (value) => {
