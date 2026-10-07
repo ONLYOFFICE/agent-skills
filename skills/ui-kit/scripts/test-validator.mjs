@@ -806,6 +806,26 @@ export const Field = () => <InputBlock value="" onChange={() => {}} />;
   { code: 0, has: ["W-tabindex-missing"] },
 );
 
+// `/*` inside a regex or in JSX text is no comment; read as one, it hid every tag after it.
+for (const [label, opener] of [
+  ["a regex", `export const trim = (url: string) => url.replace(/\\/*$/, "");`],
+  ["JSX text", `export const Hint = () => <p>Accepts image/* files</p>;`],
+]) {
+  expect(
+    `slash-star in ${label} does not hide the rest of the file`,
+    {
+      "src/AppProviders.tsx": PROVIDERS,
+      "src/Panel.tsx": `import { Aside } from "@onlyoffice/apps-ui-kit/components/aside";
+
+${opener}
+
+export const Panel = ({ open }: { open: boolean }) => <Aside isVisible={open} />;
+`,
+    },
+    { code: 1, has: ["E-visibility-prop"] },
+  );
+}
+
 // --- the root barrel ---------------------------------------------------------------------------
 
 // A value import from the root pulls billing and uploader into the module graph, and with them

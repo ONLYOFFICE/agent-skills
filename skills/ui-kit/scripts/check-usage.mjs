@@ -606,7 +606,10 @@ function scan(text) {
     const next = text[i + 1];
     // `:` before `//` is the scheme of a URL written as JSX text, not a comment.
     const lineComment = char === "/" && next === "/" && text[i - 1] !== ":";
-    const blockComment = char === "/" && next === "*";
+    // After a word character or a backslash, `/*` is part of something else -- the `\/*` of a
+    // regex, the `image/*` of an accept list in JSX text -- and taking it for a comment hid
+    // the rest of the file.
+    const blockComment = char === "/" && next === "*" && !/[\w\\]/.test(text[i - 1] ?? "");
     if (lineComment || blockComment) {
       const close = lineComment ? text.indexOf("\n", i) : text.indexOf("*/", i + 2);
       const end = close === -1 ? text.length : lineComment ? close : close + 2;
