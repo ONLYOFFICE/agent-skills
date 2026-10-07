@@ -1216,7 +1216,7 @@ check("manifest: every component is accounted for", Object.keys(MANIFEST.compone
 check("manifest: the portal-internal modules were parsed", MANIFEST.portalInternalSubpaths.includes("selectors"));
 check("manifest: the barrel leak is recorded", MANIFEST.portalInternalBarrelNames.includes("Uploader"));
 check("manifest: the leak includes billing's constants file", MANIFEST.portalInternalBarrelNames.includes("YEAR_KEY"));
-check("manifest: the revision is recorded once, in sources.json", !("syncedCommit" in MANIFEST));
+check("manifest: carries no revision of the kit, which would differ on every commit", !("syncedCommit" in MANIFEST));
 
 // --- the sync tools ---------------------------------------------------------------------------
 

@@ -39,6 +39,16 @@ const flag = (name) => {
 };
 const has = (name) => args.includes(name);
 
+// A typo (`--wirte`) used to fall through to check mode and read as a successful write.
+const KNOWN = new Set(["--from", "--write", "--check", "--dump", "--strict"]);
+for (let i = 0; i < args.length; i += 1) {
+  if (args[i] === "--from") i += 1;
+  else if (!KNOWN.has(args[i])) {
+    console.error(`ERROR: unknown argument ${args[i]}`);
+    process.exit(2);
+  }
+}
+
 const from = flag("--from");
 const mode = has("--write") ? "write" : has("--dump") ? "dump" : "check";
 const strict = has("--strict");
@@ -254,6 +264,13 @@ if (mode === "write") {
   report("MISSING", posix(path.relative(ROOT, MANIFEST)), "no manifest; run --write");
 } else if (readFileSync(MANIFEST, "utf8") !== serialised) {
   report("DRIFT", posix(path.relative(ROOT, MANIFEST)), "the manifest differs from what the kit now says; run --write");
+}
+if (mode === "check" && manifest.kitVersion !== skillSources.version) {
+  report(
+    "VERSION",
+    posix(path.relative(ROOT, SKILL_SOURCES)),
+    `says ${skillSources.version}, the kit is ${manifest.kitVersion}: run \`node tools/sync-sources.mjs --skill ui-kit --set-version ${manifest.kitVersion}\``,
+  );
 }
 
 const missingMeta = readmes.length - metas.size;
