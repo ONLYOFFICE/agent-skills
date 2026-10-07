@@ -100,7 +100,8 @@ function runOnce(query) {
           if (block.type !== "tool_use" || block.name !== "Skill") continue;
           const name = String(block.input?.skill ?? "");
           skills.push(name);
-          if (name.includes(SKILL)) triggered = true;
+          // The skill itself, bare or plugin-qualified -- `sync-ui-kit` is not `ui-kit`.
+          if (name === SKILL || name.endsWith(`:${SKILL}`)) triggered = true;
         }
         if (triggered) { clearTimeout(timer); finish("detected"); }
       }
