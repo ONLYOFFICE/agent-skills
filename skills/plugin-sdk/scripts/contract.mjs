@@ -340,6 +340,7 @@ export const checkSdkDrift = (sdk, installedVersion) => {
 
   compare("PluginLocale values", LOCALE_TAGS, values(sdk.PluginLocale));
   compare("UsersType values", USERS_TYPES, values(sdk.UsersType));
+  compare("UserRole values", USER_ROLES, values(sdk.UserRole));
   compare("Devices values", DEVICES, values(sdk.Devices));
   compare("Events values", EVENT_TYPES, values(sdk.Events));
   compare("Section values", SECTIONS, values(sdk.Section));

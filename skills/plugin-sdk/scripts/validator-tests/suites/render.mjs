@@ -40,6 +40,10 @@ const READS_FILE = `const file = useCurrentFile(); return jsx("p", { children: f
 const GUARDED = `const file = useCurrentFile(); return jsx("p", { children: file ? file.title : "nothing selected" });`;
 const KIT_THEME = `const { isBase, currentColorScheme } = useTheme();
   return jsx(Text, { color: currentColorScheme.main.accent, children: isBase ? "light" : "dark" });`;
+// load() is a synchronous read the SDK's examples make in a lazy useState initialiser - during
+// render; save() is a write, and from render it would run on every re-render.
+const SETTINGS_READ = `const saved = usePluginSettings().load(); return jsx("p", { children: saved ? "saved" : "nothing saved" });`;
+const SETTINGS_WRITE = `usePluginSettings().save({ apiKey: "" }); return jsx("p", { children: "saved" });`;
 
 export default ({ workspace, check }) => {
   const surfaces = (dirName, bodies) => {
@@ -104,6 +108,22 @@ export default ({ workspace, check }) => {
     "a component reading the kit's useTheme() renders clean",
     !kitHook.errorCodes.includes("render") && kitHook.runtime.render?.rendered === 2,
     kitHook.messageSummary,
+  );
+
+  const settingsRead = surfaces("render-settings-read", { tabBody: SETTINGS_READ, pageBody: SETTINGS_READ });
+
+  check(
+    "reading settings.load() while rendering renders clean - the SDK reads them synchronously",
+    !settingsRead.errorCodes.includes("render") && settingsRead.runtime.render?.rendered === 2,
+    settingsRead.messageSummary,
+  );
+
+  const settingsWrite = surfaces("render-settings-write", { tabBody: SETTINGS_WRITE, pageBody: SETTINGS_WRITE });
+
+  check(
+    "calling settings.save() while rendering is still a render error",
+    settingsWrite.hasFindingMentioning("settings.save() was called while the component was rendering"),
+    settingsWrite.messageSummary,
   );
 
   const modalDir = workspace.write("render-modal", {

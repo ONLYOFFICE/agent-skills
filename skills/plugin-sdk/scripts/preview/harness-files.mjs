@@ -168,7 +168,8 @@ const runtime = (hasCurrentFile) => ({
   actions: new Proxy({}, { get: (_t, p) => record("actions." + String(p)) }),
   api: new Proxy({}, { get: (_t, p) => asyncRecord("api." + String(p)) }),
   settings: {
-    load: async () => null,
+    // Synchronous, as the portal answers it: nothing saved yet.
+    load: () => null,
     save: async () => {},
     setSaveButton: record("settings.setSaveButton"),
   },

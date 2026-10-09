@@ -23,6 +23,16 @@ The maps are flat and shared across every installed plugin: two plugins using ke
 
 Every enum, with its members and values, is under [Enums](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums.md). Two things worth knowing beyond the values: `FilesExst` covers the extensions ONLYOFFICE Apps knows, and a plain string works for your own; and every enum-valued string comes from the enum, because a near-miss compiles and is never matched ([plugin.md → Localisation](../plugins/plugin.md#localisation)).
 
-### `UsersType` does not name the roles the portal shows
+### Roles: `UserRole`, and the `UsersType` it replaces
 
-The product renamed the roles and the enum did not, so **two members mean the opposite of what they read like**: [`UsersType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/UsersType.md) states beside each member how the portal labels it today — `collaborator` is shown as **User**, `user` as **Guest**, `docSpaceAdmin` as **Full admin**. Every user is exactly **one** of the five, and the filter lists each one that may see the item — no member implies another: `[UsersType.roomAdmin]` hides the item from the owner and from full admins, "admins of any kind" is `[UsersType.owner, UsersType.docSpaceAdmin, UsersType.roomAdmin]`. So `usersTypes: [UsersType.user]` is "guests only", not "signed-in users", and the internal-staff filter most features want is `[UsersType.owner, UsersType.docSpaceAdmin, UsersType.roomAdmin, UsersType.collaborator]`. Getting this backwards shows a feature to exactly the audience it was meant to be hidden from, and nothing reports it. (An SDK that has the newer `UserRole` enum writes `FullAdmin`, `PortalUser` and `Guest` for three of them; the portal matches both spellings.)
+`UserRole` names the roles as the portal shows them; [`UsersType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/UsersType.md), which it deprecates, kept the product's old names, so **two of its members mean the opposite of what they read like**. Write `UserRole` — the SDK this skill installs has it; a 3.0.0 build packed before it was added has only `UsersType`, which the installed types settle. The values differ as well as the names, the portal matches both, and the field keeps its name and takes either (`(UserRole | UsersType)[]`):
+
+| `UserRole` | `UsersType` | The portal shows |
+|---|---|---|
+| `owner` | `owner` | Owner |
+| `fullAdmin` | `docSpaceAdmin` | Full admin |
+| `roomAdmin` | `roomAdmin` | Room admin |
+| `user` | `collaborator` | User |
+| `guest` | `user` | Guest |
+
+**`.user` is the member that changed sides**: `UsersType.user` is a guest, `UserRole.user` a regular portal user — the same name for opposite audiences, so a filter copied from older code, or a file that imports both enums, shows a feature to the opposite audience. Every user is exactly **one** of the five, and the filter lists each one that may see the item — no member implies another: `[UserRole.roomAdmin]` hides the item from the owner and from full admins, "admins of any kind" is `[UserRole.owner, UserRole.fullAdmin, UserRole.roomAdmin]`, and the internal-staff filter most features want is `[UserRole.owner, UserRole.fullAdmin, UserRole.roomAdmin, UserRole.user]` — everyone but guests. Getting this backwards shows a feature to the audience it was meant to be hidden from, and nothing reports it.

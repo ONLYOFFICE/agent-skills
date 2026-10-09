@@ -44,25 +44,15 @@ The `setSaved` after a successful save is what stops a second press re-sending t
 ```tsx
 function SettingsPage() {
   const settings = usePluginSettings();
-  const [config, setConfig] = useState<TConfig>(DEFAULTS);   // what the form shows
-  const [saved, setSaved] = useState<TConfig>(DEFAULTS);     // what is stored, to compare against
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    // `await`, never `.then`: the SDK types load() as a Promise, the portal answers synchronously.
-    void (async () => {
-      const stored = await settings.load<TConfig>();
-      const next = { ...DEFAULTS, ...(stored ?? {}) };
-      setConfig(next); setSaved(next); setLoaded(true);
-    })();
-  }, [settings]);
+  // load() is synchronous - the portal already holds the settings - and null until the first save.
+  const [saved, setSaved] = useState<TConfig>(() => ({ ...DEFAULTS, ...(settings.load<TConfig>() ?? {}) })); // what is stored
+  const [config, setConfig] = useState<TConfig>(saved);      // what the form shows
 
   const invalid = config.webhook.length > 0 && !/^https:\/\//.test(config.webhook);
   const dirty = JSON.stringify(config) !== JSON.stringify(saved);
   const showError = invalid && config.webhook !== saved.webhook;
 
   useEffect(() => {
-    if (!loaded) return;
     settings.setSaveButton({
       component: Components.button,                       // the SDK's Components and ButtonSize, not the kit's
       // Not `isDisabled: invalid` alone - that leaves Save lit on a form nobody edited.
@@ -78,9 +68,8 @@ function SettingsPage() {
                  }
                } },
     });
-  }, [settings, config, loaded, invalid, dirty]);
+  }, [settings, config, invalid, dirty]);
 
-  if (!loaded) return <RectangleSkeleton height="120px" />;
   return (
     // No `gap` on the column: FieldContainer brings its own 16px bottom margin, and the two add up.
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -99,7 +88,7 @@ function SettingsPage() {
 
 Registered with `this.setAdminPluginSettings({ component: SettingsPage })` in `onLoadCallback`. Class-side code reads stored values in `setAdminPluginSettingsValue` — a string, arriving after installation; parse in `try/catch`.
 
-Three facts about the store itself that the page does not put together. **The whole object is one string the server caps at 255 characters** — a longer `save()` is refused with a 400, not truncated, so a settings object is a few short scalars, and anything bulkier lives in a file or a portal entity the plugin refers to by id; the `catch` above is what turns that refusal into a toast. **`load()` answers synchronously on the portal** although the SDK types it as a `Promise` — `await` it, as the example does, rather than chaining `.then`, which throws on a plain object and blanks the page. **After `save()` the portal calls `setAdminPluginSettingsValue` and then re-reads `getStatus()`**, so a plugin can hide or show itself from its own configuration ([plugin.md](plugin.md#iplugin--always-required)). Only the session that saved hears about it: other open tabs keep the value they loaded — their `load()` returns it too — until they reload, so a settings page open in another tab shows, and can save back, the old value.
+Three facts about the store itself that the page does not put together. **The whole object is one string the server caps at 255 characters** — a longer `save()` is refused with a 400, not truncated, so a settings object is a few short scalars, and anything bulkier lives in a file or a portal entity the plugin refers to by id; the `catch` above is what turns that refusal into a toast. **`load()` answers synchronously** — the portal already holds the settings when the page renders — so read it in a lazy `useState` initialiser, as the example does, with no loading state. Code written against an earlier 3.0.0 build that typed it as a `Promise` and `await`s it still works; `.then` throws on the plain object and blanks the page. **After `save()` the portal calls `setAdminPluginSettingsValue` and then re-reads `getStatus()`**, so a plugin can hide or show itself from its own configuration ([plugin.md](plugin.md#iplugin--always-required)). Only the session that saved hears about it: other open tabs keep the value they loaded — their `load()` returns it too — until they reload, so a settings page open in another tab shows, and can save back, the old value.
 
 ## A static `saveButton`
 

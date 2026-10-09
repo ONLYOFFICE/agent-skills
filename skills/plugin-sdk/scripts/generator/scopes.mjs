@@ -94,7 +94,7 @@ export const SCOPE_SPECS = {
   getAdminPluginSettings = (): ISettings | null => this.adminPluginSettings;
 `,
 
-    note: "call this.setAdminPluginSettings({ component: SettingsPage }) here, where SettingsPage loads with settings.load() in a useEffect and saves through settings.setSaveButton(...) - whose isDisabled, like any field's hasError, is gated on what the user changed and not on validity alone, or the aside opens with Save lit over a form nobody edited; its onClick catches the save and returns a showToast IMessage on both branches, since the aside closes on a failed save exactly as on a stored one and nothing else reports it",
+    note: "call this.setAdminPluginSettings({ component: SettingsPage }) here, where SettingsPage reads settings.load() - synchronous, null until the first save - in a lazy useState initialiser and saves through settings.setSaveButton(...) - whose isDisabled, like any field's hasError, is gated on what the user changed and not on validity alone, or the aside opens with Save lit over a form nobody edited; its onClick catches the save and returns a showToast IMessage on both branches, since the aside closes on a failed save exactly as on a stored one and nothing else reports it",
   },
 
   ContextMenu: {

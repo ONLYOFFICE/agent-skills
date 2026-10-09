@@ -308,7 +308,7 @@ export const scopeSource = ({ adder, getter, members = [] }) =>
  */
 export const renderSurfacesPlugin = ({ tabBody, pageBody, kit = "", memo = false }) => `
 import { jsx } from "react/jsx-runtime";
-import { useCurrentFile } from "@onlyoffice/docspace-plugin-sdk/react";
+import { useCurrentFile, usePluginSettings } from "@onlyoffice/docspace-plugin-sdk/react";
 ${kit ? `import { ${kit} } from "@onlyoffice/apps-ui-kit";` : ""}
 
 const Tab = () => { ${tabBody} };

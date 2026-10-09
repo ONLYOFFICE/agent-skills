@@ -82,9 +82,11 @@ const pluginRuntime = (currentFile) => ({
   actions: clientProxy("actions"),
   api: clientProxy("api"),
   settings: {
-    load: duringRender("settings.load()"),
+    // A synchronous read of what the portal already holds - the SDK's own examples make it in
+    // a lazy useState initialiser, which runs during the first render. Nothing saved yet here.
+    load: () => null,
     save: duringRender("settings.save()"),
-    // The one call a settings component may legitimately make from render.
+    // The other call a settings component may legitimately make from render.
     setSaveButton: () => {},
   },
 });
