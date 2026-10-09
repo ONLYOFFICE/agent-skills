@@ -67,7 +67,8 @@ is also stated in `skills/plugin-sdk/references/plugins/scopes.md`. When an SDK 
   to confirm the three URLs answer. Until then the flag is what keeps that check able to report
   a *new* breakage instead of drowning it in a known one.
 - `plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
-  generator and validator) and the version pair in `references/plugins/scopes.md`; if the
+  generator and validator), the version pair in `references/plugins/scopes.md` and, on a new
+  SDK major, `SDK_RANGE` in `scripts/generator/project-files.mjs`; if the
   kit changed, move `UI_KIT_RANGE` in `scripts/generator/project-files.mjs` with the range the
   portal installs and update `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
   validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.
@@ -129,7 +130,6 @@ Before tagging a release:
 - CI that runs the offline checks of [TESTING.md](TESTING.md) on every push and the cheap eval
   cases (`--tag question --tag trigger`) on a schedule; the build cases need a Linux or macOS
   runner, since a shell grant requires a sandbox backend. Until then every step is run by hand.
-- `skills/plugin-sdk/vendor/` holds the packed SDK in git until 3.0.0 is on npm; delete it then.
 - `skills/embed-sdk/scripts/sync-sdk.mjs` derives the validator dictionaries by parsing the
   SDK's `.d.ts` files with regular expressions; a generated schema on the SDK side was
   considered and dropped (the SDK itself has no use for it), so the parser stays and must be

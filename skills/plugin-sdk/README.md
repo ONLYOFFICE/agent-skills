@@ -17,7 +17,7 @@ node skills/plugin-sdk/scripts/preview-plugin.mjs ./my-plugin
 node skills/plugin-sdk/scripts/test-validator.mjs
 ```
 
-The **generator** writes the plugin class with every member the loader calls, a Vite + React build that keeps the host-provided packages external, a typed localisation module for the languages given as `--locales` (validated against `PluginLocale`, since a table filed under `ja` instead of `ja-JP` is never read), the CSS-module declaration and a `typecheck` script, depends on `@onlyoffice/apps-ui-kit` from npm, and copies in the packed SDK from `vendor/` while 3.0.0 is unpublished. It registers no items by design — a placeholder that survives into an upload is a plugin that looks alive and does the wrong thing.
+The **generator** writes the plugin class with every member the loader calls, a Vite + React build that keeps the host-provided packages external, a typed localisation module for the languages given as `--locales` (validated against `PluginLocale`, since a table filed under `ja` instead of `ja-JP` is never read), the CSS-module declaration and a `typecheck` script, and depends on the SDK and `@onlyoffice/apps-ui-kit` from npm. It registers no items by design — a placeholder that survives into an upload is a plugin that looks alive and does the wrong thing.
 
 The **validator** runs static checks over the manifest, build config, sources and packed archive — including whether that archive is newer than the sources, since uploading one packed before the last edit ships the previous build — then imports the built bundle the way the portal does — as an ES module, against the React and SDK the project installed, with a stand-in for the UI kit — executes `onLoadCallback` and verifies each declared scope registered items with the fields, components and filter values the portal reads. `--invoke` also calls the class-side callbacks and checks every returned action carries its payload.
 
@@ -48,7 +48,6 @@ references/   the knowledge base
 scripts/      generate, validate, preview in a browser, self-test, and contract.mjs (the portal contract as data)
   generator/  validator/  validator-tests/  preview/
 templates/    build config for generated projects (inert filenames so editors ignore them)
-vendor/       the packed SDK, until 3.0.0 is on npm
 evals/        graded scenarios, the fixture plugin one of them starts from, and the trigger tests for the description — a maintenance tool, not read by agents
 ```
 
@@ -58,16 +57,16 @@ evals/        graded scenarios, the fixture plugin one of them starts from, and 
 
 **Why the scaffolder is ours.** `npx create-docspace-plugin` is built on an interactive prompt (`inquirer`), so it blocks a tool call; it emits an empty `onLoadCallback`; it derives `pluginName` itself (`my-plugin` → `Myplugin`); and it knows nothing of the UI kit. Packaging, by contrast, comes from the SDK untouched: generated projects run `vite build && npx build-docspace-plugin`, and the build configs mirror the SDK's `template/`.
 
-**Where the UI kit and the SDK come from.** `@onlyoffice/apps-ui-kit` is installed from npm at `UI_KIT_RANGE` in `scripts/generator/project-files.mjs` — the range the portal itself installs, so a plugin compiles against the kit it is handed. The bundle keeps the kit external, so it is a build-time (types) need only. When the kit changes, move that range with the portal and update [references/ui-kit.md](references/ui-kit.md) where behaviour moved — `docspace-ui-kit-react` has a `sync-ui-kit-reference` skill that reports exactly what drifted. SDK 3.0.0 is released but not yet on npm, so `vendor/` holds `onlyoffice-docspace-plugin-sdk-3.0.0.tgz` and the generator installs from it whenever such a tarball is present. When it lands on npm, delete the tarball — the generator falls back to `SDK_RANGE` in `scripts/generator/project-files.mjs`. Until then pack it from the SDK repository's `develop` branch (`npm ci && npm run build && npm pack`) and repack whenever `develop` moves: the packer copies that package's `minDocSpaceVersion` into every generated plugin's `config.json`, and agents read the SDK's JSDoc out of this tarball.
+**Where the UI kit and the SDK come from.** `@onlyoffice/apps-ui-kit` is installed from npm at `UI_KIT_RANGE` in `scripts/generator/project-files.mjs` — the range the portal itself installs, so a plugin compiles against the kit it is handed. The bundle keeps the kit external, so it is a build-time (types) need only. When the kit changes, move that range with the portal and update [references/ui-kit.md](references/ui-kit.md) where behaviour moved — `docspace-ui-kit-react` has a `sync-ui-kit-reference` skill that reports exactly what drifted. The SDK comes from npm at `SDK_RANGE` in the same file; its packer copies the installed package's `minDocSpaceVersion` into every generated plugin's `config.json`, and agents read the SDK's JSDoc out of `node_modules`. When an SDK release changes the contract, update `scripts/contract.mjs` and the references with it — the validator's `checkSdkDrift()` names what moved.
 
-**Verifying the toolchain.** Whether the pinned versions still compile the generated config is not expressed anywhere else, so after touching `scripts/generator/project-files.mjs`, `templates/` or `vendor/`:
+**Verifying the toolchain.** Whether the pinned versions still compile the generated config is not expressed anywhere else, so after touching `scripts/generator/project-files.mjs` or `templates/`, and after an SDK or kit release:
 
 ```sh
 node skills/plugin-sdk/scripts/generate-plugin.mjs --name smoke --plugin-name Smoke --scopes <all eleven> --locales ru,pt-BR --dir ../smoke
 cd ../smoke && npm install && npm run build && npm run typecheck && node ../agent-skills/skills/plugin-sdk/scripts/validate-plugin.mjs . --invoke
 ```
 
-A missing `dist/plugin.zip` means the toolchain disagrees with itself, and `typecheck` is the only thing that reads the generated types at all — `vite build` strips them, so a broken `locales.ts` or `css-modules.d.ts` builds cleanly. Pass `--locales`, or the extra-language tables are never generated in a smoke run. Use all eleven scopes — a renamed SDK export only surfaces when every scope's imports are emitted. If you swap the vendored SDK for a checkout, `npm pack` it rather than linking the directory, or the SDK's `react` peer resolves outside the project and the validator cannot import the bundle.
+A missing `dist/plugin.zip` means the toolchain disagrees with itself, and `typecheck` is the only thing that reads the generated types at all — `vite build` strips them, so a broken `locales.ts` or `css-modules.d.ts` builds cleanly. Pass `--locales`, or the extra-language tables are never generated in a smoke run. Use all eleven scopes — a renamed SDK export only surfaces when every scope's imports are emitted. If you swap the npm SDK for a checkout, `npm pack` it rather than linking the directory, or the SDK's `react` peer resolves outside the project and the validator cannot import the bundle.
 
 ### Where the documentation links point
 

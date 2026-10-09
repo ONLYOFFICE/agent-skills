@@ -11,7 +11,7 @@
       "assertions": [
         "dist/plugin.zip exists",
         "validate-plugin.mjs --invoke reports zero errors",
-        "package.json depends on @onlyoffice/docspace-plugin-sdk 3.x - the npm range ^3.0.0 or the vendored onlyoffice-docspace-plugin-sdk-3.0.0.tgz, which is what the generator writes while the release is unpublished - and declares runtime: module",
+        "package.json depends on @onlyoffice/docspace-plugin-sdk 3.x - the npm range ^3.0.0 - and declares runtime: module",
         "the plugin is its default export - no window.Plugins assignment",
         "vite.config keeps react, react-dom, react/jsx-runtime, @onlyoffice/docspace-plugin-sdk/react and @onlyoffice/apps-ui-kit external and bundles the SDK root",
         "ArticleNavigation, Settings, EventListener and ArticleButton scopes are declared, implemented, and each item scope registers at least one item",
@@ -50,7 +50,7 @@
       "assertions": [
         "dist/plugin.zip exists",
         "validate-plugin.mjs --invoke reports zero errors",
-        "package.json depends on @onlyoffice/docspace-plugin-sdk 3.x - the npm range ^3.0.0 or the vendored onlyoffice-docspace-plugin-sdk-3.0.0.tgz, which is what the generator writes while the release is unpublished - and declares runtime: module",
+        "package.json depends on @onlyoffice/docspace-plugin-sdk 3.x - the npm range ^3.0.0 - and declares runtime: module",
         "File, MainButton and ContextMenu scopes are declared, implemented, and each registers at least one item",
         "the File map is keyed by the extension with its leading dot, because the click dispatch matches it against the file's fileExst",
         "a fileRowIcon is shipped - the host uses that one icon at every size outside the tiles view, which reads fileTileIcon instead",

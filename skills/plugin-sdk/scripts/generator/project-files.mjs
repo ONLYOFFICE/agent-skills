@@ -22,7 +22,6 @@
 
 import { MODULE_RUNTIME, SDK_PACKAGE, UI_KIT_PACKAGE } from "../contract.mjs";
 
-/** Used when no packed SDK is vendored; while 3.0.0 is unpublished the tarball is installed instead. */
 const SDK_RANGE = "^3.0.0";
 /** The range the portal itself installs - the plugin compiles against the kit the portal hands it. */
 const UI_KIT_RANGE = "^4.0.0";
@@ -52,7 +51,7 @@ const DEV_DEPENDENCIES = {
 };
 
 /** package.json, which is also the manifest the packer reads. Field order follows the SDK template. */
-export const buildManifest = ({ name, pluginName, description, author, scopeNames, sdkTarball }) => ({
+export const buildManifest = ({ name, pluginName, description, author, scopeNames }) => ({
   name,
   pluginName,
   version: "1.0.0",
@@ -69,7 +68,7 @@ export const buildManifest = ({ name, pluginName, description, author, scopeName
   scopes: scopeNames,
   scripts: BUILD_SCRIPTS,
   dependencies: {
-    [SDK_PACKAGE]: sdkTarball ? `file:./${sdkTarball}` : SDK_RANGE,
+    [SDK_PACKAGE]: SDK_RANGE,
     ...DEPENDENCIES,
     [UI_KIT_PACKAGE]: UI_KIT_RANGE,
   },
@@ -112,7 +111,7 @@ export const placeholderIcons = ({ itemIconFiles, letter }) => {
   return { paths: files.map(({ path }) => path), files };
 };
 
-export const readmeMarkdown = ({ name, description, scopeNames, sdkTarball }) => `# ${name}
+export const readmeMarkdown = ({ name, description, scopeNames }) => `# ${name}
 
 ${description}
 
@@ -135,15 +134,7 @@ keeps serving the cached bundle and icons.
 
 \`${UI_KIT_PACKAGE}\` is a build-time dependency only: the bundle keeps the kit external and
 the portal supplies its own copy at load time, which is why a second copy must never be bundled.
-${
-  sdkTarball
-    ? `
-\`${SDK_PACKAGE}\` 3.x is not on npm yet, so it is installed from
-\`${sdkTarball}\`. Once the release is published, replace that \`file:\` entry with
-\`"${SDK_RANGE}"\` and delete the tarball.
-`
-    : ""
-}
+
 ## Scopes
 
 ${scopeNames.map((scopeName) => `- \`${scopeName}\``).join("\n")}

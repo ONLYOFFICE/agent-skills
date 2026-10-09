@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@onlyoffice/apps-ui-kit": "^4.0.0",
-    "@onlyoffice/docspace-plugin-sdk": "file:../../../vendor/onlyoffice-docspace-plugin-sdk-3.0.0.tgz",
+    "@onlyoffice/docspace-plugin-sdk": "^3.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

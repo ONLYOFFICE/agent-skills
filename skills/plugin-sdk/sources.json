@@ -10,7 +10,6 @@
   "placeholderHosts": ["portal.example.com", "localhost", "www.apache.org", "www.w3.org"],
   "versionPatterns": [
     {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
-    {"file": "README.md", "pattern": "\\*\\*`\\^{v}`\\*\\*"},
-    {"file": "README.md", "pattern": "SDK {v} is released"}
+    {"file": "README.md", "pattern": "\\*\\*`\\^{v}`\\*\\*"}
   ]
 }

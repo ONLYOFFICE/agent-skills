@@ -21,7 +21,6 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { LOCALE_TAGS, SCOPES, localeMember, localeSuggestions } from "../contract.mjs";
 
@@ -59,16 +58,6 @@ const requireFlag = (argv, flagName) => {
   const value = readFlag(argv, flagName);
   if (!value) throw new CliError(`--${flagName} is required`);
   return value;
-};
-
-const isPluginSdkTarball = (fileName) => /^onlyoffice-docspace-plugin-sdk-.*\.tgz$/.test(fileName);
-
-const VENDOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "vendor");
-
-/** The packed SDK while 3.0.0 is unpublished; once vendor/ holds none, the npm range takes over. */
-const findVendoredSdk = () => {
-  const fileName = fs.existsSync(VENDOR_DIR) ? fs.readdirSync(VENDOR_DIR).find(isPluginSdkTarball) : undefined;
-  return fileName && path.join(VENDOR_DIR, fileName);
 };
 
 const KNOWN_FLAGS = ["name", "plugin-name", "scopes", "dir", "description", "author", "locales", "force"];
@@ -120,6 +109,5 @@ export const parseCliOptions = (argv) => {
     description: readFlag(argv, "description") ?? `ONLYOFFICE Apps plugin ${name}`,
     author: readFlag(argv, "author") ?? "",
     extraLocales,
-    sdkTarballPath: findVendoredSdk(),
   };
 };
