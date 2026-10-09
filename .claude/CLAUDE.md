@@ -40,7 +40,7 @@ all three.
 
 Two skills describe `@onlyoffice/apps-ui-kit`, and each is kept honest by a different tool.
 
-- **`skills/plugin-sdk`** documents it for plugin authors, from a vendored tarball and
+- **`skills/plugin-sdk`** documents it for plugin authors, from the npm package and
   hand-written prose in `references/ui-kit.md`. The kit carries a `sync-ui-kit-reference`
   skill that reports what has drifted in that file and applies the fixes -- package
   specifier, tarball version, dist paths, component names, prop defaults. Run it from

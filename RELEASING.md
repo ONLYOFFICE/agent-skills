@@ -68,8 +68,8 @@ is also stated in `skills/plugin-sdk/references/plugins/scopes.md`. When an SDK 
   a *new* breakage instead of drowning it in a known one.
 - `plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
   generator and validator) and the version pair in `references/plugins/scopes.md`; if the
-  kit changed (`docspace-ui-kit-react`, `pnpm build && pnpm pack` on the branch the portal builds against), replace the tarball in `vendor/` and update
-  `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
+  kit changed, move `UI_KIT_RANGE` in `scripts/generator/project-files.mjs` with the range the
+  portal installs and update `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
   validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.
 - `ui-kit`: the target is a release of the kit itself. Pull `docspace-ui-kit-react` to the
   released revision (or install the released package) and run
@@ -129,8 +129,7 @@ Before tagging a release:
 - CI that runs the offline checks of [TESTING.md](TESTING.md) on every push and the cheap eval
   cases (`--tag question --tag trigger`) on a schedule; the build cases need a Linux or macOS
   runner, since a shell grant requires a sandbox backend. Until then every step is run by hand.
-- `skills/plugin-sdk/vendor/` holds ~7 MB of tarballs in git; move them to LFS, a
-  registry or release assets once a home is chosen.
+- `skills/plugin-sdk/vendor/` holds the packed SDK in git until 3.0.0 is on npm; delete it then.
 - `skills/embed-sdk/scripts/sync-sdk.mjs` derives the validator dictionaries by parsing the
   SDK's `.d.ts` files with regular expressions; a generated schema on the SDK side was
   considered and dropped (the SDK itself has no use for it), so the parser stays and must be

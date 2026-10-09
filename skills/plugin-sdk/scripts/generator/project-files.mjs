@@ -24,6 +24,8 @@ import { MODULE_RUNTIME, SDK_PACKAGE, UI_KIT_PACKAGE } from "../contract.mjs";
 
 /** Used when no packed SDK is vendored; while 3.0.0 is unpublished the tarball is installed instead. */
 const SDK_RANGE = "^3.0.0";
+/** The range the portal itself installs - the plugin compiles against the kit the portal hands it. */
+const UI_KIT_RANGE = "^4.0.0";
 
 const BUILD_SCRIPTS = {
   // Vite writes dist/plugin.js; the SDK's own packer assembles config.json and zips.
@@ -50,7 +52,7 @@ const DEV_DEPENDENCIES = {
 };
 
 /** package.json, which is also the manifest the packer reads. Field order follows the SDK template. */
-export const buildManifest = ({ name, pluginName, description, author, scopeNames, uiKitTarball, sdkTarball }) => ({
+export const buildManifest = ({ name, pluginName, description, author, scopeNames, sdkTarball }) => ({
   name,
   pluginName,
   version: "1.0.0",
@@ -69,7 +71,7 @@ export const buildManifest = ({ name, pluginName, description, author, scopeName
   dependencies: {
     [SDK_PACKAGE]: sdkTarball ? `file:./${sdkTarball}` : SDK_RANGE,
     ...DEPENDENCIES,
-    [UI_KIT_PACKAGE]: `file:./${uiKitTarball}`,
+    [UI_KIT_PACKAGE]: UI_KIT_RANGE,
   },
   devDependencies: DEV_DEPENDENCIES,
 });
@@ -110,7 +112,7 @@ export const placeholderIcons = ({ itemIconFiles, letter }) => {
   return { paths: files.map(({ path }) => path), files };
 };
 
-export const readmeMarkdown = ({ name, description, scopeNames, uiKitTarball, sdkTarball }) => `# ${name}
+export const readmeMarkdown = ({ name, description, scopeNames, sdkTarball }) => `# ${name}
 
 ${description}
 
@@ -129,17 +131,14 @@ Upload \`dist/plugin.zip\` in the portal under Settings → Integration → Plug
 Bump \`version\` in \`package.json\` before every re-upload, otherwise the portal
 keeps serving the cached bundle and icons.
 
-## The UI kit
+## Dependencies
 
-\`${UI_KIT_PACKAGE}\` is not published to npm, so it is installed from \`${uiKitTarball}\`, a
-packed copy of the kit from a \`docspace-ui-kit-react\` checkout (\`pnpm build && pnpm pack\`).
-It is a build-time dependency only: the bundle keeps the kit external and the portal
-supplies its own copy at load time, which is why a second copy must never be bundled.
-Everything the kit itself needs resolves from the registry.
+\`${UI_KIT_PACKAGE}\` is a build-time dependency only: the bundle keeps the kit external and
+the portal supplies its own copy at load time, which is why a second copy must never be bundled.
 ${
   sdkTarball
     ? `
-\`${SDK_PACKAGE}\` 3.x is not on npm yet either, so it is installed the same way, from
+\`${SDK_PACKAGE}\` 3.x is not on npm yet, so it is installed from
 \`${sdkTarball}\`. Once the release is published, replace that \`file:\` entry with
 \`"${SDK_RANGE}"\` and delete the tarball.
 `

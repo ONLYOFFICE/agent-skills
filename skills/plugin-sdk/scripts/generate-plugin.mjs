@@ -19,8 +19,8 @@
 /*
  * Scaffolds an ONLYOFFICE Apps plugin project: a class implementing every interface its declared
  * scopes require, a Vite + React build with the host-provided packages external, the packed
- * ui-kit and SDK, placeholder assets. It registers no items on purpose - a TODO per scope.
- * Run with no arguments for the options.
+ * SDK while it is unpublished, placeholder assets. It registers no items on purpose - a TODO
+ * per scope. Run with no arguments for the options.
  */
 
 import * as path from "node:path";
@@ -50,7 +50,6 @@ const main = () => {
   console.log(`Scaffolded ${options.pluginName} (${options.name}) in ${result.targetDir}`);
   console.log(`  scopes:       ${options.scopeNames.join(", ")}`);
   console.log(`  runtime:      module - the portal imports dist/plugin.js and reads its default export`);
-  console.log(`  ui-kit:       ${result.uiKitTarball}, copied into the project`);
 
   if (result.sdkTarball)
     console.log(`  sdk:          ${result.sdkTarball}, installed from the vendored tarball`);

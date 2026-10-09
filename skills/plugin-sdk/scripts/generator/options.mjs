@@ -42,10 +42,6 @@ Options:
   --locales       comma separated PluginLocale tags, e.g. ru,pt-BR,ja-JP
                   (en-US is always present; a tag the enum does not have is rejected -
                   "ja" is not "ja-JP" and would never be selected by the portal)
-  --ui-kit        a packed @onlyoffice/apps-ui-kit (onlyoffice-apps-ui-kit-*.tgz), copied
-                  alone, or a directory holding it, copied whole - with the packed SDK
-                  while it is unpublished, else the vendored one is used; defaults to
-                  this skill's vendor/ directory
   --force         write into a non-empty directory`;
 
 const readFlag = (argv, flagName) => {
@@ -65,66 +61,17 @@ const requireFlag = (argv, flagName) => {
   return value;
 };
 
-const isUiKitTarball = (fileName) => /^onlyoffice-apps-ui-kit(-.*)?\.tgz$/.test(fileName);
 const isPluginSdkTarball = (fileName) => /^onlyoffice-docspace-plugin-sdk-.*\.tgz$/.test(fileName);
 
 const VENDOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "vendor");
 
-/**
- * The packed kit and what travels with it. Given a directory, every tarball in it travels into
- * the project: the kit named `file:` tarballs of its own until 4.0.0 (they had to sit in the
- * project root, because npm resolves nested `file:` specs against the project, not against the
- * package), and `sdk` is the packed SDK while 3.0.0 is unpublished. Since 4.0.0 the kit names
- * none, so in practice only the two travel -- but the copying stays general, so a kit that
- * vendors something again does not need this code changed. Given a single tarball, it travels
- * alone, with the vendored SDK when nothing else supplies one: a kit that needs siblings is
- * given as the directory holding them.
- * @returns {{ kit: string, sdk: string | undefined, all: string[] }}
- */
-const resolveVendoredTarballs = (value) => {
-  const given = path.resolve(value ?? VENDOR_DIR);
-
-  if (!fs.existsSync(given))
-    throw new CliError(
-      value
-        ? `--ui-kit ${value} does not exist`
-        : `the vendored ui-kit is missing from ${given} - restore vendor/ or pass --ui-kit`,
-    );
-
-  const isDir = fs.statSync(given).isDirectory();
-  const dir = isDir ? given : path.dirname(given);
-
-  // A directory is a vendor directory and travels whole. A single tarball travels alone: its
-  // neighbours are whatever else sits in Downloads, and an old SDK tarball among them would
-  // have been installed in place of the vendored one.
-  const tarballs = isDir
-    ? fs
-        .readdirSync(dir)
-        .filter((fileName) => fileName.endsWith(".tgz"))
-        .map((fileName) => path.join(dir, fileName))
-    : [given];
-
-  const kit = isDir ? tarballs.find((tarball) => isUiKitTarball(path.basename(tarball))) : given;
-
-  if (!kit || !isUiKitTarball(path.basename(kit)))
-    throw new CliError(
-      `${value ? `--ui-kit ${value}` : given} holds no onlyoffice-apps-ui-kit-*.tgz - pack the kit from a docspace-ui-kit-react checkout (pnpm build && pnpm pack)`,
-    );
-
-  const all = tarballs.includes(kit) ? tarballs : [kit, ...tarballs];
-
-  // A kit given on its own -- a tarball in Downloads -- brings no packed SDK, and the
-  // fallback range names a 3.x that npm does not have yet, so the install would fail. The SDK
-  // vendored with this skill is used instead.
-  if (!all.some((tarball) => isPluginSdkTarball(path.basename(tarball))) && fs.existsSync(VENDOR_DIR)) {
-    const vendoredSdk = fs.readdirSync(VENDOR_DIR).find(isPluginSdkTarball);
-    if (vendoredSdk) all.push(path.join(VENDOR_DIR, vendoredSdk));
-  }
-
-  return { kit, sdk: all.find((tarball) => isPluginSdkTarball(path.basename(tarball))), all };
+/** The packed SDK while 3.0.0 is unpublished; once vendor/ holds none, the npm range takes over. */
+const findVendoredSdk = () => {
+  const fileName = fs.existsSync(VENDOR_DIR) ? fs.readdirSync(VENDOR_DIR).find(isPluginSdkTarball) : undefined;
+  return fileName && path.join(VENDOR_DIR, fileName);
 };
 
-const KNOWN_FLAGS = ["name", "plugin-name", "scopes", "dir", "description", "author", "locales", "ui-kit", "force"];
+const KNOWN_FLAGS = ["name", "plugin-name", "scopes", "dir", "description", "author", "locales", "force"];
 
 export const parseCliOptions = (argv) => {
   // A flag nothing reads is a request dropped in silence: `--version 2.0.0` would leave the default in package.json.
@@ -173,6 +120,6 @@ export const parseCliOptions = (argv) => {
     description: readFlag(argv, "description") ?? `ONLYOFFICE Apps plugin ${name}`,
     author: readFlag(argv, "author") ?? "",
     extraLocales,
-    vendoredTarballs: resolveVendoredTarballs(readFlag(argv, "ui-kit")),
+    sdkTarballPath: findVendoredSdk(),
   };
 };
