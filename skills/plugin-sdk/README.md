@@ -80,7 +80,7 @@ node tools/sync-sources.mjs --skill plugin-sdk --verify                         
 node tools/sync-sources.mjs --host apiSite=<production origin>                           # back, so git status shows no change to sources.json
 ```
 
-`localhost` is a placeholder host for the checker — links to it are neither checked nor verified — so a local build is addressed as `127.0.0.1` with its port. A new link enters a reference only if it is built on one of those two sources (or the SDK repository); `node tools/sync-sources.mjs --check` fails otherwise. Until the SDK 3.0 pages are published, `--verify` against production reports the pages the site does not have yet as `DEAD`; `--verify --fallback` requests the same links from the docs stand (`apiSiteFallback` in the root `sources.json`) without touching the text.
+`localhost` is a placeholder host for the checker — links to it are neither checked nor verified — so a local build is addressed as `127.0.0.1` with its port. A new link enters a reference only if it is built on one of those two sources (or the SDK repository); `node tools/sync-sources.mjs --check` fails otherwise, and `--verify` must answer `ok` for every link on production before a release.
 
 ### Keeping it current
 

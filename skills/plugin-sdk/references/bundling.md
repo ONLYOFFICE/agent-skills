@@ -6,7 +6,7 @@ The portal provides exactly five specifiers to a module plugin and rewrites the 
 react   react-dom   react/jsx-runtime   @onlyoffice/docspace-plugin-sdk/react   @onlyoffice/apps-ui-kit
 ```
 
-`@docspace/ui-kit`, the kit's name before the rename, still resolves to the same kit — which is why the SDK's template and JSDoc can show it — but the portal's error messages no longer list it and the validator warns on it. Rename it in the imports and in `external` together.
+`@docspace/ui-kit` was the kit's name inside the portal before it was published; it was never on npm. The portal still resolves it to the same kit for plugins built against pre-release builds, its error messages do not list it, and the validator warns on it. Rename it in the imports and in `external` together.
 
 Everything else **must be bundled** — a bare import of anything else (`lodash-es`, the SDK root, a `@onlyoffice/apps-ui-kit/…` subpath) makes the loader refuse the plugin with a console error naming it. `react/jsx-dev-runtime` is not on the list either: a development build imports it and is refused, so upload only what `vite build` produced. The reverse is quieter and worse: bundling one of the five installs cleanly and breaks at render — a second React or SDK React entry makes every hook throw (every component blank), a second ui-kit renders light and left-to-right. The generator's `vite.config.ts` encodes the list; copy its `external` exactly if you write your own. What it costs to bundle anything else is in [dependencies.md](dependencies.md).
 
