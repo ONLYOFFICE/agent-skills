@@ -219,6 +219,59 @@ Iteration 3 also found a fault in the kit through a run that refused to follow r
 elements. And it found the runs' shared scratch directory carrying one iteration's screenshots
 into the next one's outputs; each run now gets a scratch directory of its own.
 
+## Why the rules in SKILL.md stay
+
+Most of the sixteen rules are said somewhere in the kit's own pages too — rules 1, 2, 5 and 6 in
+`docs/getting-started.md`, rule 4 in the catalogue's *prop that shows and hides it* table, and
+rules 7 to 15 on the page of the component each is about. That is not, by itself, a reason to
+cut them, and the iterations so far have not settled it. Both arms of every scenario had the kit
+installed, so both could read those pages and the package's own `.d.ts`; what the ties show is
+that the pages are *sufficient once read*. They say nothing about whether an agent would go and
+read them unprompted, which is exactly what a rule in `SKILL.md` buys: it names the trap before
+the agent decides what to open. No run so far has separated those two things.
+
+Iteration 2 is the nearest thing to evidence either way, and it points the other direction. The
+kit gained `labelFor` and the fixed `Aside` the day before, and both are documented on the kit's
+own pages — yet the baseline attached two captions to nothing and hand-rebuilt the panel layout
+the component now brings, while the with-skill arm did neither. The facts were in `node_modules`
+in both arms. Only one arm was told to look.
+
+Separating them needs a third arm — the skill with one rule removed, against the same scenario —
+and until that is run, a rule with a passing assertion behind it stays. An argument from "the
+page says it too" is not evidence.
+
+Two are not candidates at all. **Rule 16 cannot move upstream**: the kit's own validator
+forbids the string `PUBLIC_DIR` in any README, even in a sentence telling the reader not to use
+it, so the kit is structurally unable to warn about the alias its own client defines. And
+**rule 3** is only half-said upstream — `providers/README.md` explains what the composed
+`Providers` is, but that page is not one this skill copies.
+
+What the runs buy, taken together: the skill's value is concentrated where the package cannot
+answer for itself — explaining a symptom with no project to read, auditing someone else's file
+without inventing findings, and the composition traps no single component page states. It also
+shows in the discipline the scenarios grade rather than the knowledge: the failure path of a
+dialog, colours declared for both themes, a review that names its source, and not hand-rolling
+what a fixed component already does. The one persistent tie is `explain-empty-labels`, 10/10 in
+both arms in two iterations running — that is the kit shipping its own READMEs and annotated
+`.d.ts` into `node_modules` working, not this skill failing.
+
+What the runs do not buy, and should not be claimed:
+
+- **No rule has been shown to be individually load-bearing.** Measuring that needs the third arm
+  described above. The run tells you the skill as a whole beats no skill; it does not rank the
+  rules inside it.
+- **The trigger figure is from a routing-judgement method, not the protocol.** The protocol wants
+  fresh sessions with the plugin installed; the run gave three judges the descriptions and the
+  messages. `trigger-tests.md` says so in full. Re-run the real thing before a release that
+  changes the description.
+- **Prose in the kit's pages is checked by nobody.** The kit's validator settles metadata,
+  generated tables and compiling examples; a sentence that has become false as the component
+  changed is caught only by someone re-reading it. Five such sentences have now been found by the
+  eval runs and fixed upstream, which is the argument for running these at all — and also the
+  measure of how they were found. The last two were a day old: a page written the same week the
+  component changed said `initialTheme` needs a remount and that `labelFor` cannot reach a
+  `Textarea`, and both were wrong. Freshly written is not the same as checked.
+
 ## Adding one
 
 The best scenarios come from real failures: turn the report into a scenario, watch it fail,
