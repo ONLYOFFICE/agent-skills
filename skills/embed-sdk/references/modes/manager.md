@@ -10,6 +10,10 @@ common use cases — open a room by `id`, `onFileManagerClick`, `onEditorOpen`, 
 - The loader is **forced on** (`noLoader` is ignored) — the SDK does that, not the page.
 - `filter.sortBy` takes **API values** (`"AZ"`, `"DateAndTime"`, …), never enum key names; `sortBy: "Name"` yields
   an unsorted list without an error ([config-reference](../config-reference.md#manager-and-filter)).
+- `filter.groupId` (a room group id, `GET /api/2.0/files/group`) pins the rooms list to that group: only its rooms are
+  listed, search and the filters stay inside it, the group chips are hidden, and `getRooms()` is narrowed the same way
+  (Apps 4.0). `customActions` at load, or `setCustomActions` later, adds entries to the context menus and the create
+  menu ([methods](../methods.md)).
 - `viewAs` is deprecated in 2.2.0 and ignored by client 4.0.0 — the layout is the one the user last chose; call
   `setListView("table")` after `onAppReady`. `viewTableColumns` (default `"Index,Name,Size,Type,Tags"`, embeds often
   trim to `"Name,Size,Type"`) applies in the table layout until the user changes the columns; `showSettings` adds

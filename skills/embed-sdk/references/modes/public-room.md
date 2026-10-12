@@ -30,7 +30,8 @@ Key points:
   `onAppError`, no console hint pointing at the config. Run `validate-config.mjs`: it
   rejects a public-room config without `id`. A wrong or revoked `requestToken` takes a
   different path: the portal redirects to its error page, which fires `onNotFound` (invalid
-  link) or `onNoAccess` (expired link) — the only two portal events this mode sends.
+  link) or `onNoAccess` (expired link). Besides those two the page sends only `onFilterSearch`
+  (`{ search }`, `""` on reset) when the list's search text changes (client 4.0.0).
 - Where `id` and the token come from (always as a pair — the token is bound to the room):
   - the room's external sharing link on the portal (the room id is in the portal URL of
     that room), or

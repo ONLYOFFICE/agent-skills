@@ -46,11 +46,11 @@ and on the portal's build:
 
 | Embedded page | Methods handled |
 |---|---|
-| Manager (files UI at `{rootPath}`) | `setConfig`, `getFolderInfo`, `getFolders`, `getFiles`, `getList`, `getSelection`, `getUserInfo`, `getRooms`, `openModal`, `createFile`, `createFolder`, `createRoom`, `createTag`, `addTagsToRoom`, `removeTagsFromRoom`, `setListView`, `createHash`, `getHashSettings`, `login`, `logout` |
+| Manager (files UI at `{rootPath}`) | `setConfig`, `getFolderInfo`, `getFolders`, `getFiles`, `getList`, `getSelection`, `getUserInfo`, `getRooms`, `openModal`, `createFile`, `createFolder`, `createRoom`, `createTag`, `addTagsToRoom`, `removeTagsFromRoom`, `setListView`, `setCustomActions`, `createHash`, `getHashSettings`, `login`, `logout` |
 | System (`/old-sdk/system`) | `setConfig`, `createHash`, `getUserInfo`, `getHashSettings`, `login`, `logout` |
 | Editor / Viewer (`/doceditor`) | `setConfig`, `executeInEditor` |
 | Forms (`/sdk/forms/*`) | `setConfig`, `navigateSection`, `setCustomActions`, `upload` |
-| Personal (`/sdk/personal-files/*`) | `setConfig`, `navigateSection`, `upload` |
+| Personal (`/sdk/personal-files/*`) | `setConfig`, `navigateSection`, `setCustomActions`, `upload` |
 | Room selector, File selector, Uploader, Public room, Chat (`/sdk/*`) | `setConfig` only |
 
 Everything not listed for the current mode's page rejects with `MODE_MISMATCH` (an older portal resolves the
@@ -102,5 +102,5 @@ portal-wide — `createTag` before `addTagsToRoom` when the name is new.
 | Method | Notes |
 |---|---|
 | `executeInEditor(callback, data?)` | run code inside the editor context. The callback is **serialized** (no closures/imports) and invoked as **`callback(editor, asc, data)`** — three arguments: the DocsAPI editor object (call `editor.createConnector()` yourself), `window.Asc` of the frame, then your `data`. SDK 2.2.0 types it that way; SDKs <= 2.1 declared `(instance, data?)`, which was wrong. The call resolves as soon as the page has run your callback, with no result (`{}`); a throw inside the callback is caught and logged in the frame's console only. See [editor-automation.md](editor-automation.md) before using |
-| `navigateSection(section)` | Forms (`my-forms`, `in-progress`, `completed-forms`, `library`, `settings`) and Personal (`my-documents`, `favorites`, `recent`, `trash`, `settings`); resolves `{ section }`. An unknown section is **not answered** by the Forms page (the call ends in `TIMEOUT`); the Personal page answers with `{ error }`. In any other mode the promise rejects with `MODE_MISMATCH` |
-| `setCustomActions(config: TCustomActionsConfig)` | `{ contextMenu: TCustomContextMenuActions = { file?: [...], folder?: [...] } }`; register custom context-menu actions (Forms); each action = `{ key, label, icon?, section? }`; clicks arrive via the `onCustomAction` event. Outside Forms the promise rejects with `MODE_MISMATCH` |
+| `navigateSection(section)` | Forms (`my-forms`, `in-progress`, `completed-forms`, `library`, `settings`) and Personal (`my-documents`, `favorites`, `recent`, `shared-with-me`, `trash`, `settings`); resolves `{ section }`. An unknown section is **not answered** by the Forms page (the call ends in `TIMEOUT`); the Personal page answers with `{ error }`. In any other mode the promise rejects with `MODE_MISMATCH` |
+| `setCustomActions(config: TCustomActionsConfig)` | `{ contextMenu: TCustomContextMenuActions = { file?: [...], folder?: [...] } }`; register entries in the context menus (`contextMenu`) and, in Manager and Personal, in the create menu (`createMenu: [...]`); each entry = `{ key, label, icon?, section? }`; clicks arrive via the `onCustomAction` event. The same config passed as `customActions` in `TFrameConfig` is applied when the frame loads (not a script-tag parameter). Outside Manager, Personal and Forms the promise rejects with `MODE_MISMATCH` |

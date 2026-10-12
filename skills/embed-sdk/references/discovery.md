@@ -25,9 +25,9 @@ requests and prints a report plus recommendations. `--json` prints the raw findi
 the report top to bottom:
 
 - **SDK bundles** — the newest `/static/scripts/sdk/{v}/api.js` that answers 200 is the
-  portal's SDK version; `getToken` in that bundle means OAuth mode exists. A path is not a build:
-  `docspace.onlyoffice.com` serves a pre-release bundle under `2.2.0` with no `getToken` and `chatId`
-  where the release has `threadId` — read the markers, not only the version in the path.
+  portal's SDK version; `getToken` in that bundle means OAuth mode exists. A path is not a build: a
+  self-hosted portal may serve a pre-release bundle under a release number — read the markers, not only
+  the version in the path.
 - **Frame headers** — per page: status, `X-Frame-Options`, the `frame-ancestors` list and,
   with `--origin`, whether the host origin is in it.
 - **OAuth discovery** — `/.well-known/openid-configuration` answering 200 with a

@@ -28,7 +28,10 @@ const instance = sdk.initForms({
   `onUploadProgress`.
 - `setCustomActions({ contextMenu: { file: [{ key, label, icon?, section? }], folder: [] } })` registers context-menu
   entries; clicks arrive as `onCustomAction` with `action` = the `key`. `section` limits an entry to the listed sections;
-  omit it to show it everywhere. Outside Forms the method rejects with `MODE_MISMATCH`.
+  omit it to show it everywhere. The same config in `TFrameConfig.customActions` is applied at load. The method also
+  works in Manager and Personal (where `createMenu` adds entries to the create menu); elsewhere it rejects with `MODE_MISMATCH`.
+- Without `onEditorOpen`, a file opens where `openEditorInSameTab` says: `true` navigates the host page to the editor,
+  `false` opens a new tab, unset follows the portal's "Open in the same tab" setting.
 - `headerOffset` (px) shifts the header-row controls inline-start (RTL-aware) so host overlays do not cover them;
   `headerHeight` overrides the header height to match host chrome. In Chat the same two fields are container insets
   ([chat](chat.md)).

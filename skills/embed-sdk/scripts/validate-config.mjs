@@ -29,7 +29,7 @@ const ENUMS = {
   type: ["desktop", "embedded", "mobile"],
   showHeaderBanner: ["all", "info", "none"],
   destination: ["my-forms", "in-progress", "completed-forms", "library", "settings"],
-  personalDestination: ["my-documents", "favorites", "recent", "trash", "settings"],
+  personalDestination: ["my-documents", "favorites", "recent", "shared-with-me", "trash", "settings"],
 };
 
 const FILTER_ENUMS = {
@@ -47,29 +47,31 @@ const SORTBY_HINTS = {
 
 const BOOLEAN_FIELDS = [
   "noLoader", "checkCSP", "disableActionButton", "downloadToEvent", "editorGoBack",
-  "infoPanelVisible", "init", "showFilter", "showHeader", "showMenu", "showSelectorCancel",
-  "showSelectorHeader", "showSettings", "showSignOut", "showTitle", "waiting",
-  "withBreadCrumbs", "withSearch", "withSubtitle", "isFolderUpload", "isMultipleUpload",
+  "openEditorInSameTab", "infoPanelVisible", "init", "showFilter", "showHeader", "showMenu",
+  "showSelectorCancel", "showSelectorHeader", "showSettings", "showSignOut", "showTitle",
+  "waiting", "withBreadCrumbs", "withSearch", "withSubtitle", "isFolderUpload",
+  "isMultipleUpload",
 ];
 
 const KNOWN_KEYS = [
   "noLoader", "roomType", "acceptButtonLabel", "cancelButtonLabel", "buttonColor",
-  "checkCSP", "destroyText", "methodTimeout", "disableActionButton", "downloadToEvent",
-  "editorCustomization", "editorGoBack", "editorType", "events", "filter", "filterParam",
-  "frameId", "height", "id", "infoPanelVisible", "init", "integrationUrl", "locale", "mode",
-  "name", "requestToken", "getToken", "accessToken", "tokenExpiresAt", "rootPath",
-  "selectorType", "showFilter", "showHeader", "showHeaderBanner", "showMenu",
-  "headerOffset", "headerHeight", "providerName", "inviteKey", "emplType", "uid",
-  "showSelectorCancel", "showSelectorHeader", "showSettings", "showSignOut", "showTitle",
-  "src", "stylesUrl", "theme", "type", "viewAs", "viewTableColumns", "waiting", "width",
-  "withBreadCrumbs", "withSearch", "withSubtitle", "destination", "personalDestination",
-  "libraryId", "linkMainText", "secondaryText", "extensionsText", "acceptExtensions",
-  "isFolderUpload", "isMultipleUpload", "maxPerUploadSize", "maxTotalUploadSize", "agentId",
-  "entityId", "fileId", "threadId",
+  "checkCSP", "customActions", "destroyText", "methodTimeout", "disableActionButton",
+  "downloadToEvent", "editorCustomization", "editorGoBack", "editorType",
+  "openEditorInSameTab", "events", "filter", "filterParam", "frameId", "height", "id",
+  "infoPanelVisible", "init", "integrationUrl", "locale", "mode", "name", "requestToken",
+  "getToken", "accessToken", "tokenExpiresAt", "rootPath", "selectorType", "showFilter",
+  "showHeader", "showHeaderBanner", "showMenu", "headerOffset", "headerHeight",
+  "providerName", "inviteKey", "emplType", "uid", "showSelectorCancel",
+  "showSelectorHeader", "showSettings", "showSignOut", "showTitle", "src", "stylesUrl",
+  "theme", "type", "viewAs", "viewTableColumns", "waiting", "width", "withBreadCrumbs",
+  "withSearch", "withSubtitle", "destination", "personalDestination", "libraryId",
+  "linkMainText", "secondaryText", "extensionsText", "acceptExtensions", "isFolderUpload",
+  "isMultipleUpload", "maxPerUploadSize", "maxTotalUploadSize", "agentId", "entityId",
+  "fileId", "threadId",
 ];
 
 const KNOWN_FILTER_KEYS = [
-  "count", "folder", "page", "search", "sortBy", "sortOrder", "withSubfolders",
+  "count", "folder", "groupId", "page", "search", "sortBy", "sortOrder", "withSubfolders",
 ];
 
 const KNOWN_CUSTOMIZATION_KEYS = [
@@ -83,8 +85,8 @@ const KNOWN_EVENTS = [
   "onAppError", "onAuthError", "onAppReady", "onAuthSuccess", "onCloseCallback",
   "onContentReady", "onDownload", "onEditorCloseCallback", "onNoAccess", "onNotFound",
   "onSelectCallback", "onSignOut", "onEditorOpen", "onFileManagerClick", "onUploadSuccess",
-  "onUploadError", "onUploadProgress", "onCustomAction", "onNavigate", "onGetExternalData",
-  "onSetExternalData",
+  "onUploadError", "onUploadProgress", "onCustomAction", "onNavigate", "onFilterSearch",
+  "onGetExternalData", "onSetExternalData",
 ];
 
 // mode → { errors: required fields, warnings: strongly recommended fields }

@@ -46,9 +46,10 @@ promise-based methods and events. This file is the router — read the matching 
 When sources disagree, the higher one wins — say so to the user instead of switching between them.
 
 1. **The installed package's types**: `node_modules/@onlyoffice/docspace-sdk-js/dist/types/main.d.ts` — the exact contract of the version the project runs.
-2. **The docs site** for the portal's SDK version, under `https://api.onlyoffice.com/docspace/javascript-sdk/`: the
+2. **The docs site** for the portal's SDK version, section `docspace/javascript-sdk` (its index page is
+   `https://api.onlyoffice.com/docspace/javascript-sdk/get-started`): the
    guides `get-started/{quickstart|playground|authentication-security}` and one per mode under
-   `embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|forms|frame}-mode`, the generated
+   `embedding-modes/{manager|viewer|editor|room-selector|file-selector|system|uploader|frame}-mode`, the generated
    reference under `usage-sdk/{classes|type-aliases|enumerations|variables}` (a class or type name is its page name:
    `classes/SDKInstance`, `type-aliases/TFrameConfig`, `enumerations/SDKErrorCode`, …) and samples under
    `samples/{basic-samples|advanced-samples}`. **Read pages as Markdown**: append `.md` to the page URL, which has no
@@ -56,14 +57,12 @@ When sources disagree, the higher one wins — say so to the user instead of swi
    listed in `https://api.onlyoffice.com/docspace/javascript-sdk/llms.txt`; the root
    `https://api.onlyoffice.com/llms.txt` lists the sections.
 3. **The SDK sources** at the matching tag: `https://raw.githubusercontent.com/ONLYOFFICE/docspace-sdk-js/v2.2.0/src/types/index.ts`,
-   `…/src/enums/index.ts`, `…/src/constants/index.ts`. **That tag is not cut yet**: the skill describes 2.2.0
-   because the behaviour it documents is 2.2.0's, but `v2.1.0` is the newest tag GitHub resolves, so those three
-   URLs answer 404 until the release lands. Read the installed package's own sources in the meantime.
+   `…/src/enums/index.ts`, `…/src/constants/index.ts`.
 4. **This skill** — the process, the traps and the portal behaviours the types cannot express. Facts marked
    "client 4.0.0" were verified against the client's `release/v4.0.0` branch.
 
-Chat, Personal and Public room have no guide page (Forms has `embedding-modes/forms-mode`): `usage-sdk/classes/SDK`
-documents their wrappers (`initChat`, `initPersonal`, `initPublicRoom`), `type-aliases/TFrameConfig` their fields, and this
+Forms, Chat, Personal and Public room have no guide page: `usage-sdk/classes/SDK`
+documents their wrappers (`initForms`, `initChat`, `initPersonal`, `initPublicRoom`), `type-aliases/TFrameConfig` their fields, and this
 skill's mode references cover the portal's behaviour. The samples show the calls,
 not the checks — the login samples never look at `status` ([auth-recipes](references/auth-recipes.md)).
 

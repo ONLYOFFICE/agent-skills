@@ -76,17 +76,29 @@ for (const c of CASES) {
   }
 }
 
-const SDK_CHECKOUT = path.resolve(path.dirname(VALIDATOR), "..", "..", "..", "..", "docspace-sdk-js");
-if (existsSync(path.join(SDK_CHECKOUT, "src", "types", "index.ts"))) {
-  const sync = spawnSync(process.execPath, [path.join(path.dirname(VALIDATOR), "sync-sdk.mjs"), "--from", SDK_CHECKOUT, "--check"], { encoding: "utf8" });
+// The dictionaries are compared with the SDK the skill pins: `--from <dir>` names a checkout at the
+// matching tag or an installed package; without it, an installed @onlyoffice/docspace-sdk-js found up
+// the directory chain is used. A sibling checkout is not consulted on its own: its types describe
+// whatever branch it is on, not the release the skill targets.
+const fromArg = process.argv.indexOf("--from");
+const installedSdk = (() => {
+  for (let dir = path.dirname(VALIDATOR); ; dir = path.dirname(dir)) {
+    const candidate = path.join(dir, "node_modules", "@onlyoffice", "docspace-sdk-js");
+    if (existsSync(path.join(candidate, "package.json"))) return candidate;
+    if (path.dirname(dir) === dir) return null;
+  }
+})();
+const SDK_SOURCE = fromArg !== -1 ? process.argv[fromArg + 1] : installedSdk;
+if (SDK_SOURCE) {
+  const sync = spawnSync(process.execPath, [path.join(path.dirname(VALIDATOR), "sync-sdk.mjs"), "--from", SDK_SOURCE, "--check"], { encoding: "utf8" });
   if (sync.status !== 0) {
     failed++;
-    console.log(`FAIL  validator dictionaries match the SDK checkout\n      ${`${sync.stdout}${sync.stderr}`.trim().split("\n").join("\n      ")}`);
+    console.log(`FAIL  validator dictionaries match the SDK at ${SDK_SOURCE}\n      ${`${sync.stdout}${sync.stderr}`.trim().split("\n").join("\n      ")}`);
   } else {
-    console.log("ok    validator dictionaries match the SDK checkout");
+    console.log(`ok    validator dictionaries match the SDK at ${SDK_SOURCE}`);
   }
 } else {
-  console.log(`skip  validator dictionaries vs the SDK checkout (no ${SDK_CHECKOUT})`);
+  console.log("skip  validator dictionaries vs the SDK (pass --from <checkout at the pinned tag | node_modules/@onlyoffice/docspace-sdk-js>)");
 }
 
 const SOURCES = path.resolve(path.dirname(VALIDATOR), "..", "..", "..", "tools", "sync-sources.mjs");

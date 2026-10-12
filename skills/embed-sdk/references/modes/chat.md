@@ -13,7 +13,7 @@ sdk.initChat({
   agentId,                        // optional: AI agent room id (omit -> user chat)
   entityId,                       // optional: room/folder the chat is opened from
   fileId,                         // optional: attach a file to the composer on init
-  threadId,                       // optional: resume a conversation (was `chatId` pre-release)
+  threadId,                       // optional: resume a conversation
   theme: "System",
   headerHeight: 56,               // optional: top inset (px) for host chrome
   headerOffset: 48,               // optional: inline-start inset (px) for host overlays
@@ -52,8 +52,7 @@ Key points:
 - `entityId` — the room/folder the chat is opened from. The AI receives it as workspace
   context and scopes tool calls to it; the caller must have access to it (404 otherwise).
   If both `agentId` and `entityId` are passed, `agentId` wins. Default: `undefined`.
-- `threadId` — resume an existing thread (loads its history). The field was named `chatId`
-  in unreleased 2.2 builds; 2.2.0 ships `threadId`.
+- `threadId` — resume an existing thread (loads its history).
 - `fileId` — attaches the file to the composer so the first message goes with it.
 - Anonymous visitors see the "no access" screen and the frame fires `onNoAccess`; sign the user in first (see auth below).
 - Events: `onAppReady`, `onContentReady` (fired after the chat mounts), `onAppError`

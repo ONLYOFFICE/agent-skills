@@ -58,7 +58,8 @@ Editor / viewer · Uploader, Forms, Chat, Personal · Script-tag configs · Ifra
   `onAppReady` instead.
 - `filter.sortBy` takes the **API values**, not the enum key names — `AZ` for the name, `DateAndTime` for the
   modified date; the full list is [FilterSortBy](https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/enumerations/FilterSortBy.md). `sortOrder` is
-  `ascending` / `descending`; `count` and `page` are strings; `folder` is set from `id` — never by hand.
+  `ascending` / `descending`; `count` and `page` are strings; `folder` is set from `id` — never by hand. `groupId` pins
+  the rooms list to one room group (Apps 4.0; [manager](modes/manager.md)).
 
 ## Selectors (room-selector / file-selector)
 
@@ -88,7 +89,9 @@ what each page does with them — the upload payload shapes, `upload()` only in 
 `onNoAccess`, the `MODE_MISMATCH` of every data method on the Personal page — is in the mode files:
 [uploader](modes/uploader.md), [forms](modes/forms.md), [chat](modes/chat.md), [personal](modes/personal.md).
 Two traps that cross modes: `maxPerUploadSize` / `maxTotalUploadSize` are **strings** of bytes, and `entityId` is
-ignored by Chat when `agentId` is set.
+ignored by Chat when `agentId` is set. Two fields Forms and Personal share: `openEditorInSameTab` decides where a file
+opens when `onEditorOpen` is not set (unset = the portal's own setting), and `customActions` (Manager too) applies a
+`setCustomActions` config at load — it is not a script-tag parameter.
 
 ## Script-tag configs
 

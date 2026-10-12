@@ -46,6 +46,7 @@ mode needs.
 | `onNoAccess` | Manager: navigating to a room/folder the user may not open (403); Public room page: an expired link; Chat page: the frame's user may not use AI (a guest, or nobody signed in) | show a "request access" flow, or sign the user in |
 | `onNotFound` | Manager: the room/folder does not exist (404) or was deleted while open; Public room page: an invalid or revoked link. **A Manager opened with `requestToken` reports every access error — 401, 402, 403 and 404 alike — as `onNotFound`** (client 4.0.0) | the entity was deleted on the portal — drop your stored mapping, offer to create a new one; over a `requestToken` treat it as "link no longer works" |
 | `onNavigate` | Forms/Personal section change | `{ section }` |
+| `onFilterSearch` | Personal and Public room: the file list's search text changed; fires with `""` when the search is reset (client 4.0.0) | `{ search }` |
 
 ## Manager / editor
 
@@ -73,11 +74,11 @@ So `onUploadSuccess: (files) => files.map((f) => f.response?.title)` on an Uploa
 on a Forms or Personal frame; `file[0].response.title` is the Uploader shape. Files added through the Forms or
 Personal page's own UI do not fire these events.
 
-## Custom actions (Forms)
+## Custom actions (Manager, Personal, Forms)
 
 | Event | Payload |
 |---|---|
-| `onCustomAction` | `{ action, type, item }` — `action` = the `key` registered via `setCustomActions` |
+| `onCustomAction` | `{ action, type, item?, items?, folderId? }` — `action` = the `key` registered via `setCustomActions` or `customActions`; `type` is `file`, `folder` or `room` from a context menu and `create` from the create menu; `items` is the whole selection when the entry was applied to several items of one type, `item` the single one — both absent for `create` |
 
 ## External storage bridge
 
