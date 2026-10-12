@@ -25,7 +25,6 @@ import * as path from "node:path";
 
 import {
   HOST_PROVIDED_SPECIFIERS,
-  LEGACY_UI_KIT_PACKAGE,
   PORTAL_LIMITS,
   SDK_PACKAGE,
   UI_KIT_PACKAGE,
@@ -100,7 +99,7 @@ export class ArchiveChecks extends Check {
     const unresolvable = imports.filter((specifier) => !isHostProvided(specifier));
 
     for (const specifier of unresolvable) {
-      if ([UI_KIT_PACKAGE, LEGACY_UI_KIT_PACKAGE].some((kitName) => specifier.startsWith(`${kitName}/`)))
+      if (specifier.startsWith(`${UI_KIT_PACKAGE}/`))
         this.error(
           "dist",
           `dist/plugin.js imports "${specifier}" - the portal provides the kit as a single entry point and refuses a subpath; import from "${UI_KIT_PACKAGE}" instead`,
@@ -116,12 +115,6 @@ export class ArchiveChecks extends Check {
           `dist/plugin.js imports "${specifier}", which ONLYOFFICE Apps does not provide - drop it from "external" in the build config so it is bundled into plugin.js. ONLYOFFICE Apps provides: ${HOST_PROVIDED_SPECIFIERS.map((s) => `"${s}"`).join(", ")}`,
         );
     }
-
-    if (imports.includes(LEGACY_UI_KIT_PACKAGE))
-      this.warn(
-        "dist",
-        `dist/plugin.js imports "${LEGACY_UI_KIT_PACKAGE}", the kit's name before it became "${UI_KIT_PACKAGE}" - the portal still resolves it, so the plugin loads; rename the imports and the build's external to "${UI_KIT_PACKAGE}" together, never bundle the kit`,
-      );
 
     if (BUNDLED_REACT_MARKERS.some((marker) => code.includes(marker)))
       this.error(

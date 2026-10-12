@@ -724,17 +724,6 @@ export function Noise() {
   { code: 0, has: ["W-tabindex-noise"] },
 );
 
-expect(
-  "plugin-shaped",
-  {
-    "src/Plugin.tsx": `import { Button } from "@docspace/ui-kit";
-
-export const button = Button;
-`,
-  },
-  { code: 0, has: ["W-docspace-ui-kit"] },
-);
-
 // A file that explains itself was being reported for the thing it explains: the raw-control
 // check read `<button>` out of a JSDoc line. Found by an eval run, not by this suite.
 expect(

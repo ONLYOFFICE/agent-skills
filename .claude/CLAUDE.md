@@ -56,9 +56,5 @@ Two skills describe `@onlyoffice/apps-ui-kit`, and each is kept honest by a diff
   against the kit's source before changing it.
 
 The package specifier is shared with DocSpace-client's plugin shim, which throws on any
-specifier it does not know. The client's and the kit's `feature/ui-kit-separation` landed in
-their `release/v4.0.0` on 2 October 2026 (PR !753 and !108), ahead of this repository's, and
-the client's shim maps both
-`@onlyoffice/apps-ui-kit` and the old `@docspace/ui-kit` to the portal's kit, so a plugin
-built against either name loads. Removing the old name from the shim is what would break
-plugins now; `plugin-sdk`'s validator warns on it for that reason.
+specifier it does not know: `UI_KIT_PACKAGE` in `plugin-sdk`'s `scripts/contract.mjs` has to
+equal the one key the shim holds for the kit, and changes only when the shim does.

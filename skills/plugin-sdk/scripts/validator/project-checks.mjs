@@ -20,7 +20,6 @@
  */
 
 import {
-  LEGACY_UI_KIT_PACKAGE,
   LOCALE_TAGS,
   MODULE_RUNTIME,
   PORTAL_LIMITS,
@@ -408,14 +407,7 @@ export class ProjectChecks extends Check {
       text.includes(`'${specifier}'`) ||
       text.includes(specifier.replace(/\//g, "\\/"));
 
-    // The kit under its old name is still resolved by the portal: warned about, not missing --
-    // unless the sources already import the new name, which that external does not cover, so
-    // the kit is bundled.
-    const keepsLegacyKit = mentions(LEGACY_UI_KIT_PACKAGE) && !mentions(UI_KIT_PACKAGE);
-    const importsNewKit = new RegExp(`["']${UI_KIT_PACKAGE}(?:/[^"']*)?["']`).test(project.sourceText);
-    const missing = REQUIRED_EXTERNALS.filter(
-      (specifier) => !mentions(specifier) && !(specifier === UI_KIT_PACKAGE && keepsLegacyKit && !importsNewKit),
-    );
+    const missing = REQUIRED_EXTERNALS.filter((specifier) => !mentions(specifier));
 
     if (!/external/.test(text))
       this.error(
@@ -426,12 +418,6 @@ export class ProjectChecks extends Check {
       this.error(
         "build",
         `${file} does not list ${missing.join(", ")} in rolldownOptions.external - a bundled copy means a second React or a second ui-kit at runtime, and every SDK hook then throws`,
-      );
-
-    if (keepsLegacyKit)
-      this.warn(
-        "build",
-        `${file} keeps "${LEGACY_UI_KIT_PACKAGE}" external, the kit's name before it became "${UI_KIT_PACKAGE}" - the portal still resolves it; rename the external and the imports together, or the renamed imports are bundled`,
       );
 
     if (new RegExp(`["']${SDK_PACKAGE}["']`).test(text))

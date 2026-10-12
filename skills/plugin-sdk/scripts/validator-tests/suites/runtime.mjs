@@ -127,64 +127,6 @@ export default ({ workspace, check }) => {
     kitSubpath.messageSummary,
   );
 
-  // The kit's name before the rename, as SDK 3.0.0's own template still writes it. The portal
-  // resolves it, so the plugin loads; both places that name it are told to rename.
-  const legacyKit = workspace.validateProject("legacy-kit", {
-    ...throwProject(contextMenuPlugin({ imports: `import { Button } from "@docspace/ui-kit";\nimport { jsx } from "react/jsx-runtime";` })),
-    viteConfig: `export default { build: { rolldownOptions: { external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@docspace\\/ui-kit(\\/.*)?$/] } } };`,
-  });
-
-  check(
-    "the kit's old name loads, with a warning to rename the import and the external",
-    legacyKit.ok &&
-      legacyKit.runtime.loaded &&
-      legacyKit.warningsMention(`imports "@docspace/ui-kit", the kit's name before`) &&
-      legacyKit.warningsMention(`keeps "@docspace/ui-kit" external`),
-    legacyKit.messageSummary,
-  );
-
-  // Imports renamed, external not: the old name in `external` does not cover the new one, so
-  // the kit is bundled. That is the missing-external error, not the rename warning.
-  const legacyExternalNewImports = workspace.validateProject("legacy-external-new-imports", {
-    ...contextMenuProject("throw", "FixtureThrow", {
-      bundle: contextMenuPlugin({ imports: `import { jsx } from "react/jsx-runtime";` }),
-      src: `import { Button } from "@onlyoffice/apps-ui-kit";\n${contextMenuSource()}`,
-    }),
-    viteConfig: `export default { build: { rolldownOptions: { external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@docspace\\/ui-kit(\\/.*)?$/] } } };`,
-  });
-
-  check(
-    "an old-name external with imports already renamed is the missing-external error",
-    legacyExternalNewImports.errorsMention(`does not list @onlyoffice/apps-ui-kit`),
-    legacyExternalNewImports.messageSummary,
-  );
-
-  // The same through a subpath, the form the kit's own examples import in.
-  const legacyExternalNewSubpath = workspace.validateProject("legacy-external-new-subpath", {
-    ...contextMenuProject("throw", "FixtureThrow", {
-      bundle: contextMenuPlugin({ imports: `import { jsx } from "react/jsx-runtime";` }),
-      src: `import { Button } from "@onlyoffice/apps-ui-kit/components/button";\n${contextMenuSource()}`,
-    }),
-    viteConfig: `export default { build: { rolldownOptions: { external: ["react", "react-dom", "react/jsx-runtime", "@onlyoffice/docspace-plugin-sdk/react", /^@docspace\\/ui-kit(\\/.*)?$/] } } };`,
-  });
-
-  check(
-    "an old-name external with imports renamed through a subpath is the missing-external error",
-    legacyExternalNewSubpath.errorsMention(`does not list @onlyoffice/apps-ui-kit`),
-    legacyExternalNewSubpath.messageSummary,
-  );
-
-  const legacyKitSubpath = workspace.validateProject(
-    "legacy-kit-subpath",
-    throwProject(contextMenuPlugin({ imports: `import { Button } from "@docspace/ui-kit/components/button";\nimport { jsx } from "react/jsx-runtime";` })),
-  );
-
-  check(
-    "a subpath of the kit's old name is the subpath error, not advice to bundle it",
-    legacyKitSubpath.errorsMention("refuses a subpath") && !legacyKitSubpath.mentions("so it is bundled"),
-    legacyKitSubpath.messageSummary,
-  );
-
   const bundledReact = workspace.validateProject(
     "bundled-react",
     throwProject(`var REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element");\n${contextMenuPlugin({ imports: "" })}`),

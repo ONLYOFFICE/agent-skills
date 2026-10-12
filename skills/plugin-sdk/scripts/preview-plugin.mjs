@@ -38,7 +38,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { LEGACY_UI_KIT_PACKAGE, UI_KIT_PACKAGE } from "./contract.mjs";
+import { UI_KIT_PACKAGE } from "./contract.mjs";
 import { Findings } from "./validator/findings.mjs";
 import {
   FatalProjectError,
@@ -481,12 +481,8 @@ const main = async () => {
     skipped = `dist/ holds ${project.distChunks.length} chunk file(s) beside plugin.js - the archive cannot carry them, and this pass would resolve them and show the plugin working; set build.rolldownOptions.output.codeSplitting: false and build again (validate-plugin.mjs has the detail)`;
   // The kit found the way Node finds it, so a workspace with its packages hoisted to the root,
   // and no node_modules in the plugin's own directory, is previewed rather than skipped.
-  // The harness mounts the kit by its current name. A project still on the old one loads on the
-  // portal (validate-plugin.mjs warns), but here every import of the kit would fail to resolve.
   else if (!packageDir(project.dir, UI_KIT_PACKAGE))
-    skipped = packageDir(project.dir, LEGACY_UI_KIT_PACKAGE)
-      ? `the kit is installed as "${LEGACY_UI_KIT_PACKAGE}", its name before "${UI_KIT_PACKAGE}" - rename the dependency, the imports and the build's external together, install, build, and run the preview again`
-      : `${UI_KIT_PACKAGE} is not installed - run npm install first`;
+    skipped = `${UI_KIT_PACKAGE} is not installed - run npm install first`;
 
   const playwright = skipped ? null : await loadPlaywright(project);
   if (!skipped && !playwright)

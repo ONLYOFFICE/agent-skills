@@ -23,7 +23,6 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_MANIFEST = path.join(HERE, "data", "kit-manifest.json");
 
 const PACKAGE = "@onlyoffice/apps-ui-kit";
-const LEGACY_PACKAGE = "@docspace/ui-kit";
 const VISIBILITY_NAMES = ["visible", "isVisible", "isOpen", "opened", "open"];
 // Controls that are in the tab order by default, so a `tabIndex={0}` on one is
 // left over from when they were not. `AddButton` is deliberately absent: it has
@@ -393,10 +392,6 @@ function subpathOf(specifier) {
 function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
   if (specifier.includes("PUBLIC_DIR")) {
     add("error", "E-public-dir", file, line, `\`${specifier}\` uses PUBLIC_DIR`, "PUBLIC_DIR is a DocSpace client webpack alias and resolves nowhere else; import your own asset, or one of the kit's under assets/");
-    return;
-  }
-  if (specifier === LEGACY_PACKAGE || specifier.startsWith(`${LEGACY_PACKAGE}/`)) {
-    add("warning", "W-docspace-ui-kit", file, line, `\`${specifier}\` was never published`, `the package is ${PACKAGE}; the old name resolves only inside the portal, where a plugin is the plugin-sdk skill's job`);
     return;
   }
 
