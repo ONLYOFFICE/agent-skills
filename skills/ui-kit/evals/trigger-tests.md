@@ -55,6 +55,7 @@ message is not in English. Do not "fix" either.
 |---|---|---|---|---|
 | 2026-09-24 | Opus 5 | 10/10 | 10/10 | Three runs, routing-judgement method (below); 30/30 and 0/30 across them |
 | 2026-10-07 | sonnet | 10/10 | 10/10 | The protocol itself, through `node tools/run-triggers.mjs --skill ui-kit --model sonnet --runs 1`: twenty fresh `claude -p` sessions with the plugin installed, one run per message, no errors. Description as of `ecf2f56`. The two "should not" messages about the DocSpace plugin and the portal loaded `plugin-sdk`, the embedding one loaded `embed-sdk`, the other seven loaded nothing |
+| 2026-10-12 | sonnet | 9/10 | 10/10 | `run-triggers.mjs --runs 1`, then `--runs 2`, description as of `a5277b9` (the old package name dropped from it). The one miss both times is message 10, which names a file it does not attach: the session asks for the file and exits in two turns without loading a skill. An A/B of that message alone gave 0/3 against 1/3 at three runs and 8/10 against 8/10 at ten, so the description change is not the cause: the message fires about four times in five, and a one-run record cannot tell that from 10/10. Every other "should" fired on the first run; the "should not" messages routed as before |
 
 **Method, and how it differs from the protocol above.** The protocol asks for twenty fresh
 sessions with the plugin installed. This run could not install the plugin into fresh sessions,
