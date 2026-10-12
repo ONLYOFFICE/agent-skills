@@ -19,7 +19,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1314,15 +1314,22 @@ check("manifest: carries no revision of the kit, which would differ on every com
 // The manifest check needs a kit to compare with, and the two kinds of source the tool accepts
 // have failed independently of each other -- a field written from one and not the other -- so
 // each runs when it is at hand: an installed package through `--kit-project`, and a checkout of
-// `docspace-ui-kit-react` beside this repository, where the release checklist expects it.
+// `docspace-ui-kit-react` beside this repository when it is at the version the skill pins -- on any
+// other revision its metadata describes a different release and says nothing about the manifest.
 const syncChecks = [["every link and version traces to sources.json", ["tools/sync-sources.mjs", "--skill", "ui-kit", "--check"]]];
 if (kitProjectAt > 0) {
   const kit = path.join(path.resolve(process.argv[kitProjectAt + 1] ?? ""), "node_modules", "@onlyoffice", "apps-ui-kit");
   syncChecks.push(["the manifest matches the installed kit", ["tools/sync-ui-kit.mjs", "--from", kit, "--check"]]);
 }
 const kitCheckout = path.resolve(REPO, "..", "docspace-ui-kit-react");
-if (existsSync(path.join(kitCheckout, "docs", "public-api.md"))) {
+const pinnedKit = JSON.parse(readFileSync(path.join(REPO, "skills", "ui-kit", "sources.json"), "utf8")).version;
+const checkoutVersion = existsSync(path.join(kitCheckout, "package.json"))
+  ? JSON.parse(readFileSync(path.join(kitCheckout, "package.json"), "utf8")).version
+  : null;
+if (checkoutVersion === pinnedKit && existsSync(path.join(kitCheckout, "docs", "public-api.md"))) {
   syncChecks.push(["the manifest matches the kit checkout", ["tools/sync-ui-kit.mjs", "--from", kitCheckout, "--check", "--strict"]]);
+} else if (checkoutVersion) {
+  console.log(`skip  the manifest vs the kit checkout (${kitCheckout} is at ${checkoutVersion}, the skill pins ${pinnedKit} — pull it, or pass --kit-project)`);
 } else {
   console.log(`skip  the manifest vs the kit checkout (no ${kitCheckout})`);
 }

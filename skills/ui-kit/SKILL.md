@@ -1,22 +1,22 @@
 ---
 name: ui-kit
-description: Build React 19 screens with the ONLYOFFICE UI kit (@onlyoffice/apps-ui-kit, successor of @docspace/ui-kit) in your own web app — forms, dialogs, side panels, lists, empty states, toasts, theming and translations. Use when someone wants their app to look like ONLYOFFICE DocSpace or Apps ("a dialog in the DocSpace style", "a settings form like the portal's", "use the DocSpace components in our admin") even if they never name the kit; when they ask which kit component fits a job or what a prop is called (visible vs isVisible vs isOpen vs open); when kit components render unstyled, with empty labels, an i18n console error, a collapsed toggle, a 1px textarea or doubled spacing; when an import from the kit does not resolve or pulls in portal-only modules (selectors, billing, uploader); or when reviewing code that uses the kit. Not for plugins inside the DocSpace portal (plugin-sdk), for embedding DocSpace in an iframe (embed-sdk), or for other component libraries.
+description: Build React 19 screens with the ONLYOFFICE UI kit (@onlyoffice/apps-ui-kit) in your own web app — forms, dialogs, side panels, lists, empty states, toasts, theming and translations. Use when someone wants their app to look like ONLYOFFICE DocSpace or Apps ("a dialog in the DocSpace style", "a settings form like the portal's", "use the DocSpace components in our admin") even if they never name the kit; when they ask which kit component fits a job or what a prop is called (visible vs isVisible vs isOpen vs open); when kit components render unstyled, with empty labels, an i18n console error, a collapsed toggle, a 1px textarea or doubled spacing; when an import from the kit does not resolve or pulls in portal-only modules (selectors, billing, uploader); or when reviewing code that uses the kit. Not for plugins inside the DocSpace portal (plugin-sdk), for embedding DocSpace in an iframe (embed-sdk), or for other component libraries.
 license: Apache-2.0
 metadata:
   author: ONLYOFFICE
-  sdk-version: "4.0.0"
+  sdk-version: "4.0.1"
 ---
 
 # ONLYOFFICE UI kit
 
 The component library ONLYOFFICE DocSpace and ONLYOFFICE Apps are built from, used from your
-own React application: the portal's `@docspace/ui-kit`, published as `@onlyoffice/apps-ui-kit`.
+own React application: `@onlyoffice/apps-ui-kit`.
 It fails quietly: a wrong prop name is ignored, a missing provider empties every label, and
 nothing is logged.
 
 ## Pinned facts
 
-- `@onlyoffice/apps-ui-kit` **4.0.0** from npm, ESM only, React 19. Four required peers:
+- `@onlyoffice/apps-ui-kit` **4.0.1** from npm, ESM only, React 19. Four required peers:
   `react`, `react-dom`, `i18next` (^25.5.2), `react-i18next` (^15.7.3); fifteen more are
   optional and belong to the portal-internal modules.
 - **Each module imports its own CSS.** Nothing is imported by hand;
@@ -32,8 +32,8 @@ nothing is logged.
 1. Read `node_modules/@onlyoffice/apps-ui-kit/package.json` and compare its `version` with the
    4.0.0 above. Say in your answer which version you read.
 2. Not installed? `npm install @onlyoffice/apps-ui-kit`, then read the version it brought.
-3. A **DocSpace portal plugin** (`@onlyoffice/docspace-plugin-sdk` in `package.json`, or imports
-   of `@docspace/ui-kit`) is the `plugin-sdk` skill's job: the portal decides how a plugin gets
+3. A **DocSpace portal plugin** (`@onlyoffice/docspace-plugin-sdk` in `package.json`) is the
+   `plugin-sdk` skill's job: the portal decides how a plugin gets
    the kit, so load that skill — it says which rules below still hold in a plugin (most do).
 
 ## Sources, and which one wins
@@ -45,7 +45,7 @@ When two disagree, the higher one wins — say so instead of switching between t
    shows and hides each component; `docs/getting-started.md` and `docs/public-api.md` the setup
    and the public boundary; `dist/types/**/*.d.ts` the exact props. It describes the version the
    project builds against, so it wins on names, props and defaults.
-2. **The docs site**, `https://api.onlyoffice.com/docspace/ui-kit/`: the same pages for the
+2. **The docs site**, `https://api.onlyoffice.com/docspace/ui-kit/getting-started`: the same pages for the
    released kit, plus what the package has no page for — `getting-started/{hooks|utils|
    constants|themes|translation|structure}`. A component is under `ui/<group>/<slug>`
    (`ui/overlays/aside`, `ui/form-controls/text-input`); the site's `components/` section is
@@ -80,7 +80,7 @@ When two disagree, the higher one wins — say so instead of switching between t
 
 | Question | Read |
 |---|---|
-| Install, providers, CSS, fonts | the package's `docs/getting-started.md` ([Installation](https://api.onlyoffice.com/docspace/ui-kit/getting-started/installation.md) on the site), then [references/setup.md](references/setup.md) for the templates, Vite/Next and SSR |
+| Install, providers, CSS, fonts | the package's `docs/getting-started.md` ([Installation and setup](https://api.onlyoffice.com/docspace/ui-kit/getting-started/installation-and-setup.md) on the site), then [references/setup.md](references/setup.md) for the templates, Vite/Next and SSR |
 | Which component, and what is portal furniture | [references/choosing.md](references/choosing.md) |
 | A form: fields, spacing, validation, submit | [references/forms.md](references/forms.md) |
 | Dialogs, panels, menus, toasts | [references/overlays.md](references/overlays.md) |

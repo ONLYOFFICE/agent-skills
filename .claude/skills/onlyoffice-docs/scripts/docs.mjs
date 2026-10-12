@@ -2,7 +2,7 @@
 /**
  * Reads the ONLYOFFICE API documentation as Markdown for an agent: which sections the site has,
  * which page answers a question, and the page itself — from the production site, or from the
- * fallback stand while production does not serve the Markdown twins yet.
+ * fallback stand for a section production does not serve yet (a release still on the stand).
  *
  *   node docs.mjs status [--json]                  production vs fallback: llms.txt and one .md page per section
  *   node docs.mjs sections [--json]                the sections of the site (from the root llms.txt)
@@ -293,7 +293,7 @@ async function resolveHost(hosts, { forced, refresh }) {
 
 function sourceLine(hosts, res) {
   if (res.forced) return `source: ${res.origin} (given with --host)`;
-  if (res.fallback) return `source: FALLBACK ${res.origin} — production ${hosts.apiSite} has no Markdown docs yet (${res.primaryStatus}); the stand may be ahead of or behind the released version, name it when you cite it`;
+  if (res.fallback) return `source: FALLBACK ${res.origin} — production ${hosts.apiSite} does not serve the Markdown docs (${res.primaryStatus}); the stand may be ahead of or behind the released version, name it when you cite it`;
   return `source: ${res.origin} (production)`;
 }
 
@@ -374,7 +374,7 @@ async function cmdStatus(hosts, opts) {
       verdict === "production"
         ? "verdict: production serves llms.txt and Markdown pages for every section — the plugin's links are live"
         : verdict === "fallback"
-          ? "verdict: production is incomplete; the fallback stand serves every section — the docs skill reads from it until the site is deployed"
+          ? "verdict: production is incomplete; the fallback stand serves every section — the docs skill reads from it until that release of the site is deployed"
           : "verdict: neither host serves the Markdown docs — only the installed packages' types remain as a source",
     );
   }

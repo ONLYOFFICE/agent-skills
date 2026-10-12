@@ -1,5 +1,5 @@
 {
-  "version": "4.0.0",
+  "version": "4.0.1",
   "sources": {
     "docs": {"host": "apiSite", "path": "/docspace/ui-kit", "verify": true},
     "repo": {"host": "github", "path": "/docspace-ui-kit-react", "verify": true}

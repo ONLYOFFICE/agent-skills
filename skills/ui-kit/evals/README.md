@@ -108,7 +108,7 @@ component's page states.
 Scenarios 5 and 6 have no project, so the line above does not apply. Their baseline is told
 where the documentation is instead:
 
-> The kit's documentation is at `https://api.onlyoffice.com/docspace/ui-kit/`; `llms.txt`
+> The kit's documentation is at `https://api.onlyoffice.com/docspace/ui-kit/getting-started`; `llms.txt`
 > there lists every page, and a page is read as Markdown by appending `.md` to its URL.
 
 Both arms may fetch the site; what the skill earns there is reaching the right page without

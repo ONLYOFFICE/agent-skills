@@ -50,12 +50,11 @@ installed kit. Breaking one branch of the validator fails it.
 
 ## What it targets
 
-`@onlyoffice/apps-ui-kit` **4.0.0** — the public name of the library the portal ships as
-`@docspace/ui-kit`, built from
+`@onlyoffice/apps-ui-kit` **4.0.1** — the library the portal is built from, published from
 [`docspace-ui-kit-react`](https://github.com/ONLYOFFICE/docspace-ui-kit-react) and
 installed from npm. ESM only, React 19. Its documentation is the kit's own: the READMEs and
 `docs/*.md` that ship inside the package, and the same pages on the docs site under
-[`docspace/ui-kit`](https://api.onlyoffice.com/docspace/ui-kit/). The skill links the site
+[`docspace/ui-kit`](https://api.onlyoffice.com/docspace/ui-kit/getting-started). The skill links the site
 and copies nothing from it.
 
 Screens built **for the portal itself** are a different job: a plugin gets the kit through

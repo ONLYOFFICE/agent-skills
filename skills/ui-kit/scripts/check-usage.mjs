@@ -396,7 +396,7 @@ function checkSpecifier(file, line, specifier, bindings, typeOnly = false) {
     return;
   }
   if (specifier === LEGACY_PACKAGE || specifier.startsWith(`${LEGACY_PACKAGE}/`)) {
-    add("warning", "W-docspace-ui-kit", file, line, `\`${specifier}\` is the portal's name for this package`, `outside the portal it is ${PACKAGE}; inside a plugin, this is the plugin-sdk skill's job`);
+    add("warning", "W-docspace-ui-kit", file, line, `\`${specifier}\` was never published`, `the package is ${PACKAGE}; the old name resolves only inside the portal, where a plugin is the plugin-sdk skill's job`);
     return;
   }
 
