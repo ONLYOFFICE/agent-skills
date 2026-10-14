@@ -6,8 +6,8 @@ The routing surface for the Build task shape, in one table - implement each row 
 
 | Method | Path | Purpose | Required in | Required out | Schema / rules |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/editor` | Embeds `DocsAPI.DocEditor` for one file with the server-signed config | file id, mode, optional return URL for `goback` | HTML page that loads the API script and constructs the editor | `api.md`, `configuration/config.md` |
-| `POST` | `/callback` | Editor callback (save, force-save, error, …) | `status`, `url` (present only for `status` 2/6), a signed `token` | exactly `{"error": 0}` for every status this handler acted on | `callback/handler.md` |
+| `GET` | `/editor` | Embeds `DocsAPI.DocEditor` for one file with the server-signed config | file id, mode, optional return URL for `onRequestClose` (and `goback.url`) | HTML page that loads the API script and constructs the editor | `api.md`, `configuration/config.md` |
+| `POST` | `/callback` | Editor callback (save, force-save, error, ...) | `status`, `url` (present only for `status` 2/6), a signed `token` | exactly `{"error": 0}` for every status this handler acted on | `callback/handler.md` |
 | `GET` | `/download` | Streams the stored file to Document Server | a token/query proving the request is Document Server's own fetch | file bytes | `configuration/document.md`'s `document.url` |
 | `POST` | `/upload` | Ingests a locally-uploaded file | multipart file, enforced size limit | stored file id/key | [`example.md`](../references/example.md) |
 | `POST` | `/convert` | Converts between formats via the Conversion API | `filetype`, `key`, `outputtype`, `url`, all inside the signed body token, `Accept: application/json` | converted file location, or the async poll's in-progress state (`endConvert: false`) | the sibling **`web-converter`** skill |
@@ -21,4 +21,4 @@ Repeated here (not just in `SKILL.md`'s Definition of Done) because this table i
 - JWT secret (and any session/proxy secret) is read from the environment and the process fails at startup if it's unset - never a hardcoded fallback in source. See [`infrastructure/compose.md`](../references/infrastructure/compose.md).
 - `document.key` rotates on every committed revision (the final save of status `2`, a conversion, an upload replacing the file) and is persisted with the file so a restart can't hand out an old one; a stale key reused across an updated file corrupts revision history rather than erroring visibly. A force-save (status `6`) is a snapshot with the session still open, so it stores the bytes without rotating the key.
 - The callback (`/callback`) verifies its token **before** fetching anything from `url` - acknowledging a forged callback tells the sender it worked.
-- Every named error/status code (Command Service's `1`/`2`/`3`/`4`/`6`, the callback's `status`, and - via `web-converter` - conversion's `-1`…`-10`) gets its own branch in the generated code, not a single generic "failed" catch-all.
+- Every named error/status code (Command Service's `1`/`2`/`3`/`4`/`6`, the callback's `status`, and - via `web-converter` - conversion's `-1`...`-10`) gets its own branch in the generated code, not a single generic "failed" catch-all.

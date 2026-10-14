@@ -4,7 +4,7 @@
 
 The visual and interaction bar for any UI generated alongside an ONLYOFFICE integration - the file manager, the editor page, the dialogs a person actually clicks. A generated sample gets screenshared and judged on sight long before anyone reads its code, so it has to look like a product that shipped, not a harness someone wired up.
 
-[`example.md`](./example.md) defines *what* the UI must do; this file defines *how it looks and behaves*, always built on ONLYOFFICE's own [`docspace-ui-kit-react`](./dependencies/kit.md). The official Node.js sample is the **feature floor, never the visual ceiling** - porting its markup faithfully reproduces a decade-old demo, not "something I can show the team on Friday."
+[`example.md`](./example.md) defines *what* the UI must do; this file defines *how it looks and behaves*, always built on ONLYOFFICE's own [UI kit](./dependencies/kit.md). The official Node.js sample is the **feature floor, never the visual ceiling** - porting its markup faithfully reproduces a decade-old demo, not "something I can show the team on Friday."
 
 ## Reference Documentation Map
 
@@ -15,7 +15,7 @@ The visual and interaction bar for any UI generated alongside an ONLYOFFICE inte
 * **Design collections, for a style the user named** - theme the kit, don't replace it: [Dribbble](https://dribbble.com), [Awwwards](https://www.awwwards.com), [Land-book](https://land-book.com), [Mobbin](https://mobbin.com), [Godly](https://godly.website), [siteInspire](https://www.siteinspire.com), [Lapa Ninja](https://www.lapa.ninja), [Refero](https://refero.design), [Collect UI](https://collectui.com); [Material Design 3](https://m3.material.io), [Apple HIG](https://developer.apple.com/design/human-interface-guidelines), [shadcn/ui](https://ui.shadcn.com), [Tailwind UI](https://tailwindui.com).
 * **https://www.onlyoffice.com** - the live site, for whatever neither the kit nor a named style covers: page chrome, wordmark, general brand tone.
 * **Port-mode reference** (only for an explicit port request - see "Pick the mode"): the Node.js sample's own front end - [`index.ejs`](https://github.com/ONLYOFFICE/document-server-integration/blob/main/web/documentserver-example/nodejs/views/index.ejs), [`editor.ejs`](https://github.com/ONLYOFFICE/document-server-integration/blob/main/web/documentserver-example/nodejs/views/editor.ejs), [`jscript.js`](https://github.com/ONLYOFFICE/document-server-integration/blob/main/web/documentserver-example/nodejs/public/javascripts/jscript.js), plus whatever stylesheets `index.ejs` links - read the links rather than guessing filenames ([`example-checklist.md`](./example-checklist.md) §2.2). A local pinned checkout beats a fetched branch.
-* **Mounting the editor in React/Angular/Vue:** the official component for each - [React](https://api.onlyoffice.com/docs/docs-api/get-started/frontend-frameworks/react.md), [Angular](https://api.onlyoffice.com/docs/docs-api/get-started/frontend-frameworks/angular.md), [Vue](https://api.onlyoffice.com/docs/docs-api/get-started/frontend-frameworks/vue.md) - with the sibling `doceditor` skill's manual `DocsAPI.DocEditor` pattern as the fallback for any other framework.
+* **Mounting the editor in React/Angular/Vue:** the official component for each - [React](https://api.onlyoffice.com/docs/docs-api/get-started/frontend-frameworks/react.md), [Angular](https://api.onlyoffice.com/docs/docs-api/get-started/frontend-frameworks/angular.md), [Vue](https://api.onlyoffice.com/docs/docs-api/get-started/frontend-frameworks/vue.md) - with the sibling `doceditor` skill's manual `DocsAPI.DocEditor` pattern as the fallback for any other framework. On Vue, pass every event handler through `config.events`, not `events_*` props - see `SKILL.md`'s Vue caveat.
 * **Editor surface sizing:** `api.md` - init replaces the placeholder (or the component's own root) with an iframe, so size lives on a wrapper around it either way.
 * **Editor placeholder inside a component framework, if falling back to manual init:** `api.md`'s "Inside a Component Framework" - a framework-owned placeholder crashes the render layer the moment anything re-renders around it. The React/Angular/Vue packages above already solve this internally.
 * **Seed and create-new content:** [`templates.md`](./templates.md) - real vendored documents, not placeholders.
@@ -32,7 +32,7 @@ The visual and interaction bar for any UI generated alongside an ONLYOFFICE inte
 
 **Default to designed app.** A demo request wants something presentable; a faithful port is a narrower, explicitly-requested deliverable. Feature coverage is identical either way - only whether the visual layer is transcribed or designed.
 
-## Always use `docspace-ui-kit-react`
+## Always use the UI kit
 
 **Every designed-app UI is built on the kit - not conditional on whether a style was named, no exception but an explicit faithful port.** A named style (glassmorphism, a dashboard archetype, a competitor's product) changes the *theme* layered onto the kit's components - it is never a reason to hand-roll a parallel button/modal/tile from scratch. See [`dependencies/kit.md`](./dependencies/kit.md) for how to install and verify it, and its **License** section for what changes while it's AGPL-3.0 - that section's ask-the-user step is question 6 in the ask-step below.
 
@@ -46,14 +46,14 @@ Per-component styling is how incoherence gets in. Settle the system first - CSS 
 
 ### Ask, don't guess - batch these into one dialog with any other open question for the task
 
-1. **Style** - *"Any particular look you'd like this styled after - a product, a brand, a design system - or ONLYOFFICE's own DocSpace look?"* ONLYOFFICE's own identity is the default/no-preference option. Any concrete name proceeds via "They named a style" below; "no preference" proceeds via "They named nothing."
+1. **Style** - *"Any particular look you'd like this styled after - a product, a brand, a design system - or ONLYOFFICE's own look?"* ONLYOFFICE's own identity is the default/no-preference option. Any concrete name proceeds via "They named a style" below; "no preference" proceeds via "They named nothing."
 2. **Collection layout** - *"How should the file list be browsed?"* **Data table** (dense rows, aligned columns), **Card/tile grid** (thumbnail-forward), **Hybrid** (icon + row). Skip only when (1) already implies it unambiguously.
 3. **Overall shape** - *"What's the overall shape of this UI?"*, grounded in real document-management patterns:
    1. **Single embed** - just the editor and minimal chrome; nothing to return to.
    2. **Simple file list** - a flat "my files" view behind little or no auth; a narrow demo, not a full product.
    3. **Folder-based drive** - nested folders, breadcrumbs, upload/organize, auth-gated; no external-sharing concept.
    4. **Sharing-centric cloud storage** - personal/shared folders, shareable links with per-link permissions, a details/activity panel per file, starred/recent views.
-   5. **Room/workspace-based** - separate collaboration spaces with their own membership/roles - ONLYOFFICE DocSpace's own model; typically the most screens.
+   5. **Room/workspace-based** - separate collaboration spaces with their own membership/roles - typically the most screens.
 
    Five options exceed the four-button dialog ceiling - present this one as a **plain numbered list in the question text** rather than dropping an option to fit buttons; the user can answer with a number, a short name, or an explicit hybrid. Skip only when the request already settles it, or [`infrastructure/backend.md`](./infrastructure/backend.md)'s decision table already resolved "backend only, no UI."
 4. **Theme mode** - *"Should this default to light, dark, or follow the system preference?"* [`dependencies/kit.md`](./dependencies/kit.md)'s `ThemeProvider` supports all three natively - **system** is the default if this gets skipped. Skip only when the style answer already settles it ("dark-first," "neon," "light and airy").

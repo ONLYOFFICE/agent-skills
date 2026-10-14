@@ -13,7 +13,7 @@ The field by field reference is the official docs, linked directly below - **Cor
 
 This skill is scoped to *using* the API correctly, wherever it's being called from - an existing backend, a route added to a larger app, a single page. Two adjacent concerns live in sibling skills instead of here:
 
-- **Generating a whole sample/demo integration from scratch** — project scaffolding, the reusable-backend-vs-sample-UI decision, `docspace-ui-kit-react` - based UI, Docker/nginx/compose, hexagonal architecture, and the testing methodology for generated code - is the sibling **`doceditor-integration`** skill. Reach for that one when the task is "build me something I can click through," not just "wire the editor into what we have." It also carries the official React/Angular/Vue component walkthroughs.
+- **Generating a whole sample/demo integration from scratch** - project scaffolding, the reusable-backend-vs-sample-UI decision, a UI built on ONLYOFFICE's UI kit, Docker/nginx/compose, hexagonal architecture, and the testing methodology for generated code - is the sibling **`doceditor-integration`** skill. Reach for that one when the task is "build me something I can click through," not just "wire the editor into what we have." It also carries the official React/Angular/Vue component walkthroughs.
 - **Standalone document format conversion**, no live editing session involved, is the sibling **`web-converter`** skill; **server-side document generation from a builder script** is the sibling **`web-builder`** skill.
 
 ## How to use

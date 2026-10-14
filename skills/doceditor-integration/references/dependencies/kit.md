@@ -1,8 +1,8 @@
-# UI kit `docspace-ui-kit-react` dependency
+# ONLYOFFICE UI kit dependency
 
 ## Context & Purpose
 
-The single source of truth for ONLYOFFICE's own [`docspace-ui-kit-react`](https://github.com/ONLYOFFICE/docspace-ui-kit-react) — what it is, how to take it on as a real dependency, and the license rule that governs whether it's used directly or ported. [`ui.md`](../ui.md) is the design bar a generated UI is held to; this file is what that bar is *built on*. Read this file before installing, importing, or theming anything from the kit - not just before writing CSS.
+The single source of truth for ONLYOFFICE's own [UI kit](https://github.com/ONLYOFFICE/docspace-ui-kit-react), published on npm as `@onlyoffice/apps-ui-kit` - what it is, how to take it on as a real dependency, and the license rule that governs whether it's used directly or ported. [`ui.md`](../ui.md) is the design bar a generated UI is held to; this file is what that bar is *built on*. Read this file before installing, importing, or theming anything from the kit - not just before writing CSS.
 
 ## Reference Documentation Map
 
@@ -26,7 +26,12 @@ The single source of truth for ONLYOFFICE's own [`docspace-ui-kit-react`](https:
 
 ## Install and verify
 
-**Install it as a real dependency, then verify each component you actually adopt.** The kit isn't on public npm - add it as a `file:`/git dependency pinned to a commit of the repo (or a local workspace checkout), matching the peer requirement `react`/`react-dom` `>=19.0.0`; a target on an older React needs a real upgrade first. Wrap the app in its `Providers` (or the individual `ApiProvider`/`ThemeProvider`/`TranslationProvider`) per the Welcome/API/Themes/Translation docs above.
+**Install it as a real dependency, then verify each component you actually adopt.** The kit is published on npm as `@onlyoffice/apps-ui-kit` - install it with `npm i @onlyoffice/apps-ui-kit` pinned to an exact version, not as a `file:`/git dependency. Check the published `package.json` of that version rather than this paragraph for the peer set; at 4.0.x the required peers are `react`/`react-dom` `^19`, `i18next` and `react-i18next`, while `mobx`, `mobx-react`, `axios`, `react-router` (pinned, and itself demanding a newer React), `socket.io-client`, the markdown/katex stack and `@onlyoffice/document-editor-react` are *optional* peers that only the kit's portal-bound parts (API client, stores, AI chat, editor wrapper) need. A target on an older React needs a real upgrade first.
+
+* **Import by sub-path, never from the package root.** `@onlyoffice/apps-ui-kit/components/button`, `@onlyoffice/apps-ui-kit/providers/theme`, `@onlyoffice/apps-ui-kit/providers/translation` (the `./*` export). The root entry re-exports everything, which drags in every optional peer and fails the build when they aren't installed.
+* **Use `ThemeProvider` and `TranslationProvider` on their own.** The composite `Providers` also wraps `ApiProvider`, which requires a portal `url` and `apiKey` - an editor integration has neither. See the Themes/Translation docs above.
+* **Don't import `styles.css`.** Each component imports its own compiled stylesheet; the global sheet only duplicates them.
+* **A reference file manager ships in the repo:** [`docs/samples/files-app/FilesApp.tsx`](https://github.com/ONLYOFFICE/docspace-ui-kit-react/blob/master/docs/samples/files-app/FilesApp.tsx) - read it before composing the dashboard from the kit's components.
 
 **Being the real kit doesn't exempt a specific component from `ui.md`'s bar - read its actual source before adopting it, not just its name.** A real integration found the kit's `IconButton`/`ContextMenuButton` combo - the obvious pick for an icon-only trigger - renders a non-focusable `<div>` with a mouse-only `onClick`, failing `ui.md`'s accessibility rules just as hard as a hand-rolled version would. Reading the component's own source (not its docs' happy-path example, not its name) caught this before it shipped; the fix composed `Button` (a real `<button>`) with `DropDown`/`DropDownItem` instead. Using the kit is not itself proof of meeting the bar - verify the specific component clears it.
 
@@ -34,10 +39,10 @@ The single source of truth for ONLYOFFICE's own [`docspace-ui-kit-react`](https:
 
 The kit is currently **AGPL-3.0-only** (confirmed via its `LICENSE` file and `CLAUDE.md`; ONLYOFFICE has only *planned*, not shipped, an MIT relicense). Re-check the live `LICENSE` file every session that touches this - don't carry over either state from memory or a prior session.
 
-**While it's AGPL, ask the user directly** - batched with `ui.md`'s other ask-step questions, never inferred, never silently defaulted: *"This UI is built on ONLYOFFICE's own `docspace-ui-kit-react`, currently AGPL-3.0. Use the real component library directly - this project becomes AGPL-3.0 too, with a network-copyleft obligation - or port its design (tokens, layout, component shapes) into fresh, permissively-licensed code with the same look?"*
+**While it's AGPL, ask the user directly** - batched with `ui.md`'s other ask-step questions, never inferred, never silently defaulted: *"This UI is built on ONLYOFFICE's own UI kit (`@onlyoffice/apps-ui-kit`), currently AGPL-3.0. Use the real component library directly - this project becomes AGPL-3.0 too, with a network-copyleft obligation - or port its design (tokens, layout, component shapes) into fresh, permissively-licensed code with the same look?"*
 
 * **Port (the default if this is somehow skipped):** never take the dependency or copy its component/style source. Port token *values* (colors, spacing, radii, type scale — facts, not expression) into hand-written components, per "Theming" below.
-* **Use directly (only on explicit acceptance):** wire the real `file:`/git dependency and use its components as-is (React target), or port its actual markup/CSS/behavior faithfully (non-React target). This makes the generated project itself AGPL-3.0 - add the kit's real `LICENSE` text (not a summary), set the manifest's license field to match, and disclose the AGPL §13 network-source obligation prominently in the README.
+* **Use directly (only on explicit acceptance):** install the real `@onlyoffice/apps-ui-kit` npm package and use its components as-is (React target), or port its actual markup/CSS/behavior faithfully (non-React target). This makes the generated project itself AGPL-3.0 - add the kit's real `LICENSE` text (not a summary), set the manifest's license field to match, and disclose the AGPL §13 network-source obligation prominently in the README.
 
 **If a live check ever shows MIT**, this whole license note is moot - use the kit as an unconditional real dependency, no question needed.
 

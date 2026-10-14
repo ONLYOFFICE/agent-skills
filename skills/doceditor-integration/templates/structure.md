@@ -2,7 +2,7 @@
 
 *Bare mentions of `signature/signature.md`, `configuration/events.md`, and `methods.md` below are the sibling **`doceditor`** skill's files, not ones in this directory.*
 
-Ports & Adapters layout ([`architecture/hexagonal.md`](../references/architecture/hexagonal.md)) instantiated for an ONLYOFFICE integration - one folder per concern, one file per port/use-case/route. **Names below are neutral placeholders, not a naming convention to port literally** - the folder path already carries the role (`ports/output/`, `use-cases/`, `adapters/input/http/…`), so these deliberately drop the `-port`/`-use-case`/`-route` suffixes an interface/class/file might carry in one specific language. Translate each name into the target language's own casing, file/type-naming, and suffix habits - see the table below - and delete branches a narrower request doesn't need (e.g. no `list-documents` port for a single-document embed with no file list).
+Ports & Adapters layout ([`architecture/hexagonal.md`](../references/architecture/hexagonal.md)) instantiated for an ONLYOFFICE integration - one folder per concern, one file per port/use-case/route. **Names below are neutral placeholders, not a naming convention to port literally** - the folder path already carries the role (`ports/output/`, `use-cases/`, `adapters/input/http/...`), so these deliberately drop the `-port`/`-use-case`/`-route` suffixes an interface/class/file might carry in one specific language. Translate each name into the target language's own casing, file/type-naming, and suffix habits - see the table below - and delete branches a narrower request doesn't need (e.g. no `list-documents` port for a single-document embed with no file list).
 
 ```text
 <root>/
@@ -18,7 +18,7 @@ Ports & Adapters layout ([`architecture/hexagonal.md`](../references/architectur
         list-documents.*           # only when a dashboard exists; used by the ui/ module, not by a backend route
       output/
         document-repository.*      # persistence: metadata + revisions
-        document-storage.*         # file bytes (local disk / S3 / …)
+        document-storage.*         # file bytes (local disk / S3 /...)
         document-server-gateway.*  # Command Service + Conversion API calls
         token-signer.*             # JWT sign/verify, all three vectors
         clock.*
@@ -88,7 +88,7 @@ The HTTP-adapter layer follows the same rule, translating `callback.*` into each
 - `token-signer` covers all three JWT vectors (browser config token, HTTP-body token, `Authorization` header) - one port, dispatched by caller, not three separate ports. See `signature/signature.md`.
 - When version history/comparison/restore is in scope, add `application/ports/output/document-history.*` (revision number, actor, snapshot location, content hash) and wire it from the `handle-callback` use case (on save/force-save) - see `configuration/events.md` and `methods.md` for the two distinct event pairs this needs client-side.
 - A sample UI, when also requested ([`infrastructure/backend.md`](../references/infrastructure/backend.md)'s decision table), is a **separate, removable** sibling module (`ui/` or `web/`) - never inside `domain/`, `application/`, or `adapters/output/` - wired only through the input adapters' use-case calls, never bypassing them. It owns both the dashboard page and its list/create-new/rename/delete routes, registering them itself, so excluding the module removes all of them while `adapters/input/http/` - the embedding page included - still builds and serves.
-- **Every adapter under `adapters/output/` - repository, storage, gateway, signer, clock, all of them - is one swappable implementation of its port, not a foundation to build on**, whether or not this particular deliverable ever swaps it out - see [`hexagonal.md`](../references/architecture/hexagonal.md)'s "Swappable Adapters". Concretely: a demo's `adapters/output/repository/in-memory/` becomes `adapters/output/repository/postgres/` (or `mongo/`, `dynamodb/`, …), a stubbed `adapters/output/gateway/notifications/stub/` becomes `.../real/`, and so on for any port - each swap is that one new folder plus a one-line change in `composition/container.*`, never a change to `domain/`, `application/ports/`, `application/use-cases/`, or any other adapter. If getting there would touch any of those, the port leaked something implementation-specific and needs fixing before the swap, not after.
+- **Every adapter under `adapters/output/` - repository, storage, gateway, signer, clock, all of them - is one swappable implementation of its port, not a foundation to build on**, whether or not this particular deliverable ever swaps it out - see [`hexagonal.md`](../references/architecture/hexagonal.md)'s "Swappable Adapters". Concretely: a demo's `adapters/output/repository/in-memory/` becomes `adapters/output/repository/postgres/` (or `mongo/`, `dynamodb/`, ...), a stubbed `adapters/output/gateway/notifications/stub/` becomes `.../real/`, and so on for any port - each swap is that one new folder plus a one-line change in `composition/container.*`, never a change to `domain/`, `application/ports/`, `application/use-cases/`, or any other adapter. If getting there would touch any of those, the port leaked something implementation-specific and needs fixing before the swap, not after.
 
 ## Composition root
 
