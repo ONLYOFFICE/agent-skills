@@ -34,7 +34,6 @@ Every feature or step a generation session adds gets its **own** explicit test -
 
 Do this **before** generating or reading the implementation under test, not after:
 * **Derive tests from the contract, not the code:** write test cases from `configuration/config.md`, `configuration/document.md`, `configuration/editor.md`, the `callbackUrl` status table in `callback/handler.md`, and the three JWT vectors in `signature/signature.md` - never by reading what the generated code happens to do and asserting that. A test written from the implementation only proves the code is internally consistent, not correct.
-* **Capture a golden reference first:** before a generated sample exists to diff against, record the official Node.js sample's ([`example.md`](./example.md)) actual request/response traffic for each of the five endpoints (page, callback, download, upload, convert) as a golden trace. The Golden-Master Diff step (below Phase 4) diffs future generations against this, not against each other.
 * **Enumerate edge cases explicitly up front:** empty/null fields, a missing `key`, an expired or corrupted `token`, an unsupported conversion pair, a callback for a `key` with no matching session - write these into the test plan now, since generated code has a measurably higher chance of skipping exactly these branches.
 
 ## Phase 1: Static Analysis — Backend (always) + Frontend (if exists)
@@ -116,10 +115,6 @@ Everything above proves the code *works* in isolation or under a test harness; i
 * **Containerized deployment (when a docker-compose file or equivalent orchestration exists):** `docker compose build && docker compose up -d`, wait for every service to report `healthy` (not merely `running`), then drive the *same* full cycle through the stack's actual public entrypoint (the reverse proxy, if one exists) rather than a service's internal port. Passing the manual cycle but failing this one means the application works but the container networking/proxy/env-var wiring doesn't - a distinct, equally shippable-looking defect that only surfaces once something is actually brought up this way. While the stack is up, also confirm named volumes survive a `down`/`up` cycle (write a marker, `down`, `up`, check the marker is still there) rather than trusting the compose file's `volumes:` block on sight.
 
 Report explicitly which of the two cycles were actually run and which, if any, could not be (no Docker daemon in this sandbox, no way to drive a real browser, etc.) - a skipped cycle is an open verification gap to state, not a passing check to imply.
-
-## Golden-Master Diff
-
-Replay the golden trace captured in Phase 0 against the generated sample's five endpoints - via the Phase 3a HTTP client for a backend-only deliverable, or the browser for one with a UI — and diff the actual request/response shapes (status, headers, body fields), not just "does it return 200." This catches behavioral drift across regenerations (a regenerated sample silently dropping the `Accept: application/json` header, say) without hand-authoring a fresh assertion for every field on every run.
 
 ## Phase 5: Dynamic Execution & Mutation Testing — Backend (always) + Frontend (if exists)
 

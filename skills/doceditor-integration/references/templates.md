@@ -121,6 +121,6 @@ Every locale folder carries the same four files (`new.docx`, `new.pdf`, `new.ppt
 ## Companion Guides
 
 * **Consumed by "create new" UI and demo seeding** -> [`example.md`](./example.md) - the `index.ejs` create-new-by-format buttons and the sample UI's reference shape
-* **Testing this integration** -> [`api-testing.md`](./api-testing.md) - Phase 1 (valid-binary static check), the Coverage Mandate (create-new-by-format is a per-action test target), Golden-Master Diff (pin the vendored commit before diffing)
+* **Testing this integration** -> [`api-testing.md`](./api-testing.md) - Phase 1 (valid-binary static check), the Coverage Mandate (create-new-by-format is a per-action test target)
 * **Vendoring automation** -> [`infrastructure/makefile.md`](infrastructure/makefile.md) - a `setup`/`templates` target that fetches once, never per-request
 * **Process checklist entry** -> [`example-checklist.md`](./example-checklist.md) - Asset Fidelity applies to vendored templates the same way it applies to reused CSS/JS/icons: byte-diffed against the pinned reference, not hand-transcribed
