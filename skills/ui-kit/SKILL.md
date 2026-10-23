@@ -30,8 +30,9 @@ nothing is logged.
 ## Step 0 — find out what you are working against
 
 1. Read `node_modules/@onlyoffice/apps-ui-kit/package.json` and compare its `version` with the
-   4.0.0 above. Say in your answer which version you read.
-2. Not installed? `npm install @onlyoffice/apps-ui-kit`, then read the version it brought.
+   one pinned above. Say in your answer which version you read.
+2. Not installed? `npm install @onlyoffice/apps-ui-kit`, then read the version it brought; if
+   you cannot install, answer from the component's page on the docs site (2 below) and name it.
 3. A **DocSpace portal plugin** (`@onlyoffice/docspace-plugin-sdk` in `package.json`) is the
    `plugin-sdk` skill's job: the portal decides how a plugin gets
    the kit, so load that skill — it says which rules below still hold in a plugin (most do).
