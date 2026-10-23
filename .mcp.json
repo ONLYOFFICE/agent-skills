@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "docspace": {
-      "type": "http",
-      "url": "https://mcp.onlyoffice.com/mcp"
-    }
-  }
-}

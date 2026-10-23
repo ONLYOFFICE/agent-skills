@@ -27,7 +27,7 @@ switch them to the GitHub path as part of that release.
 | What | Value | Where | Notes |
 |---|---|---|---|
 | Marketplace | `onlyoffice-skills` | `marketplace.json` → `name` | Goes after `@` in `/plugin install`. Kebab-case. **Do not rename to `agent-skills`** — it is on Claude Code's reserved list (with `claude-*`, `anthropic-*`, `agent-skills`, `anthropic-agent-skills`, …); the client rejects such marketplaces at `marketplace add`, and `claude plugin validate` does not catch it. |
-| Plugin | `onlyoffice` | `plugin.json` → `name`, and the entry in `marketplace.json` → `plugins[].name` | The two must match. This is the namespace prefix every skill is shown under (`onlyoffice:embed-sdk`). One plugin covers every ONLYOFFICE SDK and tool; new SDKs become new skills, not new plugins. |
+| Plugin | `onlyoffice` | `plugin.json` → `name`, and the entry in `marketplace.json` → `plugins[].name` | The two must match. This is the namespace prefix every skill is shown under (`onlyoffice:embed-sdk`). One plugin covers every ONLYOFFICE SDK and tool; new SDKs become new skills, not new plugins. The ONLYOFFICE Apps MCP server is not part of it: it ships as a plugin of its own, from its own repository. |
 | Skills | `embed-sdk`, `plugin-sdk`, `ui-kit` | `skills/<name>/SKILL.md` → `name` | Must equal the directory name. |
 
 Installation reads `/plugin install onlyoffice@onlyoffice-skills`.

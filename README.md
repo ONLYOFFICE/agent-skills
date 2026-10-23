@@ -34,11 +34,6 @@ In the VS Code extension, type `/plugins` in the chat: add this repository on th
 tab, then install `onlyoffice` on the *Plugins* tab. To try a local checkout without installing:
 `claude --plugin-dir /path/to/agent-skills`.
 
-The plugin also ships the ONLYOFFICE Apps MCP server, `docspace`, at
-`https://mcp.onlyoffice.com/mcp`, which gives the agent live access to a workspace beside the
-skills' static knowledge. It requires a sign-in (an unauthenticated request gets `401`): run
-`/mcp` once and authenticate it.
-
 ### Cursor, Codex, GitHub Copilot and other agents
 
 Clone the repository and copy `skills/*` into a directory your agent scans. `.agents/skills/` in
@@ -51,9 +46,7 @@ cp -r agent-skills/skills/* .agents/skills/
 
 Each agent also reads its own directories: `.cursor/skills/` and `~/.cursor/skills/` (Cursor),
 `~/.agents/skills/` (Codex), `.github/skills/` and `~/.copilot/skills/` (Copilot). Any other client
-of the Agent Skills format can be handed `skills/<name>/SKILL.md` directly. These install paths
-copy skills only; add the MCP server the way your agent adds any HTTP MCP server
-(`claude mcp add --transport http docspace https://mcp.onlyoffice.com/mcp` in Claude Code).
+of the Agent Skills format can be handed `skills/<name>/SKILL.md` directly.
 
 ## What you need
 

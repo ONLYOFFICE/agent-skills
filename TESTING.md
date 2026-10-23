@@ -77,9 +77,8 @@ lists the cases and how each is graded. What to know before running it:
   formatting does not decide it.
 - **Other models.** `--model haiku` / `--model opus` run the same suite against another agent
   model; record each in the Results table with the model named.
-- **Noise you can ignore.** `"plugin:onlyoffice:docspace" has no mock and is NOT started`: the
-  MCP server the plugin ships is not needed by any case. `not granted: WebFetch` on a question
-  case: the answer comes from the skill, not the site.
+- **Noise you can ignore.** `not granted: WebFetch` on a question case: the answer comes from the
+  skill, not the site.
 - **Results** land in `evals/results/<timestamp>/` (gitignored); `--json <path>` writes the
   machine-readable summary — `aggregates.overallScore`, `aggregates.meanDelta`, per-case arms.
 

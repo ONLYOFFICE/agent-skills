@@ -35,7 +35,6 @@ naming the SDK — not as a summary of the contents.
 .claude/skills/          repository-internal skills, not shipped in the plugin:
                          sync-sources (links and versions), sync-ui-kit (the ui-kit manifest),
                          onlyoffice-docs (read the docs site as Markdown while writing references)
-.mcp.json                MCP servers shipped with the plugin (docspace, HTTP)
 sources.json             the external hosts named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at another docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
