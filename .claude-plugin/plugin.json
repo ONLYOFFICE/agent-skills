@@ -9,7 +9,7 @@
     "url": "https://www.onlyoffice.com"
   },
   "homepage": "https://api.onlyoffice.com/",
-  "repository": "https://git.onlyoffice.com/ONLYOFFICE/agent-skills",
+  "repository": "https://github.com/ONLYOFFICE/agent-skills",
   "license": "Apache-2.0",
   "keywords": [
     "onlyoffice",

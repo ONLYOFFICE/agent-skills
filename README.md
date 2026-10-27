@@ -26,13 +26,13 @@ Install the `onlyoffice` plugin; it stays updatable through `/plugin`, and the s
 `onlyoffice:embed-sdk`, `onlyoffice:plugin-sdk` and `onlyoffice:ui-kit`:
 
 ```
-/plugin marketplace add git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git
+/plugin marketplace add ONLYOFFICE/agent-skills
 /plugin install onlyoffice@onlyoffice-skills
 ```
 
-In the VS Code extension, type `/plugins` in the chat: add this repository on the *Marketplaces*
-tab, then install `onlyoffice` on the *Plugins* tab. To try a local checkout without installing:
-`claude --plugin-dir /path/to/agent-skills`.
+In the VS Code extension, type `/plugins` in the chat: add `ONLYOFFICE/agent-skills` on the
+*Marketplaces* tab, then install `onlyoffice` on the *Plugins* tab. To try a local checkout
+without installing: `claude --plugin-dir /path/to/agent-skills`.
 
 ### Cursor, Codex, GitHub Copilot and other agents
 
@@ -40,7 +40,8 @@ Clone the repository and copy `skills/*` into a directory your agent scans. `.ag
 a project is read by Cursor, Codex and Copilot alike:
 
 ```bash
-git clone git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git
+git clone https://github.com/ONLYOFFICE/agent-skills
+mkdir -p .agents/skills
 cp -r agent-skills/skills/* .agents/skills/
 ```
 
