@@ -54,6 +54,7 @@ Assertions passed per scenario, in the order of the table above; one sample per 
 |---|---|---|---|---|---|
 | 2026-09-24 | claude-sonnet-5 | 0–3 | 83/92 (25 · 27 · 25 · 6) | 47/92 (6 · 14 · 22 · 5) | iteration-0, `2eb74a8`; no docs hint, the baseline built on npm's SDK 2.1.1 |
 | 2026-10-05 | sonnet, graders sonnet | 0–3 | 87/92 (28 · 27 · 25 · 7) | 70/92 (19 · 21 · 24 · 6) | iteration-2, `82ff8c7`, docs on the stand; the baseline had its `llms.txt`, so scenarios 2 and 3 barely discriminate |
+| 2026-10-27 | sonnet, graders sonnet | 0–3 | 88/92 (28 · 26 · 26 · 8) | 66/92 (17 · 18 · 25 · 6) | iteration-5, `36fbfeb`, docs on production; both arms install SDK 3.0.0 and the kit from npm, and a missing `getServerSnapshot` is now a warning, which lets the baseline's scenario 2 pass the validator |
 
 ## Adding one
 
