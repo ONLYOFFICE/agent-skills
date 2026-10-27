@@ -29,10 +29,13 @@
  * ThemeProviderComponent from the barrel is enough. Without it every var() in the plugin's
  * CSS would silently fall back and a colour finding would be noise.
  *
- * One thing the ONLYOFFICE Apps client provides and the kit does not, so the harness provides it and
- * says so rather than pretending the page is the portal: the base typography. The provider
- * sets --font-family as a variable; the rule that applies it to the document lives in the
- * client's own stylesheet.
+ * Two things the ONLYOFFICE Apps client provides and the kit does not, so the harness provides
+ * them and says so rather than pretending the page is the portal. The base typography: the
+ * provider sets --font-family as a variable; the rule that applies it to the document lives in
+ * the client's own stylesheet. And the theme variables styles.md recommends that the kit's
+ * theme sheet leaves out (--accent-main, --input-error-color, ...): without them a plugin's
+ * error text draws in the body colour here and nowhere else, and the author "fixes" it with a
+ * hard-coded fallback.
  */
 
 import { SCOPE_CONTRACT } from "../contract.mjs";
@@ -91,6 +94,26 @@ export const harnessHtml = () => `<!doctype html>
     line-height: 20px;
     color: var(--text-color);
     background: var(--background-color);
+  }
+  /* The portal theme's values for the variables the kit's theme sheet does not define. A kit
+     stylesheet that declares one of them loads after this block and wins. */
+  .light {
+    --accent-main: var(--color-scheme-main-accent, #4781d1);
+    --input-error-color: #f24724;
+    --text-disable-color: #a3a9ae;
+    --background-service-color: #f3f4f4;
+    --border-service-color: #eceef1;
+    --status-icon-color-positive: #35ad17;
+    --status-warning: #ed7309;
+  }
+  .dark {
+    --accent-main: var(--color-scheme-main-accent, #4781d1);
+    --input-error-color: #e06451;
+    --text-disable-color: #5c5c5c;
+    --background-service-color: #3d3d3d;
+    --border-service-color: #474747;
+    --status-icon-color-positive: #3ba420;
+    --status-warning: #e17415;
   }
   /* Each surface is measured inside its own box at the width the portal gives it. */
   [data-surface] { box-sizing: border-box; overflow: visible; }
