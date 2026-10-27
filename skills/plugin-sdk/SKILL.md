@@ -74,7 +74,7 @@ A question that turns out to need a whole feature is better answered by building
 | An entry point in the user's own profile menu | [`ProfileMenu`](references/items/profile-menu-item.md) | none — one item; what its click opens is up to you |
 | Information about a file or room, alongside it | [`InfoPanel`](references/items/info-panel-item.md) | a tab, `component` |
 | To own a file extension — icon, open action | [`File`](references/items/file-item.md) | none, or a viewer/modal it opens |
-| To react when the user starts a portal action — a create, rename, room or user-type dialog opening, a column toggled; it fires before anything exists and carries no data | [`EventListener`](references/items/event-listener-item.md) | none |
+| To react when the user starts a portal action — a create, rename, room or user-type dialog opening, which fires before anything exists, or a column toggled; no event carries data | [`EventListener`](references/items/event-listener-item.md) | none |
 | A small persistent control in the sidebar | [`ArticleButton`](references/items/article-button-item.md) | a 32×32 slot, `component` |
 | Admin-configurable options | [`Settings`](references/plugins/settings-plugin.md) | the settings aside, `component` |
 | Class-side code that calls the REST API | [`API`](references/plugins/api-plugin.md) | — (a component needs no scope for this) |

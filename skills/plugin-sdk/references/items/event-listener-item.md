@@ -1,6 +1,6 @@
 # EventListener
 
-To react when the user starts a portal action — a dialog opening, a column toggled — not when it completes.
+To react when the user starts a portal action — a dialog opening — not when it completes; a column toggle is the one event that reports a finished change.
 
 | | |
 |---|---|
@@ -18,7 +18,7 @@ Subscribed as plain `window` listeners. `eventHandler` is declared with **no par
 
 ## The event fires when the dialog opens
 
-**These are not completion events.** `CREATE`, `ROOM_CREATE`, `RENAME`, `ROOM_EDIT` and `CHANGE_USER_TYPE` are dispatched when the portal *opens the dialog* for that operation — before the user has typed a name, and whether or not they go on to confirm it. `CHANGE_COLUMN` fires from the table header the same way, and `CREATE_PLUGIN_FILE` when any plugin's `showCreateDialog` opens the portal's create dialog. There is **no event for the operation finishing**, and no id of a created entity to receive, because nothing has been created yet.
+**These are not completion events.** `CREATE`, `ROOM_CREATE`, `RENAME`, `ROOM_EDIT` and `CHANGE_USER_TYPE` are dispatched when the portal *opens the dialog* for that operation — before the user has typed a name, and whether or not they go on to confirm it. `CHANGE_COLUMN` is the exception: the table header fires it after the column has been shown or hidden. `CREATE_PLUGIN_FILE` fires when any plugin's `showCreateDialog` opens the portal's create dialog. Apart from that column toggle, there is **no event for an operation finishing**, and no id of a created entity to receive, because nothing has been created yet.
 
 So an event handler that reports (`"Room created"`) is wrong at least as often as it is right: the user pressing Esc gets the toast anyway. What the scope is actually for is reacting to the *intent* — refreshing your own item labels, arming state a later click will read, recording that a flow was entered. When the plugin genuinely needs to know a room now exists, poll or re-read the listing from the surface that cares, rather than trusting the event.
 
