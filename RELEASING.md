@@ -7,20 +7,11 @@ release. The audience is whoever cuts a release; contributors need [CONTRIBUTING
 
 There is no registry. A Claude Code marketplace **is a git repository** with
 `.claude-plugin/marketplace.json` in it, and `/plugin marketplace add <repo>` simply
-clones that repository. The plugin is therefore available exactly to those who can
-clone the repository that holds it:
-
-| Where the repository lives | Who can install | How |
-|---|---|---|
-| `git.onlyoffice.com/ONLYOFFICE/agent-skills` (origin) | company | `/plugin marketplace add git@git.onlyoffice.com:ONLYOFFICE/agent-skills.git` |
-| `github.com/ONLYOFFICE/agent-skills` (public mirror, **not yet created**) | everyone | `/plugin marketplace add ONLYOFFICE/agent-skills`, `npx skills add ONLYOFFICE/agent-skills` |
-
-Pushing to the public mirror **is** the publication. Nothing is announced or indexed
-automatically, but both install commands above start working the moment the public
-repository exists, and `npx skills add` (agentskills.io) requires it to be public on
-GitHub. Until that push the plugin stays internal, and every install command in the
-README and `repository` in `.claude-plugin/plugin.json` point at `git.onlyoffice.com`;
-switch them to the GitHub path as part of that release.
+clones that repository. This one is `github.com/ONLYOFFICE/agent-skills`, public:
+`/plugin marketplace add ONLYOFFICE/agent-skills` and `npx skills add ONLYOFFICE/agent-skills`
+install from its default branch, `main`, so what is merged into `main` is what users get.
+Every other branch is public too — do not push anything that may not be. Nothing is announced
+or indexed automatically.
 
 ## Names
 
@@ -100,8 +91,8 @@ Before tagging a release:
    release will bring from a link that is simply wrong.
 2b. `node .claude/skills/onlyoffice-docs/scripts/docs.mjs status` exits 0: production serves
    `llms.txt` and a Markdown page for every section, so the skills' "append `.md`" and `llms.txt`
-   instructions work for users. Exit 1 means only the stand serves them — fine for an internal
-   release, not for a public one. `node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs` passes.
+   instructions work for users. Exit 1 means only the stand serves them, and the release waits
+   for the docs. `node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs` passes.
 3. The plugin eval suite passes after the last content change:
    `claude plugin eval . --json evals/results/release.json --threshold 0.8 --trust-plugin --no-publish --allow-tools Write Edit Bash WebFetch`
    (the `heavy` cases need the network for npm; run them once, `--tag heavy`). Pin `--model`
@@ -113,8 +104,8 @@ Before tagging a release:
 4. `version` in `plugin.json` and `metadata.version` in `marketplace.json` are bumped
    and equal.
 5. `metadata.sdk-version` in every `SKILL.md` matches the "Targets" column in the README.
-6. Commit, tag `v<version>`, push to origin. Push to the GitHub mirror only when the
-   release is meant to be public (see above).
+6. Merge into `main`, tag the merge commit `v<version>` and push the tag;
+   `git ls-remote --tags https://github.com/ONLYOFFICE/agent-skills` lists it.
 
 ## Not yet done
 
