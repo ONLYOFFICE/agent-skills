@@ -25,7 +25,7 @@ Every enum, with its members and values, is under [Enums](https://api.onlyoffice
 
 ### Roles: `UserRole`, and the `UsersType` it replaces
 
-`UserRole` names the roles as the portal shows them; [`UsersType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/UsersType.md), which it deprecates, kept the product's old names, so **two of its members mean the opposite of what they read like**. Write `UserRole` — the SDK this skill installs has it; a 3.0.0 build packed before it was added has only `UsersType`, which the installed types settle. The values differ as well as the names, the portal matches both, and the field keeps its name and takes either (`(UserRole | UsersType)[]`):
+`UserRole` names the roles as the portal shows them; [`UsersType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/UsersType.md), which it deprecates, kept the product's old names, so **two of its members mean the opposite of what they read like**. Write `UserRole`. The values differ as well as the names, the portal matches both, and the field keeps its name and takes either (`(UserRole | UsersType)[]`):
 
 | `UserRole` | `UsersType` | The portal shows |
 |---|---|---|
