@@ -126,6 +126,17 @@ export default ({ workspace, check }) => {
     settingsWrite.messageSummary,
   );
 
+  // What react-dom/server throws for useSyncExternalStore without getServerSnapshot; the
+  // portal renders on the client, where the same component is fine.
+  const SERVER_SNAPSHOT = `throw new Error("Missing getServerSnapshot, which is required for server-rendered content. Will revert to client rendering.");`;
+  const serverSnapshot = surfaces("render-server-snapshot", { tabBody: SERVER_SNAPSHOT, pageBody: GUARDED });
+
+  check(
+    "a missing getServerSnapshot is a warning, not a render error - only server rendering needs it",
+    !serverSnapshot.errorCodes.includes("render") && serverSnapshot.warningsMention("Only server rendering needs getServerSnapshot"),
+    serverSnapshot.messageSummary,
+  );
+
   const modalDir = workspace.write("render-modal", {
     pkg: manifestFor("render-modal", "FixtureRenderModal"),
     bundle: modalSurfacePlugin({ dialogBody: READS_FILE }),

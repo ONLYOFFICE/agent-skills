@@ -147,10 +147,19 @@ export class RenderChecks extends Check {
 
   /**
    * A throw here is what the portal turns into an empty surface, so it is an error - except
-   * a browser API the sandbox does not provide, which is this tool's gap, not the plugin's.
+   * a browser API the sandbox does not provide, or a server-rendering requirement, which are
+   * this tool's gaps, not the plugin's.
    */
   #reportRenderFailure(where, hasCurrentFile, e) {
     const message = e?.message ?? String(e);
+
+    if (/getServerSnapshot/.test(message)) {
+      this.warn(
+        "render",
+        `${where} could not be rendered here: ${message}. Only server rendering needs getServerSnapshot - the portal renders on the client, so this is not a defect there, but the rest of the surface went unchecked`,
+      );
+      return;
+    }
 
     if (isMissingHostApi(e)) {
       this.warn(
