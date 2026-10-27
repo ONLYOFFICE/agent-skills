@@ -33,7 +33,7 @@ Contents: [The five types](#the-five-types) · [The Files selector: folder vs fi
 
 Entering a folder sets `selectedItemId` to it (and `selectedItemType` to `"rooms"` on the rooms list, `"files"` inside); clicking a file leaves `selectedItemId` on the folder and fills `selectedFileInfo` (`{ id, title, fileExst }`). Both are current in `onSubmit`.
 
-- **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, and on some portal builds never — a Select gated on it is dead there. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
+- **Gate on the folder, verify the file in `onSubmit`.** `getIsDisabled` sees `selectedFileInfo` one render after the click, so a Select gated on it trails the selection. Gate on `isFirstLoad || !selectedItemId || selectedItemType === "rooms"`; in `onSubmit` a `null` `selectedFileInfo` gets a toast and no return.
 - `filterParam` filters what is *listed*, not what can be submitted; it takes [`FilterType`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Utility.md) from the SDK root (`FilterType.DocumentsOnly`). The enum has seven members and the portal understands more — the selector passes the value through, so PDF files (`22`), media (`12`), archives (`10`) or diagrams (`25`) go in as the number: `filterParam: 22 as FilterType`.
 - `selectedFileInfo` is `{ id, title, fileExst }` and `@inline` in the SDK — declare your own type where you store it; anything more is `GET /files/file/{id}`.
 
@@ -61,14 +61,13 @@ export const pickDocument = ({ showSelector, closeSelector, showToast }: PluginA
           finish({ id: selectedFileInfo.id, title: selectedFileInfo.title });
           closeSelector();
         },
-        onCancel: cancel,
-        onClose: () => finish(null),
+        onCancel: cancel,                                                              // the header's cross lands here too
       },
     });
   });
 ```
 
-A destination picker differs in three places: no `filterParam`, `isDisabledFolder` in the gate, and an `onSubmit` that reads `GET /files/folder/{selectedItemId}` and refuses `security.Create !== true` with a toast — there, while another folder can still be picked. Then:
+A destination picker differs in two places: no `filterParam`, and an `onSubmit` that reads `GET /files/folder/{selectedItemId}` and refuses `security.Create !== true` with a toast — there, while another folder can still be picked. `isDisabledFolder` is typed on the gate's argument, but the portal does not pass it, so it is always `undefined` and the gate cannot refuse a folder; `onSubmit` is where that happens. Then:
 
 ```ts
 const template = await pickDocument(actions, t("pickTemplate"));       if (!template) return;
