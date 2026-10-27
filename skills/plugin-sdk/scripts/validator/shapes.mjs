@@ -72,22 +72,29 @@ export class ShapeChecks extends Check {
 
     if (item.component !== undefined) this.#component(where, item.component);
 
-    this.#checkEntryFields(where, scope, contract, item);
+    this.#checkFilters(where, scope, contract, item);
+    this.#checkIcon(where, item);
     this.#checkScopeSpecifics(where, scope, item);
 
     if (SUBMENU_SCOPES.includes(scope)) this.#checkMenuEntry(where, scope, contract, item);
 
     // A scope keyed by extension has no room for a prefix.
     if (contract.key === "key") this.#checkKeyIsNamespaced(where, key);
+    else if (typeof item.extension === "string" && key !== item.extension)
+      this.error(
+        "item",
+        `${where} is stored under a key other than its extension "${item.extension}" - the portal draws the icon from extension but finds the click by key, so the file shows the plugin's icon and opens as if no plugin owned it; key the map by the extension`,
+      );
   }
 
-  /** The fields a menu child shares with its parent: the filters and the icon. */
-  #checkEntryFields(where, scope, contract, entry) {
+  #checkFilters(where, scope, contract, entry) {
     this.#checkFilterFieldName(where, scope, contract, entry);
 
     this.#filterValues(where, contract.filter, entry[contract.filter]);
     this.#filterValues(where, "devices", entry.devices);
+  }
 
+  #checkIcon(where, entry) {
     if (
       typeof entry.icon === "string" &&
       !this.project.assetNames.includes(entry.icon)
@@ -146,8 +153,9 @@ export class ShapeChecks extends Check {
   }
 
   /**
-   * A submenu child is an item of the same interface, filtered and clicked by the same host
-   * code - so it can carry every mistake its parent can, and none of them is reported.
+   * A submenu child is an item of the same interface, clicked by the same host code - so it can
+   * carry every mistake its parent can. A ContextMenu child is filtered like its parent; a
+   * MainButton child is not, its filters are copied in unread, so their values are moot.
    */
   #checkSubmenu(where, scope, contract, children) {
     if (!Array.isArray(children)) return;
@@ -157,9 +165,22 @@ export class ShapeChecks extends Check {
 
       const at = `${where} > "${child.key ?? child.label ?? "?"}"`;
 
-      this.#checkEntryFields(at, scope, contract, child);
+      if (scope === "MainButton") this.#warnUnreadFilters(at, child);
+      else this.#checkFilters(at, scope, contract, child);
+
+      this.#checkIcon(at, child);
       this.#checkMenuEntry(at, scope, contract, child);
     }
+  }
+
+  /** Either spelling: neither is read on a MainButton child. */
+  #warnUnreadFilters(where, child) {
+    for (const field of ["usersType", "usersTypes", "devices"])
+      if (child[field] !== undefined)
+        this.warn(
+          "item",
+          `${where} sets ${field}, which the portal reads on the parent only - the child is shown to everyone its parent is shown to; make it a top-level item to filter it`,
+        );
   }
 
   #checkOneOf(where, alternatives, item) {
@@ -246,12 +267,17 @@ export class ShapeChecks extends Check {
           "item",
           `${where} appears must be an array of Section values`,
         );
+      else if (item.appears.length === 0)
+        this.error(
+          "item",
+          `${where} appears is an empty array - the entry is shown in no section at all; leave appears out to show it in every section`,
+        );
       else
         for (const section of item.appears)
           if (!SECTIONS.includes(section))
             this.error(
               "item",
-              `${where} appears contains "${section}", which is not a Section value (${SECTIONS.join(", ")}) - the entry is shown in no section at all`,
+              `${where} appears contains "${section}", which is not a Section value (${SECTIONS.join(", ")}) - it matches no section, so the entry is missing from the one it was meant for`,
             );
     }
   }
@@ -277,6 +303,14 @@ export class ShapeChecks extends Check {
 
     if (!Array.isArray(value)) {
       this.error("item", `${where} ${field} must be an array`);
+      return;
+    }
+
+    if (value.length === 0) {
+      this.error(
+        "item",
+        `${where} ${field} is an empty array - the host shows the item only to a value the list contains, so it is filtered out for everyone; leave ${field} out to show it to all`,
+      );
       return;
     }
 

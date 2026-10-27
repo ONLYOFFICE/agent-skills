@@ -88,6 +88,18 @@ export default ({ workspace, check }) => {
   );
   check("a devices value outside the enum is an error", values.mentions('contains "phone"'));
 
+  const emptyFilter = workspace.validateProject("empty-filter", {
+    pkg: manifestFor("empty-filter", "FixtureEmptyFilter"),
+    bundle: contextMenuPlugin({ filters: `usersTypes: []` }),
+    src: contextMenuSource(),
+  });
+
+  check(
+    "an empty filter array is an error, since it matches nobody",
+    emptyFilter.errorsMention("usersTypes is an empty array"),
+    emptyFilter.messageSummary,
+  );
+
   // --- bulk actions: the group form is a different item ------------------------
 
   const groupOnly = workspace.validateProject(
@@ -349,6 +361,49 @@ export default ({ workspace, check }) => {
     mainButton.messageSummary,
   );
 
+  const mainButtonChild = workspace.validateProject("main-button-child-filter", {
+    pkg: manifestFor("main-button-child-filter", "FixtureMainChild", { scopes: ["MainButton"] }),
+    bundle: mapScopePlugin({
+      field: "items",
+      adder: "addMainButtonItem",
+      getter: "getMainButtonItems",
+      onLoadBody: `this.items.set("fixture-main-child-parent", { key: "fixture-main-child-parent", label: "New", icon: "logo.svg",
+      items: [{ key: "fixture-main-child-a", label: "A", icon: "logo.svg", usersType: ["owner"], devices: ["mobile"], async onItemClick() {} },
+        { key: "fixture-main-child-b", label: "B", icon: "logo.svg", usersType: [], async onItemClick() {} }] });`,
+    }),
+    src: scopeSource({ adder: "addMainButtonItem", getter: "getMainButtonItems" }),
+  });
+
+  check(
+    "a filter on a main button child is a warning, since the portal reads it on the parent only",
+    mainButtonChild.warningsMention('> "fixture-main-child-a" sets usersType') &&
+      mainButtonChild.warningsMention('> "fixture-main-child-a" sets devices'),
+    mainButtonChild.messageSummary,
+  );
+  check(
+    "a main button child's filter values are not judged, since nothing reads them",
+    mainButtonChild.warningsMention('> "fixture-main-child-b" sets usersType') &&
+      !mainButtonChild.errorsMention("fixture-main-child-b"),
+    mainButtonChild.messageSummary,
+  );
+
+  const fileKey = workspace.validateProject("file-key", {
+    pkg: manifestFor("file-key", "FixtureFileKey", { scopes: ["File"] }),
+    bundle: mapScopePlugin({
+      field: "files",
+      adder: "addFileItem",
+      getter: "getFileItems",
+      onLoadBody: `this.files.set("md", { extension: ".md", fileTypeName: "Markdown", async onClick() {} });`,
+    }),
+    src: scopeSource({ adder: "addFileItem", getter: "getFileItems" }),
+  });
+
+  check(
+    "a File item stored under a key other than its extension is an error",
+    fileKey.errorsMention('stored under a key other than its extension ".md"'),
+    fileKey.messageSummary,
+  );
+
   const extension = workspace.validateProject("file-no-dot", {
     pkg: manifestFor("file-no-dot", "FixtureNoDot", { scopes: ["File"] }),
     bundle: mapScopePlugin({
@@ -382,6 +437,23 @@ export default ({ workspace, check }) => {
     "an ArticleNavigation icon that is not an SVG is an error",
     navIcon.errorsMention('icon "logo.png" is not an SVG'),
     navIcon.messageSummary,
+  );
+
+  const navNowhere = workspace.validateProject("nav-appears-empty", {
+    pkg: manifestFor("nav-appears-empty", "FixtureNavNowhere", { scopes: ["ArticleNavigation"] }),
+    bundle: mapScopePlugin({
+      field: "pages",
+      adder: "addArticleNavigationItem",
+      getter: "getArticleNavigationItems",
+      onLoadBody: `this.pages.set("fixture-nav-appears-empty-page", { key: "fixture-nav-appears-empty-page", label: "Page", icon: "logo.svg", component: () => null, appears: [] });`,
+    }),
+    src: scopeSource({ adder: "addArticleNavigationItem", getter: "getArticleNavigationItems" }),
+  });
+
+  check(
+    "an empty appears is an error, since the entry is shown in no section",
+    navNowhere.errorsMention("appears is an empty array"),
+    navNowhere.messageSummary,
   );
 
   const roles = workspace.validateProject("user-role", {
