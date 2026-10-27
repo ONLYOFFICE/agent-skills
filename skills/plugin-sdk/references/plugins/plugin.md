@@ -80,15 +80,16 @@ The generated module also carries `tf(key, values)` for strings with placeholder
 
 ## Deprecated — do not use in new code
 
-Still compile and render (SDK 2 forms), recognised by the validator and warned about — and struck through in the docs' property tables:
+Still compile and render (SDK 2 forms), recognised by the validator and warned about — and marked **Deprecated** in the docs' property tables:
 
 - `IInfoPanelItem.body`/`onLoad`, `IArticleButtonItem.body`/`onLoad`, `IMediaViewer.content`/`onLoad` → `component`
 - `IModalDialog.dialogBody`/`dialogFooter`/`onLoad` → `dialogBodyComponent`
 - `ISettings.settings`/`onLoad` → `component` (`saveButton` is **not** deprecated — see below)
 - `IContextMenuItem.onClick`, `IMainButtonItem.onClick` → `onItemClick`
-- `ISeparatorItem` — gone
 - `window.Plugins.<pluginName> = plugin` — replaced by the default export; harmless but dead
 - build script `webpack && node ./scripts/createZip.js` → `vite build && npx build-docspace-plugin`
+
+Removed in SDK 3, so an import of it no longer compiles: `ISeparatorItem`.
 
 Two members on that list look deprecated and are not:
 
