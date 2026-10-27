@@ -55,7 +55,7 @@ export const REQUIRED_EXTERNALS = HOST_PROVIDED_SPECIFIERS;
  * still accepts. Order here is the order scopes are listed in messages.
  */
 export const SCOPE_CONTRACT = {
-  API: { iface: "IApiPlugin", members: ["setAPI", "getAPI"] },
+  API: { iface: "IApiPlugin", members: ["setAPI"] },
   Settings: {
     iface: "ISettingsPlugin",
     members: ["setAdminPluginSettingsValue", "getAdminPluginSettings"],

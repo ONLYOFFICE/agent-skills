@@ -220,6 +220,18 @@ export default ({ workspace, check }) => {
     settingsLegacy.messageSummary,
   );
 
+  const apiSetOnly = workspace.validateProject("api-set-only", {
+    pkg: manifestFor("api-set-only", "FixtureApiSetOnly", { scopes: ["API"] }),
+    bundle: onLoadPlugin({}).replace("const plugin = {", "const plugin = {\n  setAPI() {},"),
+    src: scopeSource({ members: ["setAPI"] }),
+  });
+
+  check(
+    "an API scope with setAPI alone passes, since the portal never calls getAPI",
+    apiSetOnly.ok && !apiSetOnly.mentions("getAPI"),
+    apiSetOnly.messageSummary,
+  );
+
   // --- unbuilt project ---------------------------------------------------------
   //
   // Nothing to run is not a defect: the runtime pass is skipped and the report says why.
