@@ -18,7 +18,7 @@ or indexed automatically.
 | What | Value | Where | Notes |
 |---|---|---|---|
 | Marketplace | `onlyoffice-skills` | `marketplace.json` → `name` | Goes after `@` in `/plugin install`. Kebab-case. **Do not rename to `agent-skills`** — it is on Claude Code's reserved list (with `claude-*`, `anthropic-*`, `agent-skills`, `anthropic-agent-skills`, …); the client rejects such marketplaces at `marketplace add`, and `claude plugin validate` does not catch it. |
-| Plugin | `onlyoffice-devtools` | `plugin.json` → `name`, and the entry in `marketplace.json` → `plugins[].name` | The two must match. This is the namespace prefix every skill is shown under (`onlyoffice-devtools:apps-embed-sdk`). One plugin covers every ONLYOFFICE SDK and tool; new SDKs become new skills, not new plugins. The ONLYOFFICE Apps MCP server is not part of it: it ships as a plugin of its own, from its own repository. |
+| Plugin | `onlyoffice-devtools` | `name` in both plugin manifests, and the entry in `marketplace.json` → `plugins[].name` | All three must match. This is the namespace prefix every skill is shown under (`onlyoffice-devtools:apps-embed-sdk`). One plugin covers every ONLYOFFICE SDK and tool; new SDKs become new skills, not new plugins. The ONLYOFFICE Apps MCP server is not part of it: it ships as a plugin of its own, from its own repository. |
 | Skills | `apps-embed-sdk`, `apps-plugin-sdk`, `apps-ui-kit` | `skills/<name>/SKILL.md` → `name` | Must equal the directory name. |
 
 Installation reads `/plugin install onlyoffice-devtools@onlyoffice-skills`.
@@ -27,13 +27,25 @@ Installation reads `/plugin install onlyoffice-devtools@onlyoffice-skills`.
 
 Two different things carry a version; do not confuse them.
 
-**Plugin version** — the version of this repository as a whole. Lives in two places that
-must be equal: `.claude-plugin/plugin.json` → `version` and
-`.claude-plugin/marketplace.json` → `metadata.version`. Claude Code uses `plugin.json`
-to detect updates, so a release that does not bump it is invisible to installed
+**Plugin version** — the version of this repository as a whole. Lives in three places that
+must be equal: `version` in both plugin manifests and `.claude-plugin/marketplace.json` →
+`metadata.version`. The plugin carries two manifests because the clients read different
+ones: `.claude-plugin/plugin.json` is Claude Code's and Anthropic's directory's, and
+`plugin.json` at the root is the Agent Plugins 1.0.0 manifest that OpenAI, Codex and the other
+clients of that standard read, with the OpenAI listing under `extensions["com.openai"]` (it
+replaces `.codex-plugin/plugin.json`, which OpenAI now keeps only as a fallback).
+`node tools/check-manifests.mjs` says whether the three agree. Claude Code uses
+`.claude-plugin/plugin.json` to detect updates, so a release that does not bump it is invisible to installed
 copies. Skills do not have versions of their own; a change to any skill is a plugin
 release. Semver: new skill or breaking rewrite of one → minor while `0.x`; corrections
 → patch.
+
+**Icon** — `assets/icon.png`, named by `icon` in the Claude manifest and by `composerIcon` and
+`logo` in the OpenAI listing. One file meets both directories: Anthropic's takes only PNG or
+JPEG, square, 512 to 2048 px; OpenAI's takes 48 px and up. It is the ONLYOFFICE mark, the same art
+as the ONLYOFFICE Apps MCP plugin's icon, rendered at 1024 px from the vector logo. Anthropic's
+directory reads it once, at the first save in the developer portal, so replace it before that
+save or not at all.
 
 **Target SDK version** — the SDK release a skill describes. Lives in each skill's
 `SKILL.md` frontmatter as `metadata.sdk-version`, and is repeated in prose in the root
@@ -72,6 +84,7 @@ Before tagging a release:
    Two commands, not one: the tool picks its mode from the path, so a directory holding a
    `.claude-plugin/` is validated as a manifest and nothing under it is read. The `.` form alone
    has never checked a `SKILL.md`, which is most of what a release changes.
+   `node tools/check-manifests.mjs` passes too: `validate` reads only the Claude manifest.
 2. `node skills/apps-embed-sdk/scripts/test-validator.mjs`,
    `node skills/apps-plugin-sdk/scripts/test-validator.mjs` and
    `node skills/apps-ui-kit/scripts/test-validator.mjs` pass. Run the last one once more with
@@ -101,8 +114,8 @@ Before tagging a release:
    [apps-plugin-sdk](skills/apps-plugin-sdk/evals/README.md),
    [apps-ui-kit](skills/apps-ui-kit/evals/README.md)) are for iterating on a skill, not a
    release gate.
-4. `version` in `plugin.json` and `metadata.version` in `marketplace.json` are bumped
-   and equal.
+4. `version` in both plugin manifests and `metadata.version` in `marketplace.json` are bumped
+   and equal (`node tools/check-manifests.mjs`).
 5. `metadata.sdk-version` in every `SKILL.md` matches the "Targets" column in the README.
 6. Merge into `main`, tag the merge commit `v<version>` and push the tag;
    `git ls-remote --tags https://github.com/ONLYOFFICE/agent-skills` lists it.

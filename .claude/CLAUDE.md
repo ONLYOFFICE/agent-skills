@@ -28,6 +28,10 @@ holds a `.claude-plugin/` it validates the manifest and stops, and only a direct
 is walked for skills, agents and commands. Pointing it at a single skill fails -- `skills/apps-ui-kit`
 is not a plugin and has no manifest of its own.
 
+The plugin has a second manifest, `plugin.json` at the root (Agent Plugins, read by OpenAI and
+Codex), that `validate` never reads. Change a shared field in both, and run
+`node tools/check-manifests.mjs`.
+
 Run `apps-plugin-sdk`'s suite after touching anything under
 `skills/apps-plugin-sdk/scripts/` or `templates/` -- it is the only thing that
 catches a broken generator, and it covers cases a grep does not: the host-provided
