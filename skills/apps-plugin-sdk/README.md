@@ -19,7 +19,7 @@ and the validator are built around those silent failures.
 
 ## Install
 
-Comes with the `onlyoffice` plugin — see [Install](../../README.md#install). On its own, copy
+Comes with the `onlyoffice-devtools` plugin — see [Install](../../README.md#install). On its own, copy
 or symlink this directory to where your agent scans for skills (for example
 `~/.claude/skills/apps-plugin-sdk/`), or hand it `SKILL.md`. It leans on the `apps-ui-kit` skill for the
 kit's own rules; without it, the agent reads the kit's READMEs from the project's

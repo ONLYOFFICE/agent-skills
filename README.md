@@ -22,16 +22,16 @@ reads.
 
 ### Claude Code
 
-Install the `onlyoffice` plugin; it stays updatable through `/plugin`, and the skills appear as
-`onlyoffice:apps-embed-sdk`, `onlyoffice:apps-plugin-sdk` and `onlyoffice:apps-ui-kit`:
+Install the `onlyoffice-devtools` plugin; it stays updatable through `/plugin`, and the skills appear as
+`onlyoffice-devtools:apps-embed-sdk`, `onlyoffice-devtools:apps-plugin-sdk` and `onlyoffice-devtools:apps-ui-kit`:
 
 ```
 /plugin marketplace add ONLYOFFICE/agent-skills
-/plugin install onlyoffice@onlyoffice-skills
+/plugin install onlyoffice-devtools@onlyoffice-skills
 ```
 
 In the VS Code extension, type `/plugins` in the chat: add `ONLYOFFICE/agent-skills` on the
-*Marketplaces* tab, then install `onlyoffice` on the *Plugins* tab. To try a local checkout
+*Marketplaces* tab, then install `onlyoffice-devtools` on the *Plugins* tab. To try a local checkout
 without installing: `claude --plugin-dir /path/to/agent-skills`.
 
 ### Cursor, Codex, GitHub Copilot and other agents

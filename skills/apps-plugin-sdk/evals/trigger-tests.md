@@ -1,7 +1,7 @@
 # Trigger tests for the `description`
 
 Twenty first messages, each sent to a fresh session with the plugin installed and nothing
-else said. Record whether the agent loaded `onlyoffice:apps-plugin-sdk` before answering —
+else said. Record whether the agent loaded `onlyoffice-devtools:apps-plugin-sdk` before answering —
 `node tools/run-triggers.mjs --skill apps-plugin-sdk --model sonnet` does that through `claude -p`. Target:
 every "should" triggers, no "should not" does, on each model the evals run on. Run three
 times per message; a message counts as triggering when it does so in at least two runs.

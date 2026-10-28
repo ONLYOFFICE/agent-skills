@@ -14,7 +14,7 @@ change needs. There is no CI yet; this is the protocol it will run.
 | Links and pins | `node tools/sync-sources.mjs --check` | a link not built on a declared host, a version literal that disagrees with a skill's `sources.json` | seconds |
 | Links, live | `node tools/sync-sources.mjs --verify` (production) or `--verify --fallback` (the stand) | a page the site no longer serves | one request per link |
 | Docs availability | `node .claude/skills/onlyoffice-docs/scripts/docs.mjs status` | whether production serves `llms.txt` and Markdown pages for every section (exit 0), only the stand does (1), or neither (2) | a few requests |
-| Token budget | `claude plugin details onlyoffice` (the installed copy) | the always-on cost of the descriptions and the on-invoke cost of each skill | seconds |
+| Token budget | `claude plugin details onlyoffice-devtools` (the installed copy) | the always-on cost of the descriptions and the on-invoke cost of each skill | seconds |
 | Behaviour | `claude plugin eval …` | whether the skills change what the agent produces — see below | model calls, dollars |
 
 ## What to run when

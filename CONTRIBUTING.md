@@ -7,7 +7,7 @@ Release mechanics — versions, names, publishing — are in [RELEASING.md](RELE
 
 Every skill lives in `skills/<name>/` and describes one ONLYOFFICE SDK or tool. `<name>`
 is kebab-case and equals the `name` in the skill's frontmatter. There is one plugin,
-`onlyoffice`, for the whole repository; a new SDK is a new skill directory plus one row in
+`onlyoffice-devtools`, for the whole repository; a new SDK is a new skill directory plus one row in
 the README table, nothing else.
 
 ## What a skill directory contains

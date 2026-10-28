@@ -22,7 +22,7 @@ StrictMode breaks the frame in development only.
 
 ## Install
 
-Comes with the `onlyoffice` plugin — see [Install](../../README.md#install). On its own, copy
+Comes with the `onlyoffice-devtools` plugin — see [Install](../../README.md#install). On its own, copy
 this directory to where your agent scans for skills (for example `~/.claude/skills/apps-embed-sdk/`),
 or hand it `SKILL.md`.
 
