@@ -13,11 +13,34 @@ install from its default branch, `main`, so what is merged into `main` is what u
 Every other branch is public too — do not push anything that may not be. Nothing is announced
 or indexed automatically.
 
+### How a release gets there
+
+The repository's origin is `git.onlyoffice.com`; `github.com/ONLYOFFICE/agent-skills` is its
+public mirror. Two workflows in `.github/workflows/` turn a version bump into a release, each
+running on one side only:
+
+1. **`create-tag.yml`, on Gitea.** A push to `main` that changes `.claude-plugin/plugin.json`
+   runs `tools/check-manifests.mjs` and tags the commit `v<version>`, unless that tag exists.
+2. The mirror carries the tag to GitHub.
+3. **`release.yml`, on GitHub.** The tag checks that it matches the manifest's version, runs
+   the offline checks of [TESTING.md](TESTING.md), runs `tools/build-plugin.mjs`, then
+   - commits `dist/` as the next commit of the `plugin` branch, a history of
+     its own that holds the plugin and nothing else, and pushes it; a build identical to the
+     branch's tip is not committed again;
+   - zips `dist/` and creates the GitHub release `v<version>` with
+     `onlyoffice-devtools-<version>.zip` attached, the archive submitted to OpenAI's directory.
+
+The `plugin` branch is what Anthropic's directory follows (*Branch or tag* in the developer
+portal) and what a marketplace entry outside this repository points at. It exists only on
+GitHub: a push mirror from Gitea that prunes refs missing on Gitea deletes it at the next sync,
+so the mirror must not prune, or must leave `plugin` alone.
+
 ## What ships
 
 The repository is the plugin's source, not the plugin. `node tools/build-plugin.mjs` builds what
-an install receives into `dist/`; OpenAI's directory takes the same files as
-`onlyoffice-devtools-<version>.zip`, made on Linux or macOS with
+an install receives into `dist/`; the release workflow zips the same files into
+`onlyoffice-devtools-<version>.zip`, the archive OpenAI's directory takes. To look at that archive
+before a release, make it on Linux or macOS the way the workflow does:
 `cd dist && zip -r -X ../onlyoffice-devtools-<version>.zip .`
 
 | Ships | Left out |
@@ -139,14 +162,17 @@ Before tagging a release:
 5a. `node tools/build-plugin.mjs` passes on the release commit, and
    `claude plugin validate dist --strict` and `claude plugin validate dist/skills --strict` pass
    on what it built.
-6. Merge into `main`, tag the merge commit `v<version>` and push the tag;
-   `git ls-remote --tags https://github.com/ONLYOFFICE/agent-skills` lists it.
+6. Merge into `main` on Gitea; `create-tag.yml` tags the merge commit `v<version>`. Once the
+   mirror has carried the tag, `release.yml` on GitHub publishes the `plugin` branch and the
+   release: `git ls-remote https://github.com/ONLYOFFICE/agent-skills refs/heads/plugin refs/tags/v<version>`
+   lists both, and the release has the zip attached.
 
 ## Not yet done
 
-- CI that runs the offline checks of [TESTING.md](TESTING.md) on every push and the cheap eval
-  cases (`--tag question --tag trigger`) on a schedule; the build cases need a Linux or macOS
-  runner, since a shell grant requires a sandbox backend. Until then every step is run by hand.
+- CI that runs the offline checks of [TESTING.md](TESTING.md) on every push, not only on a
+  release, and the cheap eval cases (`--tag question --tag trigger`) on a schedule; the build
+  cases need a Linux or macOS runner, since a shell grant requires a sandbox backend. Until then
+  a change is checked by hand before its pull request, and the eval suite before a release.
 - `skills/apps-embed-sdk/scripts/sync-sdk.mjs` derives the validator dictionaries by parsing the
   SDK's `.d.ts` files with regular expressions; a generated schema on the SDK side was
   considered and dropped (the SDK itself has no use for it), so the parser stays and must be
