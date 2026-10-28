@@ -1,7 +1,7 @@
 {
   "name": "onlyoffice",
   "displayName": "ONLYOFFICE Developer Tools",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships.",
   "author": {
     "name": "Ascensio System SIA",

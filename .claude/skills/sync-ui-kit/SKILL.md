@@ -1,17 +1,17 @@
 ---
 name: sync-ui-kit
 description: >
-  Rebuild the ui-kit skill's component manifest from the ONLYOFFICE UI kit's own metadata.
-  Use when docspace-ui-kit-react has changed and skills/ui-kit/scripts/data/kit-manifest.json
+  Rebuild the apps-ui-kit skill's component manifest from the ONLYOFFICE UI kit's own metadata.
+  Use when docspace-ui-kit-react has changed and skills/apps-ui-kit/scripts/data/kit-manifest.json
   must follow, when the kit releases a new version, when someone asks to "regenerate the kit
   manifest" or "update check-usage's view of the kit", and when
   `node tools/sync-ui-kit.mjs --from <kit> --check` fails in the release checklist.
   Repository-internal; not shipped in the plugin.
 ---
 
-# Rebuild the ui-kit manifest from the kit
+# Rebuild the apps-ui-kit manifest from the kit
 
-`skills/ui-kit/scripts/data/kit-manifest.json` is not written here. It is derived by
+`skills/apps-ui-kit/scripts/data/kit-manifest.json` is not written here. It is derived by
 `tools/sync-ui-kit.mjs` from [`docspace-ui-kit-react`](https://github.com/ONLYOFFICE/docspace-ui-kit-react):
 the `<!-- ui-kit-doc … -->` block of every component README (name, category, status, import
 form, the prop that shows and hides the component), the portal-internal modules of
@@ -28,10 +28,10 @@ the installed package, or its page on the docs site (`https://api.onlyoffice.com
   the component's README in `docspace-ui-kit-react`, then rebuild.
 - **A README without a metadata block is absent from the manifest** and announced as
   `META-MISSING`; `--strict` turns that into a failure.
-- The version the skill targets stays in `skills/ui-kit/sources.json` and is written into the
+- The version the skill targets stays in `skills/apps-ui-kit/sources.json` and is written into the
   text by `sync-sources.mjs`; this tool only reports when the kit's version has moved past it.
 - Links to the kit's documentation in the skill point at the docs site and are checked by
-  `node tools/sync-sources.mjs --skill ui-kit --check`; nothing here rewrites them.
+  `node tools/sync-sources.mjs --skill apps-ui-kit --check`; nothing here rewrites them.
 
 ## Commands
 
@@ -51,11 +51,11 @@ trees read the same.
 2. `--from <kit> --write`, then read the run: the README count, the components in the manifest,
    and any `META-MISSING`.
 3. If the kit's version moved, run the command the tool prints
-   (`node tools/sync-sources.mjs --skill ui-kit --set-version <x.y.z>`).
-4. Re-read the critical rules in `skills/ui-kit/SKILL.md` against the kit's pages. A rule the
+   (`node tools/sync-sources.mjs --skill apps-ui-kit --set-version <x.y.z>`).
+4. Re-read the critical rules in `skills/apps-ui-kit/SKILL.md` against the kit's pages. A rule the
    kit's page now states in the same words is a candidate for deletion — delete it only when
    its eval assertion still passes without it.
-5. `node skills/ui-kit/scripts/test-validator.mjs` and `node tools/sync-sources.mjs --check`.
+5. `node skills/apps-ui-kit/scripts/test-validator.mjs` and `node tools/sync-sources.mjs --check`.
 
 ## When --check fails
 

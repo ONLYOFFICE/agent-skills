@@ -10,9 +10,9 @@ and checks its work with the scripts the skill carries.
 
 | Skill | Ask for | What the agent does | Targets |
 |---|---|---|---|
-| [`embed-sdk`](skills/embed-sdk/README.md) | "embed our DocSpace file manager in the CRM", "open a document from our page in an editor frame", "why does the embedded frame answer 401" | Embeds ONLYOFFICE Apps (formerly DocSpace) into a web page with the [Embed SDK](https://api.onlyoffice.com/docspace/javascript-sdk/get-started): probes the portal, picks the mode, writes the frame config and the sign-in flow, validates the config offline | Embed SDK **2.2.0** |
-| [`plugin-sdk`](skills/plugin-sdk/README.md) | "a context menu action that converts the selected file", "a page in the sidebar listing our rooms", "my plugin installs but the item never appears" | Builds, audits and explains portal plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started): scaffolds a Vite + React project, validates it against the portal's loader, renders every surface in a browser | Plugins SDK **3.0.0**, ONLYOFFICE Apps **4.0** |
-| [`ui-kit`](skills/ui-kit/README.md) | "a settings form like the portal's", "a dialog in the DocSpace style in our admin", "the kit's labels are blank" | Builds React 19 screens in your own application with the [ONLYOFFICE UI kit](https://api.onlyoffice.com/docspace/ui-kit/getting-started): picks the components, mounts the providers, uses the prop names the kit reads, checks the result | UI kit **4.0.1** |
+| [`apps-embed-sdk`](skills/apps-embed-sdk/README.md) | "embed our DocSpace file manager in the CRM", "open a document from our page in an editor frame", "why does the embedded frame answer 401" | Embeds ONLYOFFICE Apps (formerly DocSpace) into a web page with the [Embed SDK](https://api.onlyoffice.com/docspace/javascript-sdk/get-started): probes the portal, picks the mode, writes the frame config and the sign-in flow, validates the config offline | Embed SDK **2.2.0** |
+| [`apps-plugin-sdk`](skills/apps-plugin-sdk/README.md) | "a context menu action that converts the selected file", "a page in the sidebar listing our rooms", "my plugin installs but the item never appears" | Builds, audits and explains portal plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started): scaffolds a Vite + React project, validates it against the portal's loader, renders every surface in a browser | Plugins SDK **3.0.0**, ONLYOFFICE Apps **4.0** |
+| [`apps-ui-kit`](skills/apps-ui-kit/README.md) | "a settings form like the portal's", "a dialog in the DocSpace style in our admin", "the kit's labels are blank" | Builds React 19 screens in your own application with the [ONLYOFFICE UI kit](https://api.onlyoffice.com/docspace/ui-kit/getting-started): picks the components, mounts the providers, uses the prop names the kit reads, checks the result | UI kit **4.0.1** |
 
 Every skill is a `SKILL.md` the agent reads whole, a `references/` folder it reads on demand, and
 `scripts/` it runs — Node only, no dependencies, offline except where a script says which host it
@@ -23,7 +23,7 @@ reads.
 ### Claude Code
 
 Install the `onlyoffice` plugin; it stays updatable through `/plugin`, and the skills appear as
-`onlyoffice:embed-sdk`, `onlyoffice:plugin-sdk` and `onlyoffice:ui-kit`:
+`onlyoffice:apps-embed-sdk`, `onlyoffice:apps-plugin-sdk` and `onlyoffice:apps-ui-kit`:
 
 ```
 /plugin marketplace add ONLYOFFICE/agent-skills

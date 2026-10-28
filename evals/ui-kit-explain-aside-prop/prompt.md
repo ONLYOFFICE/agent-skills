@@ -1,7 +1,7 @@
 ---
 description: Which prop opens Aside, whether ModalDialog and Tooltip share it, and where the answer comes from when nothing is installed.
 expected_outcome: Aside and ModalDialog open with `visible`, Tooltip with `isOpen`; a wrong name is ignored silently; the answer cites the docs site page under docspace/ui-kit or the README shipped in the package, and builds nothing.
-tags: [ui-kit, question]
+tags: [apps-ui-kit, question]
 max_turns: 15
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill, WebFetch]

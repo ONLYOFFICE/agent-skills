@@ -11,4 +11,4 @@ evals/results/
 
 # eval fixture installs: the fixture installs the kit from npm; a run against a pre-release build
 # installs it from a packed tarball instead, and the lockfile would then carry the operator's own path
-skills/ui-kit/evals/fixtures/consumer-app/package-lock.json
+skills/apps-ui-kit/evals/fixtures/consumer-app/package-lock.json

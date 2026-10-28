@@ -5,7 +5,7 @@ description: >
   section production does not serve yet) while working on the skills of this repository: find the
   page that states a signature, field, default, enum value, endpoint or event, print it or one
   heading of it, and check whether production serves the Markdown docs at all. Use when writing
-  or correcting a reference of embed-sdk, plugin-sdk or ui-kit, when a claim in a skill must be checked
+  or correcting a reference of apps-embed-sdk, apps-plugin-sdk or apps-ui-kit, when a claim in a skill must be checked
   against the docs, when a reference needs a docs link, when deciding whether a passage
   duplicates the docs and can become a pointer, or when someone asks "is the documentation live
   on production", "what does the docs page for X say", "find the docs page about Y".
@@ -30,7 +30,8 @@ node .claude/skills/onlyoffice-docs/scripts/docs.mjs page SDKInstance --toc     
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs                                  # offline self-test of the parsers
 ```
 
-Section aliases for `--section`: `embed-sdk`, `plugins-sdk`, `ui-kit`, `rest`, `mcp`, `docs-api`,
+Section aliases for `--section`: `apps-embed-sdk` or `embed-sdk`, `apps-plugin-sdk` or `plugins-sdk`,
+`apps-ui-kit` or `ui-kit`, `rest`, `mcp`, `docs-api`,
 `office-api`, `plugins`, `macros`, `ai`, `document-builder`, `desktop`. `--host <origin>` pins a
 site (a local docs build); `--refresh` bypasses the one-hour cache.
 
