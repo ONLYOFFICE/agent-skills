@@ -40,8 +40,8 @@ jobs:
             echo "v$version already exists"
             echo "exists=true" >> "$GITHUB_OUTPUT"
           fi
+      # Runs even when the tag exists: a version moved back to a tagged one must still agree.
       - name: Check the manifests agree on the version
-        if: steps.info.outputs.exists != 'true'
         run: node tools/check-manifests.mjs
       - name: Run the offline checks
         if: steps.info.outputs.exists != 'true'

@@ -23,8 +23,8 @@ public mirror. Two workflows in `.github/workflows/` turn a version bump into a 
 running on one side only:
 
 1. **`create-tag.yml`, on Gitea.** A push to `main` that changes `.claude-plugin/plugin.json`
-   does nothing if the tag `v<version>` exists. Otherwise it runs `tools/check-manifests.mjs`,
-   the offline checks of [TESTING.md](TESTING.md) and `tools/build-plugin.mjs`, commits `dist/`
+   runs `tools/check-manifests.mjs`, and stops there if the tag `v<version>` exists. Otherwise it
+   runs the offline checks of [TESTING.md](TESTING.md) and `tools/build-plugin.mjs`, commits `dist/`
    as the next commit of the `plugin` branch — a history of its own that holds the plugin and
    nothing else; a build identical to the branch's tip is not committed again — and pushes that
    commit and the tag `v<version>` in one atomic push: both land or neither does.
