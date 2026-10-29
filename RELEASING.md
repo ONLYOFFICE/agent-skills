@@ -7,11 +7,14 @@ release. The audience is whoever cuts a release; contributors need [CONTRIBUTING
 
 There is no registry. A Claude Code marketplace **is a git repository** with
 `.claude-plugin/marketplace.json` in it, and `/plugin marketplace add <repo>` simply
-clones that repository. This one is `github.com/ONLYOFFICE/agent-skills`, public:
-`/plugin marketplace add ONLYOFFICE/agent-skills` and `npx skills add ONLYOFFICE/agent-skills`
-install from its default branch, `main`, so what is merged into `main` is what users get.
-Every other branch is public too — do not push anything that may not be. Nothing is announced
-or indexed automatically.
+clones that repository. Users add ONLYOFFICE's,
+[ONLYOFFICE/agent-plugins](https://github.com/ONLYOFFICE/agent-plugins), whose entry for this
+plugin fetches the `plugin` branch of `github.com/ONLYOFFICE/agent-skills`; Codex reads the same
+repository's `.agents/plugins/marketplace.json`, which points at the same branch. So what a
+release publishes to `plugin` is what users get, and nothing in `agent-plugins` changes for a
+release. `npx skills add ONLYOFFICE/agent-skills` reads the skills from the default branch,
+`main`. Every branch of `github.com/ONLYOFFICE/agent-skills` is public — do not push anything
+that may not be. Nothing is announced or indexed automatically.
 
 ## What ships
 
@@ -42,7 +45,12 @@ icon it checks are the ones it ships.
 | Plugin | `onlyoffice-devtools` | `name` in both plugin manifests, and the entry in `marketplace.json` → `plugins[].name` | All three must match. This is the namespace prefix every skill is shown under (`onlyoffice-devtools:apps-embed-sdk`). One plugin covers every ONLYOFFICE SDK and tool; new SDKs become new skills, not new plugins. The ONLYOFFICE Apps MCP server is not part of it: it ships as a plugin of its own, from its own repository. |
 | Skills | `apps-embed-sdk`, `apps-plugin-sdk`, `apps-ui-kit` | `skills/<name>/SKILL.md` → `name` | Must equal the directory name. |
 
-Installation reads `/plugin install onlyoffice-devtools@onlyoffice-skills`.
+Installation reads `/plugin install onlyoffice-devtools@onlyoffice`, from the `onlyoffice`
+marketplace in `ONLYOFFICE/agent-plugins`. That marketplace's entry repeats the plugin's
+`displayName`, `description` and links, which Claude Code shows before the plugin is installed:
+a change to them here reaches the listing only when the entry there changes too. This
+repository's own marketplace, `onlyoffice-skills`, still installs the repository root as it is;
+the README does not point at it.
 
 ## Versions
 
