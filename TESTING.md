@@ -11,6 +11,7 @@ change needs. There is no CI yet; this is the protocol it will run.
 | Validator self-tests | `node skills/apps-embed-sdk/scripts/test-validator.mjs`, `node skills/apps-plugin-sdk/scripts/test-validator.mjs`, `node skills/apps-ui-kit/scripts/test-validator.mjs` | a rule the validators stopped enforcing; the apps-embed-sdk one also runs `sync-sources --check` and compares the validator's dictionaries with the pinned SDK (`--from <checkout at the tag or installed package>`, else an installed `@onlyoffice/docspace-sdk-js` up the directory chain); the apps-ui-kit one also runs `sync-ui-kit --check` | seconds |
 | Kit manifest | `node tools/sync-ui-kit.mjs --from <kit> --check` | a `skills/apps-ui-kit` manifest that no longer matches the kit's metadata — rerun with `--write`; needs a kit checkout or an installed package | seconds |
 | Docs script self-test | `node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs` | the parsers behind the internal docs script, offline | seconds |
+| Plugin manifests | `node tools/check-manifests.mjs` | `plugin.json` and `.claude-plugin/plugin.json` disagreeing on a shared field, a marketplace entry or version out of step, an OpenAI listing over its length limits or naming an icon that is not there or that a directory would refuse | seconds |
 | Links and pins | `node tools/sync-sources.mjs --check` | a link not built on a declared host, a version literal that disagrees with a skill's `sources.json` | seconds |
 | Links, live | `node tools/sync-sources.mjs --verify` (production) or `--verify --fallback` (the stand) | a page the site no longer serves | one request per link |
 | Docs availability | `node .claude/skills/onlyoffice-docs/scripts/docs.mjs status` | whether production serves `llms.txt` and Markdown pages for every section (exit 0), only the stand does (1), or neither (2) | a few requests |
@@ -29,6 +30,7 @@ node skills/apps-plugin-sdk/scripts/test-validator.mjs
 node skills/apps-ui-kit/scripts/test-validator.mjs
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs
 node tools/sync-sources.mjs --check
+node tools/check-manifests.mjs
 node tools/sync-ui-kit.mjs --from <kit> --check     # with a kit checkout or an installed package at hand
 ```
 
