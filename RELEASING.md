@@ -31,7 +31,8 @@ match one, so a new file fails the build until it is given one — decide by whe
 reads or runs it while doing the skill's job. A relative link from a shipped Markdown file to
 anything left out fails the build too. The build reads the committed files of a revision
 (`--ref`, HEAD by default), never the working tree: the same revision gives the same files on
-every OS.
+every OS. It runs `tools/check-manifests.mjs --ref` on that revision first, so the manifests and
+icon it checks are the ones it ships.
 
 ## Names
 

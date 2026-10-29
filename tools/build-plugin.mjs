@@ -18,9 +18,9 @@
  *   - per skill: SKILL.md, references/, templates/ and scripts/, less the maintainers' part of
  *     scripts/ (READMEs, self-tests, the SDK sync)
  * Every tracked file under skills/ must match a rule below, shipped or dropped: a new file fails
- * the build until it is given one. Before writing, tools/check-manifests.mjs must pass, and every
- * relative link in a shipped Markdown file must reach a shipped file (and its heading, when the
- * link names one).
+ * the build until it is given one. Before writing, tools/check-manifests.mjs must pass on the same
+ * revision, and every relative link in a shipped Markdown file must reach a shipped file (and its
+ * heading, when the link names one).
  *
  * Exit: 0 built, 1 a check failed, 2 the build could not run. No dependencies, no network.
  */
@@ -119,7 +119,7 @@ const ref = refAt === -1 ? "HEAD" : args[refAt + 1];
 if (!ref) fail("--ref needs a revision");
 
 try {
-  execFileSync(process.execPath, [path.join(ROOT, "tools", "check-manifests.mjs")], { cwd: ROOT, stdio: "inherit" });
+  execFileSync(process.execPath, [path.join(ROOT, "tools", "check-manifests.mjs"), "--ref", ref], { cwd: ROOT, stdio: "inherit" });
 } catch {
   process.exit(1);
 }

@@ -5,7 +5,11 @@
  * OpenAI listing lives under extensions["com.openai"]) and .claude-plugin/plugin.json (read by
  * Claude Code and Anthropic's directory). The marketplace manifest names the plugin a third time.
  *
- *   node tools/check-manifests.mjs
+ *   node tools/check-manifests.mjs              # the working tree
+ *   node tools/check-manifests.mjs --ref v0.2.0 # the committed files of a tag or any other revision
+ *
+ * With --ref every file it reads, the manifests and the icons they name, comes from that
+ * revision; tools/build-plugin.mjs passes its own, so the check vouches for what the build ships.
  *
  * Checks:
  *   - the fields both plugin manifests carry are equal: name, version, description, author,
@@ -29,7 +33,8 @@
  * Exit: 0 in step, 1 a mismatch, 2 a manifest that cannot be read. No dependencies, no network.
  */
 
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,9 +62,30 @@ function rel(file) {
   return path.relative(ROOT, file).replaceAll("\\", "/");
 }
 
+const args = process.argv.slice(2);
+const refAt = args.indexOf("--ref");
+const REF = refAt === -1 ? null : args[refAt + 1];
+if (refAt !== -1 && !REF) fail("--ref needs a revision");
+if (REF) {
+  try {
+    execFileSync("git", ["rev-parse", "--verify", "--quiet", `${REF}^{commit}`], { cwd: ROOT, stdio: "ignore" });
+  } catch {
+    fail(`${REF} is not a revision of this repository`);
+  }
+}
+
+// The file's bytes, from REF when one is given and from the working tree otherwise; null when there is no such file.
+function load(file) {
+  try {
+    if (REF) return execFileSync("git", ["cat-file", "blob", `${REF}:${rel(file)}`], { cwd: ROOT, stdio: ["ignore", "pipe", "ignore"] });
+    return readFileSync(file);
+  } catch {
+    return null;
+  }
+}
+
 // Format and pixel size from the file's own header; null when it is none of the five formats.
-function imageInfo(file) {
-  const b = readFileSync(file);
+function imageInfo(b) {
   if (b.length > 24 && b.readUInt32BE(0) === 0x89504e47) return { format: "png", width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
   if (b.length > 10 && b.toString("ascii", 0, 4) === "GIF8") return { format: "gif", width: b.readUInt16LE(6), height: b.readUInt16LE(8) };
   if (b.length > 4 && b[0] === 0xff && b[1] === 0xd8) {
@@ -95,11 +121,12 @@ function iconProblems(asset, rules) {
   if (rules.dotSlash && !asset.startsWith("./")) return [`must be a path starting with ./`];
   const file = path.resolve(PLUGIN, asset);
   const inside = path.relative(PLUGIN, file);
-  if (inside.startsWith("..") || path.isAbsolute(inside) || !existsSync(file)) return [`${asset} is not in the plugin`];
-  const info = imageInfo(file);
+  const data = inside.startsWith("..") || path.isAbsolute(inside) ? null : load(file);
+  if (!data) return [`${asset} is not in the plugin`];
+  const info = imageInfo(data);
   if (!info || !rules.formats.includes(info.format)) return [`${asset} is ${info?.format ?? "not an image"}; accepted: ${rules.formats.join(", ")}`];
   const found = [];
-  const bytes = statSync(file).size;
+  const bytes = data.length;
   if (bytes > rules.bytes) found.push(`${asset} is ${bytes} bytes, the limit is ${rules.bytes}`);
   if (!rules.square) return found;
   if (!info.width || !info.height) return [...found, `${asset}: its size cannot be read`];
@@ -110,9 +137,10 @@ function iconProblems(asset, rules) {
 }
 
 function read(file) {
-  if (!existsSync(file)) fail(`${rel(file)} not found`);
+  const data = load(file);
+  if (!data) fail(`${rel(file)} not found${REF ? ` at ${REF}` : ""}`);
   try {
-    return JSON.parse(readFileSync(file, "utf8"));
+    return JSON.parse(data.toString("utf8"));
   } catch (error) {
     fail(`${rel(file)} is not valid JSON (${error.message.split("\n")[0]})`);
   }
@@ -172,4 +200,4 @@ if (claude.icon !== undefined) {
 
 for (const p of problems) console.log(`MISMATCH  ${p}`);
 if (problems.length) process.exit(1);
-console.log(`OK: ${rel(PORTABLE)}, ${rel(CLAUDE)} and ${rel(MARKETPLACE)} agree on ${claude.name} ${claude.version}`);
+console.log(`OK: ${rel(PORTABLE)}, ${rel(CLAUDE)} and ${rel(MARKETPLACE)} agree on ${claude.name} ${claude.version}${REF ? ` at ${REF}` : ""}`);
