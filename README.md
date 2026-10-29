@@ -22,25 +22,46 @@ Every skill is a `SKILL.md` the agent reads whole, a `references/` folder it rea
 
 ### Claude Code
 
-Install the `onlyoffice-devtools` plugin; it stays updatable through `/plugin`, and the skills appear as
-`onlyoffice-devtools:apps-embed-sdk`, `onlyoffice-devtools:apps-plugin-sdk` and `onlyoffice-devtools:apps-ui-kit`:
+Install the `onlyoffice-devtools` plugin from the ONLYOFFICE marketplace,
+[ONLYOFFICE/agent-plugins](https://github.com/ONLYOFFICE/agent-plugins); it stays updatable through
+`/plugin`, and the skills appear as `onlyoffice-devtools:apps-embed-sdk`,
+`onlyoffice-devtools:apps-plugin-sdk` and `onlyoffice-devtools:apps-ui-kit`:
 
 ```
-/plugin marketplace add ONLYOFFICE/agent-skills
-/plugin install onlyoffice-devtools@onlyoffice-skills
+/plugin marketplace add ONLYOFFICE/agent-plugins
+/plugin install onlyoffice-devtools@onlyoffice
 ```
 
-In the VS Code extension, type `/plugins` in the chat: add `ONLYOFFICE/agent-skills` on the
-*Marketplaces* tab, then install `onlyoffice-devtools` on the *Plugins* tab. To try a local checkout
+In the VS Code extension, type `/plugins` in the chat: add `ONLYOFFICE/agent-plugins` on the
+*Marketplaces* tab, then install `onlyoffice-devtools` on the *Plugins* tab.
+`/plugin update onlyoffice-devtools@onlyoffice` installs a newer release. To try a local checkout
 without installing: `claude --plugin-dir /path/to/agent-skills`.
 
-### Cursor, Codex, GitHub Copilot and other agents
+### Codex and the ChatGPT desktop app
+
+```
+codex plugin marketplace add ONLYOFFICE/agent-plugins
+```
+
+Then install `onlyoffice-devtools` from the `ONLYOFFICE` marketplace in the plugin list.
+`codex plugin marketplace upgrade onlyoffice` fetches a newer release.
+
+### GitHub Copilot CLI
+
+Copilot CLI reads the same marketplace as Claude Code:
+
+```
+copilot plugin marketplace add ONLYOFFICE/agent-plugins
+copilot plugin install onlyoffice-devtools@onlyoffice
+```
+
+### Cursor and other agents
 
 Clone the repository and copy `skills/*` into a directory your agent scans. `.agents/skills/` in
 a project is read by Cursor, Codex and Copilot alike:
 
 ```bash
-git clone https://github.com/ONLYOFFICE/agent-skills
+git clone --branch plugin --depth 1 https://github.com/ONLYOFFICE/agent-skills
 mkdir -p .agents/skills
 cp -r agent-skills/skills/* .agents/skills/
 ```
