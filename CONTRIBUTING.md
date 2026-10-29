@@ -42,6 +42,7 @@ sources.json             the external hosts named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at another docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
                          sync-ui-kit.mjs: derives skills/apps-ui-kit's component manifest from the UI kit's own metadata
+                         build-plugin.mjs: the plugin as it ships, into dist/, which OpenAI's directory takes as a zip
                          check-manifests.mjs: the two plugin manifests and the marketplace entry agree; the OpenAI listing fits its limits
                          run-triggers.mjs: sends a skill's evals/trigger-tests.md through `claude -p` and reports which messages loaded it
 evals/                   the `claude plugin eval` suite: one directory per case (prompt.md + graders/), results/ gitignored
@@ -134,6 +135,7 @@ node skills/<name>/scripts/test-validator.mjs                  # for every skill
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs      # the internal docs script's parsers
 node tools/sync-sources.mjs --check                            # every link and pinned version traces to sources.json
 node tools/check-manifests.mjs                                 # both plugin manifests and the marketplace entry agree
+node tools/build-plugin.mjs                                    # every file has a rule, every link in what ships resolves
 node tools/sync-ui-kit.mjs --from <kit> --check                # the apps-ui-kit manifest matches the kit (a checkout or an installed package)
 ```
 

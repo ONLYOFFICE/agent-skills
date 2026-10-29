@@ -13,6 +13,26 @@ install from its default branch, `main`, so what is merged into `main` is what u
 Every other branch is public too — do not push anything that may not be. Nothing is announced
 or indexed automatically.
 
+## What ships
+
+The repository is the plugin's source, not the plugin. `node tools/build-plugin.mjs` builds what
+an install receives into `dist/`; OpenAI's directory takes the same files as
+`onlyoffice-devtools-<version>.zip`, made on Linux or macOS with
+`cd dist && zip -r -X ../onlyoffice-devtools-<version>.zip .`
+
+| Ships | Left out |
+|---|---|
+| `.claude-plugin/plugin.json`, `plugin.json`, `assets/icon.png`, `LICENSE` | `.claude-plugin/marketplace.json`, `.claude/`, `tools/`, `evals/`, `sources.json`, `CONTRIBUTING.md`, `RELEASING.md`, `TESTING.md` |
+| `README.md`, made from the root README: the skills table links each `SKILL.md`, the line for contributors is dropped | |
+| per skill: `SKILL.md`, `references/`, `templates/`, `scripts/` | per skill: `README.md`, `sources.json`, `evals/`; in `scripts/` every `README.md`, `test-validator.mjs`, `validator-tests/` and `embed-sdk`'s `sync-sdk.mjs` |
+
+The rules are in `SKILL_RULES` at the top of the script. Every tracked file under `skills/` must
+match one, so a new file fails the build until it is given one — decide by whether an agent
+reads or runs it while doing the skill's job. A relative link from a shipped Markdown file to
+anything left out fails the build too. The build reads the committed files of a revision
+(`--ref`, HEAD by default), never the working tree: the same revision gives the same files on
+every OS.
+
 ## Names
 
 | What | Value | Where | Notes |
@@ -115,6 +135,9 @@ Before tagging a release:
 4. `version` in both plugin manifests and `metadata.version` in `marketplace.json` are bumped
    and equal (`node tools/check-manifests.mjs`).
 5. `metadata.sdk-version` in every `SKILL.md` matches the "Targets" column in the README.
+5a. `node tools/build-plugin.mjs` passes on the release commit, and
+   `claude plugin validate dist --strict` and `claude plugin validate dist/skills --strict` pass
+   on what it built.
 6. Merge into `main`, tag the merge commit `v<version>` and push the tag;
    `git ls-remote --tags https://github.com/ONLYOFFICE/agent-skills` lists it.
 
