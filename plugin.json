@@ -36,7 +36,7 @@
         "composerIcon": "./assets/icon.png",
         "logo": "./assets/icon.png",
         "defaultPrompt": [
-          "Embed our DocSpace file manager in the CRM page",
+          "Embed the ONLYOFFICE Apps file manager in our CRM page",
           "Add a context menu action to ONLYOFFICE Apps that converts the selected file",
           "Build a settings form in our admin with the ONLYOFFICE UI kit"
         ]
