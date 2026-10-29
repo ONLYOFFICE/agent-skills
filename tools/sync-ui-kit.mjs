@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Derives skills/ui-kit/scripts/data/kit-manifest.json from the UI kit's own metadata: the
+ * Derives skills/apps-ui-kit/scripts/data/kit-manifest.json from the UI kit's own metadata: the
  * ui-kit-doc block of every component README, the portal-internal modules of
  * docs/public-api.md and the root-barrel snapshot in docs/plugin-surface.json.
  *
@@ -20,7 +20,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SKILL = path.join(ROOT, "skills", "ui-kit");
+const SKILL = path.join(ROOT, "skills", "apps-ui-kit");
 const MANIFEST = path.join(SKILL, "scripts", "data", "kit-manifest.json");
 const SKILL_SOURCES = path.join(SKILL, "sources.json");
 const ROOT_SOURCES = path.join(ROOT, "sources.json");
@@ -258,7 +258,7 @@ if (mode === "write") {
   mkdirSync(path.dirname(MANIFEST), { recursive: true });
   writeFileSync(MANIFEST, serialised);
   if (manifest.kitVersion !== skillSources.version) {
-    say(`version ${skillSources.version} -> ${manifest.kitVersion}: run \`node tools/sync-sources.mjs --skill ui-kit --set-version ${manifest.kitVersion}\``);
+    say(`version ${skillSources.version} -> ${manifest.kitVersion}: run \`node tools/sync-sources.mjs --skill apps-ui-kit --set-version ${manifest.kitVersion}\``);
   }
 } else if (!existsSync(MANIFEST)) {
   report("MISSING", posix(path.relative(ROOT, MANIFEST)), "no manifest; run --write");
@@ -269,7 +269,7 @@ if (mode === "check" && manifest.kitVersion !== skillSources.version) {
   report(
     "VERSION",
     posix(path.relative(ROOT, SKILL_SOURCES)),
-    `says ${skillSources.version}, the kit is ${manifest.kitVersion}: run \`node tools/sync-sources.mjs --skill ui-kit --set-version ${manifest.kitVersion}\``,
+    `says ${skillSources.version}, the kit is ${manifest.kitVersion}: run \`node tools/sync-sources.mjs --skill apps-ui-kit --set-version ${manifest.kitVersion}\``,
   );
 }
 

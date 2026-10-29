@@ -25,11 +25,11 @@ claude plugin validate skills --strict   # the SKILL.md files; the line above ne
 
 Both forms are needed because `validate` picks its mode from the path: given a directory that
 holds a `.claude-plugin/` it validates the manifest and stops, and only a directory without one
-is walked for skills, agents and commands. Pointing it at a single skill fails -- `skills/ui-kit`
+is walked for skills, agents and commands. Pointing it at a single skill fails -- `skills/apps-ui-kit`
 is not a plugin and has no manifest of its own.
 
-Run `plugin-sdk`'s suite after touching anything under
-`skills/plugin-sdk/scripts/` or `templates/` -- it is the only thing that
+Run `apps-plugin-sdk`'s suite after touching anything under
+`skills/apps-plugin-sdk/scripts/` or `templates/` -- it is the only thing that
 catches a broken generator, and it covers cases a grep does not: the host-provided
 externals are written as regexes (`/^@onlyoffice\/apps-ui-kit(\/.*)?$/`) in
 `templates/vite.config`, `evals/fixtures/working-plugin/vite.config.ts` and
@@ -40,13 +40,13 @@ all three.
 
 Two skills describe `@onlyoffice/apps-ui-kit`, and each is kept honest by a different tool.
 
-- **`skills/plugin-sdk`** documents it for plugin authors, from the npm package and
+- **`skills/apps-plugin-sdk`** documents it for plugin authors, from the npm package and
   hand-written prose in `references/ui-kit.md`. The kit carries a `sync-ui-kit-reference`
   skill that reports what has drifted in that file and applies the fixes -- package
   specifier, tarball version, dist paths, component names, prop defaults. Run it from
-  `docspace-ui-kit-react` rather than re-deriving the answer. It reads `plugin-sdk` and
+  `docspace-ui-kit-react` rather than re-deriving the answer. It reads `apps-plugin-sdk` and
   nothing else.
-- **`skills/ui-kit`** documents it for applications of their own. It carries no copies of the
+- **`skills/apps-ui-kit`** documents it for applications of their own. It carries no copies of the
   kit's pages: an agent reads a component's README inside the installed package or its page on
   the docs site (`https://api.onlyoffice.com/docspace/ui-kit/`). Its manifest
   (`scripts/data/kit-manifest.json`) is derived from the kit's metadata, and `node
@@ -56,5 +56,5 @@ Two skills describe `@onlyoffice/apps-ui-kit`, and each is kept honest by a diff
   against the kit's source before changing it.
 
 The package specifier is shared with DocSpace-client's plugin shim, which throws on any
-specifier it does not know: `UI_KIT_PACKAGE` in `plugin-sdk`'s `scripts/contract.mjs` has to
+specifier it does not know: `UI_KIT_PACKAGE` in `apps-plugin-sdk`'s `scripts/contract.mjs` has to
 equal the one key the shim holds for the kit, and changes only when the shim does.

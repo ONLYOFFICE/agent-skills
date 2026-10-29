@@ -18,8 +18,8 @@ or indexed automatically.
 | What | Value | Where | Notes |
 |---|---|---|---|
 | Marketplace | `onlyoffice-skills` | `marketplace.json` → `name` | Goes after `@` in `/plugin install`. Kebab-case. **Do not rename to `agent-skills`** — it is on Claude Code's reserved list (with `claude-*`, `anthropic-*`, `agent-skills`, `anthropic-agent-skills`, …); the client rejects such marketplaces at `marketplace add`, and `claude plugin validate` does not catch it. |
-| Plugin | `onlyoffice` | `plugin.json` → `name`, and the entry in `marketplace.json` → `plugins[].name` | The two must match. This is the namespace prefix every skill is shown under (`onlyoffice:embed-sdk`). One plugin covers every ONLYOFFICE SDK and tool; new SDKs become new skills, not new plugins. The ONLYOFFICE Apps MCP server is not part of it: it ships as a plugin of its own, from its own repository. |
-| Skills | `embed-sdk`, `plugin-sdk`, `ui-kit` | `skills/<name>/SKILL.md` → `name` | Must equal the directory name. |
+| Plugin | `onlyoffice` | `plugin.json` → `name`, and the entry in `marketplace.json` → `plugins[].name` | The two must match. This is the namespace prefix every skill is shown under (`onlyoffice:apps-embed-sdk`). One plugin covers every ONLYOFFICE SDK and tool; new SDKs become new skills, not new plugins. The ONLYOFFICE Apps MCP server is not part of it: it ships as a plugin of its own, from its own repository. |
+| Skills | `apps-embed-sdk`, `apps-plugin-sdk`, `apps-ui-kit` | `skills/<name>/SKILL.md` → `name` | Must equal the directory name. |
 
 Installation reads `/plugin install onlyoffice@onlyoffice-skills`.
 
@@ -37,23 +37,23 @@ release. Semver: new skill or breaking rewrite of one → minor while `0.x`; cor
 
 **Target SDK version** — the SDK release a skill describes. Lives in each skill's
 `SKILL.md` frontmatter as `metadata.sdk-version`, and is repeated in prose in the root
-README (the "Targets" column of the skills table). For `plugin-sdk` the SDK/DocSpace pair
-is also stated in `skills/plugin-sdk/references/plugins/scopes.md`. When an SDK is released:
+README (the "Targets" column of the skills table). For `apps-plugin-sdk` the SDK/DocSpace pair
+is also stated in `skills/apps-plugin-sdk/references/plugins/scopes.md`. When an SDK is released:
 
-- `embed-sdk`: `node tools/sync-sources.mjs --skill embed-sdk --set-version <x.y.z>` (moves
+- `apps-embed-sdk`: `node tools/sync-sources.mjs --skill apps-embed-sdk --set-version <x.y.z>` (moves
   `sdk-version`, the pinned-facts line, the validator header and the raw GitHub links
-  together), then `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK checkout or
+  together), then `node skills/apps-embed-sdk/scripts/sync-sdk.mjs --from <SDK checkout or
   node_modules/@onlyoffice/docspace-sdk-js> --write` (regenerates the validator's
   dictionaries from the types), then read the SDK changelog and revise the references that
   describe behaviour (`config-reference.md` traps, `methods.md`, `events.md`, mode files).
   Finish with `--verify` on the links and the README table.
-- `plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
+- `apps-plugin-sdk`: update `scripts/contract.mjs` (the portal contract, imported by both
   generator and validator), the version pair in `references/plugins/scopes.md` and, on a new
   SDK major, `SDK_RANGE` in `scripts/generator/project-files.mjs`; if the
   kit changed, move `UI_KIT_RANGE` in `scripts/generator/project-files.mjs` with the range the
   portal installs and update `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
   validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.
-- `ui-kit`: the target is a release of the kit itself. Pull `docspace-ui-kit-react` to the
+- `apps-ui-kit`: the target is a release of the kit itself. Pull `docspace-ui-kit-react` to the
   released revision (or install the released package) and run
   `node tools/sync-ui-kit.mjs --from <kit> --write`, which rebuilds
   `scripts/data/kit-manifest.json`. If the kit's `package.json` version moved, the run prints
@@ -72,16 +72,16 @@ Before tagging a release:
    Two commands, not one: the tool picks its mode from the path, so a directory holding a
    `.claude-plugin/` is validated as a manifest and nothing under it is read. The `.` form alone
    has never checked a `SKILL.md`, which is most of what a release changes.
-2. `node skills/embed-sdk/scripts/test-validator.mjs`,
-   `node skills/plugin-sdk/scripts/test-validator.mjs` and
-   `node skills/ui-kit/scripts/test-validator.mjs` pass. Run the last one once more with
-   `--kit-project <dir>`, naming a project that has the kit installed — the `ui-kit` eval
-   fixture after its install will do: that type-checks `skills/ui-kit/templates/*` against the
+2. `node skills/apps-embed-sdk/scripts/test-validator.mjs`,
+   `node skills/apps-plugin-sdk/scripts/test-validator.mjs` and
+   `node skills/apps-ui-kit/scripts/test-validator.mjs` pass. Run the last one once more with
+   `--kit-project <dir>`, naming a project that has the kit installed — the `apps-ui-kit` eval
+   fixture after its install will do: that type-checks `skills/apps-ui-kit/templates/*` against the
    kit's own types, which the offline run cannot reach. The templates are copied into
    projects verbatim, so a prop the kit renamed breaks every one of them.
 2a. `node tools/sync-sources.mjs --verify` passes: every link traces to a `sources.json`,
-   every pinned version matches, every source URL answers. For `embed-sdk` also
-   `node skills/embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`; for `ui-kit`,
+   every pinned version matches, every source URL answers. For `apps-embed-sdk` also
+   `node skills/apps-embed-sdk/scripts/sync-sdk.mjs --from <SDK> --check`; for `apps-ui-kit`,
    `node tools/sync-ui-kit.mjs --from <kit> --check --strict` — the manifest must match the
    released kit, and `--strict` additionally fails when a component README upstream has lost
    its metadata block, which would drop that component from the manifest.
@@ -97,9 +97,9 @@ Before tagging a release:
    `claude plugin eval . --json evals/results/release.json --threshold 0.8 --trust-plugin --no-publish --allow-tools Write Edit Bash WebFetch`
    (the `heavy` cases need the network for npm; run them once, `--tag heavy`). Pin `--model`
    and `--judge-model` in the notes so the number is reproducible. The per-skill A/B
-   protocols ([embed-sdk](skills/embed-sdk/evals/README.md),
-   [plugin-sdk](skills/plugin-sdk/evals/README.md),
-   [ui-kit](skills/ui-kit/evals/README.md)) are for iterating on a skill, not a
+   protocols ([apps-embed-sdk](skills/apps-embed-sdk/evals/README.md),
+   [apps-plugin-sdk](skills/apps-plugin-sdk/evals/README.md),
+   [apps-ui-kit](skills/apps-ui-kit/evals/README.md)) are for iterating on a skill, not a
    release gate.
 4. `version` in `plugin.json` and `metadata.version` in `marketplace.json` are bumped
    and equal.
@@ -112,9 +112,9 @@ Before tagging a release:
 - CI that runs the offline checks of [TESTING.md](TESTING.md) on every push and the cheap eval
   cases (`--tag question --tag trigger`) on a schedule; the build cases need a Linux or macOS
   runner, since a shell grant requires a sandbox backend. Until then every step is run by hand.
-- `skills/embed-sdk/scripts/sync-sdk.mjs` derives the validator dictionaries by parsing the
+- `skills/apps-embed-sdk/scripts/sync-sdk.mjs` derives the validator dictionaries by parsing the
   SDK's `.d.ts` files with regular expressions; a generated schema on the SDK side was
   considered and dropped (the SDK itself has no use for it), so the parser stays and must be
   re-checked when the type declarations change shape.
-- `sources.json` knows one version per skill; `plugin-sdk` also pins a DocSpace version
+- `sources.json` knows one version per skill; `apps-plugin-sdk` also pins a DocSpace version
   (`docspace-version` in its frontmatter) that the tooling does not track yet.

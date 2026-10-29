@@ -33,20 +33,20 @@ naming the SDK — not as a summary of the contents.
 ```
 .claude-plugin/          plugin + marketplace manifests
 .claude/skills/          repository-internal skills, not shipped in the plugin:
-                         sync-sources (links and versions), sync-ui-kit (the ui-kit manifest),
+                         sync-sources (links and versions), sync-ui-kit (the apps-ui-kit manifest),
                          onlyoffice-docs (read the docs site as Markdown while writing references)
 sources.json             the external hosts named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at another docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
-                         sync-ui-kit.mjs: derives skills/ui-kit's component manifest from the UI kit's own metadata
+                         sync-ui-kit.mjs: derives skills/apps-ui-kit's component manifest from the UI kit's own metadata
                          run-triggers.mjs: sends a skill's evals/trigger-tests.md through `claude -p` and reports which messages loaded it
 evals/                   the `claude plugin eval` suite: one directory per case (prompt.md + graders/), results/ gitignored
-skills/embed-sdk/        references: config-reference (fields by mode), one file per mode, methods, events, editor automation,
+skills/apps-embed-sdk/   references: config-reference (fields by mode), one file per mode, methods, events, editor automation,
                          auth recipes, testing, framework recipes; scripts: probe-portal, validate-config, sync-sdk
-skills/plugin-sdk/       references: build and audit workflows, plugins/ items/ components/ react/ (a page per SDK type),
+skills/apps-plugin-sdk/  references: build and audit workflows, plugins/ items/ components/ react/ (a page per SDK type),
                          bundling, portal behaviour, styles, the UI kit in a plugin, REST API, SDK 2 plugins;
                          scripts: generate, validate, preview, contract.mjs; templates: Vite/TS config for generated projects
-skills/ui-kit/           references: setup, choosing, forms, overlays, lists, theming, i18n, testing, public API, troubleshooting;
+skills/apps-ui-kit/      references: setup, choosing, forms, overlays, lists, theming, i18n, testing, public API, troubleshooting;
                          scripts: check-usage and data/kit-manifest.json; templates: the entry point and the providers
 ```
 
@@ -60,15 +60,15 @@ a correction commit names what was checked ("Correct eight reference claims agai
 like — a blank page, an unsorted list, an item that never appears — so the agent can
 recognise it when debugging.
 
-**Where a fact is written — once.** In `plugin-sdk`, on the page of the SDK type it belongs
+**Where a fact is written — once.** In `apps-plugin-sdk`, on the page of the SDK type it belongs
 to — under `plugins/`, `items/`, `components/` or `react/`, each page named after its type
 without the `I`, in kebab-case (`IInfoPanelItem` → `references/items/info-panel-item.md`); the
 topical files at the root hold what belongs to no single type and link to those pages rather
-than restating them, and `SKILL.md` links every page directly. In `ui-kit`, in the kit: every
+than restating them, and `SKILL.md` links every page directly. In `apps-ui-kit`, in the kit: every
 component's behaviour lives in its README inside `docspace-ui-kit-react`, which ships in the
 package and on the docs site, so a fault in a component page is corrected upstream and the skill
 keeps only what no component page can hold — which component to choose, how the pieces compose,
-the rules an agent breaks without being told. In `embed-sdk`, `config-reference.md` keeps only
+the rules an agent breaks without being told. In `apps-embed-sdk`, `config-reference.md` keeps only
 what the SDK's types do not say — defaults, which mode reads a field, traps — and the generated
 dictionaries of the validator carry the rest.
 
@@ -81,7 +81,7 @@ build of the docs, move the whole plugin there and back before committing:
 
 ```sh
 node tools/sync-sources.mjs --host apiSite=<origin of the staging site or local build>   # every link of every skill moves there
-node tools/sync-sources.mjs --skill plugin-sdk --verify                                  # one request per link
+node tools/sync-sources.mjs --skill apps-plugin-sdk --verify                                  # one request per link
 node tools/sync-sources.mjs --host apiSite=<production origin>                           # back, so git status shows no change
 ```
 
@@ -106,7 +106,7 @@ work; a check both runs pass is a passage that can probably go.
 
 A rule enters `SKILL.md` only with an eval assertion behind it: the file is loaded whole on
 every trigger, so a new trap goes on the component's page upstream or into a reference first.
-`ui-kit` keeps a budget of 175 lines for its `SKILL.md`; the entry condition, not the ceiling,
+`apps-ui-kit` keeps a budget of 175 lines for its `SKILL.md`; the entry condition, not the ceiling,
 is what keeps it small. Its `evals/README.md` records why each rule the kit's own pages also
 state still stays.
 
@@ -129,7 +129,7 @@ claude plugin validate skills --strict                         # the SKILL.md fi
 node skills/<name>/scripts/test-validator.mjs                  # for every skill that has a validator
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs      # the internal docs script's parsers
 node tools/sync-sources.mjs --check                            # every link and pinned version traces to sources.json
-node tools/sync-ui-kit.mjs --from <kit> --check                # the ui-kit manifest matches the kit (a checkout or an installed package)
+node tools/sync-ui-kit.mjs --from <kit> --check                # the apps-ui-kit manifest matches the kit (a checkout or an installed package)
 ```
 
 For a content change, also the cheap behaviour suite — [TESTING.md](TESTING.md) has the full

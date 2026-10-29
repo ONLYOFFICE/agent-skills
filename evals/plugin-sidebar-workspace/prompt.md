@@ -1,7 +1,7 @@
 ---
 description: The full plugin build - an ArticleNavigation page with a room list and a people view, a Settings page, an EventListener and an ArticleButton, built and validated to dist/plugin.zip.
 expected_outcome: ./ops-workspace holds a module plugin (runtime module, default export) with ArticleNavigation, Settings, EventListener and ArticleButton declared and registered, built with Vite and packed to dist/plugin.zip, validated with validate-plugin.mjs.
-tags: [plugin-sdk, build, heavy]
+tags: [apps-plugin-sdk, build, heavy]
 max_turns: 150
 timeout_seconds: 3600
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]

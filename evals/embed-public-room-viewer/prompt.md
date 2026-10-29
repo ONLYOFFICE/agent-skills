@@ -1,7 +1,7 @@
 ---
 description: Documents for anonymous visitors - a public room listing and a read-only viewer in a modal, share token kept out of the source.
 expected_outcome: index.html + app.js + server.js + REPORT.md; the listing is initPublicRoom (id + requestToken) or a manager over /rooms/share; the token comes from the server; the viewer opens by file id with the same token and is destroyed on close; REPORT.md names the allow-list and says the portal version was not verified.
-tags: [embed-sdk, build]
+tags: [apps-embed-sdk, build]
 max_turns: 80
 timeout_seconds: 1800
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash, WebFetch]
