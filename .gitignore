@@ -6,6 +6,10 @@ node_modules/
 skills/*-workspace/
 .plugin-preview/
 
+# tools/build-plugin.mjs writes the plugin as it ships here
+dist/
+/onlyoffice-devtools-*.zip
+
 # claude plugin eval writes its runs here
 evals/results/
 
