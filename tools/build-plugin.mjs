@@ -125,11 +125,15 @@ try {
 }
 
 const tracked = git(["ls-tree", "-r", "-z", "--name-only", ref]).toString("utf8").split("\0").filter(Boolean);
-const ship = [...ROOT_FILES, "README.md"];
+const ship = [];
 const problems = [];
 const dropped = new Map();
 
-for (const file of ROOT_FILES) if (!tracked.includes(file)) problems.push(`${file} is not committed at ${ref}`);
+// A missing file is a problem to report with the rest, not a blob to read.
+for (const file of [...ROOT_FILES, "README.md"]) {
+  if (tracked.includes(file)) ship.push(file);
+  else problems.push(`${file} is not committed at ${ref}`);
+}
 for (const file of tracked) {
   const match = file.match(/^skills\/([^/]+)\/(.+)$/);
   if (!match) continue;
@@ -140,13 +144,15 @@ for (const file of tracked) {
 }
 
 const blobs = readBlobs(ref, ship);
-let readme = blobs.get("README.md").toString("utf8");
-for (const [pattern, replacement] of README_EDITS) {
-  if (!pattern.test(readme)) problems.push(`README.md: ${pattern} no longer matches; update README_EDITS`);
-  pattern.lastIndex = 0;
-  readme = readme.replace(pattern, replacement);
+if (blobs.has("README.md")) {
+  let readme = blobs.get("README.md").toString("utf8");
+  for (const [pattern, replacement] of README_EDITS) {
+    if (!pattern.test(readme)) problems.push(`README.md: ${pattern} no longer matches; update README_EDITS`);
+    pattern.lastIndex = 0;
+    readme = readme.replace(pattern, replacement);
+  }
+  blobs.set("README.md", Buffer.from(readme, "utf8"));
 }
-blobs.set("README.md", Buffer.from(readme, "utf8"));
 problems.push(...brokenLinks(blobs));
 
 for (const p of problems) console.log(`FAIL  ${p}`);
