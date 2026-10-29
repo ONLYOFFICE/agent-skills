@@ -2,7 +2,7 @@
 /**
  * Builds the plugin as it ships: the files an agent or a directory reads, and nothing that only
  * maintains them. The repository is the plugin's source; this is what an install receives, what
- * goes to the `plugin` branch and, zipped, to OpenAI's directory.
+ * goes to the `plugin` branch and, zipped by the release workflow, to OpenAI's directory.
  *
  *   node tools/build-plugin.mjs              # from HEAD
  *   node tools/build-plugin.mjs --ref v0.2.0 # from a tag or any other revision
