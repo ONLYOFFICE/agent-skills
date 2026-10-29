@@ -36,40 +36,44 @@ jobs:
           fi
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-      - name: Run the offline checks
-        run: |
-          node skills/apps-embed-sdk/scripts/test-validator.mjs
-          node skills/apps-plugin-sdk/scripts/test-validator.mjs
-          node skills/apps-ui-kit/scripts/test-validator.mjs
-          node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs
-          node tools/sync-sources.mjs --check
       - name: Build the plugin
         run: node tools/build-plugin.mjs
-      - name: Pack the zip for OpenAI's directory
-        run: cd dist && zip -r -X -q "$GITHUB_WORKSPACE/${{ steps.info.outputs.name }}-${{ steps.info.outputs.version }}.zip" .
-      - name: Publish the plugin branch
+      # create-tag.yml on Gitea publishes the plugin branch together with the tag; the mirror
+      # carries both. The zip must hold what the branch holds, so the build is compared with it.
+      # The tag may land on GitHub before the branch does, so a missing or older branch is
+      # waited for before it fails the release.
+      - name: Check the plugin branch holds this build
         env:
           DIR: dist
-          MESSAGE: ${{ steps.info.outputs.name }} ${{ steps.info.outputs.version }}, built from ${{ github.ref_name }} (${{ github.sha }})
-          GIT_AUTHOR_NAME: github-actions[bot]
-          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-          GIT_COMMITTER_NAME: github-actions[bot]
-          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          ATTEMPTS: 10
+          DELAY: 30
         run: |
-          parent=""
-          if git ls-remote --exit-code --heads origin "$PLUGIN_BRANCH" > /dev/null; then
-            git fetch --no-tags --depth=1 origin "$PLUGIN_BRANCH"
-            parent="$(git rev-parse FETCH_HEAD)"
-          fi
           export GIT_INDEX_FILE="$RUNNER_TEMP/plugin-index"
           (cd "$DIR" && git --git-dir="$GITHUB_WORKSPACE/.git" --work-tree=. add --all --force .)
           tree="$(git write-tree)"
-          if [ -n "$parent" ] && [ "$(git rev-parse "$parent^{tree}")" = "$tree" ]; then
-            echo "$PLUGIN_BRANCH already holds this build"
-            exit 0
+          for attempt in $(seq "$ATTEMPTS"); do
+            if git ls-remote --exit-code --heads origin "$PLUGIN_BRANCH" > /dev/null; then
+              git fetch -q --no-tags --depth=1 origin "$PLUGIN_BRANCH"
+              if [ "$(git rev-parse "FETCH_HEAD^{tree}")" = "$tree" ]; then
+                echo "$PLUGIN_BRANCH ($(git rev-parse --short FETCH_HEAD)) holds the build of $GITHUB_REF_NAME"
+                exit 0
+              fi
+              state="differs"
+              echo "$PLUGIN_BRANCH ($(git rev-parse --short FETCH_HEAD)) does not hold this build yet ($attempt/$ATTEMPTS)"
+            else
+              state="missing"
+              echo "$PLUGIN_BRANCH is not on GitHub yet ($attempt/$ATTEMPTS)"
+            fi
+            [ "$attempt" -lt "$ATTEMPTS" ] && sleep "$DELAY"
+          done
+          if [ "$state" = "missing" ]; then
+            echo "::error::$PLUGIN_BRANCH is not on GitHub: the mirror has not carried it from Gitea, or it is missing there too. Check create-tag.yml on Gitea and the mirror, then re-run this job."
+          else
+            echo "::error::$PLUGIN_BRANCH ($(git rev-parse --short FETCH_HEAD): $(git log -1 --format=%s FETCH_HEAD)) does not hold the build of $GITHUB_REF_NAME. If create-tag.yml on Gitea published it, the mirror has not synced yet; re-run this job once it has."
           fi
-          commit="$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "$MESSAGE")"
-          git push origin "$commit:refs/heads/$PLUGIN_BRANCH"
+          exit 1
+      - name: Pack the zip for OpenAI's directory
+        run: cd dist && zip -r -X -q "$GITHUB_WORKSPACE/${{ steps.info.outputs.name }}-${{ steps.info.outputs.version }}.zip" .
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
