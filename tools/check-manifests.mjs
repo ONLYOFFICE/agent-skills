@@ -23,12 +23,17 @@
  *     (https://developers.openai.com/plugins/deploy/submission)
  *   - both manifests give the same privacy policy and terms of service, as https:// URLs
  *     (privacyPolicyUrl and termsOfServiceUrl in Claude's, privacyPolicyURL and termsOfServiceURL
- *     in the OpenAI listing), and the listing's websiteURL and supportURL are https:// too
+ *     in the OpenAI listing), and the listing's websiteURL and supportURL are https:// too;
+ *     supportURL is required, the submission is refused without it
  *   - the icon .claude-plugin/plugin.json names, when it names one, is an image file inside the
  *     plugin (https://code.claude.com/docs/en/plugins-reference#directory-listing-fields) that the
  *     directory's file checks pass: PNG, JPEG, GIF, WebP or SVG, 5 MiB or less
  *     (https://claude.com/docs/plugins/pre-submission-checklist). Anthropic documents no size or
  *     shape for it
+ *   - .claude-plugin/plugin.json gives documentationUrl and supportUrl, the listing fields
+ *     Anthropic's directory reads and Claude Code ignores
+ *     (https://code.claude.com/docs/en/plugins/manifest-reference#directory-listing-fields), as
+ *     https:// URLs, and supportUrl is the OpenAI listing's supportURL when that gives one
  *
  * Exit: 0 in step, 1 a mismatch, 2 a manifest that cannot be read. No dependencies, no network.
  */
@@ -179,6 +184,7 @@ if (!listing) {
     if (typeof value !== "string" || !value) problems.push(`interface.${field} is missing`);
     else if ([...value].length > max) problems.push(`interface.${field} is ${[...value].length} characters, the limit is ${max}`);
   }
+  if (!listing.supportURL) problems.push("interface.supportURL is missing; OpenAI refuses a submission without it");
   if (listing.capabilities !== undefined && !Array.isArray(listing.capabilities)) problems.push("interface.capabilities must be an array");
   for (const field of ASSETS) {
     if (listing[field] === undefined) continue;
@@ -193,6 +199,12 @@ for (const [claudeKey, openaiKey] of Object.entries(LEGAL)) {
 for (const [where, value] of [...Object.keys(LEGAL).map((k) => [k, claude[k]]), ...["websiteURL", "supportURL", ...Object.values(LEGAL)].map((k) => [`interface.${k}`, listing?.[k]])]) {
   if (value !== undefined && !/^https:\/\/[^\s]+$/.test(value)) problems.push(`${where} must be an https:// URL, not ${JSON.stringify(value)}`);
 }
+
+for (const key of ["documentationUrl", "supportUrl"]) {
+  if (claude[key] === undefined) problems.push(`${rel(CLAUDE)}: ${key} is missing; Anthropic's directory shows it in the listing`);
+  else if (!/^https:\/\/[^\s]+$/.test(claude[key])) problems.push(`${key} must be an https:// URL, not ${JSON.stringify(claude[key])}`);
+}
+if (listing?.supportURL !== undefined && claude.supportUrl !== listing.supportURL) problems.push(`supportUrl in ${rel(CLAUDE)} is ${JSON.stringify(claude.supportUrl)}, interface.supportURL is ${JSON.stringify(listing.supportURL)}`);
 
 if (claude.icon !== undefined) {
   for (const p of iconProblems(claude.icon, CLAUDE_ICON)) problems.push(`${rel(CLAUDE)} icon: ${p}`);
