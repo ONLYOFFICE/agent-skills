@@ -31,6 +31,7 @@
         "category": "Developer Tools",
         "capabilities": [],
         "websiteURL": "https://api.onlyoffice.com/",
+        "supportURL": "https://github.com/ONLYOFFICE/agent-skills/issues",
         "privacyPolicyURL": "https://www.onlyoffice.com/privacy",
         "termsOfServiceURL": "https://www.onlyoffice.com/legalterms",
         "composerIcon": "./assets/icon.png",
