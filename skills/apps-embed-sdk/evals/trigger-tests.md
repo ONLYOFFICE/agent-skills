@@ -1,7 +1,7 @@
 # Trigger tests for the `description`
 
 Twenty first messages, each sent to a fresh session with the plugin installed and nothing
-else said. Record whether the agent loaded `onlyoffice:apps-embed-sdk` before answering.
+else said. Record whether the agent loaded `onlyoffice-devtools:apps-embed-sdk` before answering.
 `node tools/run-triggers.mjs --skill apps-embed-sdk --model sonnet` does exactly that through `claude -p`
 with this repository as `--plugin-dir`, three runs per message, and prints the misses. Target:
 every "should" triggers, no "should not" does, on each model in `evals.json` → `models`.
