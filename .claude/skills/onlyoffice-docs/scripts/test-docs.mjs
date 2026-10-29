@@ -147,6 +147,7 @@ check("matches: every word, any field, case-insensitive", matches(section[1], ["
 check("matches: a missing word fails", matches(section[1], ["tframeconfig", "uploader"]), false);
 const ids = ["docs/docs-api", "docspace/javascript-sdk", "docspace/plugins-sdk"];
 check("resolveSection: alias", resolveSection("embed-sdk", ids), "docspace/javascript-sdk");
+check("resolveSection: skill-name alias", resolveSection("apps-plugin-sdk", ids), "docspace/plugins-sdk");
 check("resolveSection: exact id", resolveSection("docspace/plugins-sdk", ids), "docspace/plugins-sdk");
 check("resolveSection: unique substring", resolveSection("javascript", ids), "docspace/javascript-sdk");
 check("resolveSection: ambiguous substring lists candidates", resolveSection("docspace", ids), ["docspace/javascript-sdk", "docspace/plugins-sdk"]);

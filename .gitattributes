@@ -6,5 +6,6 @@
 *.svg text eol=lf
 *.ts text eol=lf
 *.tsx text eol=lf
-skills/plugin-sdk/templates/* text eol=lf
+skills/apps-plugin-sdk/templates/* text eol=lf
 *.tgz binary
+*.png binary

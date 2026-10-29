@@ -47,13 +47,13 @@ another site, and bumping a version.
 
 ```
 node tools/sync-sources.mjs --check                         # every skill and the root README
-node tools/sync-sources.mjs --skill embed-sdk --check
+node tools/sync-sources.mjs --skill apps-embed-sdk --check
 node tools/sync-sources.mjs --verify                        # + one request per link
 node tools/sync-sources.mjs --verify --fallback             # the same links on the stand (apiSiteFallback)
 node tools/sync-sources.mjs --host apiSite=http://127.0.0.1:3005      # whole plugin → local docs build
 node tools/sync-sources.mjs --host apiSite=https://api.teamlab.info   # whole plugin → staging
 node tools/sync-sources.mjs --host apiSite=https://api.onlyoffice.com # back to production
-node tools/sync-sources.mjs --skill embed-sdk --set-version 2.3.0
+node tools/sync-sources.mjs --skill apps-embed-sdk --set-version 2.3.0
 ```
 
 ## Pointing the plugin at another docs site (staging, local build)
@@ -72,7 +72,7 @@ host change: fix the paths in the text and in the skill's `sources.json`, then `
 
 1. `--skill <name> --set-version <x.y.z>`: manifest, `sdk-version` in the frontmatter, the
    pinned-facts line, the validator header and the `raw` links move together.
-2. `node skills/embed-sdk/scripts/sync-sdk.mjs --from <sdk checkout or node_modules/@onlyoffice/docspace-sdk-js> --check`
+2. `node skills/apps-embed-sdk/scripts/sync-sdk.mjs --from <sdk checkout or node_modules/@onlyoffice/docspace-sdk-js> --check`
    and `--write` if the dictionaries changed (that script owns the validator's dictionaries;
    this one owns links and versions).
 3. Read the SDK changelog for the release and update the references that describe behaviour

@@ -1,7 +1,7 @@
 ---
 description: Intake page - pick a room through the room selector, remember its id and share token, then drop files into it with the uploader; no page reload.
 expected_outcome: One component whose room-selector callback reads the array payload (items[0].id, items[0].requestTokens[0].requestToken), destroys the selector, then initialises an uploader with id = the room; no programmatic upload() on the uploader; every frame destroyed on unmount and on replacement.
-tags: [embed-sdk, build]
+tags: [apps-embed-sdk, build]
 max_turns: 80
 timeout_seconds: 1800
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash, WebFetch]

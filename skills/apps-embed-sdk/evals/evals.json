@@ -1,0 +1,167 @@
+{
+  "skill_name": "apps-embed-sdk",
+  "format": "skill-creator: one entry per scenario, expectations as strings. Each expectation starts with [C] (critical, weight 2: a silent breakage) or [Q] (quality, weight 1) and ends with a (how: …) hint for the grader. Arms: with_skill = the plugin installed, prompt alone; without_skill = no skill, prompt plus docs_hint. The executor never reads evals/. Operator answers are put into the prompt identically in both arms.",
+  "docs_hint": "Documentation: https://api.onlyoffice.com/docspace/javascript-sdk/get-started.md and https://api.onlyoffice.com/docspace/javascript-sdk/usage-sdk/classes/SDKInstance.md; any page of that site is available as Markdown by replacing the trailing slash of its URL with .md, and https://api.onlyoffice.com/llms.txt lists every page.",
+  "models": [
+    "claude-sonnet-5",
+    "claude-opus-5",
+    "claude-haiku-4-5",
+    "codex (gpt-5.6)"
+  ],
+  "operator_answers": {
+    "portal url": "{PORTAL_URL}",
+    "portal or sdk version": "Not sure — the portal was upgraded recently. Find out yourself if you can.",
+    "oauth app available": "Yes, a confidential OAuth client exists; client id and secret will be in .env.",
+    "room / file / agent ids": "any numeric ids, e.g. 12345, 67890, 11111",
+    "styling": "Keep it minimal."
+  },
+  "evals": [
+    {
+      "id": 0,
+      "name": "e1-public-room-viewer",
+      "title": "Documents for visitors: public room + viewer in a modal",
+      "source": "testing scenario E1",
+      "prompt": "Build a page on our marketing site (plain HTML + JS, no framework) where a visitor without any DocSpace account sees the documents of our public room {ROOM_ID}. Clicking a document opens it read-only in a modal on the same page. The room's share token must not be hardcoded in the repository. Our portal is {PORTAL_URL}.",
+      "expected_output": "A static page plus a tiny server or config endpoint that hands the share token to the page. The listing is token-authenticated (public-room with id and requestToken, or a manager over /rooms/share with requestToken), the room id is used, clicks come from the manager events, and the viewer opens the file by id with the same token and is destroyed on close.",
+      "files": [],
+      "expectations": [
+        "[C] the room listing is authenticated by the share token and uses the room id: either initPublicRoom / mode public-room with both id and requestToken, or initManager with rootPath /rooms/share and requestToken (how: grep initPublicRoom|initManager|\"public-room\"; confirm id or rootPath and requestToken are both passed)",
+        "[C] requestToken comes from config, an env file or a server endpoint, not from a literal in source (how: grep -n requestToken; the value is read, not written)",
+        "[C] the viewer frame passes the file id and the same requestToken, so the document opens without a session (how: grep initViewer|\"viewer\" → id: present and requestToken passed)",
+        "[C] no stale viewer frame: destroyFrame() before re-initialising a fixed frameId, or a frameId unique per document (how: grep destroyFrame and frameId around the viewer)",
+        "[Q] the click is taken from the onFileManagerClick or onEditorOpen payload (id, title), not from DOM scraping inside the iframe (how: grep onFileManagerClick|onEditorOpen)",
+        "[Q] with the portal version unknown, the SDK is loaded from the portal's own script (or npm pinned with a stated reason) and the report says which and that the version was not verified (how: index.html / loader code and REPORT.md)",
+        "[Q] setup notes tell the admin to allow-list the site origin (how: REPORT.md or SETUP mentions Developer Tools → Embed SDK or /api/2.0/security/csp)"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "e2-employee-cabinet",
+      "title": "Employee cabinet: silent hash login, table manager, in-app editor",
+      "source": "testing scenario E2",
+      "prompt": "React 18 + Vite app. Our backend returns each employee's DocSpace email and a portal-compatible password hash at GET /api/docspace-credentials. Before the Documents page renders, sign the user in to DocSpace silently with those credentials; on failure show a 'Reconnect DocSpace' screen. The Documents page shows room {ROOM_ID} as a table sorted by name A→Z. Clicking a file opens the editor in our own modal, not on the portal. Portal: {PORTAL_URL}.",
+      "expected_output": "A hidden System frame probes the session with getUserInfo, then logs in with the stored hash and treats status !== 200 as failure. The manager is scoped to the room in table view sorted by AZ; onFileManagerClick or onEditorOpen opens an editor frame inside the app's own modal with the file id, unique frameId or destroy-then-init, destroyed on close; StrictMode is handled.",
+      "files": [],
+      "expectations": [
+        "[C] login runs through a hidden System frame (how: grep initSystem|\"system\")",
+        "[C] getUserInfo() is called before login and a matching session skips the login (how: grep getUserInfo in the auth code, not only in prose)",
+        "[C] the login result is checked with an explicit status !== 200 comparison (or url === \"/\" as success), and the failure path renders the Reconnect screen (how: grep -A3 'login(' for status/url handling)",
+        "[C] the manager is scoped to room {ROOM_ID} via id, viewAs is table, and filter.sortBy is \"AZ\" (or FilterSortBy.Name) with sortOrder ascending (how: grep id, viewAs, sortBy inside filter)",
+        "[C] the editor opens in the app's own modal from onFileManagerClick or onEditorOpen, with the file id, a unique frameId or destroy-then-init, and destroyFrame on close (how: grep onFileManagerClick|onEditorOpen, initEditor, destroyFrame)",
+        "[C] StrictMode double mount is handled: a ref guard or cancelled flag around init, or StrictMode removed with a note (how: main.jsx/tsx plus the frame component)",
+        "[Q] editorType is \"embedded\" for the modal editor, or another value with a stated reason (how: grep editorType)",
+        "[Q] the deliverable says the hash-login path cannot serve accounts with 2FA (how: REPORT.md or code comment)",
+        "[Q] the deliverable warns that a cross-origin host needs OAuth or same-site hosting when browsers block third-party cookies (how: REPORT.md)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "e3-select-then-upload",
+      "title": "Intake: pick a room, remember it, upload into it",
+      "source": "testing scenario E3",
+      "prompt": "Vue 3 page: the user picks a room through the DocSpace room selector; we store the room id (and its public share token if the room has one). Then the page shows an uploader that drops files into that room. Everything without a page reload. Portal: {PORTAL_URL}.",
+      "expected_output": "A room selector whose array payload yields the room id and, when present, items[0].requestTokens[0].requestToken; the selector frame is destroyed and an uploader frame is initialised with id = the room; no programmatic upload() on the uploader; instances outside deep reactivity, every frame destroyed on unmount and replacement.",
+      "files": [],
+      "expectations": [
+        "[C] the room-selector payload is handled as an array: items[0].id (how: grep onSelectCallback)",
+        "[C] the share token is read from items[0].requestTokens?.[0]?.requestToken (how: grep requestTokens)",
+        "[C] the uploader is initialised with id = the selected room after the selector frame is destroyed (how: grep initUploader and destroyFrame)",
+        "[C] no programmatic upload() is called on the uploader frame (how: grep 'upload(' must not target the uploader instance)",
+        "[Q] SDK instances are kept out of deep reactivity (shallowRef or plain variables) and every frame is destroyed on unmount and on replacement (how: component source)",
+        "[Q] the containers the frames mount into stay in the DOM (v-show or CSS toggling) so init* finds them (how: template)",
+        "[Q] onCloseCallback destroys the selector frame too (how: grep onCloseCallback)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "f1-2fa-question",
+      "title": "2FA in an existing WordPress connector (question, no build)",
+      "source": "testing log row 15",
+      "prompt": "Our WordPress plugin logs users into DocSpace with the Embed SDK (system frame, getHashSettings → createHash → login). Users with two-factor authentication enabled on the portal cannot log in. Add a field for the 2FA code to the login form, resend the auth request with the code and obtain the session. What exactly do I change?",
+      "expected_output": "A prose answer that says the second step depends on the portal build: client 4.0.0 reads the fifth login argument, so after a /confirm/… answer a second login(email, hash, undefined, undefined, code) creates the session and status !== 200 is a wrong code; older System pages forward only email and passwordHash and re-issue the challenge, detectable at runtime, where the fallbacks are OAuth getToken, portal sign-in in another tab or disabling 2FA for the integration account; the cross-origin cookie boundary is named.",
+      "files": [],
+      "expectations": [
+        "[C] wires the code field to a second login(email, hash, undefined, undefined, code) after a /confirm/… url and checks status !== 200 on its result, and names the portal requirement: client 4.0.0, whose System page reads code (how: answer.md code and prose)",
+        "[C] says what an older System page does — forwards only email and passwordHash and answers /confirm/… again — and how the plugin detects it at runtime instead of presenting the code field as universal (how: answer.md)",
+        "[Q] offers the fallbacks for portals that ignore code: OAuth getToken, portal sign-in in another tab (cookie session), disabling 2FA for the integration account (how: answer.md)",
+        "[Q] explains the asc_auth_key cookie boundary in cross-origin frames when the plugin runs on another origin (how: answer.md)",
+        "[Q] invents no method, hook, event or portal behaviour absent from the SDK and the docs (how: every named API exists in the SDK 2.2.0 reference)"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "f2-cross-origin-todo",
+      "title": "Todo app on another origin: file selector + viewer",
+      "source": "testing log row 17",
+      "prompt": "Build a small React todo-list app (Vite, runs on http://localhost:5173) and add the ability to attach a document from our DocSpace {PORTAL_URL} to a task through a file picker, then view the attached document inside the task card. I am signed in to the portal in another tab.",
+      "expected_output": "A Vite React app with a file-selector modal (object payload) and a viewer per task card (file id, unique frameId or destroy-then-init, destroyed on detach). The report names the third-party-cookie wall and remedies it with OAuth getToken through a backend or same-site hosting; the client secret never reaches the browser; the admin is told to allow-list http://localhost:5173.",
+      "files": [],
+      "expectations": [
+        "[C] tells the operator to allow-list http://localhost:5173 before the first run (how: REPORT.md)",
+        "[C] the viewer frame passes the file id, uses a frameId unique per document or destroy-then-init, and is destroyed on detach (how: grep initViewer, frameId, destroyFrame)",
+        "[C] names the third-party-cookie wall: a signed-in portal tab does not authenticate a cross-origin frame in Safari or cookie-blocking Chrome (how: REPORT.md or code comments)",
+        "[C] the remedy is OAuth getToken through a backend token endpoint or same-site hosting, not an API key in the browser and not \"no workaround exists\" (how: grep getToken; REPORT.md)",
+        "[C] client_secret and refresh tokens exist only in server code or .env, never in the frontend bundle (how: grep client_secret in src/ returns nothing)",
+        "[C] the OAuth callback validates the state parameter and, with PKCE, the code_verifier before exchanging the code (how: read the callback route)",
+        "[Q] the file-selector payload is handled as an object (item.id, item.title) (how: grep onSelectCallback)",
+        "[Q] the design does not flip between API key and OAuth; one approach, with the reason (how: REPORT.md)",
+        "[Q] runs or describes the self-check: probe, iframe attached, console clean, onAppReady (how: REPORT.md)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "f3-workspace-chat-oauth",
+      "title": "Workspace page: room manager, personal files, AI chat under OAuth",
+      "source": "testing log row 2",
+      "prompt": "Express 4 backend + React 18 frontend. Add /workspace: on the left the file manager of room {ROOM_ID}; on the right two tabs — 'My files' and 'Assistant' (the DocSpace AI chat for agent {AGENT_ID}). Everything under the same DocSpace user. Authentication through our OAuth application; put every needed parameter into .env. Portal: {PORTAL_URL}.",
+      "expected_output": "Three frames (manager, personal, chat with agentId) sharing one getToken that calls a backend endpoint; the backend does the code exchange, refreshes before expiry, persists the new pair before answering and never retries with the old refresh token; scopes are configuration read from /api/2.0/scopes; the chat preconditions are stated; tabs hide frames with CSS.",
+      "files": [],
+      "expectations": [
+        "[C] every frame gets a getToken callback that calls a backend endpoint; the code exchange and refresh live on the server; no client_secret in the frontend (how: grep getToken; server code; grep client_secret in the frontend returns nothing)",
+        "[C] the token endpoint refreshes when the token is near expiry, persists the new pair and only then answers; no code path retries a refresh with the previous refresh token (how: read the token route)",
+        "[C] chat preconditions stated: full (non-guest) user, AI enabled on the portal, token scopes covering the profile (how: REPORT.md)",
+        "[C] the OAuth callback validates the state parameter and, with PKCE, the code_verifier before exchanging the code (how: read the callback route)",
+        "[Q] three frames with distinct frameIds; hidden tabs keep frames mounted through CSS, not remounted (how: component source)",
+        "[Q] scopes are configuration taken from /api/2.0/scopes or .well-known/openid-configuration at setup, not a literal typed into code (how: grep scopes; REPORT.md)",
+        "[Q] with the portal version unknown, the SDK is loaded consistently with that (portal script, or npm with a stated pin) and the report says the version was not verified (how: loader code and REPORT.md)",
+        "[Q] a troubleshooting note ties the visible symptom \"only Chat history, no composer\" to those preconditions (how: REPORT.md)",
+        "[Q] the report names CSP allow-listing of the host origin (Developer Tools → Embed SDK or /api/2.0/security/csp) as a precondition (how: REPORT.md)"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "f4-nextjs-forms-intake",
+      "title": "Next.js client intake: template picker, prefilled form, readback, createFile",
+      "source": "testing log row 8",
+      "prompt": "Next.js 14 (App Router) page for our CRM: the visitor is signed in to our site, not to the portal. They pick a form template through the DocSpace file selector; the editor opens with fields prefilled from CRM data; after filling, we read the field values back to show a summary; the finished document is saved as a new file in the client's room (create the room on first visit). If the room was deleted, show a clear screen instead of a broken frame. Auth through our OAuth app. Portal: {PORTAL_URL}.",
+      "expected_output": "Client-only SDK loading; executeInEditor with the three-argument callback creating the connector; form filling through connector.callCommand and the Document Builder API; GetFormsData read back before the summary; createFile keeping the template's extension into a folder id; onNotFound rendering a room-deleted screen; OAuth via a backend getToken.",
+      "files": [],
+      "expectations": [
+        "[C] the executeInEditor callback is declared with three parameters (editor, asc, data) and the connector is created inside it (how: grep -A3 executeInEditor)",
+        "[C] form filling goes through connector.callCommand and the Document Builder API (GetAllForms / SetText / SetChecked…), never executeMethod('SetFormValue' | 'GetFormValue') (how: grep SetFormValue|GetFormValue returns nothing; grep callCommand)",
+        "[C] values are read back with GetFormsData() before the summary is shown (how: grep GetFormsData)",
+        "[C] createFile keeps the template's extension in the title (.pdf for a PDF form) (how: grep createFile and the title expression)",
+        "[C] createFile targets a folder or room id, never a section's rootFolderId (how: grep createFile arguments)",
+        "[C] the OAuth callback validates the state parameter and, with PKCE, the code_verifier before exchanging the code (how: read the callback route)",
+        "[C] onNotFound is handled as \"room deleted\" with a dedicated screen (how: grep onNotFound)",
+        "[Q] the SDK is imported client-side only (useEffect / dynamic import), no window.DocSpace at module top level (how: grep)",
+        "[Q] room creation on first visit and file creation are done with SDK methods (createRoom / createFile) or with REST plus a pointer to the REST docs; the report says which (how: grep createRoom|createFile; REPORT.md)",
+        "[Q] the report names CSP allow-listing of the host origin (Developer Tools → Embed SDK or /api/2.0/security/csp) as a precondition (how: REPORT.md)"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "g1-admin-panel-full",
+      "title": "Internal admin panel (the original A/B task)",
+      "source": "task.md / prompt.txt / rubric.md in this directory",
+      "prompt": "See prompt.txt",
+      "expected_output": "Graded against the 39 checkpoints in rubric.md.",
+      "files": [
+        "evals/prompt.txt"
+      ],
+      "expectations": [
+        "[C] see rubric.md: 21 critical and 18 quality checkpoints, graded by its score sheet (how: rubric.md)"
+      ]
+    }
+  ]
+}

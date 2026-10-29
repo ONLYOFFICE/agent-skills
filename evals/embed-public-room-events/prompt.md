@@ -1,7 +1,7 @@
 ---
 description: Which events the /sdk/public-room page sends, and how a revoked or expired link shows up.
 expected_outcome: onAppReady on mount, onNotFound for an invalid or revoked link, onNoAccess for an expired one; no click events from this page (a manager over /rooms/share with requestToken has them); both id and requestToken required.
-tags: [embed-sdk, question]
+tags: [apps-embed-sdk, question]
 max_turns: 15
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]

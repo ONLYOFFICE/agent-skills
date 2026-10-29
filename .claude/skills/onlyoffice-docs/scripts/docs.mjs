@@ -38,11 +38,14 @@ const MAX_FIND_RESULTS = 40;
 
 /** Short names an agent is likely to type for a section, mapped to the section's path on the site. */
 export const SECTION_ALIASES = {
+  "apps-embed-sdk": "docspace/javascript-sdk",
   "embed-sdk": "docspace/javascript-sdk",
   "javascript-sdk": "docspace/javascript-sdk",
   "js-sdk": "docspace/javascript-sdk",
   "plugins-sdk": "docspace/plugins-sdk",
+  "apps-plugin-sdk": "docspace/plugins-sdk",
   "plugin-sdk": "docspace/plugins-sdk",
+  "apps-ui-kit": "docspace/ui-kit",
   "ui-kit": "docspace/ui-kit",
   kit: "docspace/ui-kit",
   rest: "docspace/api-backend",

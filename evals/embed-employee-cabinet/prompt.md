@@ -1,7 +1,7 @@
 ---
 description: Silent hash login through a hidden System frame, a manager scoped to one room sorted A-Z in table view, and an in-app editor modal; the classic connector shape.
 expected_outcome: src/docspace.ts probes the session with getUserInfo, logs in with the stored hash and treats status !== 200 as failure; src/pages/Documents.tsx scopes the manager to the room, sorts by "AZ", switches to the table layout with setListView after onAppReady, opens the editor in the app's own modal from onFileManagerClick / onEditorOpen and destroys it on close; REPORT.md names the 2FA limitation and the cross-origin cookie wall.
-tags: [embed-sdk, build, heavy]
+tags: [apps-embed-sdk, build, heavy]
 max_turns: 120
 timeout_seconds: 2400
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash, WebFetch]
