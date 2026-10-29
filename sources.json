@@ -12,6 +12,7 @@
     "agentSkillsSpec": {"host": "agentSkills"},
     "onlyoffice": {"host": "onlyoffice"},
     "apiSite": {"host": "apiSite"},
-    "repo": {"host": "github", "path": "/agent-skills"}
+    "repo": {"host": "github", "path": "/agent-skills"},
+    "marketplace": {"host": "github", "path": "/agent-plugins"}
   }
 }

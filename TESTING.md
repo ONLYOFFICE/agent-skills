@@ -11,10 +11,12 @@ change needs. There is no CI yet; this is the protocol it will run.
 | Validator self-tests | `node skills/apps-embed-sdk/scripts/test-validator.mjs`, `node skills/apps-plugin-sdk/scripts/test-validator.mjs`, `node skills/apps-ui-kit/scripts/test-validator.mjs` | a rule the validators stopped enforcing; the apps-embed-sdk one also runs `sync-sources --check` and compares the validator's dictionaries with the pinned SDK (`--from <checkout at the tag or installed package>`, else an installed `@onlyoffice/docspace-sdk-js` up the directory chain); the apps-ui-kit one also runs `sync-ui-kit --check` | seconds |
 | Kit manifest | `node tools/sync-ui-kit.mjs --from <kit> --check` | a `skills/apps-ui-kit` manifest that no longer matches the kit's metadata — rerun with `--write`; needs a kit checkout or an installed package | seconds |
 | Docs script self-test | `node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs` | the parsers behind the internal docs script, offline | seconds |
+| Plugin manifests | `node tools/check-manifests.mjs` | `plugin.json` and `.claude-plugin/plugin.json` disagreeing on a shared field, a marketplace entry or version out of step, an OpenAI listing over its length limits or naming an icon that is not there or that a directory would refuse | seconds |
+| Plugin build | `node tools/build-plugin.mjs` | a file under `skills/` that no rule says ships or not, a relative link in a shipped Markdown file to a file or heading the plugin does not carry (a maintainers' page, `evals/`, `CONTRIBUTING.md`); builds from HEAD, so commit first | seconds |
 | Links and pins | `node tools/sync-sources.mjs --check` | a link not built on a declared host, a version literal that disagrees with a skill's `sources.json` | seconds |
 | Links, live | `node tools/sync-sources.mjs --verify` (production) or `--verify --fallback` (the stand) | a page the site no longer serves | one request per link |
 | Docs availability | `node .claude/skills/onlyoffice-docs/scripts/docs.mjs status` | whether production serves `llms.txt` and Markdown pages for every section (exit 0), only the stand does (1), or neither (2) | a few requests |
-| Token budget | `claude plugin details onlyoffice` (the installed copy) | the always-on cost of the descriptions and the on-invoke cost of each skill | seconds |
+| Token budget | `claude plugin details onlyoffice-devtools` (the installed copy) | the always-on cost of the descriptions and the on-invoke cost of each skill | seconds |
 | Behaviour | `claude plugin eval …` | whether the skills change what the agent produces — see below | model calls, dollars |
 
 ## What to run when
@@ -29,6 +31,8 @@ node skills/apps-plugin-sdk/scripts/test-validator.mjs
 node skills/apps-ui-kit/scripts/test-validator.mjs
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs
 node tools/sync-sources.mjs --check
+node tools/check-manifests.mjs
+node tools/build-plugin.mjs
 node tools/sync-ui-kit.mjs --from <kit> --check     # with a kit checkout or an installed package at hand
 ```
 

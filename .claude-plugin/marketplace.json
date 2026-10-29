@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "onlyoffice",
+      "name": "onlyoffice-devtools",
       "source": "./",
       "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships."
     }

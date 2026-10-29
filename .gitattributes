@@ -8,3 +8,4 @@
 *.tsx text eol=lf
 skills/apps-plugin-sdk/templates/* text eol=lf
 *.tgz binary
+*.png binary

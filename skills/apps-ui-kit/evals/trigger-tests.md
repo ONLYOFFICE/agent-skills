@@ -1,7 +1,7 @@
 # Trigger tests for the `description`
 
 Twenty first messages, each sent to a fresh session with the plugin installed and nothing else
-said. Record whether the agent loaded `onlyoffice:apps-ui-kit` before answering. Target: every
+said. Record whether the agent loaded `onlyoffice-devtools:apps-ui-kit` before answering. Target: every
 "should" triggers, no "should not" does, on each model the evals run on. Run three times per
 message; a message counts as triggering when it does so in at least two runs. When a "should"
 misses, add the missing situation to the description; when a "should not" fires, add the

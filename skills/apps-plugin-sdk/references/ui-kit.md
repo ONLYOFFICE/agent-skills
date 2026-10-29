@@ -6,7 +6,7 @@ The portal's own component library: it reads theme, accent and direction from co
 
 - **the installed package** — `node_modules/@onlyoffice/apps-ui-kit/components/<folder>/README.md` for one component, with `docs/getting-started.md` and `docs/components.md` beside them for the whole kit: the kit's own text, faults included, for exactly the version the project builds against;
 - **the [UI kit docs](https://api.onlyoffice.com/docspace/ui-kit/llms.txt)** — the same pages for the released kit, one per component under `ui/<group>/<slug>` (read as Markdown with `.md` appended), plus the hooks, utils, constants and theming pages the package has no page for; the one source when the kit is not installed yet;
-- **the `apps-ui-kit` skill** — load it by name (`onlyoffice:apps-ui-kit` in the plugin both ship in). Its rules are the failures that render without a word, and its routing table leads to forms, overlays, lists and a symptom index. Installed without it, the package's pages are all there is.
+- **the `apps-ui-kit` skill** — load it by name (`onlyoffice-devtools:apps-ui-kit` in the plugin both ship in). Its rules are the failures that render without a word, and its routing table leads to forms, overlays, lists and a symptom index. Installed without it, the package's pages are all there is.
 
 Their examples import from subpaths and mount providers; translate them by the table below. Of those rules, the browser pass measures the ones that show in a box — a collapsed control, a toggle over the next row, a field with no label ([build.md → See it](build.md#7-see-it--the-step-that-catches-what-looks-broken)); the rest are yours to get right. What stays in **this** file is what a plugin does differently, and what the kit's documentation leaves out for a plugin.
 

@@ -7,7 +7,7 @@ Release mechanics — versions, names, publishing — are in [RELEASING.md](RELE
 
 Every skill lives in `skills/<name>/` and describes one ONLYOFFICE SDK or tool. `<name>`
 is kebab-case and equals the `name` in the skill's frontmatter. There is one plugin,
-`onlyoffice`, for the whole repository; a new SDK is a new skill directory plus one row in
+`onlyoffice-devtools`, for the whole repository; a new SDK is a new skill directory plus one row in
 the README table, nothing else.
 
 ## What a skill directory contains
@@ -31,7 +31,10 @@ naming the SDK — not as a summary of the contents.
 ## Layout of the repository
 
 ```
-.claude-plugin/          plugin + marketplace manifests
+.claude-plugin/          plugin.json, Claude Code's manifest, and marketplace.json
+plugin.json              the Agent Plugins manifest (OpenAI, Codex); the OpenAI listing under extensions["com.openai"];
+                         the fields both plugin manifests carry must agree
+assets/icon.png          the listing icon of both directories: the ONLYOFFICE mark, 1024 px, transparent
 .claude/skills/          repository-internal skills, not shipped in the plugin:
                          sync-sources (links and versions), sync-ui-kit (the apps-ui-kit manifest),
                          onlyoffice-docs (read the docs site as Markdown while writing references)
@@ -39,6 +42,8 @@ sources.json             the external hosts named once for every skill;
                          `node tools/sync-sources.mjs --host apiSite=<origin>` points the whole plugin at another docs build
 tools/                   sync-sources.mjs: every link and pinned version traces to the root hosts and a skill's sources.json
                          sync-ui-kit.mjs: derives skills/apps-ui-kit's component manifest from the UI kit's own metadata
+                         build-plugin.mjs: the plugin as it ships, into dist/; the release workflow zips it for OpenAI's directory
+                         check-manifests.mjs: the two plugin manifests and the marketplace entry agree; the OpenAI listing fits its limits
                          run-triggers.mjs: sends a skill's evals/trigger-tests.md through `claude -p` and reports which messages loaded it
 evals/                   the `claude plugin eval` suite: one directory per case (prompt.md + graders/), results/ gitignored
 skills/apps-embed-sdk/   references: config-reference (fields by mode), one file per mode, methods, events, editor automation,
@@ -129,6 +134,8 @@ claude plugin validate skills --strict                         # the SKILL.md fi
 node skills/<name>/scripts/test-validator.mjs                  # for every skill that has a validator
 node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs      # the internal docs script's parsers
 node tools/sync-sources.mjs --check                            # every link and pinned version traces to sources.json
+node tools/check-manifests.mjs                                 # both plugin manifests and the marketplace entry agree
+node tools/build-plugin.mjs                                    # every file has a rule, every link in what ships resolves
 node tools/sync-ui-kit.mjs --from <kit> --check                # the apps-ui-kit manifest matches the kit (a checkout or an installed package)
 ```
 
