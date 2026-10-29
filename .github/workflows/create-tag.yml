@@ -10,6 +10,13 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: create-tag
+  cancel-in-progress: false
+
+env:
+  PLUGIN_BRANCH: plugin
+
 jobs:
   create-tag:
     if: github.server_url != 'https://github.com'
@@ -18,20 +25,62 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
       - name: Get version
         id: info
-        run: echo "version=$(node -p "require('./.claude-plugin/plugin.json').version")" >> "$GITHUB_OUTPUT"
-      - name: Check the manifests agree on the version
-        run: node tools/check-manifests.mjs
-      - name: Create tag
-        env:
-          TAG: v${{ steps.info.outputs.version }}
         run: |
-          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
-            echo "$TAG already exists"
-            exit 0
+          name="$(node -p "require('./.claude-plugin/plugin.json').name")"
+          version="$(node -p "require('./.claude-plugin/plugin.json').version")"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$version" > /dev/null; then
+            echo "v$version already exists"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Check the manifests agree on the version
+        if: steps.info.outputs.exists != 'true'
+        run: node tools/check-manifests.mjs
+      - name: Run the offline checks
+        if: steps.info.outputs.exists != 'true'
+        run: |
+          node skills/apps-embed-sdk/scripts/test-validator.mjs
+          node skills/apps-plugin-sdk/scripts/test-validator.mjs
+          node skills/apps-ui-kit/scripts/test-validator.mjs
+          node .claude/skills/onlyoffice-docs/scripts/test-docs.mjs
+          node tools/sync-sources.mjs --check
+      - name: Build the plugin
+        if: steps.info.outputs.exists != 'true'
+        run: node tools/build-plugin.mjs
+      # The plugin branch lives here, not only on GitHub: the push mirror deletes every ref
+      # missing on this side. The branch and the tag go in one atomic push, so the mirror
+      # never carries a tag whose build is not on the branch.
+      - name: Publish the plugin branch and the tag
+        if: steps.info.outputs.exists != 'true'
+        env:
+          DIR: dist
+          TAG: v${{ steps.info.outputs.version }}
+          MESSAGE: ${{ steps.info.outputs.name }} ${{ steps.info.outputs.version }}, built from v${{ steps.info.outputs.version }} (${{ github.sha }})
+        run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          parent=""
+          if git ls-remote --exit-code --heads origin "$PLUGIN_BRANCH" > /dev/null; then
+            git fetch --no-tags --depth=1 origin "$PLUGIN_BRANCH"
+            parent="$(git rev-parse FETCH_HEAD)"
+          fi
+          export GIT_INDEX_FILE="$RUNNER_TEMP/plugin-index"
+          (cd "$DIR" && git --git-dir="$GITHUB_WORKSPACE/.git" --work-tree=. add --all --force .)
+          tree="$(git write-tree)"
+          refs=()
+          if [ -n "$parent" ] && [ "$(git rev-parse "$parent^{tree}")" = "$tree" ]; then
+            echo "$PLUGIN_BRANCH already holds this build"
+          else
+            commit="$(git commit-tree "$tree" ${parent:+-p "$parent"} -m "$MESSAGE")"
+            refs+=("$commit:refs/heads/$PLUGIN_BRANCH")
+          fi
           git tag -a "$TAG" -m "Release/$TAG"
-          git push origin "$TAG"
+          refs+=("refs/tags/$TAG")
+          git push --atomic origin "${refs[@]}"

@@ -23,20 +23,22 @@ public mirror. Two workflows in `.github/workflows/` turn a version bump into a 
 running on one side only:
 
 1. **`create-tag.yml`, on Gitea.** A push to `main` that changes `.claude-plugin/plugin.json`
-   runs `tools/check-manifests.mjs` and tags the commit `v<version>`, unless that tag exists.
-2. The mirror carries the tag to GitHub.
-3. **`release.yml`, on GitHub.** The tag checks that it matches the manifest's version, runs
-   the offline checks of [TESTING.md](TESTING.md), runs `tools/build-plugin.mjs`, then
-   - commits `dist/` as the next commit of the `plugin` branch, a history of
-     its own that holds the plugin and nothing else, and pushes it; a build identical to the
-     branch's tip is not committed again;
-   - zips `dist/` and creates the GitHub release `v<version>` with
-     `onlyoffice-devtools-<version>.zip` attached, the archive submitted to OpenAI's directory.
+   does nothing if the tag `v<version>` exists. Otherwise it runs `tools/check-manifests.mjs`,
+   the offline checks of [TESTING.md](TESTING.md) and `tools/build-plugin.mjs`, commits `dist/`
+   as the next commit of the `plugin` branch — a history of its own that holds the plugin and
+   nothing else; a build identical to the branch's tip is not committed again — and pushes that
+   commit and the tag `v<version>` in one atomic push: both land or neither does.
+2. The mirror carries the branch and the tag to GitHub.
+3. **`release.yml`, on GitHub.** The tag checks that it matches the manifest's version, builds
+   `dist/` again and fails unless the tip of `plugin` holds exactly that build, then zips `dist/`
+   and creates the GitHub release `v<version>` with `onlyoffice-devtools-<version>.zip` attached,
+   the archive submitted to OpenAI's directory. It pushes nothing.
 
 The `plugin` branch is what Anthropic's directory follows (*Branch or tag* in the developer
-portal) and what a marketplace entry outside this repository points at. It exists only on
-GitHub: a push mirror from Gitea that prunes refs missing on Gitea deletes it at the next sync,
-so the mirror must not prune, or must leave `plugin` alone.
+portal) and what a marketplace entry outside this repository points at. It is made on Gitea
+because the push mirror runs `git push --mirror`, which deletes from GitHub every ref missing on
+Gitea and cannot be told not to: a branch pushed to GitHub alone is gone at the next sync. Never
+push to `plugin` on GitHub directly, and never delete it on Gitea.
 
 ## What ships
 
@@ -170,10 +172,11 @@ Before tagging a release:
 5a. `node tools/build-plugin.mjs` passes on the release commit, and
    `claude plugin validate dist --strict` and `claude plugin validate dist/skills --strict` pass
    on what it built.
-6. Merge into `main` on Gitea; `create-tag.yml` tags the merge commit `v<version>`. Once the
-   mirror has carried the tag, `release.yml` on GitHub publishes the `plugin` branch and the
+6. Merge into `main` on Gitea; `create-tag.yml` publishes the `plugin` branch and tags the merge
+   commit `v<version>`. Once the mirror has carried both, `release.yml` on GitHub creates the
    release: `git ls-remote https://github.com/ONLYOFFICE/agent-skills refs/heads/plugin refs/tags/v<version>`
-   lists both, and the release has the zip attached.
+   lists both, the tip of `plugin` says `built from v<version>`, and the release has the zip
+   attached.
 
 ## Not yet done
 
