@@ -6,5 +6,13 @@ node_modules/
 skills/*-workspace/
 .plugin-preview/
 
+# tools/build-plugin.mjs writes the plugin as it ships here
+dist/
+/onlyoffice-devtools-*.zip
+
 # claude plugin eval writes its runs here
 evals/results/
+
+# eval fixture installs: the fixture installs the kit from npm; a run against a pre-release build
+# installs it from a packed tarball instead, and the lockfile would then carry the operator's own path
+skills/apps-ui-kit/evals/fixtures/consumer-app/package-lock.json

@@ -1,0 +1,15 @@
+{
+  "version": "3.0.0",
+  "sources": {
+    "docs": {"host": "apiSite", "path": "/docspace/plugins-sdk", "verify": true},
+    "restDocs": {"host": "apiSite", "path": "/docspace/api-backend", "verify": true},
+    "uiKitDocs": {"host": "apiSite", "path": "/docspace/ui-kit", "verify": true},
+    "repo": {"host": "github", "path": "/docspace-plugin-sdk", "verify": true},
+    "npmRegistry": {"host": "npmApi", "verify": false}
+  },
+  "placeholderHosts": ["portal.example.com", "localhost", "www.apache.org", "www.w3.org"],
+  "versionPatterns": [
+    {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
+    {"file": "README.md", "pattern": "\\*\\*`\\^{v}`\\*\\*"}
+  ]
+}

@@ -1,7 +1,7 @@
 ---
 description: An existing connector meets two-factor accounts; the answer must know which portal build finishes the second step and how to detect the one that does not.
 expected_outcome: Prose plus a snippet - a second login(email, hash, undefined, undefined, code) after a /confirm/ url, status !== 200 as failure, the older-portal fallback, no invented API.
-tags: [embed-sdk, question]
+tags: [apps-embed-sdk, question]
 max_turns: 15
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]

@@ -1,16 +1,21 @@
 {
-  "name": "onlyoffice",
+  "name": "onlyoffice-devtools",
   "displayName": "ONLYOFFICE Developer Tools",
-  "version": "0.1.0",
-  "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships. Also ships the ONLYOFFICE Apps MCP server (HTTP).",
+  "version": "0.2.0",
+  "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships.",
   "author": {
     "name": "Ascensio System SIA",
     "email": "integration@onlyoffice.com",
     "url": "https://www.onlyoffice.com"
   },
   "homepage": "https://api.onlyoffice.com/",
-  "repository": "https://git.onlyoffice.com/ONLYOFFICE/agent-skills",
+  "repository": "https://github.com/ONLYOFFICE/agent-skills",
   "license": "Apache-2.0",
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://github.com/ONLYOFFICE/agent-skills#readme",
+  "supportUrl": "https://github.com/ONLYOFFICE/agent-skills/issues",
+  "privacyPolicyUrl": "https://www.onlyoffice.com/privacy",
+  "termsOfServiceUrl": "https://www.onlyoffice.com/legalterms",
   "keywords": [
     "onlyoffice",
     "docspace",
@@ -21,6 +26,5 @@
     "react",
     "document-management"
   ],
-  "skills": "./skills",
-  "mcpServers": "./.mcp.json"
+  "skills": "./skills"
 }

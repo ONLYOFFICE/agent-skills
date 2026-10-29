@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "Agent skills for ONLYOFFICE developer SDKs and tools",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
-      "name": "onlyoffice",
+      "name": "onlyoffice-devtools",
       "source": "./",
-      "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships. Also ships the ONLYOFFICE Apps MCP server (HTTP)."
+      "description": "Agent skills for building integrations with ONLYOFFICE developer SDKs and tools. The README lists the skills the plugin currently ships."
     }
   ]
 }

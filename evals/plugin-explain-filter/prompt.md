@@ -1,7 +1,7 @@
 ---
 description: The usersType/usersTypes asymmetry and why useCurrentFile() is null in a click-opened modal.
-expected_outcome: ContextMenu reads usersTypes (plural), the singular is skipped silently; the enum names do not match the shown roles; useCurrentFile() is null in a modal opened from a class-side click by design - hand the id over through a module variable or a factory closure.
-tags: [plugin-sdk, question]
+expected_outcome: ContextMenu reads usersTypes (plural), the singular is skipped silently; the values come from UserRole, since the deprecated UsersType's member names do not match the shown roles; useCurrentFile() is null in a modal opened from a class-side click by design - hand the id over through a module variable or a factory closure.
+tags: [apps-plugin-sdk, question]
 max_turns: 15
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]

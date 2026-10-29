@@ -1,0 +1,18 @@
+// src/main.tsx — the whole of the kit's setup. Nothing else is required: each
+// component brings its own stylesheet, so there is no CSS import here.
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+
+import { App } from "./App";
+import { AppProviders } from "./AppProviders";
+
+const container = document.getElementById("root");
+if (!container) throw new Error("#root is missing from index.html");
+
+createRoot(container).render(
+  <StrictMode>
+    <AppProviders locale="en">
+      <App />
+    </AppProviders>
+  </StrictMode>,
+);

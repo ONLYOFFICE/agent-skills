@@ -1,5 +1,5 @@
 ---
 type: regex
-pattern: 'login\(\s*\w+\s*,\s*\w+\s*,\s*undefined\s*,\s*undefined\s*,\s*\w+\s*\)'
+pattern: 'login\(\s*[\w.]+\s*,\s*[\w.]+\s*,\s*undefined\s*,\s*undefined\s*,\s*[^,()]+\)'
 weight: 2
 ---

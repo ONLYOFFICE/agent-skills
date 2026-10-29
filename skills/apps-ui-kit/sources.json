@@ -1,0 +1,13 @@
+{
+  "version": "4.0.1",
+  "sources": {
+    "docs": {"host": "apiSite", "path": "/docspace/ui-kit", "verify": true},
+    "repo": {"host": "github", "path": "/docspace-ui-kit-react", "verify": true}
+  },
+  "placeholderHosts": ["localhost", "your-app.example", "portal.example.com"],
+  "versionPatterns": [
+    {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
+    {"file": "SKILL.md", "pattern": "apps-ui-kit` \\*\\*{v}\\*\\*"},
+    {"file": "README.md", "pattern": "apps-ui-kit` \\*\\*{v}\\*\\*"}
+  ]
+}

@@ -1,0 +1,4 @@
+/* A Textarea has a max-width and no width; only wrapperClassName reaches the element carrying it. */
+.note {
+  width: 100%;
+}

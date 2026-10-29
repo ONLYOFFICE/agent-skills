@@ -2,7 +2,7 @@
 /**
  * Reads the ONLYOFFICE API documentation as Markdown for an agent: which sections the site has,
  * which page answers a question, and the page itself — from the production site, or from the
- * fallback stand while production does not serve the Markdown twins yet.
+ * fallback stand for a section production does not serve yet (a release still on the stand).
  *
  *   node docs.mjs status [--json]                  production vs fallback: llms.txt and one .md page per section
  *   node docs.mjs sections [--json]                the sections of the site (from the root llms.txt)
@@ -38,11 +38,16 @@ const MAX_FIND_RESULTS = 40;
 
 /** Short names an agent is likely to type for a section, mapped to the section's path on the site. */
 export const SECTION_ALIASES = {
+  "apps-embed-sdk": "docspace/javascript-sdk",
   "embed-sdk": "docspace/javascript-sdk",
   "javascript-sdk": "docspace/javascript-sdk",
   "js-sdk": "docspace/javascript-sdk",
   "plugins-sdk": "docspace/plugins-sdk",
+  "apps-plugin-sdk": "docspace/plugins-sdk",
   "plugin-sdk": "docspace/plugins-sdk",
+  "apps-ui-kit": "docspace/ui-kit",
+  "ui-kit": "docspace/ui-kit",
+  kit: "docspace/ui-kit",
   rest: "docspace/api-backend",
   "api-backend": "docspace/api-backend",
   "rest-api": "docspace/api-backend",
@@ -291,16 +296,26 @@ async function resolveHost(hosts, { forced, refresh }) {
 
 function sourceLine(hosts, res) {
   if (res.forced) return `source: ${res.origin} (given with --host)`;
-  if (res.fallback) return `source: FALLBACK ${res.origin} — production ${hosts.apiSite} has no Markdown docs yet (${res.primaryStatus}); the stand may be ahead of or behind the released version, name it when you cite it`;
+  if (res.fallback) return `source: FALLBACK ${res.origin} — production ${hosts.apiSite} does not serve the Markdown docs (${res.primaryStatus}); the stand may be ahead of or behind the released version, name it when you cite it`;
   return `source: ${res.origin} (production)`;
 }
+
+/**
+ * The sections the repository's skills link into. Each is checked even when the root llms.txt
+ * leaves it out, so a section missing from the index fails `status` instead of going unchecked.
+ */
+const SKILL_SECTIONS = ["docspace/javascript-sdk", "docspace/plugins-sdk", "docspace/ui-kit"];
 
 async function loadSections(origin, refresh) {
   const root = await fetchText(`${origin}/llms.txt`, { refresh });
   if (!looksLikeMarkdown(root.status, root.text)) return null;
-  return parseIndex(root.text)
+  const sections = parseIndex(root.text)
     .filter((e) => e.url.endsWith("/llms.txt"))
     .map((e) => ({ id: sectionIdOf(e.url), name: e.title, description: e.summary, group: e.group, url: e.url }));
+  for (const id of SKILL_SECTIONS)
+    if (!sections.some((s) => s.id === id))
+      sections.push({ id, name: id, description: "not listed in the root llms.txt", group: null, url: `${origin}/${id}/llms.txt` });
+  return sections;
 }
 
 async function loadSectionEntries(section, origin, refresh, knownOrigins) {
@@ -362,11 +377,14 @@ async function cmdStatus(hosts, opts) {
       verdict === "production"
         ? "verdict: production serves llms.txt and Markdown pages for every section — the plugin's links are live"
         : verdict === "fallback"
-          ? "verdict: production is incomplete; the fallback stand serves every section — the docs skill reads from it until the site is deployed"
+          ? "verdict: production is incomplete; the fallback stand serves every section — the docs skill reads from it until that release of the site is deployed"
           : "verdict: neither host serves the Markdown docs — only the installed packages' types remain as a source",
     );
   }
-  process.exit(verdict === "production" ? 0 : verdict === "fallback" ? 1 : 2);
+  // Not process.exit(): the sockets of the last requests are still closing, and on Windows
+  // Node aborts the process with a libuv assertion instead of exiting -- the code reads as 127
+  // rather than 0, 1 or 2, and the release checklist cannot tell the three apart.
+  process.exitCode = verdict === "production" ? 0 : verdict === "fallback" ? 1 : 2;
 }
 
 async function withHost(hosts, opts, fn) {
