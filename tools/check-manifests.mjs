@@ -13,15 +13,18 @@
  *   - the marketplace entry has the same name and description, and metadata.version the same version
  *   - plugin.json uses only the keys the Agent Plugins 1.0.0 schema allows, and a name that fits it
  *   - the OpenAI listing fits the directory's limits (displayName and shortDescription 30
- *     characters, longDescription 4000, developerName 80), capabilities is an array, and every
- *     icon it names is in the plugin and is what OpenAI accepts: PNG, JPEG, WebP or SVG, square,
- *     48 px or more (a raster at most 4096), 5 MiB or less
+ *     characters, longDescription 4000, developerName 80), capabilities, when given, is an array,
+ *     and every icon it names is in the plugin under a ./ path and is what OpenAI accepts: PNG,
+ *     JPEG, WebP or SVG, square, 48 px or more (a raster at most 4096), 5 MiB or less
+ *     (https://developers.openai.com/plugins/deploy/submission)
  *   - both manifests give the same privacy policy and terms of service, as https:// URLs
  *     (privacyPolicyUrl and termsOfServiceUrl in Claude's, privacyPolicyURL and termsOfServiceURL
  *     in the OpenAI listing), and the listing's websiteURL and supportURL are https:// too
- *   - the icon .claude-plugin/plugin.json names, when it names one, is what Anthropic's directory
- *     accepts: PNG or JPEG, square, 512 to 2048 px, under 2 MB. The directory takes it once, at the
- *     first save in the developer portal; a later change does not reach the listing
+ *   - the icon .claude-plugin/plugin.json names, when it names one, is an image file inside the
+ *     plugin (https://code.claude.com/docs/en/plugins-reference#directory-listing-fields) that the
+ *     directory's file checks pass: PNG, JPEG, GIF, WebP or SVG, 5 MiB or less
+ *     (https://claude.com/docs/plugins/pre-submission-checklist). Anthropic documents no size or
+ *     shape for it
  *
  * Exit: 0 in step, 1 a mismatch, 2 a manifest that cannot be read. No dependencies, no network.
  */
@@ -42,8 +45,8 @@ const SHARED_KEYS = ["name", "version", "description", "author", "homepage", "re
 const NAME = /^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
 const LIMITS = { displayName: 30, shortDescription: 30, longDescription: 4000, developerName: 80 };
 const ASSETS = ["composerIcon", "composerIconDark", "logo", "logoDark"];
-const OPENAI_ICON = { formats: ["png", "jpeg", "webp", "svg"], min: 48, max: 4096, bytes: 5 * 1024 * 1024 };
-const CLAUDE_ICON = { formats: ["png", "jpeg"], min: 512, max: 2048, bytes: 2 * 1000 * 1000 };
+const OPENAI_ICON = { formats: ["png", "jpeg", "webp", "svg"], dotSlash: true, square: true, min: 48, max: 4096, bytes: 5 * 1024 * 1024 };
+const CLAUDE_ICON = { formats: ["png", "jpeg", "gif", "webp", "svg"], bytes: 5 * 1024 * 1024 };
 
 function fail(message) {
   console.error(`ERROR: ${message}`);
@@ -54,10 +57,11 @@ function rel(file) {
   return path.relative(ROOT, file).replaceAll("\\", "/");
 }
 
-// Format and pixel size from the file's own header; null when it is none of the four formats.
+// Format and pixel size from the file's own header; null when it is none of the five formats.
 function imageInfo(file) {
   const b = readFileSync(file);
   if (b.length > 24 && b.readUInt32BE(0) === 0x89504e47) return { format: "png", width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
+  if (b.length > 10 && b.toString("ascii", 0, 4) === "GIF8") return { format: "gif", width: b.readUInt16LE(6), height: b.readUInt16LE(8) };
   if (b.length > 4 && b[0] === 0xff && b[1] === 0xd8) {
     for (let i = 2; i + 9 < b.length; ) {
       if (b[i] !== 0xff) return { format: "jpeg" };
@@ -87,14 +91,17 @@ function imageInfo(file) {
 
 // What is wrong with the icon at `asset` for a directory with these rules, or [] when nothing is.
 function iconProblems(asset, rules) {
-  if (typeof asset !== "string" || !asset.startsWith("./")) return [`must be a path starting with ./`];
-  const file = path.join(PLUGIN, asset);
-  if (!existsSync(file)) return [`${asset} is not in the plugin`];
+  if (typeof asset !== "string" || !asset) return [`must be a path to a file in the plugin`];
+  if (rules.dotSlash && !asset.startsWith("./")) return [`must be a path starting with ./`];
+  const file = path.resolve(PLUGIN, asset);
+  const inside = path.relative(PLUGIN, file);
+  if (inside.startsWith("..") || path.isAbsolute(inside) || !existsSync(file)) return [`${asset} is not in the plugin`];
   const info = imageInfo(file);
   if (!info || !rules.formats.includes(info.format)) return [`${asset} is ${info?.format ?? "not an image"}; accepted: ${rules.formats.join(", ")}`];
   const found = [];
   const bytes = statSync(file).size;
   if (bytes > rules.bytes) found.push(`${asset} is ${bytes} bytes, the limit is ${rules.bytes}`);
+  if (!rules.square) return found;
   if (!info.width || !info.height) return [...found, `${asset}: its size cannot be read`];
   if (info.width !== info.height) found.push(`${asset} is ${info.width}x${info.height}, not square`);
   if (info.width < rules.min) found.push(`${asset} is ${info.width} px, the minimum is ${rules.min}`);
@@ -144,7 +151,7 @@ if (!listing) {
     if (typeof value !== "string" || !value) problems.push(`interface.${field} is missing`);
     else if ([...value].length > max) problems.push(`interface.${field} is ${[...value].length} characters, the limit is ${max}`);
   }
-  if (!Array.isArray(listing.capabilities)) problems.push("interface.capabilities must be an array ([] when the plugin has none)");
+  if (listing.capabilities !== undefined && !Array.isArray(listing.capabilities)) problems.push("interface.capabilities must be an array");
   for (const field of ASSETS) {
     if (listing[field] === undefined) continue;
     for (const p of iconProblems(listing[field], OPENAI_ICON)) problems.push(`interface.${field}: ${p}`);

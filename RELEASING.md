@@ -41,11 +41,9 @@ release. Semver: new skill or breaking rewrite of one → minor while `0.x`; cor
 → patch.
 
 **Icon** — `assets/icon.png`, named by `icon` in the Claude manifest and by `composerIcon` and
-`logo` in the OpenAI listing. One file meets both directories: Anthropic's takes only PNG or
-JPEG, square, 512 to 2048 px; OpenAI's takes 48 px and up. It is the ONLYOFFICE mark, the same art
-as the ONLYOFFICE Apps MCP plugin's icon, rendered at 1024 px from the vector logo. Anthropic's
-directory reads it once, at the first save in the developer portal, so replace it before that
-save or not at all.
+`logo` in the OpenAI listing. OpenAI's directory takes PNG, JPEG, WebP or SVG, square, 48 to
+4096 px, 5 MiB or less; Anthropic's documents only an image file inside the plugin, which its
+file checks accept as PNG, JPEG, GIF, WebP or SVG of 5 MiB or less.
 
 **Target SDK version** — the SDK release a skill describes. Lives in each skill's
 `SKILL.md` frontmatter as `metadata.sdk-version`, and is repeated in prose in the root
