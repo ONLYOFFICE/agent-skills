@@ -20,6 +20,9 @@ Each field, with its type and a line, is on [`IInfoPanelItem`](https://api.onlyo
 - `isHeaderVisible` **defaults to `true`** — the file/room title block is above your component unless you pass `false`. Only an explicit `false` removes it.
 - `filesType` picks the kind of selection: a room gets the tab only through `room`, a plain folder only through `folder`, and without `filesType` the tab is on every selection.
 - **`filesExsts` is checked only for an entry admitted as `file`.** An image or a video admitted as `image`/`video` gets the tab whatever its extension — `filesType: [image], filesExsts: [".png"]` shows on every `.jpg` too. Either list `file` alone (images and videos pass as files as well) with the extensions, or check `file.fileExst` in the component. Extensions carry the dot.
+- **`roomType` is checked only when a room is selected** — files and folders pass it untested, as in the [context menu](context-menu-item.md), so a tab meant for some rooms also lists `filesType: [FilesType.room]`.
+- `itemSecurity` is tested against the selection's own `security` map, and a file's map and a room's have different keys: `Edit` exists only on files, `EditRoom` only on folders and rooms, so a key the selection lacks hides the tab with nothing to see. The keys every map carries are listed on the [context menu page](context-menu-item.md).
+- `itemId` compares ids as text, so `123` and `"123"` pick the same entry.
 - `subMenu.onClick` is not a click: the portal calls it itself on every selection change while the tab is open, with the id as a **number** (a third-party string id arrives as `NaN`), and ignores what it returns. A React tab reads the selection from `useCurrentFile()` instead.
 
 Renders after the portal's own tabs; ~337px wide and already scrolls — do not add a scroll container. No plugin tab on a multi-selection, in Trash, on the root folder, on a room template or anywhere in the AI agents section.
