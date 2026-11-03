@@ -33,7 +33,7 @@ Codex), that `validate` never reads. Change a shared field in both, and run
 `node tools/check-manifests.mjs`.
 
 Run `apps-plugin-sdk`'s suite after touching anything under
-`skills/apps-plugin-sdk/scripts/` or `templates/` -- it is the only thing that
+`skills/apps-plugin-sdk/scripts/`, `templates/` or `vendor/` -- it is the only thing that
 catches a broken generator, and it covers cases a grep does not: the host-provided
 externals are written as regexes (`/^@onlyoffice\/apps-ui-kit(\/.*)?$/`) in
 `templates/vite.config`, `evals/fixtures/working-plugin/vite.config.ts` and

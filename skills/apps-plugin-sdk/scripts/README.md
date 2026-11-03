@@ -12,7 +12,8 @@ The **generator** writes the plugin class with every member the loader calls, a 
 build that keeps the host-provided packages external, a typed localisation module for the
 languages given as `--locales` (validated against `PluginLocale`, since a table filed under `ja`
 instead of `ja-JP` is never read), the CSS-module declaration and a `typecheck` script, and
-depends on the SDK and `@onlyoffice/apps-ui-kit` from npm. It registers no items by design — a
+depends on `@onlyoffice/apps-ui-kit` from npm and on the SDK from `../vendor/` while it holds a
+packed release, from npm otherwise. It registers no items by design — a
 placeholder that survives into an upload is a plugin that looks alive and does the wrong thing.
 
 The **validator** runs static checks over the manifest, build config, sources and packed archive
@@ -74,7 +75,12 @@ update [references/ui-kit.md](../references/ui-kit.md) where behaviour moved —
 `docspace-ui-kit-react` has a `sync-ui-kit-reference` skill that reports exactly what drifted.
 The SDK comes from npm at `SDK_RANGE` in the same file; its packer copies the installed package's
 `minDocSpaceVersion` into every generated plugin's `config.json`, and agents read the SDK's JSDoc
-out of `node_modules`.
+out of `node_modules`. When the references describe an SDK release that is not on npm yet, put
+its pack into `../vendor/` — one `onlyoffice-docspace-plugin-sdk-<version>.tgz`, made with
+`npm run build && npm pack` in the SDK checkout — and the generator copies it into every project
+and installs it as a `file:` dependency. Once the release is on npm, delete the tarball; nothing
+else changes. `evals/fixtures/working-plugin` stays on the npm range: it uses nothing
+unreleased.
 
 ## Keeping the contract current
 
@@ -94,8 +100,8 @@ runs.
 ## Verifying the toolchain
 
 Whether the pinned versions still compile the generated config is not expressed anywhere else,
-so after touching `generator/project-files.mjs` or `../templates/`, and after an SDK or kit
-release:
+so after touching `generator/project-files.mjs`, `../templates/` or `../vendor/`, and after an SDK
+or kit release:
 
 ```sh
 node skills/apps-plugin-sdk/scripts/generate-plugin.mjs --name smoke --plugin-name Smoke --scopes <all eleven> --locales ru,pt-BR --dir ../smoke
@@ -106,7 +112,7 @@ A missing `dist/plugin.zip` means the toolchain disagrees with itself, and `type
 only thing that reads the generated types at all — `vite build` strips them, so a broken
 `locales.ts` or `css-modules.d.ts` builds cleanly. Pass `--locales`, or the extra-language tables
 are never generated in a smoke run. Use all eleven scopes — a renamed SDK export only surfaces
-when every scope's imports are emitted. If you swap the npm SDK for a checkout, `npm pack` it
+when every scope's imports are emitted. If you swap the SDK for a checkout, `npm pack` it
 rather than linking the directory, or the SDK's `react` peer resolves outside the project and the
 validator cannot import the bundle.
 

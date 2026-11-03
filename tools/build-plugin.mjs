@@ -15,8 +15,8 @@
  *   - .claude-plugin/plugin.json and plugin.json, the two manifests; assets/icon.png; LICENSE
  *   - README.md, made from the root README: skill links point at SKILL.md, the line for
  *     contributors is dropped
- *   - per skill: SKILL.md, references/, templates/ and scripts/, less the maintainers' part of
- *     scripts/ (READMEs, self-tests, the SDK sync)
+ *   - per skill: SKILL.md, references/, templates/, scripts/ and vendor/, less the maintainers'
+ *     part of scripts/ (READMEs, self-tests, the SDK sync)
  * Every tracked file under skills/ must match a rule below, shipped or dropped: a new file fails
  * the build until it is given one. Before writing, tools/check-manifests.mjs must pass on the same
  * revision, and every relative link in a shipped Markdown file must reach a shipped file (and its
@@ -45,6 +45,8 @@ const SKILL_RULES = [
   [true, /^references\//],
   [true, /^templates\//],
   [true, /^scripts\//],
+  // A packed SDK release not on npm yet; the generator installs it into every project it writes.
+  [true, /^vendor\//],
   [false, /^README\.md$/, "the skill's page in the repository"],
   [false, /^sources\.json$/, "read by tools/sync-sources.mjs"],
   [false, /^evals\//, "eval cases and fixtures"],

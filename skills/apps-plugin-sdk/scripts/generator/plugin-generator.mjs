@@ -38,10 +38,10 @@ const TEMPLATES = [
 
 /**
  * @param {ReturnType<typeof import("./options.mjs").parseCliOptions>} options
- * @returns {{ targetDir, iconPaths, hasItemScopes }}
+ * @returns {{ targetDir, iconPaths, hasItemScopes, sdkTarball }}
  */
 export const generate = (options, { templatesDir }) => {
-  const { name, pluginName, description, author, scopeNames, targetDir, extraLocales } = options;
+  const { name, pluginName, description, author, scopeNames, targetDir, extraLocales, sdkTarballPath } = options;
 
   const write = (relativePath, contents) => {
     const absolutePath = path.join(targetDir, relativePath);
@@ -52,9 +52,16 @@ export const generate = (options, { templatesDir }) => {
   const scopes = selectScopes(scopeNames);
   const icons = placeholderIcons({ itemIconFiles: scopes.itemIconFiles, letter: pluginName.charAt(0).toUpperCase() });
 
+  // A vendored SDK goes into the project root, where the manifest's `file:` entry points.
+  const sdkTarball = sdkTarballPath && path.basename(sdkTarballPath);
+  if (sdkTarball) {
+    fs.mkdirSync(targetDir, { recursive: true });
+    fs.copyFileSync(sdkTarballPath, path.join(targetDir, sdkTarball));
+  }
+
   write(
     "package.json",
-    `${JSON.stringify(buildManifest({ name, pluginName, description, author, scopeNames }), null, 2)}\n`,
+    `${JSON.stringify(buildManifest({ name, pluginName, description, author, scopeNames, sdkTarball }), null, 2)}\n`,
   );
 
   for (const [templateName, relativePath] of TEMPLATES)
@@ -65,12 +72,13 @@ export const generate = (options, { templatesDir }) => {
 
   for (const file of icons.files) write(file.path, file.contents);
 
-  write("README.md", readmeMarkdown({ name, description, scopeNames }));
+  write("README.md", readmeMarkdown({ name, description, scopeNames, sdkTarball }));
   write("CHANGELOG.md", changelogMarkdown());
 
   return {
     targetDir,
     iconPaths: icons.paths,
     hasItemScopes: scopes.itemMapScopes.length > 0,
+    sdkTarball,
   };
 };

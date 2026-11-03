@@ -114,7 +114,8 @@ is also stated in `skills/apps-plugin-sdk/references/plugins/scopes.md`. When an
   SDK major, `SDK_RANGE` in `scripts/generator/project-files.mjs`; if the
   kit changed, move `UI_KIT_RANGE` in `scripts/generator/project-files.mjs` with the range the
   portal installs and update `references/ui-kit.md`. Then bump `sdk-version` and the README table. The
-  validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge.
+  validator's `checkSdkDrift()` warns when the contract and an installed SDK diverge. If
+  `vendor/` holds a packed SDK, delete it once that release is on npm.
 - `apps-ui-kit`: the target is a release of the kit itself. Pull `docspace-ui-kit-react` to the
   released revision (or install the released package) and run
   `node tools/sync-ui-kit.mjs --from <kit> --write`, which rebuilds

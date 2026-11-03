@@ -21,6 +21,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { LOCALE_TAGS, SCOPES, localeMember, localeSuggestions } from "../contract.mjs";
 
@@ -58,6 +59,21 @@ const requireFlag = (argv, flagName) => {
   const value = readFlag(argv, flagName);
   if (!value) throw new CliError(`--${flagName} is required`);
   return value;
+};
+
+const isPluginSdkTarball = (fileName) => /^onlyoffice-docspace-plugin-sdk-.*\.tgz$/.test(fileName);
+
+const VENDOR_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "vendor");
+
+/**
+ * A packed SDK release in vendor/, for one that is not on npm yet; with none there the npm range
+ * is used. One tarball at most - with two, the version would depend on directory order.
+ */
+const findVendoredSdk = () => {
+  const tarballs = fs.existsSync(VENDOR_DIR) ? fs.readdirSync(VENDOR_DIR).filter(isPluginSdkTarball) : [];
+  if (tarballs.length > 1)
+    throw new CliError(`vendor/ holds ${tarballs.length} SDK tarballs (${tarballs.join(", ")}) - keep one`);
+  return tarballs[0] && path.join(VENDOR_DIR, tarballs[0]);
 };
 
 const KNOWN_FLAGS = ["name", "plugin-name", "scopes", "dir", "description", "author", "locales", "force"];
@@ -109,5 +125,6 @@ export const parseCliOptions = (argv) => {
     description: readFlag(argv, "description") ?? `ONLYOFFICE Apps plugin ${name}`,
     author: readFlag(argv, "author") ?? "",
     extraLocales,
+    sdkTarballPath: findVendoredSdk(),
   };
 };
