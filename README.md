@@ -13,6 +13,10 @@ and checks its work with the scripts the skill carries.
 | [`apps-embed-sdk`](skills/apps-embed-sdk/README.md) | "embed our DocSpace file manager in the CRM", "open a document from our page in an editor frame", "why does the embedded frame answer 401" | Embeds ONLYOFFICE Apps (formerly DocSpace) into a web page with the [Embed SDK](https://api.onlyoffice.com/docspace/javascript-sdk/get-started): probes the portal, picks the mode, writes the frame config and the sign-in flow, validates the config offline | Embed SDK **2.2.0** |
 | [`apps-plugin-sdk`](skills/apps-plugin-sdk/README.md) | "a context menu action that converts the selected file", "a page in the sidebar listing our rooms", "my plugin installs but the item never appears" | Builds, audits and explains portal plugins with the [Plugins SDK](https://api.onlyoffice.com/docspace/plugins-sdk/get-started): scaffolds a Vite + React project, validates it against the portal's loader, renders every surface in a browser | Plugins SDK **3.0.0**, ONLYOFFICE Apps **4.0** |
 | [`apps-ui-kit`](skills/apps-ui-kit/README.md) | "a settings form like the portal's", "a dialog in the DocSpace style in our admin", "the kit's labels are blank" | Builds React 19 screens in your own application with the [ONLYOFFICE UI kit](https://api.onlyoffice.com/docspace/ui-kit/getting-started): picks the components, mounts the providers, uses the prop names the kit reads, checks the result | UI kit **4.0.1** |
+| [`doceditor`](skills/doceditor/README.md) | "open documents from our app in the ONLYOFFICE editor", "write the callback handler that saves edits", "why does the editor keep retrying the callback" | Wires the Document Editor into an existing application with the [Docs API](https://api.onlyoffice.com/docs/docs-api/get-started/basic-concepts): assembles the `DocsAPI.DocEditor` config, implements the `callbackUrl` handler, signs JWT tokens, calls the Command Service | Docs API **8.2.0+** |
+| [`doceditor-integration`](skills/doceditor-integration/README.md) | "a sample app we can click through and show the team", "integrate ONLYOFFICE with our service from zero", "a demo with a file list and the editor" | Generates a whole editor integration from scratch: project skeleton, a UI on the official editor components or the UI kit, Docker/nginx/compose, and the tests for the result, with each piece built per `doceditor` and `web-converter` | Docs API **8.2.0+** |
+| [`web-builder`](skills/web-builder/README.md) | "generate an invoice from this order row", "fill the contract template from the database", "compare two documents into a tracked-changes result" | Generates documents, spreadsheets, presentations and PDFs server side with the [Document Builder API](https://api.onlyoffice.com/docs/docs-api/additional-api/document-builder-api): writes the builder script, passes data in through `argument`, signs the request, polls by the server-issued key | Docs API **8.2.0+** |
+| [`web-converter`](skills/web-converter/README.md) | "convert uploaded docx files to PDF", "a bulk csv-to-xlsx job", "why does conversion fail with -8" | Converts files between formats with the [Conversion API](https://api.onlyoffice.com/docs/docs-api/additional-api/conversion-api): validates the format pair, signs the request, polls with a stable key, maps each error code to its cause | Docs API **8.2.0+** |
 
 Every skill is a `SKILL.md` the agent reads whole, a `references/` folder it reads on demand, and
 `scripts/` it runs — Node only, no dependencies. What reaches the network is listed under
@@ -25,7 +29,9 @@ Every skill is a `SKILL.md` the agent reads whole, a `references/` folder it rea
 Install the `onlyoffice-devtools` plugin from the ONLYOFFICE marketplace,
 [ONLYOFFICE/agent-plugins](https://github.com/ONLYOFFICE/agent-plugins); it stays updatable through
 `/plugin`, and the skills appear as `onlyoffice-devtools:apps-embed-sdk`,
-`onlyoffice-devtools:apps-plugin-sdk` and `onlyoffice-devtools:apps-ui-kit`:
+`onlyoffice-devtools:apps-plugin-sdk`, `onlyoffice-devtools:apps-ui-kit`,
+`onlyoffice-devtools:doceditor`, `onlyoffice-devtools:doceditor-integration`,
+`onlyoffice-devtools:web-builder` and `onlyoffice-devtools:web-converter`:
 
 ```
 /plugin marketplace add ONLYOFFICE/agent-plugins

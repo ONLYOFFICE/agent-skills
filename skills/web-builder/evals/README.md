@@ -21,7 +21,7 @@ Scenario 3 starts from [`fixtures/broken-invoicer/`](fixtures/broken-invoicer/),
 
 ## Running it
 
-Same protocol as [`plugin-sdk`'s evals](../../plugin-sdk/evals/README.md): after a change to `SKILL.md`, before shipping - once, not in a loop. Ask `skill-creator`, which owns it:
+Same protocol as [`apps-plugin-sdk`'s evals](../../apps-plugin-sdk/evals/README.md): after a change to `SKILL.md`, before shipping - once, not in a loop. Ask `skill-creator`, which owns it:
 
 ```
 run the evals for skills/web-builder, iteration-1
