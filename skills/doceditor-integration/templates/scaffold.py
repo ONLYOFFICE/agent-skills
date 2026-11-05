@@ -22,7 +22,7 @@ not skipped because it came from an official generator:
 import subprocess
 import sys
 
-PINNED_CREATE_APP_VERSION = "{{PINNED_CREATE_APP_VERSION}}"
+PINNED_CREATE_APP_VERSION = "1.0.0"
 
 
 def main() -> int:
