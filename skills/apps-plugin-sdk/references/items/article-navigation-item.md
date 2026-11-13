@@ -7,6 +7,7 @@ A whole screen of the plugin's own — a dashboard, a list, a workspace.
 | Types | [`IArticleNavigationItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IArticleNavigationItem.md), [`IArticleNavigationPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IArticleNavigationPlugin.md) |
 | The loader reads | `getArticleNavigationItems()`, keyed by `key`, which is also the URL segment |
 | Role filter | `usersTypes` — [the filter field trap](common-fields.md#the-filter-field-trap) |
+| People and groups filter | `users`, `groups` — [below](#showing-the-entry-to-some-people-only) |
 | Surface | a full page at `/p/<key>` (under the section's path), `component` |
 | `useCurrentFile()` | `null` |
 | Redraw after a change | `updateArticleNavigationItems` ([actions.md](../react/actions.md#changing-an-item-from-a-component)) |
@@ -22,6 +23,17 @@ Each field, with its type and a line, is on [`IArticleNavigationItem`](https://a
 - `icon` must be an **SVG** asset: the sidebar inlines it as SVG markup, so a `.png` or `.jpg` draws an empty slot.
 
 A first-class entry beside Rooms and Documents; the page is a full section — own route, deep-linkable, the portal's header and sidebar around it, no folder context. An unknown key or a section not in `appears` redirects to the root. The scope for anything that is a **screen**: dashboards, lists, a plugin's own workspace.
+
+## Showing the entry to some people only
+
+`usersTypes` narrows the entry by role. For named people and groups (a CRM for the Sales group and the director) set `users` and `groups`, user and group ids, on the item. The portal shows it to the listed users and to the members of the listed groups. An empty array lists no one, leaving both out means everyone, and every other filter must still match.
+
+Keep the lists in the plugin's settings so an admin changes them without re-uploading the plugin:
+
+- the settings page picks ids with `showSelector({ type: SelectorType.People, props: { isMultiSelect: true } })`, adding `withGroups: true, isGroupsOnly: true` for groups (`isGroupsOnly` alone is ignored, and `SelectorType.Groups` picks a single group), and stores them with `usePluginSettings().save()`;
+- `setAdminPluginSettingsValue`, which the portal calls for every user with the stored string, registers the item with those lists. Register it there and not in `onLoadCallback`, so the entry never shows before its access is known.
+
+Settings are one string of 4096 characters (255 before 4.1), so about 100 ids. Portals before 4.1 ignore both fields and show the entry to everyone. The filter hides the entry and its page, but the plugin's code still loads for every user. Data behind the page is protected only by the service that serves it. Working plugin: [`samples/article-navigation-access`](https://github.com/ONLYOFFICE/docspace-plugin-sdk/tree/master/samples/article-navigation-access).
 
 ## Where it renders
 
