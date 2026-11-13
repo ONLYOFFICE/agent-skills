@@ -31,7 +31,7 @@ A first-class entry beside Rooms and Documents; the page is a full section — o
 Keep the lists in the plugin's settings so an admin changes them without re-uploading the plugin:
 
 - the settings page picks ids with `showSelector({ type: SelectorType.People, props: { isMultiSelect: true } })`, adding `withGroups: true, isGroupsOnly: true` for groups (`isGroupsOnly` alone is ignored, and `SelectorType.Groups` picks a single group), and stores them with `usePluginSettings().save()`;
-- `setAdminPluginSettingsValue`, which the portal calls for every user with the stored string, registers the item with those lists. Register it there and not in `onLoadCallback`, so the entry never shows before its access is known.
+- `setAdminPluginSettingsValue`, which the portal calls for every user with the stored string once the plugin declares the `Settings` scope, registers the item with those lists. Register it there and not in `onLoadCallback`, so the entry never shows before its access is known. Spread the lists onto the item only while access is restricted (`restricted ? { users, groups } : {}`): stored empty lists would hide the entry from everyone.
 
 Settings are one string of 4096 characters (255 before 4.1), so about 100 ids. Portals before 4.1 ignore both fields and show the entry to everyone. The filter hides the entry and its page, but the plugin's code still loads for every user. Data behind the page is protected only by the service that serves it. Working plugin: [`samples/workspace-app`](https://github.com/ONLYOFFICE/docspace-plugin-sdk/tree/master/samples/workspace-app).
 
