@@ -149,7 +149,7 @@ Enforced server-side; exceeding one rejects the upload. The archive and asset li
 | Assets | `.svg` `.png` `.jpg` `.jpeg` only — compared case-sensitively, so `icon.PNG` is dropped without a word — and no subdirectories |
 | Plugins per portal | 100 |
 | Upload format | `.zip` containing `plugin.js` and `config.json` |
-| Stored settings (`save()` / `saveSettings`) | one string of 255 characters; longer is refused with a 400, not truncated |
+| Stored settings (`save()` / `saveSettings`) | one string of 4096 characters (255 before 4.1); longer is refused with a 400, not truncated |
 
 Limits of one scope — context menu nesting, the five sidebar buttons — are with that scope: on its page here or on the docs page it links ([scopes.md](plugins/scopes.md)).
 
