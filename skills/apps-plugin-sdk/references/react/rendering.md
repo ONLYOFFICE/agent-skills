@@ -13,6 +13,7 @@ The portal wraps the component in the runtime provider and an error boundary and
 | `IArticleNavigationItem.component` | a full page at `/p/<key>` (under the section's path) | [article-navigation-item.md](../items/article-navigation-item.md#where-it-renders) |
 | `IInfoPanelItem.component` | body of an info panel tab | [info-panel-item.md](../items/info-panel-item.md) |
 | `IArticleButtonItem.component` | a 32×32 slot in the sidebar, `overflow: hidden` | [article-button-item.md](../items/article-button-item.md) |
+| `IDashboardWidgetItem.component` | a full-width block on the Home page, under its title | [dashboard-widget-item.md](../items/dashboard-widget-item.md#where-it-renders) |
 | `IModalDialog.dialogBodyComponent` | body of a modal or aside | [modal-dialog.md](../components/modal-dialog.md) |
 | `IMediaViewer.component` | the whole viewport, behind the viewer's chrome | [media-viewer.md](../components/media-viewer.md) |
 | `ISettings.component` | the plugin's settings aside | [settings-plugin.md](../plugins/settings-plugin.md#registering-the-page) |

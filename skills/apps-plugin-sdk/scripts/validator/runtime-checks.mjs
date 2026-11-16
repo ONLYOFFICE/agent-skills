@@ -68,7 +68,10 @@ const INVOCATIONS = {
   EventListener: (item) => (isFn(item.eventHandler) ? [["eventHandler", () => item.eventHandler()]] : []),
   InfoPanel: (item) => (isFn(item.subMenu?.onClick) ? [["subMenu.onClick", () => item.subMenu.onClick(1)]] : []),
   ArticleButton: () => [],
-  ArticleNavigation: () => [],
+  // The Home page card's button; without an onClick the card only navigates to the page.
+  ArticleNavigation: (item) =>
+    isFn(item.dashboardCard?.onClick) ? [["dashboardCard.onClick", () => item.dashboardCard.onClick()]] : [],
+  DashboardWidget: () => [],
 };
 
 const invocationsFor = (scope, item) => {
