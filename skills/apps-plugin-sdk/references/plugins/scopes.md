@@ -13,7 +13,7 @@ The skill tracks a portal release, not a range, and carries no history. A plugin
 
 **SDK 3 vs SDK 2.** SDK 2 described UI as data (`IBox` trees, `onLoad`, `updateProps`); SDK 3 hands the portal a **React component** (`component`, `dialogBodyComponent`) rendered in the portal's own tree, adds the `ArticleNavigation` scope, and turns the bundle into an **ES module** with a default export and `"runtime": "module"` in the manifest. The old fields still render, marked deprecated — the list is in [plugin.md](plugin.md#deprecated--do-not-use-in-new-code), reading old plugins in [sdk-2-plugins.md](../sdk-2-plugins.md).
 
-## The eleven scopes
+## The twelve scopes
 
 [`IPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IPlugin.md) is not a scope — it is the mandatory base every plugin implements ([plugin.md](plugin.md)). Declare a scope in `package.json:scopes` **and** implement its interface, or nothing happens. Each scope links to its page here, each interface to its docs page, where its members and signatures are ([index](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins.md)); the last three columns are what those pages do not put side by side.
 
@@ -29,11 +29,12 @@ The skill tracks a portal release, not a range, and carries no history. A plugin
 | [`File`](../items/file-item.md) | [`IFilePlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IFilePlugin.md) | `getFileItems` | `extension` | — (a click may open a modal or viewer) |
 | [`ArticleButton`](../items/article-button-item.md) | [`IArticleButtonPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IArticleButtonPlugin.md) | `getArticleButtonItems` | `key` | `component` |
 | [`ArticleNavigation`](../items/article-navigation-item.md) | [`IArticleNavigationPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IArticleNavigationPlugin.md) | `getArticleNavigationItems` | `key` | `component` |
+| [`DashboardWidget`](../items/dashboard-widget-item.md) — portal 4.1; an older portal skips it | `IDashboardWidgetPlugin` (in the installed SDK; no docs page yet) | `getDashboardWidgetItems` | `key` | `component` |
 | [`PostMessage`](post-message-plugin.md) | [`IPostMessagePlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IPostMessagePlugin.md) | `setPostMessageCallback` | — | — |
 
 ## The item scopes share one shape
 
-**Item-map scopes** — ContextMenu, InfoPanel, MainButton, ProfileMenu, EventListener, File, ArticleButton, ArticleNavigation — share one shape: a `Map`, `add<Scope>Item`, `get<Scope>Items`, `update<Scope>Item` (plus `getContextMenuItemsKeys` for ContextMenu). Two exceptions: **EventListener** has no `update…Item` — re-add to replace; **File** keys its map by `extension`, not `key`. So the eight `I<Scope>Plugin` interfaces have no page of their own here: what the portal does with each scope is on its item's page, the fields on the docs pages those link, and what every item shares in [common-fields.md](../items/common-fields.md).
+**Item-map scopes** — ContextMenu, InfoPanel, MainButton, ProfileMenu, EventListener, File, ArticleButton, ArticleNavigation, DashboardWidget — share one shape: a `Map`, `add<Scope>Item`, `get<Scope>Items`, `update<Scope>Item` (plus `getContextMenuItemsKeys` for ContextMenu). Two exceptions: **EventListener** has no `update…Item` — re-add to replace; **File** keys its map by `extension`, not `key`. So the nine `I<Scope>Plugin` interfaces have no page of their own here: what the portal does with each scope is on its item's page, the fields on the docs pages those link, and what every item shares in [common-fields.md](../items/common-fields.md).
 
 ## Anything not in that table
 

@@ -456,6 +456,59 @@ export default ({ workspace, check }) => {
     navNowhere.messageSummary,
   );
 
+  // --- the Home page: a card for a page, a widget of its own --------------------
+
+  const navCard = workspace.validateProject(
+    "nav-dashboard-card",
+    {
+      pkg: manifestFor("nav-dashboard-card", "FixtureNavCard", { scopes: ["ArticleNavigation"] }),
+      bundle: mapScopePlugin({
+        field: "pages",
+        adder: "addArticleNavigationItem",
+        getter: "getArticleNavigationItems",
+        onLoadBody: `this.pages.set("fixture-nav-dashboard-card-page", { key: "fixture-nav-dashboard-card-page", label: "Page", icon: "logo.svg", component: () => null,
+      dashboardCard: { async onClick() { return { actions: ["show-toast"] }; } } });`,
+      }),
+      src: scopeSource({ adder: "addArticleNavigationItem", getter: "getArticleNavigationItems" }),
+    },
+    "--invoke",
+  );
+
+  check(
+    "a Home page card's onClick is invoked and its message checked like any click",
+    navCard.errorsMention('"fixture-nav-dashboard-card-page" dashboardCard.onClick returns action "show-toast" without toastProps'),
+    navCard.messageSummary,
+  );
+
+  const widgets = workspace.validateProject("dashboard-widget", {
+    pkg: manifestFor("dashboard-widget", "FixtureWidget", { scopes: ["DashboardWidget"] }),
+    bundle: mapScopePlugin({
+      field: "widgets",
+      adder: "addDashboardWidgetItem",
+      getter: "getDashboardWidgetItems",
+      onLoadBody: `this.widgets.set("fixture-dashboard-widget-good", { key: "fixture-dashboard-widget-good", title: "Good", component: () => null });
+    this.widgets.set("fixture-dashboard-widget-empty", { key: "fixture-dashboard-widget-empty", title: "Empty" });
+    this.widgets.set("fixture-dashboard-widget-singular", { key: "fixture-dashboard-widget-singular", component: () => null, usersType: ["Owner"] });`,
+    }),
+    src: scopeSource({ adder: "addDashboardWidgetItem", getter: "getDashboardWidgetItems" }),
+  });
+
+  check(
+    "DashboardWidget is a known scope and a widget with a component passes",
+    !widgets.errorCodes.includes("pkg.scopes") && !widgets.hasFindingMentioning('"fixture-dashboard-widget-good"'),
+    widgets.messageSummary,
+  );
+  check(
+    "a widget without a component is an error",
+    widgets.errorsMention('DashboardWidget item "fixture-dashboard-widget-empty" has no component'),
+    widgets.messageSummary,
+  );
+  check(
+    "usersType on a widget is an error, since the host reads usersTypes",
+    widgets.errorsMention('"fixture-dashboard-widget-singular" uses usersType but the host reads usersTypes'),
+    widgets.messageSummary,
+  );
+
   const roles = workspace.validateProject("user-role", {
     pkg: manifestFor("user-role", "FixtureUserRole"),
     bundle: contextMenuPlugin({ filters: `usersTypes: ["FullAdmin", "PortalUser"]` }),

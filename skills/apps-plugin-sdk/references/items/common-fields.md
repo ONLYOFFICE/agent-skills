@@ -1,6 +1,6 @@
 # Fields every item shares
 
-Each item scope has a page of its own — [ContextMenu](context-menu-item.md), [MainButton](main-button-item.md), [ProfileMenu](profile-menu-item.md), [InfoPanel](info-panel-item.md), [EventListener](event-listener-item.md), [File](file-item.md), [ArticleButton](article-button-item.md), [ArticleNavigation](article-navigation-item.md) — recording what the portal does with that scope's items: where they render, what the callback receives, which fields are read when. The fields themselves, with types and a line each, are documented per interface under [Plugin items](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items.md); each page here links its interface and records only what that page does not say. This one holds what they share: the key, the role and device filters, and what the role values mean.
+Each item scope has a page of its own — [ContextMenu](context-menu-item.md), [MainButton](main-button-item.md), [ProfileMenu](profile-menu-item.md), [InfoPanel](info-panel-item.md), [EventListener](event-listener-item.md), [File](file-item.md), [ArticleButton](article-button-item.md), [ArticleNavigation](article-navigation-item.md), [DashboardWidget](dashboard-widget-item.md) — recording what the portal does with that scope's items: where they render, what the callback receives, which fields are read when. The fields themselves, with types and a line each, are documented per interface under [Plugin items](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items.md); each page here links its interface and records only what that page does not say. This one holds what they share: the key, the role and device filters, and what the role values mean.
 
 Where an item has a visible surface it is a React component passed as `component` ([rendering.md](../react/rendering.md)); the SDK 2 `body`/`onLoad` pairs still render, marked deprecated. Icons are asset file names; the size each one wants is on its interface's page and in [portal.md → Limits](../portal.md#limits).
 
@@ -10,10 +10,10 @@ The host reads a **different field name per scope**; the wrong one is silently s
 
 | Field | Scopes |
 |---|---|
-| `usersTypes` | ContextMenu, InfoPanel, EventListener, ArticleButton, ArticleNavigation |
+| `usersTypes` | ContextMenu, InfoPanel, EventListener, ArticleButton, ArticleNavigation, DashboardWidget |
 | `usersType` | MainButton, ProfileMenu, File |
 
-`devices` is read for every scope except `File`, where the check happens inside `onClick`.
+`devices` is read for every scope except `File`, where the check happens inside `onClick`, and `DashboardWidget`, which has no such field.
 
 ## Item keys are portal-wide
 

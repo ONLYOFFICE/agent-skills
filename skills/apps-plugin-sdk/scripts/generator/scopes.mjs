@@ -156,6 +156,10 @@ export const SCOPE_SPECS = {
 
     note: "key becomes the page URL (/p/<key>) so it must be unique across every installed plugin; appears pins the entry to Section.Files / Accounts / Settings; the component is a whole page - lay it out with the kit's Heading and Text",
   },
+
+  DashboardWidget: {
+    note: "component is a full-width block on the Home page under its title and description, with no frame of the portal's own and no current file; usersTypes, users and groups decide who sees it, devices are not read; a portal before 4.1 skips the scope",
+  },
 };
 
 /** camelCased scope name, for where a scope has to appear inside an identifier. */

@@ -68,6 +68,9 @@ const COMPONENT_SCOPES = {
     hostPadding: { paddingBlock: "19px 16px", paddingInline: "20px 3px" },
   },
   EventListener: { width: 400, hasCurrentFile: false },
+  // A Home page widget spans the page's content column: the same area beside the sidebar as a
+  // section page, less the 20px the Home page pads it on each side.
+  DashboardWidget: { width: 990, hasCurrentFile: false },
 };
 
 /** Widths the portal actually gives each surface, in px. */
