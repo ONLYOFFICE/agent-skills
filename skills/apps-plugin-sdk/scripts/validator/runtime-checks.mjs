@@ -245,6 +245,7 @@ export class RuntimeChecks extends Check {
           this.error("runtime", `scope "${scope}" requires ${member}() on the plugin instance`);
 
       if (scope === "Settings") this.#checkSettings(plugin);
+      if (scope === "ArticleWidget") this.#checkArticleWidget(plugin);
       return;
     }
 
@@ -287,6 +288,29 @@ export class RuntimeChecks extends Check {
 
     this.shapes.settings(settings);
     this.#collectSurface("the settings component", settings.component, false);
+  }
+
+  #checkArticleWidget(plugin) {
+    let widget;
+
+    try {
+      widget = plugin.getArticleWidgetItem();
+    } catch (e) {
+      this.error("runtime", `getArticleWidgetItem() threw: ${e.message}`);
+      return;
+    }
+
+    if (!widget) {
+      this.warn(
+        "runtime",
+        'scope "ArticleWidget" is declared but getArticleWidgetItem() returns nothing after onLoadCallback - the sidebar shows no widget until setArticleWidgetItem({ component }) is called and followed by Actions.updateArticleWidgetItem. Intentional only if the plugin sets it later, after its settings arrive',
+      );
+      return;
+    }
+
+    this.shapes.item("ArticleWidget", SCOPE_CONTRACT.ArticleWidget, "widget", widget);
+
+    if (widget.component) this.#collectSurface("the article widget component", widget.component, false);
   }
 
   /** @returns the map, or null when the getter is unusable (already reported). */

@@ -27,7 +27,7 @@ That is the whole registration for a module plugin (`"runtime": "module"` in `pa
 
 ## Per-scope interfaces
 
-Each scope's interface has a page, listed in [scopes.md](scopes.md): `API`, `Settings` and `PostMessage` in this folder ([api-plugin.md](api-plugin.md), [settings-plugin.md](settings-plugin.md), [post-message-plugin.md](post-message-plugin.md)), the nine item scopes on their item pages, with what they share in [common-fields.md](../items/common-fields.md).
+Each scope's interface has a page, listed in [scopes.md](scopes.md): `API`, `Settings` and `PostMessage` in this folder ([api-plugin.md](api-plugin.md), [settings-plugin.md](settings-plugin.md), [post-message-plugin.md](post-message-plugin.md)), the nine item-map scopes and `ArticleWidget` on their item pages, with what they share in [common-fields.md](../items/common-fields.md).
 
 ## Two kinds of callback
 
