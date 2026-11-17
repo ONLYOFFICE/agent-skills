@@ -27,6 +27,7 @@ import * as path from "node:path";
 
 import {
   articleButtonPlugin,
+  articleWidgetPlugin,
   contextMenuPlugin,
   contextMenuProject,
   contextMenuSource,
@@ -218,6 +219,60 @@ export default ({ workspace, check }) => {
     "a declarative settings tree is a deprecation warning",
     settingsLegacy.ok && settingsLegacy.warningCodes.includes("deprecated") && settingsLegacy.warningsMention("settings"),
     settingsLegacy.messageSummary,
+  );
+
+  // --- the sidebar widget ------------------------------------------------------
+
+  const widgetProject = (slug, widget) =>
+    workspace.validateProject(slug, {
+      pkg: manifestFor(slug, `Fixture${slug.replace(/-/g, "")}`, { scopes: ["ArticleWidget"] }),
+      bundle: articleWidgetPlugin({ widget }),
+      src: scopeSource({ members: ["getArticleWidgetItem"] }),
+    });
+
+  const widgetGood = widgetProject("widget-good", `{ component: Widget }`);
+
+  check(
+    "ArticleWidget is a known scope and a widget given as a component passes",
+    widgetGood.ok && !widgetGood.mentions("getArticleWidgetItem"),
+    widgetGood.messageSummary,
+  );
+
+  const widgetEmpty = widgetProject("widget-empty", `{}`);
+
+  check(
+    "a sidebar widget without a component is an error",
+    widgetEmpty.errorsMention('ArticleWidget item "widget" has no component'),
+    widgetEmpty.messageSummary,
+  );
+
+  const widgetSingular = widgetProject("widget-singular", `{ component: Widget, usersType: ["Owner"] }`);
+
+  check(
+    "usersType on a sidebar widget is an error, since the host reads usersTypes",
+    widgetSingular.errorsMention('"widget" uses usersType but the host reads usersTypes'),
+    widgetSingular.messageSummary,
+  );
+
+  const widgetSections = widgetProject(
+    "widget-sections",
+    `{ component: Widget, icon: "logo.png", appears: ["Settings", "Dashboard"] }`,
+  );
+
+  check(
+    "a sidebar widget gets the sidebar checks: an SVG icon and Section values in appears",
+    widgetSections.errorsMention("is not an SVG") &&
+      widgetSections.errorsMention('appears contains "Dashboard"') &&
+      !widgetSections.errorsMention('appears contains "Settings"'),
+    widgetSections.messageSummary,
+  );
+
+  const widgetLater = widgetProject("widget-later", `null`);
+
+  check(
+    "a sidebar widget not set yet is only a warning, since it may come with the settings",
+    widgetLater.ok && widgetLater.warningsMention("getArticleWidgetItem() returns nothing"),
+    widgetLater.messageSummary,
   );
 
   const apiSetOnly = workspace.validateProject("api-set-only", {

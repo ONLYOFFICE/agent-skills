@@ -10,7 +10,7 @@ What those pages do not say:
 
 - **`showToast`** — `type` from `ToastType`; `title` is the toast **body** — the heading is the portal's word for the type. Top-right, 5 s, `withCross`/`timeout` are ignored.
 - **`showModal`** — one dialog at a time; a second call replaces the first. It and the other surfaces the portal draws each have a page, [below](#surfaces-the-portal-draws).
-- **`navigate`** — an absolute portal path; the ones worth knowing are [below](#paths-navigate-takes). The host does not wait for it (the action loop is a synchronous `forEach`), so the next action fires immediately, against the page you are leaving.
+- **`navigate`** — an absolute portal path; the ones worth knowing are [below](#paths-navigate-takes). The host does not wait for it (the action loop is a synchronous `forEach`), so the next action fires immediately, against the page you are leaving. On a phone it also closes the sidebar drawer, as the portal's own entries do — from any surface, so a widget or tab that navigates needs no step of its own for that. A path that is already open replaces the current history entry instead of adding one, so navigating on every search query is safe.
 - **`openInfoPanel`** — `"info_details"`, `"info_members"`, `"info_history"`, `"info_share"`, or the `key` of your own info-panel item, passed unprefixed (the host makes `info_plugin-<key>` itself). Those four are the only portal tabs it knows: any other string, `"info_ai_chat"` included, is taken for a plugin key and prefixed, and no tab at all stores an invalid view and loses the user's remembered one — so always pass a tab. **It closes your modal, aside, settings aside and selector first** — the panel is not a second surface beside them, so anything the user was filling in is gone. To send someone from a list into an item with your tab already open, this is the pair to use — `navigate(path)` then `openInfoPanel(key)`, unaffected by the unsequenced navigation because the panel belongs to no page — not a modal reproducing the tab, which would show the row's data in a surface the user cannot act on.
 - **`sendPostMessage`** — the target iframe must be in the DOM, and the page receives a **string**: the portal `JSON.stringify`s `message` and posts it with target origin `"*"`, so the frame parses `event.data` itself and nothing secret goes in the message ([post-message-plugin.md](../plugins/post-message-plugin.md)).
 - **`saveSettings`** — class-side only; a component uses `usePluginSettings().save()`. It stores the string and does nothing else — no `setAdminPluginSettingsValue`, no status re-read — and a failed request shows the portal's own error toast. `usePluginSettings().load()` JSON-parses what is stored, so a non-JSON string saved here reads back as `null` in a component.
@@ -64,6 +64,8 @@ const openInEditor = (id: string | number, sameTab = false) =>
 plugin.updateArticleNavigationItem({ ...pageItem, label: `Visits (${++visits})` });
 updateArticleNavigationItems();
 ```
+
+`ArticleWidget` keeps one item, not a map: `plugin.setArticleWidgetItem(next)` — `null` clears it and hands the slot to the next plugin — then `updateArticleWidgetItem()`.
 
 ## Which actions work from which callback
 

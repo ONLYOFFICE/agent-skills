@@ -14,7 +14,7 @@ All from `@onlyoffice/docspace-plugin-sdk/react` — signatures, return types an
 | Media viewer | `{ id, title, fileExst }` of the file on screen — the one passed as `fileId`, then each file the user pages to ([media-viewer.md](../components/media-viewer.md)) |
 | Modal opened from **another component** via `showModal` | that component's current file |
 | Modal opened from a **class-side callback** (context menu, main button, file click, event) | **`null`** — the message carries no selection |
-| Sidebar page, sidebar button, Home page widget, settings page | `null` |
+| Sidebar page, sidebar button, sidebar widget, Home page widget, settings page | `null` |
 
 So a menu action that opens a modal about the clicked file hands the id over itself — a module variable or a factory closing over it:
 

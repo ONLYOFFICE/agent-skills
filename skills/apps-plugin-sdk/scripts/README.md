@@ -104,14 +104,14 @@ so after touching `generator/project-files.mjs`, `../templates/` or `../vendor/`
 or kit release:
 
 ```sh
-node skills/apps-plugin-sdk/scripts/generate-plugin.mjs --name smoke --plugin-name Smoke --scopes <all twelve> --locales ru,pt-BR --dir ../smoke
+node skills/apps-plugin-sdk/scripts/generate-plugin.mjs --name smoke --plugin-name Smoke --scopes <all thirteen> --locales ru,pt-BR --dir ../smoke
 cd ../smoke && npm install && npm run build && npm run typecheck && node ../agent-skills/skills/apps-plugin-sdk/scripts/validate-plugin.mjs . --invoke
 ```
 
 A missing `dist/plugin.zip` means the toolchain disagrees with itself, and `typecheck` is the
 only thing that reads the generated types at all — `vite build` strips them, so a broken
 `locales.ts` or `css-modules.d.ts` builds cleanly. Pass `--locales`, or the extra-language tables
-are never generated in a smoke run. Use all twelve scopes — a renamed SDK export only surfaces
+are never generated in a smoke run. Use all thirteen scopes — a renamed SDK export only surfaces
 when every scope's imports are emitted. If you swap the SDK for a checkout, `npm pack` it
 rather than linking the directory, or the SDK's `react` peer resolves outside the project and the
 validator cannot import the bundle.

@@ -241,6 +241,19 @@ const plugin = {${pluginMembers}
 export default plugin;
 `;
 
+/** An ArticleWidget plugin whose onLoadCallback sets the given widget object source. */
+export const articleWidgetPlugin = ({ widget }) => `
+import { jsx } from "react/jsx-runtime";
+const Widget = () => jsx("p", { children: "widget" });
+const plugin = {${pluginMembers}
+  articleWidgetItem: null,
+  async onLoadCallback() { this.articleWidgetItem = ${widget}; },
+  setArticleWidgetItem(item) { this.articleWidgetItem = item; },
+  getArticleWidgetItem() { return this.articleWidgetItem; },
+};
+export default plugin;
+`;
+
 // --- sources ----------------------------------------------------------------
 //
 // The validator reads src/ separately from the bundle, so a fixture's source has to mention

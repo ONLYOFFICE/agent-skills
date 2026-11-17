@@ -173,11 +173,18 @@ export const SCOPE_CONTRACT = {
     required: ["key", "component"],
     filter: "usersTypes",
   },
+  ArticleWidget: {
+    iface: "IArticleWidgetPlugin",
+    members: ["getArticleWidgetItem"],
+    item: "IArticleWidgetItem",
+    required: ["component"],
+    filter: "usersTypes",
+  },
 };
 
 export const SCOPES = Object.keys(SCOPE_CONTRACT);
 
-/** The sections an ArticleNavigation item may be pinned to with `appears`. */
+/** The sections an ArticleNavigation or ArticleWidget item may be pinned to with `appears`. */
 export const SECTIONS = ["Files", "Accounts", "Settings"];
 
 /** The server's assetMaxCount. */
@@ -309,6 +316,7 @@ const PAYLOAD_FREE_ACTIONS = [
   "update-article-button-items",
   "update-article-navigation-items",
   "update-dashboard-widget-items",
+  "update-article-widget-item",
 ];
 
 export const KNOWN_ACTIONS = [...Object.keys(ACTION_PAYLOAD), ...PAYLOAD_FREE_ACTIONS];

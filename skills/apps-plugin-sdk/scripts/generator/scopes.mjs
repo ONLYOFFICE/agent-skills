@@ -160,6 +160,21 @@ export const SCOPE_SPECS = {
   DashboardWidget: {
     note: "component is a full-width block on the Home page under its title and description, with no frame of the portal's own and no current file; usersTypes, users and groups decide who sees it, devices are not read; a portal before 4.1 skips the scope",
   },
+
+  ArticleWidget: {
+    types: ["IArticleWidgetItem"],
+
+    members: `  articleWidgetItem: IArticleWidgetItem | null = null;
+
+  setArticleWidgetItem = (item: IArticleWidgetItem | null): void => {
+    this.articleWidgetItem = item;
+  };
+
+  getArticleWidgetItem = (): IArticleWidgetItem | null => this.articleWidgetItem;
+`,
+
+    note: "call this.setArticleWidgetItem({ component: Widget }) here; Widget fills a 211px-wide slot at the top of the sidebar of each section in appears (Files, Accounts, Settings; all three when left out), and in a collapsed sidebar a dropdown of the same width opened from the item's icon (an SVG asset with a viewBox, drawn at 16x16 in one color; without one the collapsed sidebar shows no widget), and each section shows one widget - that of the first plugin by name whose appears, usersTypes, devices, users and groups let it through; the sidebar remounts per section, so state that must outlive it (a typed query) lives at module scope, and the widget reaches the plugin's own page with usePluginActions().navigate(\"/p/<key>\"); a portal before 4.1 skips the scope",
+  },
 };
 
 /** camelCased scope name, for where a scope has to appear inside an identifier. */

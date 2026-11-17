@@ -287,6 +287,8 @@ const boot = async () => {
   const settings = plugin.getAdminPluginSettings?.();
   add("Settings", settings?.component, false, 480);
 
+  add("ArticleWidget", plugin.getArticleWidgetItem?.()?.component, false, 211);
+
   const params = new URLSearchParams(location.search);
   const theme = params.get("theme") === "dark" ? Dark : Base;
   const only = params.get("surface");
