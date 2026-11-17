@@ -36,6 +36,7 @@ const ROLE_VALUES = [...new Set([...USERS_TYPES, ...USER_ROLES])];
 
 /** The scopes whose items carry a submenu of the same interface in `items`. */
 const SUBMENU_SCOPES = ["ContextMenu", "MainButton"];
+const SIDEBAR_SCOPES = ["ArticleNavigation", "ArticleWidget"];
 
 /** Actions whose setter belongs to a mounted element: from an item callback they do nothing. */
 const ITEM_IGNORED_ACTIONS = ["update-props", "update-context", "update-create-dialog-modal"];
@@ -252,7 +253,7 @@ export class ShapeChecks extends Check {
       );
 
     if (
-      scope === "ArticleNavigation" &&
+      SIDEBAR_SCOPES.includes(scope) &&
       typeof item.icon === "string" &&
       !item.icon.toLowerCase().endsWith(".svg")
     )
@@ -261,7 +262,7 @@ export class ShapeChecks extends Check {
         `${where} icon "${item.icon}" is not an SVG - the sidebar inlines the icon as SVG markup, so any other format draws an empty slot`,
       );
 
-    if (scope === "ArticleNavigation" && item.appears !== undefined) {
+    if (SIDEBAR_SCOPES.includes(scope) && item.appears !== undefined) {
       if (!Array.isArray(item.appears))
         this.error(
           "item",

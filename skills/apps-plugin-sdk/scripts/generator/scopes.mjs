@@ -173,7 +173,7 @@ export const SCOPE_SPECS = {
   getArticleWidgetItem = (): IArticleWidgetItem | null => this.articleWidgetItem;
 `,
 
-    note: "call this.setArticleWidgetItem({ component: Widget }) here; Widget fills a 211px-wide slot under the logo in the main sidebar, and in a collapsed sidebar a dropdown of the same width opened from the item's icon (an SVG asset with a viewBox, drawn at 16x16 in one color; without one the collapsed sidebar shows no widget), and the whole portal shows one widget - that of the first plugin by name whose usersTypes, devices, users and groups let the current user through; the sidebar remounts per section, so state that must outlive it (a typed query) lives at module scope, and the widget reaches the plugin's own page with usePluginActions().navigate(\"/p/<key>\"); a portal before 4.1 skips the scope",
+    note: "call this.setArticleWidgetItem({ component: Widget }) here; Widget fills a 211px-wide slot at the top of the sidebar of each section in appears (Files, Accounts, Settings; all three when left out), and in a collapsed sidebar a dropdown of the same width opened from the item's icon (an SVG asset with a viewBox, drawn at 16x16 in one color; without one the collapsed sidebar shows no widget), and each section shows one widget - that of the first plugin by name whose appears, usersTypes, devices, users and groups let it through; the sidebar remounts per section, so state that must outlive it (a typed query) lives at module scope, and the widget reaches the plugin's own page with usePluginActions().navigate(\"/p/<key>\"); a portal before 4.1 skips the scope",
   },
 };
 

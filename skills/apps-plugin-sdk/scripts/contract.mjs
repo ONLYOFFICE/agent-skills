@@ -184,7 +184,7 @@ export const SCOPE_CONTRACT = {
 
 export const SCOPES = Object.keys(SCOPE_CONTRACT);
 
-/** The sections an ArticleNavigation item may be pinned to with `appears`. */
+/** The sections an ArticleNavigation or ArticleWidget item may be pinned to with `appears`. */
 export const SECTIONS = ["Files", "Accounts", "Settings"];
 
 /** The server's assetMaxCount. */

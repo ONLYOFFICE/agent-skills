@@ -254,6 +254,19 @@ export default ({ workspace, check }) => {
     widgetSingular.messageSummary,
   );
 
+  const widgetSections = widgetProject(
+    "widget-sections",
+    `{ component: Widget, icon: "logo.png", appears: ["Settings", "Dashboard"] }`,
+  );
+
+  check(
+    "a sidebar widget gets the sidebar checks: an SVG icon and Section values in appears",
+    widgetSections.errorsMention("is not an SVG") &&
+      widgetSections.errorsMention('appears contains "Dashboard"') &&
+      !widgetSections.errorsMention('appears contains "Settings"'),
+    widgetSections.messageSummary,
+  );
+
   const widgetLater = widgetProject("widget-later", `null`);
 
   check(
