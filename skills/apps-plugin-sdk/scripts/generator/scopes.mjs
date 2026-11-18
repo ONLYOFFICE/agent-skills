@@ -161,6 +161,14 @@ export const SCOPE_SPECS = {
     note: "component is a full-width block on the Home page under its title and description, with no frame of the portal's own and no current file; usersTypes, users and groups decide who sees it, devices are not read; a portal before 4.1 skips the scope",
   },
 
+  ProfileTab: {
+    note: "key becomes the tab address (/profile/p/<key>) and label the tab name; the tab goes after the portal's own on the signed-in user's profile page, ordered by plugin name, and component fills the width under the tab bar with no current file; usersTypes, devices, users and groups decide who sees it; a portal before 4.1 skips the scope",
+  },
+
+  ProfileField: {
+    note: "each item is a row of the profile card after the portal's own rows: label in the label column (optional), component in the value column - about 350px wide, vertically centered; on a narrow profile the row becomes a card with the label above; useCurrentUser() is the profile owner; usersTypes, devices, users and groups decide who sees it; a portal before 4.1 skips the scope",
+  },
+
   ArticleWidget: {
     types: ["IArticleWidgetItem"],
 

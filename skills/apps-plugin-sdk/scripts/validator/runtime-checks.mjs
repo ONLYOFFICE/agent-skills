@@ -72,6 +72,8 @@ const INVOCATIONS = {
   ArticleNavigation: (item) =>
     isFn(item.dashboardCard?.onClick) ? [["dashboardCard.onClick", () => item.dashboardCard.onClick()]] : [],
   DashboardWidget: () => [],
+  ProfileTab: () => [],
+  ProfileField: () => [],
 };
 
 const invocationsFor = (scope, item) => {

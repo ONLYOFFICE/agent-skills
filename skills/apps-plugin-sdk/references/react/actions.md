@@ -41,6 +41,7 @@ Every portal section is a route ending in `/filter`, and an entity is that route
 | The Rooms list / the Archive | `/rooms/shared/filter` / `/rooms/archived/filter` |
 | My documents / Recent / Favourites / Trash | `/rooms/personal/filter` / `/recent/filter` / `/files/favorite/filter` / `/files/trash/filter` |
 | Your own `ArticleNavigation` page | `/p/{key}` — under `Section.Accounts` `/accounts/p/{key}`, under `Section.Settings` `/portal-settings/p/{key}` |
+| Your own `ProfileTab` | `/profile/p/{key}` |
 | A document, in the editor | **not a `navigate` path** — `/doceditor?fileId={id}` opened as a page load, [below](#opening-a-document-is-a-page-load) |
 
 Which of the two room paths a room takes is normally already known — you listed it with `searchArea` (`Active` or `Archive`), so carry that through to the link; sending someone to the wrong one shows an empty list rather than an error. Otherwise the room's own `rootFolderType` decides it, against `FolderType.Archive` = **20**, which is also the test that separates "archive this" from "restore this" ([portal.md](../portal.md#silent-failures-in-the-ui-layer)). The SDK types the field as a bare `number` and exports no constant, so name your own (`const ARCHIVE_ROOT = 20`) rather than leaving a literal in a condition.

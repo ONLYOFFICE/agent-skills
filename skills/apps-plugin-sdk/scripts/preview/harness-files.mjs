@@ -71,6 +71,10 @@ const COMPONENT_SCOPES = {
   // A Home page widget spans the page's content column: the same area beside the sidebar as a
   // section page, less the 20px the Home page pads it on each side.
   DashboardWidget: { width: 990, hasCurrentFile: false },
+  // A profile tab spans the profile page under its tab bar; a profile card row is the value
+  // column of the 660px card, beside the avatar and the label column.
+  ProfileTab: { width: 988, hasCurrentFile: false },
+  ProfileField: { width: 350, hasCurrentFile: false },
 };
 
 /** Widths the portal actually gives each surface, in px. */

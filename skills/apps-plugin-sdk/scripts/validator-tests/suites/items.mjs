@@ -509,6 +509,52 @@ export default ({ workspace, check }) => {
     widgets.messageSummary,
   );
 
+  const profileTabs = workspace.validateProject("profile-tab", {
+    pkg: manifestFor("profile-tab", "FixtureProfileTab", { scopes: ["ProfileTab"] }),
+    bundle: mapScopePlugin({
+      field: "tabs",
+      adder: "addProfileTabItem",
+      getter: "getProfileTabItems",
+      onLoadBody: `this.tabs.set("fixture-profile-tab-good", { key: "fixture-profile-tab-good", label: "Good", component: () => null });
+    this.tabs.set("fixture-profile-tab-nameless", { key: "fixture-profile-tab-nameless", component: () => null });`,
+    }),
+    src: scopeSource({ adder: "addProfileTabItem", getter: "getProfileTabItems" }),
+  });
+
+  check(
+    "ProfileTab is a known scope and a tab with a label and a component passes",
+    !profileTabs.errorCodes.includes("pkg.scopes") && !profileTabs.hasFindingMentioning('"fixture-profile-tab-good"'),
+    profileTabs.messageSummary,
+  );
+  check(
+    "a profile tab without a label is an error",
+    profileTabs.errorsMention('ProfileTab item "fixture-profile-tab-nameless" has no label'),
+    profileTabs.messageSummary,
+  );
+
+  const profileFields = workspace.validateProject("profile-field", {
+    pkg: manifestFor("profile-field", "FixtureProfileField", { scopes: ["ProfileField"] }),
+    bundle: mapScopePlugin({
+      field: "fields",
+      adder: "addProfileFieldItem",
+      getter: "getProfileFieldItems",
+      onLoadBody: `this.fields.set("fixture-profile-field-unlabelled", { key: "fixture-profile-field-unlabelled", component: () => null });
+    this.fields.set("fixture-profile-field-empty", { key: "fixture-profile-field-empty", label: "Empty" });`,
+    }),
+    src: scopeSource({ adder: "addProfileFieldItem", getter: "getProfileFieldItems" }),
+  });
+
+  check(
+    "ProfileField is a known scope and a row without a label passes",
+    !profileFields.errorCodes.includes("pkg.scopes") && !profileFields.hasFindingMentioning('"fixture-profile-field-unlabelled"'),
+    profileFields.messageSummary,
+  );
+  check(
+    "a profile card row without a component is an error",
+    profileFields.errorsMention('ProfileField item "fixture-profile-field-empty" has no component'),
+    profileFields.messageSummary,
+  );
+
   const roles = workspace.validateProject("user-role", {
     pkg: manifestFor("user-role", "FixtureUserRole"),
     bundle: contextMenuPlugin({ filters: `usersTypes: ["FullAdmin", "PortalUser"]` }),
