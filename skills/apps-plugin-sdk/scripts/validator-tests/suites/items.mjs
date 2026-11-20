@@ -456,6 +456,25 @@ export default ({ workspace, check }) => {
     navNowhere.messageSummary,
   );
 
+  const navKey = workspace.validateProject("nav-key", {
+    pkg: manifestFor("nav-key", "FixtureNavKey", { scopes: ["ArticleNavigation"] }),
+    bundle: mapScopePlugin({
+      field: "pages",
+      adder: "addArticleNavigationItem",
+      getter: "getArticleNavigationItems",
+      onLoadBody: `this.pages.set("fixture-nav-key-good", { key: "fixture-nav-key-good", label: "Good", icon: "logo.svg", component: () => null });
+    this.pages.set("fixture-nav-key?tab", { key: "fixture-nav-key?tab", label: "Query", icon: "logo.svg", component: () => null });`,
+    }),
+    src: scopeSource({ adder: "addArticleNavigationItem", getter: "getArticleNavigationItems" }),
+  });
+
+  check(
+    "an ArticleNavigation key that is not letters, digits and hyphens is a warning, and a plain one passes",
+    navKey.warningsMention('ArticleNavigation item "fixture-nav-key?tab" key is not letters, digits and hyphens') &&
+      !navKey.hasFindingMentioning('"fixture-nav-key-good"'),
+    navKey.messageSummary,
+  );
+
   // --- the Home page: a card for a page, a widget of its own --------------------
 
   const navCard = workspace.validateProject(
@@ -516,7 +535,8 @@ export default ({ workspace, check }) => {
       adder: "addProfileTabItem",
       getter: "getProfileTabItems",
       onLoadBody: `this.tabs.set("fixture-profile-tab-good", { key: "fixture-profile-tab-good", label: "Good", component: () => null });
-    this.tabs.set("fixture-profile-tab-nameless", { key: "fixture-profile-tab-nameless", component: () => null });`,
+    this.tabs.set("fixture-profile-tab-nameless", { key: "fixture-profile-tab-nameless", component: () => null });
+    this.tabs.set("fixture-profile-tab/sync", { key: "fixture-profile-tab/sync", label: "Sync", component: () => null });`,
     }),
     src: scopeSource({ adder: "addProfileTabItem", getter: "getProfileTabItems" }),
   });
@@ -529,6 +549,11 @@ export default ({ workspace, check }) => {
   check(
     "a profile tab without a label is an error",
     profileTabs.errorsMention('ProfileTab item "fixture-profile-tab-nameless" has no label'),
+    profileTabs.messageSummary,
+  );
+  check(
+    "a profile tab key that is not letters, digits and hyphens is a warning",
+    profileTabs.warningsMention('ProfileTab item "fixture-profile-tab/sync" key is not letters, digits and hyphens'),
     profileTabs.messageSummary,
   );
 

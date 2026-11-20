@@ -17,7 +17,7 @@ A tab of the plugin's own on the user's profile page — the user's own settings
 
 Each field, with its type and a line, is in the installed SDK's `IProfileTabItem`; what the portal does beyond it:
 
-- `key` is the tab's address: `/profile/p/<key>`, so it is a single path segment — letters, digits and hyphens. The `p/` keeps plugin tabs apart from the portal's own, so no key clashes with them; keys still clash with other plugins' ([common-fields.md](common-fields.md#item-keys-are-portal-wide)).
+- `key` is the tab's address: `/profile/p/<key>`. The portal encodes it there, so any key opens its tab, but keep to letters, digits and hyphens: the address stays readable, and `navigate("/profile/p/<key>")` of the plugin's own needs no `encodeURIComponent`. The `p/` keeps plugin tabs apart from the portal's own, so no key clashes with them; keys still clash with other plugins' ([common-fields.md](common-fields.md#item-keys-are-portal-wide)).
 - `label` is the tab name, shown as is: the plugin translates it itself.
 - The filters are applied when the tab is registered, like every item's — a changed list takes `updateProfileTabItems` (or the settings save that re-registers the plugin) to take effect.
 

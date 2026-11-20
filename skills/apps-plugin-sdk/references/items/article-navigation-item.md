@@ -16,7 +16,7 @@ A whole screen of the plugin's own — a dashboard, a list, a workspace.
 
 Each field, with its type and a line, is on [`IArticleNavigationItem`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/items/IArticleNavigationItem.md), the sections on [`Section`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/enums/Section.md); what the portal does beyond it:
 
-- `key` is the last URL segment — `/p/<key>`, `/accounts/p/<key>` or `/portal-settings/p/<key>`.
+- `key` is the last URL segment — `/p/<key>`, `/accounts/p/<key>` or `/portal-settings/p/<key>`. Keep it to letters, digits and hyphens: a portal before 4.1 puts the key in the address as is, so a `/`, `?` or `#` breaks the link (4.1 encodes it), and a `navigate` of the plugin's own to the page has to `encodeURIComponent` any other key.
 - A rename needs `updateArticleNavigationItem` + `updateArticleNavigationItems()`.
 - `component` is the whole page. `useCurrentFile()` is `null`; work from `useCurrentUser()` and `usePluginAPI()`.
 - `appears` restricts the entry to those sidebars **and** the page to their paths.
