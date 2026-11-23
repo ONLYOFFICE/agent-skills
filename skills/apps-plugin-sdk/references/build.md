@@ -92,7 +92,7 @@ Mounts the built bundle in Chromium against the **real** UI kit and the **real**
 
 | Code | What the user would have seen |
 |---|---|
-| `preview-load` | `onLoadCallback()` threw in the browser — on the portal this aborts installation: no items, no CSS, nothing for users, and *Failed to initialize* on the administrator's plugin card. The most severe code here |
+| `preview-load` | `onLoadCallback()` threw in the browser — on the portal this aborts installation: no items, no CSS, nothing for users, and *Failed to initialize* on the plugin's card, the administrator's or for a personal plugin its owner's. The most severe code here |
 | `preview-console` | the browser logged an error while the surfaces mounted — the portal's boundary swallows it and leaves the surface blank |
 | `preview-leak` | one of the plugin's own CSS rules matched portal-shaped markup planted beside it — that rule restyles ONLYOFFICE Apps itself. This is the check the references say nothing performs; now something does |
 | `preview-collapsed` | a control that came out a few px wide — the panel that looks empty and still accepts typing |
