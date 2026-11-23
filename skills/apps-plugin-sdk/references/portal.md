@@ -8,6 +8,7 @@ Contents: [The switches](#before-anything-loads-the-switches) · [The loading se
 
 - **`plugins.enabled`** (server setting; the shipped configuration turns it on, a deployment can turn it off). When false the portal never initialises plugins: no bundle fetched, no items, no routes, nothing in the console. Every surface re-checks it. Ask about this before auditing code. Where the switches and the upload control are in the UI: [Adding plugin](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/adding-plugin.md).
 - **`pluginOptions.upload` / `pluginOptions.delete`** — a second, narrower switch *behind* the first, not beside it: the Integration → Plugins tab exists only when `plugins.enabled`, and these are read only on that tab. With `upload` off it offers no upload control, however correct the archive.
+- **`pluginOptions.personal`** — on a portal that reports it as `true`, a member who is not a guest installs a plugin for themselves in Profile → Plugins (the zip goes to `POST api/2.0/settings/webplugins?personal=true`); uploading still needs `upload`. A personal plugin loads for its owner alone, with its own state and settings, and nobody else sees it, administrators included. A portal or installation-wide plugin holding the same `name` or `pluginName` comes first: a personal upload under it is refused, and a personal copy installed before it stays on the owner's card but is not loaded ([silent failures](#silent-failures)).
 - The plugin system is skipped when the portal's **paid period has expired**, and plugin surfaces are suppressed inside the **AI-agent/chat views**.
 
 ## The loading sequence
@@ -54,7 +55,7 @@ The packed `config.json` and how `package.json` maps onto it are in [Config](htt
 
 ## When loading fails
 
-A plugin that never becomes a plugin is reported — to the administrator. The upload ends with a toast, **Failed to load** or **Failed to initialize**, carrying the reason; after that, on every page load, the plugin's card in Settings → Integration → Plugins shows an icon — red for a load failure, in the warning colour for an initialization failure — whose tooltip is that reason, and the plugin's settings aside shows the same failure as its status. Users see nothing: for them the plugin is simply not there.
+A plugin that never becomes a plugin is reported — to whoever installed it: the administrator, or for a personal plugin its owner, whose card in Profile → Plugins carries the same icon. The upload ends with a toast, **Failed to load** or **Failed to initialize**, carrying the reason; after that, on every page load, the plugin's card in Settings → Integration → Plugins shows an icon — red for a load failure, in the warning colour for an initialization failure — whose tooltip is that reason, and the plugin's settings aside shows the same failure as its status. Users see nothing: for them the plugin is simply not there.
 
 | The card says | The reason reads | Cause |
 |---|---|---|
@@ -98,6 +99,7 @@ The plugin loaded, so the portal reports nothing: none of these produce an error
 | `showCreateDialog`, `showMediaViewer` or the progress button does nothing from a settings page or the settings aside — and the viewer or the progress button may turn up later, the next time the Files section is shown | portal settings has no create dialog, media viewer or progress button; a viewer request and a progress entry are kept until the Files section (Accounts included) is shown, and the button's `onLoad` fires only then; the create dialog is simply lost ([media-viewer.md](components/media-viewer.md)) |
 | A class field holds the wrong value after load | it shares a name with a field of the plugin's server record (`settings`, `name`, `version`, `url`, `enabled`, `image`, `description`, `author`, `license`, `homePage`, `pluginName`, `scopes`, `system`, `runtime`) or one the portal adds (`iconUrl`, `compatible`, `nameLocaleMap`, `descriptionLocaleMap`) — overwritten in step 3 |
 | Works everywhere except chat / AI-agent views | suppressed there by design |
+| A personal plugin is installed and on, and nothing of it appears; its card in Profile → Plugins reads *Not in use* | a portal or installation-wide plugin holds its `name` or `pluginName` and runs instead — or is switched off by the administrator, which keeps the personal copy off as well. Rename the personal plugin (`name` and `pluginName`) to run both |
 
 ### Silent failures in the UI layer
 
@@ -131,11 +133,11 @@ The plugin loaded and rendered, and what the user sees is still wrong. They read
 A module plugin runs in the portal's own window — its DOM, cookies and `localStorage` in reach. The only guard is the error boundary around each plugin component; everything outside a component is unguarded.
 
 - **Throwing in a class-side callback.** Nothing wraps them — the create dialog's `onSave` is caught, and the failure dropped when there is no `onError` — so a rejection is a dead click that tells the user nothing: catch and return a toast ([plugin.md](plugins/plugin.md#two-kinds-of-callback)).
-- **Throwing in `onLoadCallback` or at module scope** aborts the plugin: no items, no CSS, and for users no sign of it — only the administrator's plugin card says *Failed to initialize* or *Failed to load* ([When loading fails](#when-loading-fails)). Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
+- **Throwing in `onLoadCallback` or at module scope** aborts the plugin: no items, no CSS, and for users no sign of it — only the plugin's card, the administrator's or for a personal plugin its owner's, says *Failed to initialize* or *Failed to load* ([When loading fails](#when-loading-fails)). Fetching in `onLoadCallback` delays installation and, on a throw, aborts it — data belongs in component effects.
 - **Throwing during render of an SDK 2 declarative tree** — no boundary, the whole portal shows an error screen.
 - **Blocking the event loop.** No worker, no timeout around `onLoadCallback`; a synchronous loop freezes the UI.
 - **Unscoped CSS.** `plugin.css` is appended to the portal's head *after* the portal's own stylesheets, so at equal specificity your rule wins and an unprefixed `pre {}` or `.card {}` restyles the product itself — in every section, for every user, until the plugin is disabled. Only the browser pass reads the rules, and only against portal-shaped markup ([build.md → 7. See it](build.md#7-see-it--the-step-that-catches-what-looks-broken)), so the fix is a form that cannot go wrong: [styles.md → Scoped CSS](styles.md#scoped-css). The reverse direction — portal rules reaching into your markup — is [what beats your rules](styles.md#what-beats-your-rules).
-- **`cspDomains`** origins are added to the **portal's** CSP, not just yours. List only what you call. (`scpDomains` is a real typo in shipped plugins — it silently does nothing.)
+- **`cspDomains`** origins are added to the **portal's** CSP, not just yours. List only what you call. A personal plugin's origins are allowed on its owner's pages alone, from the page load after the upload or the switch — the page that uploaded it still blocks them. (`scpDomains` is a real typo in shipped plugins — it silently does nothing.)
 - **Timers and listeners at module scope or in `onLoadCallback`** keep running after the plugin is disabled. A page reload stops the ones `onLoadCallback` started, but module-scope code runs again on every load, the plugin switched off or not ([above](#the-loading-sequence)). Inside a component's effect they clean up with it.
 
 ## Limits
