@@ -6,7 +6,8 @@
     "raw": "https://raw.githubusercontent.com/ONLYOFFICE",
     "npmApi": "https://api.npmjs.org",
     "agentSkills": "https://agentskills.io",
-    "onlyoffice": "https://www.onlyoffice.com"
+    "onlyoffice": "https://www.onlyoffice.com",
+    "pluginsSite": "https://onlyoffice.github.io"
   },
   "sources": {
     "agentSkillsSpec": {"host": "agentSkills"},

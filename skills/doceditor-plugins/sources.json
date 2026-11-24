@@ -1,0 +1,15 @@
+{
+  "version": "10.0.0",
+  "sources": {
+    "docs": {"host": "apiSite", "path": "/docs", "verify": true},
+    "types": {"host": "github", "path": "/doceditor-plugin-types", "verify": true},
+    "typesRaw": {"host": "raw", "path": "/doceditor-plugin-types/master", "verify": true},
+    "pluginsRuntime": {"host": "pluginsSite", "path": "/sdkjs-plugins/v1", "verify": true}
+  },
+  "placeholderHosts": [],
+  "versionPatterns": [
+    {"file": "SKILL.md", "pattern": "sdk-version: \"{v}\""},
+    {"file": "SKILL.md", "pattern": "\\(v{v}\\)"},
+    {"file": "README.md", "pattern": "\\*\\*{v}\\*\\*"}
+  ]
+}

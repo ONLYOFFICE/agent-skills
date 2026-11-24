@@ -1,0 +1,47 @@
+---
+name: doceditor-plugins
+description: Guidance for plugins that run inside the ONLYOFFICE Docs editors (v10.0.0) - the HTML/JS add-ons with a config.json, an index.html and window.Asc.plugin that add a toolbar button, a side panel, a modal window, a context-menu item or a background helper to the document, spreadsheet, presentation and PDF editors. Use when building, fixing or reviewing such a plugin, including when the user only describes the feature ("a button in the editor that inserts our signature block", "a panel that checks the selected text", "my context menu item does nothing when clicked", "the plugin works from the marketplace repo but not once installed"), when writing callCommand/Editor.RunMacro code against the Office JavaScript API from a plugin, or when preparing a plugin for the ONLYOFFICE plugin marketplace. Not for DocSpace portal plugins (use `apps-plugin-sdk`), embedding the editor in a web page (use `doceditor`), or server-side document generation with Document Builder (use `web-builder`).
+license: Apache-2.0
+metadata:
+  author: ONLYOFFICE
+  sdk-version: "10.0.0"
+---
+
+# ONLYOFFICE Docs editor plugins
+
+The plugin framework is documented at [Plugins](https://api.onlyoffice.com/docs/plugins/get-started/overview.md); the member-by-member API is typed by [`@onlyoffice/doceditor-plugin-types`](https://github.com/ONLYOFFICE/doceditor-plugin-types), which also ships the `config.json` schema. **Core rules** below are what neither states as a consequence - the ways a plugin fails *without an error*. Detail lives in `references/`, routed from the table.
+
+## How to use
+
+1. **Discover first:** which editors (`word`, `cell`, `slide`, `pdf`), which kind (panel, right panel, modal window, background, context-menu/toolbar only), the lowest editor version it must run on, and whether the users have Community or Developer Edition. These decide fields in `config.json` and which API members exist.
+2. **Name the task shape** (table below) and read what it routes to.
+3. **A member you are not sure exists is a required lookup, not a guess** - the types and the docs pages are the authority; an invented `executeMethod` name or `Api` method fails only at run time, in the editor.
+4. Finish with `node scripts/validate-plugin.mjs <plugin-dir>` and fix every `error`.
+
+| Shape | Sounds like | Path | Done when |
+| :--- | :--- | :--- | :--- |
+| **New plugin** | "a button that inserts our footer", "a panel to search our wiki from the editor" | [references/config.md](references/config.md) -> [references/runtime.md](references/runtime.md) -> [references/types.md](references/types.md) | The validator reports no error, the type check (`npx tsc -p jsconfig.json`) passes, and every kind/version field matches the discovery answers |
+| **Add a capability** | "add a right-click action", "add our own toolbar tab", "react when the selection changes" | [references/menus.md](references/menus.md) for menus and toolbar, [references/runtime.md](references/runtime.md) for commands, events and windows | The capability is wired the way the editor delivers it (declared events, the right payload shape), not only the handler written |
+| **Debug** | "the click does nothing", "the variable is undefined inside the command", "works in the repo, blank once installed" | [references/audit.md](references/audit.md), by symptom | The **rule** behind the symptom is told back, not only the file patched |
+| **Review / prepare for the marketplace** | "check our plugin before we submit it", "what's wrong with this plugin, don't rewrite it" | [references/audit.md](references/audit.md) top to bottom, then [Submit to marketplace](https://api.onlyoffice.com/docs/plugins/development-workflow/publishing/submit-to-marketplace.md) | Every finding names symptom -> cause -> change; nothing reported that is not there; no rewrite |
+
+## Official reference
+
+- [Overview](https://api.onlyoffice.com/docs/plugins/get-started/overview.md), [Configuration](https://api.onlyoffice.com/docs/plugins/configuration.md), [Types](https://api.onlyoffice.com/docs/plugins/configuration/types.md), [Variations](https://api.onlyoffice.com/docs/plugins/configuration/variations.md), [Icons](https://api.onlyoffice.com/docs/plugins/configuration/icons-and-branding.md)
+- [How to call commands](https://api.onlyoffice.com/docs/plugins/interacting-with-editors/overview/how-to-call-commands.md) (`callCommand`, `Asc.scope`, `Editor.RunMacro`), [How to call methods](https://api.onlyoffice.com/docs/plugins/interacting-with-editors/overview/how-to-call-methods.md) (`Editor`, `executeMethod`), [How to attach events](https://api.onlyoffice.com/docs/plugins/interacting-with-editors/overview/how-to-attach-events.md), [Asc.plugin](https://api.onlyoffice.com/docs/plugins/interacting-with-editors/overview/asc-plugin.md)
+- [Context menu](https://api.onlyoffice.com/docs/plugins/customization/context-menu.md), [Toolbar](https://api.onlyoffice.com/docs/plugins/customization/toolbar.md), [Windows and panels](https://api.onlyoffice.com/docs/plugins/customization/windows-and-panels.md), [Buttons](https://api.onlyoffice.com/docs/plugins/customization/custom-buttons.md)
+- [Office JavaScript API](https://api.onlyoffice.com/docs/office-api/get-started/overview.md) - the `Api` object model inside a command
+- [Debugging plugins](https://api.onlyoffice.com/docs/plugins/development-workflow/debugging-plugins.md), [Preparing for release](https://api.onlyoffice.com/docs/plugins/development-workflow/publishing/preparing-for-release.md)
+
+## Core rules (always apply)
+
+- **A command is source text, not a closure.** `callCommand` sends `func.toString()` to the editor and runs it there; nothing from the plugin's scope exists inside. Data goes in through `Asc.scope`, which is serialized **at the moment of the call** - set it right before calling, never later. Only plain data comes back; an `Api` object returns as `undefined`. On 10.0+ `Editor.RunMacro(fn, ...args)` passes arguments instead and returns a Promise.
+- **One `callCommand` at a time - `Editor.RunMacro` included.** The plugin has a single slot for the command's callback: a second command sent before the first one answers takes it, and the first result goes to the wrong handler or nowhere. `RunMacro` is `callCommand` underneath, so its Promises share that slot too - await one before starting the next. Chain or queue them; `executeMethod` queues itself, commands do not.
+- **An event reaches the plugin only if the editor knows the plugin listens.** `attachEditorEvent(name, fn)` registers it; `attachEvent(name, fn)` and assigning `Asc.plugin.event_<name>` only store a handler, so the event must also be listed in the variation's `"events"` in `config.json`. `attachContextMenuClickEvent` routes clicks through `event_onContextMenuClick`, so `onContextMenuClick` belongs in `"events"` - and calling `attachEditorEvent("onContextMenuClick", ...)` overwrites that router and breaks every per-item handler. Details: [references/menus.md](references/menus.md).
+- **Answer every `onContextMenuShow`.** The editor waits for every listening plugin before it opens the menu: call `AddContextMenuItem` each time, with `items: []` when there is nothing to offer, or the menu opens late. Its argument is one object `{ guid, items }`, not an array.
+- **`AddToolbarMenuItem`/`UpdateToolbarMenuItem` take one object `{ guid, tabs }`.** sdkjs reads `items.guid` and `items.tabs` off the argument; a call wrapped in an extra array (`[[item]]`) fails inside the editor.
+- **Load `plugins.js` from `https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js`.** A relative `../v1/plugins.js` resolves only inside the marketplace repository; installed anywhere else the page has no `window.Asc.plugin` and the plugin is blank.
+- **`"type"` in a variation is read from 8.1.0.** Older editors place the plugin by `isVisual`/`isInsideMode`/`isModal`. Set those flags too, and set `minVersion` to `8.1.0` or later for `panelRight` and `background`, which no flag combination expresses.
+- **Check the edition before recommending a member.** Members such as `AnnotateParagraph` and the annotation events exist only in Developer Edition builds; on Community Edition the call fails or the event never fires. The types mark them (`requires`); see [references/types.md](references/types.md).
+- **`initOnSelectionChanged` re-runs `init` when a selection is made, not when it is cleared.** A plugin that mirrors the selection needs its own refresh for the cleared case.
+- **Set up the types in the plugin folder** - [references/types.md](references/types.md). In a `jsconfig.json`, `module` and `moduleResolution` are required: the defaults cannot resolve the scoped package, `skipLibCheck` hides the failure, and nothing is checked while it looks configured.

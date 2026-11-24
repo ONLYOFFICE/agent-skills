@@ -1,6 +1,6 @@
 ---
-description: A Document Server (ONLYOFFICE Docs) editor plugin is neither an Embed SDK nor a DocSpace plugin task; neither skill should fire.
-expected_outcome: Claude answers about the ONLYOFFICE Docs plugin framework (config.json, pluginCode, window.Asc.plugin) without invoking apps-embed-sdk or apps-plugin-sdk.
+description: A Document Server (ONLYOFFICE Docs) editor plugin is neither an Embed SDK nor a DocSpace plugin task; the Apps skills must not fire, doceditor-plugins should.
+expected_outcome: Claude answers about the ONLYOFFICE Docs plugin framework (config.json, pluginCode, window.Asc.plugin), loading doceditor-plugins and without invoking apps-embed-sdk, apps-plugin-sdk or apps-ui-kit.
 tags: [trigger]
 max_turns: 10
 timeout_seconds: 600

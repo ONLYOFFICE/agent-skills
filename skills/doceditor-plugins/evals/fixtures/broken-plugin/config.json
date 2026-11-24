@@ -1,0 +1,26 @@
+{
+  "name": "Ticket helper",
+  "guid": "asc.{7C1E9A42-3B6D-4F08-A15C-2D8E6F90B371}",
+  "version": "1.2.0",
+  "minVersion": "7.4.0",
+  "offered": "Example Ltd",
+  "variations": [
+    {
+      "description": "Turns selected text into ticket links and counts them.",
+      "url": "index.html",
+      "icons": ["resources/light/icon.png", "resources/light/icon@2x.png"],
+      "icons2": [
+        { "style": "light", "100%": { "normal": "resources/light/icon.png" }, "200%": { "normal": "resources/light/icon@2x.png" } },
+        { "style": "dark", "100%": { "normal": "resources/dark/icon.png" }, "200%": { "normal": "resources/dark/icon@2x.png" } }
+      ],
+      "isViewer": false,
+      "EditorsSupport": ["word"],
+      "type": "panelRight",
+      "initDataType": "text",
+      "initData": "",
+      "initOnSelectionChanged": true,
+      "buttons": [],
+      "events": ["onContextMenuShow"]
+    }
+  ]
+}

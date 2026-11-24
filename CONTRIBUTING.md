@@ -53,6 +53,8 @@ skills/apps-plugin-sdk/  references: build and audit workflows, plugins/ items/ 
                          scripts: generate, validate, preview, contract.mjs; templates: Vite/TS config for generated projects
 skills/apps-ui-kit/      references: setup, choosing, forms, overlays, lists, theming, i18n, testing, public API, troubleshooting;
                          scripts: check-usage and data/kit-manifest.json; templates: the entry point and the providers
+skills/doceditor-plugins/ references: config (kinds by editor version, icons, the marketplace), runtime (commands, methods,
+                         events, windows), menus (context menu and toolbar), types, audit; scripts: validate-plugin
 ```
 
 ## What a reference says

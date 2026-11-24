@@ -1,0 +1,69 @@
+{
+  "skill_name": "doceditor-plugins",
+  "evals": [
+    {
+      "id": 0,
+      "name": "build-context-menu-action",
+      "mode": "build",
+      "prompt": "we need a small onlyoffice plugin for the document editor: when you right click on selected text there should be an entry that wraps the selection in square brackets, like [this]. nothing else, no panel, no window. it has to work on our docs servers, those are 8.3 and 9.1. also set the folder up so vs code autocompletes the editor api for whoever maintains it after me. put it in ./bracket-plugin",
+      "expected_output": "A plugin folder with config.json, index.html and a script. The variation is a background plugin: \"type\": \"background\" plus isVisual/isInsideMode/isModal set false, and minVersion 8.1.0 or later (8.3.0 fits the servers named). Its \"events\" lists onContextMenuClick (and onContextMenuShow unless the show handler is registered with attachEditorEvent). The show handler answers every onContextMenuShow with AddContextMenuItem, passing one object { guid, items } - an item only when options.type is \"Selection\", an empty items array otherwise. The click is handled with attachContextMenuClickEvent for the item id; nothing registers onContextMenuClick with attachEditorEvent. index.html loads plugins.js from https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js. The type setup is a package.json with @onlyoffice/doceditor-plugin-types as a dev dependency and a jsconfig.json with checkJs, module and moduleResolution set and the types entry for the document editor. The validator was run.",
+      "files": [],
+      "assertions": [
+        "the variation's \"events\" contains onContextMenuClick, because attachContextMenuClickEvent only stores the handler and the editor sends the click only to a plugin registered for it",
+        "no code calls attachEditorEvent(\"onContextMenuClick\", ...), which would replace the runtime's click router",
+        "AddContextMenuItem is called with one object holding guid and items inside the argument array - [{ guid, items }] - not with an array of items",
+        "the onContextMenuShow handler calls AddContextMenuItem on every path, with an empty items array when the menu was not opened on a selection, rather than returning early",
+        "the menu entry is added only when options.type is \"Selection\"",
+        "index.html loads plugins.js from https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js, not a relative path",
+        "the variation is a background plugin that sets \"type\": \"background\" and also isVisual false, and minVersion is 8.1.0 or later",
+        "jsconfig.json sets checkJs and both module and moduleResolution (bundler or node16/nodenext), and its types include @onlyoffice/doceditor-plugin-types and its /word entry point",
+        "@onlyoffice/doceditor-plugin-types is a devDependency in package.json",
+        "the bracket wrap reads the selection and writes it back through the editor (GetSelectedText then PasteText/PasteHtml, or a command) rather than editing the document from the plugin's DOM",
+        "the agent ran scripts/validate-plugin.mjs over the folder and it reports no error"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "audit-ticket-helper",
+      "mode": "audit",
+      "prompt": "our ticket helper plugin, the folder is attached with the notes the team collected. half the things in it don't work and nobody knows why. go through it and tell me what's actually wrong and why, i want a list for the team. don't rewrite it.",
+      "expected_output": "A ranked review, not a rewrite. Blank once installed: index.html loads ../v1/plugins.js, which exists only inside the marketplace repository. No panel on 8.0: \"type\": \"panelRight\" is read from 8.1.0 and the variation sets no isVisual/isInsideMode flags, so older editors start it invisible; minVersion 7.4.0 claims support it does not have. The click does nothing: onContextMenuClick is not in \"events\", and Ivan's attachEditorEvent(\"onContextMenuClick\") replaced the runtime's click router, so even declaring the event would not route to the per-item handler - remove that line and declare the event. The slow menu: the onContextMenuShow handler returns early without AddContextMenuItem when nothing is selected, and the editor waits for the answer. undefined<text>: the command reads PREFIX from the plugin's scope, which does not exist inside the command, and Asc.scope.text is assigned after callCommand, which already copied Asc.scope. The count showing paragraph text: makeTicketLink and showCount send two callCommands back to back, they share one callback slot, so a result lands in the other handler; also the insert command returns the paragraph object, which arrives as undefined so paragraph.GetText() throws. No toolbar tab: AddToolbarMenuItem is called with [[{ guid, tabs }]] instead of [{ guid, tabs }], and onToolbarMenuClick is not in \"events\" either. The stale panel: initOnSelectionChanged re-runs init on a selection, not on clearing it. Annotations at the customer: AnnotateParagraph exists only in Developer Edition. The settings window and its message exchange are correct and are not reported as faults.",
+      "files": [
+        "fixtures/broken-plugin/"
+      ],
+      "assertions": [
+        "the blank-once-installed note is traced to index.html loading plugins.js by the relative path ../v1/plugins.js, with the absolute https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js as the change",
+        "the no-panel-on-8.0 note is traced to \"type\": \"panelRight\" being read only from 8.1.0 and the variation lacking the isVisual/isInsideMode flags, and the review says minVersion 7.4.0 does not match",
+        "the dead click is traced to onContextMenuClick missing from \"events\"",
+        "the review says the attachEditorEvent(\"onContextMenuClick\") line makes it worse - it replaces the runtime's router of per-item click handlers - and must be removed, not kept",
+        "the slow menu with nothing selected is traced to the onContextMenuShow handler returning before AddContextMenuItem, while the editor waits for every listening plugin's answer",
+        "undefined<text> is traced to PREFIX being read inside the command, where the plugin's variables do not exist",
+        "the review also says Asc.scope.text is set after callCommand is called, and that Asc.scope is copied at the call, so the command does not see it",
+        "the wrong value in the counter is traced to two callCommand calls in flight at once sharing one callback slot",
+        "returning the paragraph object from the command is called out: only plain data comes back, so the callback's paragraph.GetText() fails",
+        "the missing toolbar tab is traced to AddToolbarMenuItem receiving an array of objects ([[...]]) instead of one object { guid, tabs }",
+        "onToolbarMenuClick missing from \"events\" is reported for the Settings button",
+        "the stale panel on clearing the selection is explained by initOnSelectionChanged re-running init only when a selection is made",
+        "the annotation note is explained by AnnotateParagraph being available only in Developer Edition builds",
+        "settings.html and scripts/settings.js are not reported as faulty - the window loads the absolute plugins.js and talks to the plugin through sendToPlugin/command messages, which is correct",
+        "the deliverable is a list of findings with causes and changes, and the plugin files are not rewritten"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "explain-command-scope",
+      "mode": "explain",
+      "prompt": "onlyoffice editor plugin question. i have const user = getUserName() at the top of my plugin script and inside callCommand i do paragraph.AddText(user) - i get ReferenceError user is not defined, but i can see it's set! so i moved it to Asc.scope.user = user, which works on the first click but when people click fast, sometimes the callback gets the wrong result, like the result of the other button. is the editor buggy? just explain, don't write me a plugin",
+      "expected_output": "Not a bug. callCommand sends the function's source text to the editor and runs it there, so nothing from the plugin's scope exists inside - user is undefined there by design; data goes through Asc.scope (or Editor.RunMacro arguments on 10.0+). Asc.scope is serialized when callCommand is called, so it must be set right before each call. The wrong result on fast clicks is two commands in flight: the plugin keeps a single callback slot for callCommand, so a second call replaces the first one's callback; chain or queue the commands (executeMethod queues itself, callCommand does not); Editor.RunMacro is callCommand underneath and shares the slot, so it is not a way around it.",
+      "files": [],
+      "assertions": [
+        "says the command function is sent as source text and run inside the editor, so variables of the plugin script do not exist there - not a bug",
+        "says Asc.scope is serialized at the moment callCommand is called, so it must be assigned immediately before each call",
+        "explains the wrong result on fast clicks by callCommand having a single callback slot that a second call in flight replaces",
+        "gives the fix for it: chain the commands or queue them so only one is in flight",
+        "does not offer Editor.RunMacro as a way around the shared callback - RunMacro sends its command through callCommand and shares the same slot",
+        "does not call the behaviour an editor bug and does not build a plugin"
+      ]
+    }
+  ]
+}
