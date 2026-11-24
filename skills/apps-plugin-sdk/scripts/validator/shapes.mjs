@@ -290,7 +290,7 @@ export class ShapeChecks extends Check {
     }
   }
 
-  /** Item keys share one host-wide map per scope, across every installed plugin. */
+  /** A key that is also a page address should read as one URL segment. */
   #checkKeyIsUrlSegment(where, scope, key) {
     const address = KEY_ADDRESS[scope];
 
@@ -305,6 +305,7 @@ export class ShapeChecks extends Check {
     );
   }
 
+  /** Item keys share one host-wide map per scope, across every installed plugin. */
   #checkKeyIsNamespaced(where, key) {
     const pluginSlug = this.project.manifest.name;
 
