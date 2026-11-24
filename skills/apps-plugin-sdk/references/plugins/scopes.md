@@ -13,7 +13,7 @@ The skill tracks a portal release, not a range, and carries no history. A plugin
 
 **SDK 3 vs SDK 2.** SDK 2 described UI as data (`IBox` trees, `onLoad`, `updateProps`); SDK 3 hands the portal a **React component** (`component`, `dialogBodyComponent`) rendered in the portal's own tree, adds the `ArticleNavigation` scope, and turns the bundle into an **ES module** with a default export and `"runtime": "module"` in the manifest. The old fields still render, marked deprecated — the list is in [plugin.md](plugin.md#deprecated--do-not-use-in-new-code), reading old plugins in [sdk-2-plugins.md](../sdk-2-plugins.md).
 
-## The thirteen scopes
+## The fifteen scopes
 
 [`IPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IPlugin.md) is not a scope — it is the mandatory base every plugin implements ([plugin.md](plugin.md)). Declare a scope in `package.json:scopes` **and** implement its interface, or nothing happens. Each scope links to its page here, each interface to its docs page, where its members and signatures are ([index](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins.md)); the last three columns are what those pages do not put side by side.
 
@@ -31,11 +31,13 @@ The skill tracks a portal release, not a range, and carries no history. A plugin
 | [`ArticleNavigation`](../items/article-navigation-item.md) | [`IArticleNavigationPlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IArticleNavigationPlugin.md) | `getArticleNavigationItems` | `key` | `component` |
 | [`DashboardWidget`](../items/dashboard-widget-item.md) — portal 4.1; an older portal skips it | `IDashboardWidgetPlugin` (in the installed SDK; no docs page yet) | `getDashboardWidgetItems` | `key` | `component` |
 | [`ArticleWidget`](../items/article-widget-item.md) — portal 4.1; an older portal skips it | `IArticleWidgetPlugin` (in the installed SDK; no docs page yet) | `getArticleWidgetItem` | — (one item per plugin) | `component` |
+| [`ProfileTab`](../items/profile-tab-item.md) — portal 4.1; an older portal skips it | `IProfileTabPlugin` (in the installed SDK; no docs page yet) | `getProfileTabItems` | `key` | `component` |
+| [`ProfileField`](../items/profile-field-item.md) — portal 4.1; an older portal skips it | `IProfileFieldPlugin` (in the installed SDK; no docs page yet) | `getProfileFieldItems` | `key` | `component` |
 | [`PostMessage`](post-message-plugin.md) | [`IPostMessagePlugin`](https://api.onlyoffice.com/docspace/plugins-sdk/usage-sdk/coding-plugin/interfaces/plugins/IPostMessagePlugin.md) | `setPostMessageCallback` | — | — |
 
 ## The item scopes share one shape
 
-**Item-map scopes** — ContextMenu, InfoPanel, MainButton, ProfileMenu, EventListener, File, ArticleButton, ArticleNavigation, DashboardWidget — share one shape: a `Map`, `add<Scope>Item`, `get<Scope>Items`, `update<Scope>Item` (plus `getContextMenuItemsKeys` for ContextMenu). Two exceptions: **EventListener** has no `update…Item` — re-add to replace; **File** keys its map by `extension`, not `key`. **ArticleWidget** is not one of them: the sidebar has one widget slot, so the plugin holds one item, as `Settings` does — `articleWidgetItem`, `setArticleWidgetItem`, `getArticleWidgetItem`. So the nine `I<Scope>Plugin` interfaces have no page of their own here: what the portal does with each scope is on its item's page, the fields on the docs pages those link, and what every item shares in [common-fields.md](../items/common-fields.md).
+**Item-map scopes** — ContextMenu, InfoPanel, MainButton, ProfileMenu, EventListener, File, ArticleButton, ArticleNavigation, DashboardWidget, ProfileTab, ProfileField — share one shape: a `Map`, `add<Scope>Item`, `get<Scope>Items`, `update<Scope>Item` (plus `getContextMenuItemsKeys` for ContextMenu). Two exceptions: **EventListener** has no `update…Item` — re-add to replace; **File** keys its map by `extension`, not `key`. **ArticleWidget** is not one of them: the sidebar has one widget slot, so the plugin holds one item, as `Settings` does — `articleWidgetItem`, `setArticleWidgetItem`, `getArticleWidgetItem`. So the eleven `I<Scope>Plugin` interfaces have no page of their own here: what the portal does with each scope is on its item's page, the fields on the docs pages those link, and what every item shares in [common-fields.md](../items/common-fields.md).
 
 ## Anything not in that table
 

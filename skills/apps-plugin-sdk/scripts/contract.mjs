@@ -180,6 +180,30 @@ export const SCOPE_CONTRACT = {
     required: ["component"],
     filter: "usersTypes",
   },
+  ProfileTab: {
+    iface: "IProfileTabPlugin",
+    item: "IProfileTabItem",
+    field: "profileTabItems",
+    getter: "getProfileTabItems",
+    adder: "addProfileTabItem",
+    updater: "updateProfileTabItem",
+    refresh: "updateProfileTabItems",
+    key: "key",
+    required: ["key", "label", "component"],
+    filter: "usersTypes",
+  },
+  ProfileField: {
+    iface: "IProfileFieldPlugin",
+    item: "IProfileFieldItem",
+    field: "profileFieldItems",
+    getter: "getProfileFieldItems",
+    adder: "addProfileFieldItem",
+    updater: "updateProfileFieldItem",
+    refresh: "updateProfileFieldItems",
+    key: "key",
+    required: ["key", "component"],
+    filter: "usersTypes",
+  },
 };
 
 export const SCOPES = Object.keys(SCOPE_CONTRACT);
@@ -317,6 +341,8 @@ const PAYLOAD_FREE_ACTIONS = [
   "update-article-navigation-items",
   "update-dashboard-widget-items",
   "update-article-widget-item",
+  "update-profile-tab-items",
+  "update-profile-field-items",
 ];
 
 export const KNOWN_ACTIONS = [...Object.keys(ACTION_PAYLOAD), ...PAYLOAD_FREE_ACTIONS];

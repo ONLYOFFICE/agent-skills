@@ -78,6 +78,7 @@ A question that turns out to need a whole feature is better answered by building
 | A small persistent control in the sidebar | [`ArticleButton`](references/items/article-button-item.md) | a 32×32 slot, `component` |
 | Something always in reach at the top of the sidebar — a search box, a quick filter; one slot per section | [`ArticleWidget`](references/items/article-widget-item.md) | the slot under the logo, 211px wide, `component`; collapsed, its `icon` opens it in a dropdown (portal 4.1) |
 | A block of their own on the Home page — a summary, a short list; a card there for an existing page is `dashboardCard` on its `ArticleNavigation` item instead | [`DashboardWidget`](references/items/dashboard-widget-item.md) | a full-width block on Home, `component` (portal 4.1) |
+| Something in the user's own profile — a field or a button in the profile card, a personal settings tab | [`ProfileField`](references/items/profile-field-item.md), [`ProfileTab`](references/items/profile-tab-item.md) | a card row, a tab, `component` (portal 4.1) |
 | Admin-configurable options | [`Settings`](references/plugins/settings-plugin.md) | the settings aside, `component` |
 | Class-side code that calls the REST API | [`API`](references/plugins/api-plugin.md) | — (a component needs no scope for this) |
 | To embed a third-party page and talk to it | [`PostMessage`](references/plugins/post-message-plugin.md) | — |

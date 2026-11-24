@@ -456,6 +456,25 @@ export default ({ workspace, check }) => {
     navNowhere.messageSummary,
   );
 
+  const navKey = workspace.validateProject("nav-key", {
+    pkg: manifestFor("nav-key", "FixtureNavKey", { scopes: ["ArticleNavigation"] }),
+    bundle: mapScopePlugin({
+      field: "pages",
+      adder: "addArticleNavigationItem",
+      getter: "getArticleNavigationItems",
+      onLoadBody: `this.pages.set("fixture-nav-key-good", { key: "fixture-nav-key-good", label: "Good", icon: "logo.svg", component: () => null });
+    this.pages.set("fixture-nav-key?tab", { key: "fixture-nav-key?tab", label: "Query", icon: "logo.svg", component: () => null });`,
+    }),
+    src: scopeSource({ adder: "addArticleNavigationItem", getter: "getArticleNavigationItems" }),
+  });
+
+  check(
+    "an ArticleNavigation key that is not letters, digits and hyphens is a warning, and a plain one passes",
+    navKey.warningsMention('ArticleNavigation item "fixture-nav-key?tab" key is not letters, digits and hyphens') &&
+      !navKey.hasFindingMentioning('"fixture-nav-key-good"'),
+    navKey.messageSummary,
+  );
+
   // --- the Home page: a card for a page, a widget of its own --------------------
 
   const navCard = workspace.validateProject(
@@ -507,6 +526,58 @@ export default ({ workspace, check }) => {
     "usersType on a widget is an error, since the host reads usersTypes",
     widgets.errorsMention('"fixture-dashboard-widget-singular" uses usersType but the host reads usersTypes'),
     widgets.messageSummary,
+  );
+
+  const profileTabs = workspace.validateProject("profile-tab", {
+    pkg: manifestFor("profile-tab", "FixtureProfileTab", { scopes: ["ProfileTab"] }),
+    bundle: mapScopePlugin({
+      field: "tabs",
+      adder: "addProfileTabItem",
+      getter: "getProfileTabItems",
+      onLoadBody: `this.tabs.set("fixture-profile-tab-good", { key: "fixture-profile-tab-good", label: "Good", component: () => null });
+    this.tabs.set("fixture-profile-tab-nameless", { key: "fixture-profile-tab-nameless", component: () => null });
+    this.tabs.set("fixture-profile-tab/sync", { key: "fixture-profile-tab/sync", label: "Sync", component: () => null });`,
+    }),
+    src: scopeSource({ adder: "addProfileTabItem", getter: "getProfileTabItems" }),
+  });
+
+  check(
+    "ProfileTab is a known scope and a tab with a label and a component passes",
+    !profileTabs.errorCodes.includes("pkg.scopes") && !profileTabs.hasFindingMentioning('"fixture-profile-tab-good"'),
+    profileTabs.messageSummary,
+  );
+  check(
+    "a profile tab without a label is an error",
+    profileTabs.errorsMention('ProfileTab item "fixture-profile-tab-nameless" has no label'),
+    profileTabs.messageSummary,
+  );
+  check(
+    "a profile tab key that is not letters, digits and hyphens is a warning",
+    profileTabs.warningsMention('ProfileTab item "fixture-profile-tab/sync" key is not letters, digits and hyphens'),
+    profileTabs.messageSummary,
+  );
+
+  const profileFields = workspace.validateProject("profile-field", {
+    pkg: manifestFor("profile-field", "FixtureProfileField", { scopes: ["ProfileField"] }),
+    bundle: mapScopePlugin({
+      field: "fields",
+      adder: "addProfileFieldItem",
+      getter: "getProfileFieldItems",
+      onLoadBody: `this.fields.set("fixture-profile-field-unlabelled", { key: "fixture-profile-field-unlabelled", component: () => null });
+    this.fields.set("fixture-profile-field-empty", { key: "fixture-profile-field-empty", label: "Empty" });`,
+    }),
+    src: scopeSource({ adder: "addProfileFieldItem", getter: "getProfileFieldItems" }),
+  });
+
+  check(
+    "ProfileField is a known scope and a row without a label passes",
+    !profileFields.errorCodes.includes("pkg.scopes") && !profileFields.hasFindingMentioning('"fixture-profile-field-unlabelled"'),
+    profileFields.messageSummary,
+  );
+  check(
+    "a profile card row without a component is an error",
+    profileFields.errorsMention('ProfileField item "fixture-profile-field-empty" has no component'),
+    profileFields.messageSummary,
   );
 
   const roles = workspace.validateProject("user-role", {

@@ -38,6 +38,12 @@ const ROLE_VALUES = [...new Set([...USERS_TYPES, ...USER_ROLES])];
 const SUBMENU_SCOPES = ["ContextMenu", "MainButton"];
 const SIDEBAR_SCOPES = ["ArticleNavigation", "ArticleWidget"];
 
+/** The scopes whose key is the last segment of a page address. */
+const KEY_ADDRESS = {
+  ArticleNavigation: "/p/<key>",
+  ProfileTab: "/profile/p/<key>",
+};
+
 /** Actions whose setter belongs to a mounted element: from an item callback they do nothing. */
 const ITEM_IGNORED_ACTIONS = ["update-props", "update-context", "update-create-dialog-modal"];
 
@@ -76,6 +82,7 @@ export class ShapeChecks extends Check {
     this.#checkFilters(where, scope, contract, item);
     this.#checkIcon(where, item);
     this.#checkScopeSpecifics(where, scope, item);
+    this.#checkKeyIsUrlSegment(where, scope, key);
 
     if (SUBMENU_SCOPES.includes(scope)) this.#checkMenuEntry(where, scope, contract, item);
 
@@ -281,6 +288,21 @@ export class ShapeChecks extends Check {
               `${where} appears contains "${section}", which is not a Section value (${SECTIONS.join(", ")}) - it matches no section, so the entry is missing from the one it was meant for`,
             );
     }
+  }
+
+  /** A key that is also a page address should read as one URL segment. */
+  #checkKeyIsUrlSegment(where, scope, key) {
+    const address = KEY_ADDRESS[scope];
+
+    if (!address || typeof key !== "string" || /^[A-Za-z0-9-]+$/.test(key))
+      return;
+
+    this.warn(
+      "item",
+      scope === "ArticleNavigation"
+        ? `${where} key is not letters, digits and hyphens - the key is the page address ${address}: a portal before 4.1 puts it there as is, so a "/", "?" or "#" in it breaks the link, and a navigate("${address}") of the plugin's own has to encodeURIComponent it; use letters, digits and hyphens only`
+        : `${where} key is not letters, digits and hyphens - the key is the tab address ${address}: the portal encodes it there, but a navigate("${address}") of the plugin's own has to encodeURIComponent it, or it opens another address; use letters, digits and hyphens only`,
+    );
   }
 
   /** Item keys share one host-wide map per scope, across every installed plugin. */
