@@ -48,6 +48,10 @@ Use `attachEditorEvent` for editor events (`onTargetPositionChanged`, `onAddComm
 
 ## Windows, panels and buttons
 
-- `Asc.plugin.button(id)` receives the position of the clicked button from the variation's `buttons` (`0`, `1`, ...) and `-1` for the window's own close. Close the plugin with `executeCommand("close", "")` - after the command whose result you need has called back, not before.
+- `Asc.plugin.button(id, windowId)` receives the position of the clicked button from the variation's `buttons` (`0`, `1`, ...), or `-1` for a close:
+  - **a panel's close** arrives as `button(-1, windowId)`, and the panel stays open until the plugin closes itself;
+  - **a window opened with `new Asc.PluginWindow()`** arrives as `button(-1, windowId)` with that window's `id` - close that window, not the plugin. Keep the windows you open by `id` to tell this from the panel's close;
+  - **the plugin's own modal window**: from 9.5.0 its close does not reach `button` - the runtime closes the plugin, so cleanup placed under `-1` never runs there. Earlier versions call `button(-1)`.
+- Close the plugin with `executeCommand("close", "")` - after the command whose result you need has called back, not before. Without a `button` handler, every button and close closes the plugin.
 - A modal window opened from a plugin (`new Asc.PluginWindow()`) is a separate page with its own `plugins.js`; it talks to the plugin through `sendToPlugin`/`attachEvent` messages, not shared variables.
 - `ResizeWindow` with a minimum and a maximum size (its third and fourth arguments) makes a window resizable by the user; the limits are the outer size.

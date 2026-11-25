@@ -16,11 +16,17 @@ import { expandIconTemplate } from "./validate-plugin.mjs";
 const VALIDATOR = path.join(path.dirname(fileURLToPath(import.meta.url)), "validate-plugin.mjs");
 const RUNTIME = "https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js";
 
+const SCALE_FILES = { "100%": "icon.png", "125%": "icon@1.25x.png", "150%": "icon@1.5x.png", "175%": "icon@1.75x.png", "200%": "icon@2x.png" };
+
 const ICONS2 = ["light", "dark"].map((style) => ({
   style,
-  "100%": { normal: `resources/${style}/icon.png` },
-  "200%": { normal: `resources/${style}/icon@2x.png` },
+  ...Object.fromEntries(Object.entries(SCALE_FILES).map(([scale, file]) => [scale, { normal: `resources/${style}/${file}` }])),
 }));
+
+/** Every icon file the good config names, as empty files - the validator checks existence only. */
+const ICON_FILES = Object.fromEntries(
+  ["resources/light", "resources/dark", "resources/store/icons"].flatMap((folder) => Object.values(SCALE_FILES).map((file) => [`${folder}/${file}`, ""])),
+);
 
 function goodConfig() {
   return {
@@ -34,7 +40,7 @@ function goodConfig() {
         description: "Adds our signature block from the context menu.",
         url: "index.html",
         icons: ["resources/light/icon.png", "resources/light/icon@2x.png"],
-        icons2: ICONS2,
+        icons2: structuredClone(ICONS2), // a fresh copy: cases edit it
         EditorsSupport: ["word"],
         type: "background",
         isVisual: false,
@@ -71,11 +77,10 @@ function plugin(change = {}) {
     "config.json": JSON.stringify(config, null, 2),
     "index.html": change.html ?? GOOD_HTML,
     "scripts/code.js": change.code ?? GOOD_CODE,
-    "resources/light/icon.png": "",
-    "resources/light/icon@2x.png": "",
-    "resources/dark/icon.png": "",
-    "resources/dark/icon@2x.png": "",
-    "resources/store/icons/icon.png": "",
+    "translations/langs.json": '["de-DE"]',
+    "README.md": "# Signature block\n",
+    "CHANGELOG.md": "# Change Log\n",
+    ...ICON_FILES,
     "resources/store/screenshots/screen_1.png": "",
     ...(change.files ?? {}),
   };
@@ -129,10 +134,45 @@ const CASES = [
   },
   { name: "malformed guid warns", change: { config: (c) => { c.guid = "my-plugin"; } }, exit: 0, codes: ["guid-format"] },
   { name: "missing listing fields are marketplace findings", change: { config: (c) => { delete c.offered; delete c.version; } }, exit: 0, codes: ["listing-field"] },
+  { name: "an unknown field warns and names the field it likely meant", change: { config: (c) => { c.variations[0].isviewer = true; c.author = "x"; } }, exit: 0, codes: ["unknown-field"] },
+  { name: "fields the editor reads but the schema lacks are known", change: { config: (c) => { c.variations[0].autostart = true; c.variations[0].hiddenHeaderButtons = []; c.groupName = "x"; } }, exit: 0, codes: [] },
+  // --- what the plugin manager shows ----------------------------------------------------------
+  { name: "missing langs.json", change: { files: { "translations/langs.json": null } }, exit: 0, codes: ["no-langs"] },
+  { name: "langs.json without en-EN is fine - English is always listed", change: { files: { "translations/langs.json": "[]" } }, exit: 0, codes: [] },
+  { name: "langs.json that is not an array", change: { files: { "translations/langs.json": "{}" } }, exit: 0, codes: ["bad-langs"] },
+  { name: "missing README.md and CHANGELOG.md", change: { files: { "README.md": null, "CHANGELOG.md": null } }, exit: 0, codes: ["no-readme", "no-changelog"] },
+  {
+    name: "no dark-theme toolbar icons",
+    change: { config: (c) => { c.variations[0].icons2 = c.variations[0].icons2.filter((s) => s.style === "light"); } },
+    exit: 0,
+    codes: ["icon-coverage"],
+  },
+  {
+    name: "toolbar icons missing a scale",
+    change: { config: (c) => { for (const s of c.variations[0].icons2) delete s["175%"]; } },
+    exit: 0,
+    codes: ["icon-coverage"],
+  },
+  {
+    name: "one SVG per theme covers every scale",
+    change: {
+      config: (c) => { const v = c.variations[0]; v.icons = "resources/%theme-type%(light|dark)/icon.svg"; delete v.icons2; },
+      files: { "resources/light/icon.svg": "", "resources/dark/icon.svg": "" },
+    },
+    exit: 0,
+    codes: [],
+  },
+  { name: "store icons missing a scale", change: { files: { "resources/store/icons/icon@1.75x.png": null } }, exit: 0, codes: ["store-icon-scales"] },
   // --- files ------------------------------------------------------------------------------------
   { name: "missing toolbar icon of the first variation", change: { files: { "resources/dark/icon@2x.png": null } }, exit: 1, codes: ["missing-file"] },
   { name: "missing page", change: { files: { "index.html": null } }, exit: 1, codes: ["missing-file"] },
   // --- the page ---------------------------------------------------------------------------------
+  {
+    name: "a page url with a ?query names the file before it",
+    change: { config: (c) => { c.variations[0].url = "index.html?v=1.0.0"; } },
+    exit: 0,
+    codes: [],
+  },
   { name: "relative plugins.js", change: { html: GOOD_HTML.replace(RUNTIME, "../v1/plugins.js") }, exit: 1, codes: ["relative-runtime"] },
   { name: "no plugins.js at all", change: { html: '<html><head><script src="scripts/code.js"></script></head></html>' }, exit: 1, codes: ["no-runtime"] },
   // --- the scripts ------------------------------------------------------------------------------

@@ -13,21 +13,22 @@ An editor plugin fails without an error - a click that never arrives, a command 
 | 0 | `build-context-menu-action` | build | events and the click router, answering every `onContextMenuShow`, the `{ guid, items }` shape, absolute `plugins.js`, `"type"` from 8.1.0, the type setup with `moduleResolution`, running the validator |
 | 1 | `audit-ticket-helper` | audit | every core rule at once, read from symptoms; plus the review discipline - one correct file left alone, no rewrite |
 | 2 | `explain-command-scope` | explain | a command is source text, `Asc.scope` copied at the call, one `callCommand` in flight |
+| 3 | `build-panel-no-types` | build | no type setup nobody asked for; `"type"` with its flags, absolute `plugins.js`, data into a command, running the validator |
 
 Every core rule in `SKILL.md` has at least one assertion behind it:
 
 | Core rule | Scenario |
 |---|---|
-| A command is source text, not a closure; `Asc.scope` copied at the call; plain data only | 1, 2 |
+| A command is source text, not a closure; `Asc.scope` copied at the call; plain data only | 1, 2, 3 |
 | One `callCommand` at a time | 1, 2 |
 | An event reaches the plugin only if the editor knows it listens; the click router | 0, 1 |
 | Answer every `onContextMenuShow`; one object `{ guid, items }` | 0, 1 |
 | `AddToolbarMenuItem` takes one object `{ guid, tabs }` | 1 |
-| Absolute `plugins.js` | 0, 1 |
-| `"type"` read from 8.1.0 | 0, 1 |
+| Absolute `plugins.js` | 0, 1, 3 |
+| `"type"` read from 8.1.0 | 0, 1, 3 |
 | Check the edition | 1 |
 | `initOnSelectionChanged` on a selection, not on clearing | 1 |
-| Type setup with `module`/`moduleResolution` | 0 |
+| Types only when asked; then `module`/`moduleResolution` | 0 (asked), 3 (not asked) |
 
 Prompts are written the way someone would ask - lowercase, symptom first - and **never name the mechanism**: no `onContextMenuClick`, no `Asc.scope` in the build prompt, no "events array". What a real user names is fair game (the editor, the versions, VS Code).
 

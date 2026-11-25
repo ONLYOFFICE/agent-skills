@@ -64,6 +64,22 @@
         "does not offer Editor.RunMacro as a way around the shared callback - RunMacro sends its command through callCommand and shares the same slot",
         "does not call the behaviour an editor bug and does not build a plugin"
       ]
+    },
+    {
+      "id": 3,
+      "name": "build-panel-no-types",
+      "mode": "build",
+      "prompt": "make an onlyoffice plugin for the spreadsheet editor: a left panel with one button that puts today's date into the selected cell. our server runs 9.1. put it in ./date-plugin",
+      "expected_output": "A plugin folder with config.json, index.html and a script, and nothing else: no package.json, jsconfig.json, types folder or node_modules, and npm install was not run - nobody asked for autocompletion. The variation is a panel: \"type\": \"panel\" with isVisual true, isInsideMode true, isModal false, EditorsSupport [\"cell\"]. index.html loads plugins.js from https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js. The date is written through the editor (a command with Api.GetActiveSheet() or a paste method), with the value passed in through Asc.scope or Editor.RunMacro arguments, not read from the plugin's scope inside the command. The validator was run.",
+      "files": [],
+      "assertions": [
+        "the plugin folder has no package.json, jsconfig.json, types/ folder or node_modules, and npm install was not run",
+        "index.html loads plugins.js from https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js, not a relative path",
+        "the variation sets \"type\": \"panel\" and also isVisual true and isInsideMode true",
+        "EditorsSupport is [\"cell\"]",
+        "a value computed in the plugin reaches the command through Asc.scope (set right before the call) or Editor.RunMacro arguments, not as a variable read inside the command",
+        "the agent ran scripts/validate-plugin.mjs over the folder and it reports no error"
+      ]
     }
   ]
 }

@@ -35,7 +35,7 @@ with, in the variation of `config.json`:
 - **Clicks.** `attachContextMenuClickEvent(id, fn)` stores `fn` under the item id; the runtime's own `event_onContextMenuClick` looks the id up and calls it. The editor sends `onContextMenuClick` only to a plugin registered for it - list it in `"events"`. Do **not** register it with `attachEditorEvent("onContextMenuClick", ...)`: that replaces the runtime's router, and no per-item handler runs again.
 - **Show.** `attachEvent("onContextMenuShow", ...)` with the event in `"events"`, or `attachEditorEvent("onContextMenuShow", ...)` which registers it by itself. Either way the handler must answer.
 
-A background plugin is the usual host for context-menu items: it runs from the moment the editor starts, so its items exist without the user opening anything.
+A background plugin is the usual host for context-menu items: it runs without a window, so its items exist without the user opening anything.
 
 ## Toolbar
 

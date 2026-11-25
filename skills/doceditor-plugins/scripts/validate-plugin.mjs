@@ -16,6 +16,23 @@ const EDITORS = new Set(["word", "cell", "slide", "pdf"]);
 const KINDS = new Set(["window", "panel", "panelRight", "background", "system", "invisible", "unvisible"]);
 const KINDS_FROM_8_1 = new Set(["panelRight", "background"]);
 const RUNTIME_URL = "https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js";
+// Fields something reads: the config.json schema of @onlyoffice/doceditor-plugin-types, sdkjs
+// common/apiCommon.js (CPlugin and CPluginVariation deserialize) and web-apps' Plugins controller.
+// Anything else is ignored by the editor - usually a typo or an invented field.
+const KNOWN_ROOT = new Set([
+  "$schema", "baseUrl", "group", "groupName", "groupRank", "guid", "help", "isConnector", "loader",
+  "minVersion", "name", "nameLocale", "offered", "onlyofficeScheme", "variations", "version",
+]);
+const KNOWN_VARIATION = new Set([
+  "autostart", "buttons", "cryptoDisabledForExternalCloud", "cryptoDisabledForInternalCloud", "cryptoDisabledOnStart",
+  "cryptoMode", "description", "descriptionLocale", "disableReasons", "dockedPlace", "EditorsSupport", "events",
+  "fixedSize", "help", "hiddenHeaderButtons", "icons", "icons2", "index", "initData", "initDataType",
+  "initOnSelectionChanged", "isActivated", "isCanDocked", "isCustomWindow", "isDisplayedInViewer", "isInsideMode",
+  "isModal", "isSystem", "isTargeted", "isUpdateOleOnResize", "isViewer", "isVisual", "menu", "methods", "name",
+  "nameLocale", "positionX", "positionY", "screens", "size", "store", "transparent", "type", "url",
+]);
+const SCALES = ["100%", "125%", "150%", "175%", "200%"];
+
 // Events the editor itself sends, which reach a handler stored by attachEvent only when declared in
 // "events". From the plugin-window events and the per-editor events of @onlyoffice/doceditor-plugin-types.
 const EDITOR_EVENTS = new Set([
@@ -67,6 +84,23 @@ export function validatePlugin(dir) {
   for (const field of ["version", "minVersion"]) {
     if (typeof config[field] === "string" && !/^\d+\.\d+\.\d+$/.test(config[field])) add("warning", "version-format", field, 'expected three numbers, e.g. "1.0.0"');
   }
+  for (const key of Object.keys(config)) {
+    if (!KNOWN_ROOT.has(key)) add("warning", "unknown-field", "config.json", `"${key}" is not a field the editor reads; it is ignored${hint(key, KNOWN_ROOT)}`);
+  }
+
+  // What the plugin manager shows besides config.json.
+  const langsPath = path.join(dir, "translations", "langs.json");
+  if (!existsSync(langsPath)) {
+    add("marketplace", "no-langs", "translations/langs.json", 'missing - the plugin manager reads the languages from it; [] when the plugin ships English only (English is always listed, "en-EN" need not be)');
+  } else {
+    try {
+      if (!Array.isArray(JSON.parse(readFileSync(langsPath, "utf8").replace(/^﻿/, "")))) throw new Error("not an array");
+    } catch (e) {
+      add("marketplace", "bad-langs", "translations/langs.json", `must be a JSON array of codes such as "de-DE" (${e.message})`);
+    }
+  }
+  if (!existsSync(path.join(dir, "README.md"))) add("marketplace", "no-readme", "README.md", "missing - the plugin manager shows it to users deciding whether to install");
+  if (!existsSync(path.join(dir, "CHANGELOG.md"))) add("marketplace", "no-changelog", "CHANGELOG.md", "missing - the plugin manager shows what changed before an update");
 
   const variations = Array.isArray(config.variations) ? config.variations : [];
   if (!variations.length) {
@@ -82,6 +116,9 @@ export function validatePlugin(dir) {
   variations.forEach((v, i) => {
     const at = `variations[${i}]`;
     if (!v || typeof v !== "object") return add("error", "bad-variation", at, "must be an object");
+    for (const key of Object.keys(v)) {
+      if (!KNOWN_VARIATION.has(key)) add("warning", "unknown-field", at, `"${key}" is not a field the editor reads; it is ignored${hint(key, KNOWN_VARIATION)}`);
+    }
     for (const field of ["description", "url"]) if (typeof v[field] !== "string") add("error", "missing-field", at, `missing "${field}"`);
     if (!Array.isArray(v.EditorsSupport) || !v.EditorsSupport.length) {
       add("error", "missing-field", at, 'missing "EditorsSupport" - the editors the button exists in');
@@ -105,22 +142,41 @@ export function validatePlugin(dir) {
     const iconLevel = i === 0 ? "error" : "warning";
     const missing = (where, rel, what, level = "error") => {
       if (typeof rel !== "string" || /^(https?:)?\/\//.test(rel)) return;
-      if (!existsSync(path.join(dir, rel))) add(level, "missing-file", where, `${what} "${rel}" does not exist`);
+      if (!existsSync(path.join(dir, filePart(rel)))) add(level, "missing-file", where, `${what} "${rel}" does not exist`);
     };
     missing(`${at}.url`, v.url, "page");
     for (const [where, rel] of iconPaths(v.icons, `${at}.icons`)) missing(where, rel, "icon", iconLevel);
     for (const [where, rel] of iconPaths(v.icons2, `${at}.icons2`)) missing(where, rel, "icon", iconLevel);
+    if (i === 0) {
+      const coverage = iconCoverage(v);
+      for (const theme of ["light", "dark"]) {
+        const have = coverage.get(theme);
+        if (!have || !have.size) {
+          add("marketplace", "icon-coverage", `${at}.icons2`, `no ${theme}-theme toolbar icons - the button needs both themes at every scale (${SCALES.join(", ")})`);
+          continue;
+        }
+        const absent = SCALES.filter((s) => !have.has(s));
+        if (absent.length) add("marketplace", "icon-coverage", `${at}.icons2`, `${theme}-theme toolbar icons lack ${absent.join(", ")}`);
+      }
+    }
     if (v.store && typeof v.store === "object") {
       for (const field of ["background", "icons", "screenshots"]) {
         if (v.store[field] === undefined) add("marketplace", "listing-field", `${at}.store`, `missing "${field}"`);
       }
-      for (const theme of ["light", "dark"]) missing(`${at}.store.icons.${theme}`, v.store.icons?.[theme], "store icon folder", "marketplace");
+      for (const theme of ["light", "dark"]) {
+        const folder = v.store.icons?.[theme];
+        missing(`${at}.store.icons.${theme}`, folder, "store icon folder", "marketplace");
+        if (typeof folder === "string" && existsSync(path.join(dir, folder))) {
+          const absent = SCALES.map(scaleFile).filter((f) => !existsSync(path.join(dir, folder, f)));
+          if (absent.length) add("marketplace", "store-icon-scales", `${at}.store.icons.${theme}`, `"${folder}" lacks ${absent.join(", ")} - the plugin manager card needs every scale`);
+        }
+      }
       (Array.isArray(v.store.screenshots) ? v.store.screenshots : []).forEach((s, n) => missing(`${at}.store.screenshots[${n}]`, s, "screenshot", "marketplace"));
     }
 
     // How the page loads the runtime.
-    if (typeof v.url === "string" && !/^(https?:)?\/\//.test(v.url) && existsSync(path.join(dir, v.url))) {
-      const sources = scriptSources(readFileSync(path.join(dir, v.url), "utf8"));
+    if (typeof v.url === "string" && !/^(https?:)?\/\//.test(v.url) && existsSync(path.join(dir, filePart(v.url)))) {
+      const sources = scriptSources(readFileSync(path.join(dir, filePart(v.url)), "utf8"));
       const runtime = sources.filter((s) => /(^|\/)plugins\.js(\?|$)/.test(s));
       if (!runtime.length) add("error", "no-runtime", `${at}.url`, `the page does not load plugins.js, so window.Asc.plugin never exists; load ${RUNTIME_URL}`);
       for (const s of runtime.filter((s) => !/^(https?:)?\/\//.test(s))) {
@@ -131,7 +187,7 @@ export function validatePlugin(dir) {
 
   // What the plugin's own scripts listen for. A page a variation names is the plugin; any other page
   // is a window the plugin opens, whose Asc.plugin.attachEvent hears the plugin, not the editor.
-  const mainPages = new Set(variations.map((v) => v?.url).filter((u) => typeof u === "string").map((u) => path.posix.normalize(u)));
+  const mainPages = new Set(variations.map((v) => v?.url).filter((u) => typeof u === "string").map((u) => path.posix.normalize(filePart(u))));
   for (const { file, main } of pluginScripts(dir, mainPages)) {
     const code = readFileSync(path.join(dir, file), "utf8");
     const line = (index) => code.slice(0, index).split("\n").length;
@@ -158,8 +214,12 @@ export function validatePlugin(dir) {
       add("error", "menu-array", at(m.index), `${m[1]} takes one object ({ guid, ${m[1].includes("Toolbar") ? "tabs" : "items"} }) inside the argument array, not an array of them`);
     }
   }
+
   return out;
 }
+
+// A page or icon path as the editor fetches it: a cache-busting ?query or #hash names no file.
+const filePart = (rel) => rel.replace(/[?#].*$/, "");
 
 /**
  * Local scripts the plugin's pages load, minus libraries; `main` when a page a variation names loads it.
@@ -250,6 +310,50 @@ export function expandIconTemplate(template) {
     }
   }
   return [...new Set(out)];
+}
+
+/**
+ * Which theme has toolbar icons at which scale, from `icons2` (objects or templates) and an `icons`
+ * template. A plain `icons` array is the legacy light set and counts for nothing here.
+ * @returns {Map<string, Set<string>>}
+ */
+function iconCoverage(v) {
+  const coverage = new Map([["light", new Set()], ["dark", new Set()]]);
+  const addScales = (themes, scales) => {
+    for (const t of themes) for (const s of scales) coverage.get(t)?.add(s);
+  };
+  // A vector icon serves every scale, so an SVG counts for all of them.
+  const isSvg = (p) => typeof p === "string" && /\.svg$|%extension%\([^)]*\bsvg\b/i.test(p);
+  const fromTemplate = (template) => {
+    const values = (name) => new RegExp(`%${name}%\\(([^)]*)\\)`).exec(template)?.[1].split("|");
+    const themes = values("theme-type") ?? ["light", "dark"];
+    const raw = values("scale") ?? (isSvg(template) ? ["*"] : ["100"]);
+    const scales = raw.flatMap((s) => (s === "default" || s === "*" || isSvg(template) ? SCALES : [`${s.replace(/%$/, "")}%`]));
+    addScales(themes, scales);
+  };
+  if (typeof v.icons === "string") fromTemplate(v.icons);
+  for (const entry of Array.isArray(v.icons2) ? v.icons2 : []) {
+    if (typeof entry === "string") fromTemplate(entry);
+    else if (entry && typeof entry === "object") {
+      const themes = entry.style ? [entry.style] : ["light", "dark"];
+      const sets = Object.entries(entry).filter(([k, val]) => (k === "default" || SCALES.includes(k)) && val?.normal);
+      const scales = sets.some(([k, val]) => k === "default" || isSvg(val.normal)) ? SCALES : sets.map(([k]) => k);
+      addScales(themes, scales);
+    }
+  }
+  return coverage;
+}
+
+/** The file name a scale uses: icon.png at 100%, icon@1.25x.png and so on. */
+function scaleFile(scale) {
+  const n = Number.parseInt(scale, 10);
+  return n === 100 ? "icon.png" : `icon@${String(n / 100).replace(/0+$/, "").replace(/\.$/, "")}x.png`;
+}
+
+/** "; did you mean X?" for a known name that differs only in case. */
+function hint(key, known) {
+  const match = [...known].find((k) => k.toLowerCase() === key.toLowerCase());
+  return match ? `; did you mean "${match}"?` : "";
 }
 
 function compareVersions(a, b) {

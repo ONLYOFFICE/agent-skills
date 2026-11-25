@@ -2,6 +2,8 @@
 
 [`@onlyoffice/doceditor-plugin-types`](https://github.com/ONLYOFFICE/doceditor-plugin-types) types the whole plugin API per editor: `window.Asc.plugin`, every `executeMethod` and `Editor` method with its arguments, the editor events, and the `Api` object model inside a command. In a plain JavaScript plugin it turns an invented member into an error in the editor and in `tsc`, before anyone opens the document. Its README covers TypeScript projects and plugins for several editors; this page is the JavaScript setup and what the check does not see.
 
+The setup is optional: the plugin runs without it, and the author may not use an editor that reads it. Add it when they ask for autocompletion or type checking.
+
 ## Setup for a JavaScript plugin
 
 In the plugin folder:
