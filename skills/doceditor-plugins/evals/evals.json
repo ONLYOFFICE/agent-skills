@@ -80,6 +80,21 @@
         "a value computed in the plugin reaches the command through Asc.scope (set right before the call) or Editor.RunMacro arguments, not as a variable read inside the command",
         "the agent ran scripts/validate-plugin.mjs over the folder and it reports no error"
       ]
+    },
+    {
+      "id": 4,
+      "name": "explain-cross-origin-insert",
+      "mode": "explain",
+      "prompt": "our onlyoffice plugin for the document editor inserts an equation the user types as latex. on our own docs server, where we copied it into the plugins folder, it works. people who install it from the marketplace get \"Blocked a frame with origin ... from accessing a cross-origin frame\" in the console and nothing is inserted. the insert is just\n\nconst api = window.parent.Asc.editor;\napi.asc_AddMath(latex);\n\na colleague wants to wrap it in try/catch and fall back to postMessage. what's going on and how do we fix it properly? our servers are 9.0 and newer.",
+      "expected_output": "The code reaches out of the plugin's iframe into the editor's page. Copied onto their own server the plugin is served from the editor's origin, so the browser allows it; installed from the marketplace it is served from onlyoffice.github.io, another origin, and reading anything through window.parent throws. Asc.editor and asc_AddMath are editor internals, not plugin API - undocumented and free to change between versions - so even the same-origin case is fragile. A try/catch with a postMessage fallback keeps the internals and adds an unsupported channel; it is not the fix. The fix is the plugin API: a command that calls Api.GetDocument().AddMathEquation(latex, \"latex\") (8.2.0+, so fine on 9.0), with the LaTeX passed in through Asc.scope set right before callCommand or as an Editor.RunMacro argument.",
+      "files": [],
+      "assertions": [
+        "traces the error to the code reading the editor's page through window.parent: from the marketplace the plugin is served from another origin than the editor, so the browser blocks it, while on their own server it shares the editor's origin, which is why it worked there",
+        "says Asc.editor and asc_AddMath are editor internals rather than plugin API, so they can change between versions even where the access is allowed",
+        "advises against the try/catch with a postMessage fallback, or any other way of keeping the editor's internals, rather than adopting it",
+        "the fix inserts the equation through the plugin API - a command (callCommand or Editor.RunMacro) calling the document's AddMathEquation with the \"latex\" format",
+        "the LaTeX reaches the command through Asc.scope set right before the call or an Editor.RunMacro argument, not as a variable read inside the command"
+      ]
     }
   ]
 }

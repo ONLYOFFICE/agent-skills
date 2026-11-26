@@ -26,8 +26,12 @@ is in the skill's [README](../README.md); this page is for whoever maintains the
   handlers whose event is not in `"events"`, `attachEditorEvent` on the two click routers,
   `Asc.plugin.attachEvent` for an editor event that is neither declared nor registered (main
   pages only, and only for the names in `EDITOR_EVENTS` - anything else is the plugin's own
-  message from a window), and the context-menu and toolbar methods called with an array of
-  objects.
+  message from a window), the context-menu and toolbar methods called with an array of
+  objects, and code that leaves the plugin API (`outside-api`, a `warning`): `window.parent`/
+  `top`/`opener`/`frameElement`, a bundler's alias of them (`r.parent.Asc`), `Asc.editor` and
+  `asc_*` members. `postMessage` to the parent is not reported - it works across origins, and a
+  page nested in the plugin's own iframe uses it. Built bundles are skipped like libraries, so a
+  review still sweeps them by hand ([audit.md](../references/audit.md#review-discipline)).
 
 Exit code 1 when there is an `error`. `--json` prints the findings with a stable `code` each.
 
@@ -51,4 +55,6 @@ Last checked against the marketplace's own plugins: no false positive on the eve
 the remaining errors there are real (missing icon files, one relative `plugins.js`). The
 `unknown-field` warnings there are real too (`isNeedNumbering`, root-level `description`/`type`/
 `icons`, `author`, `category`, `manifestVersion`); `icon-coverage` flags plugins with only the
-legacy `icons` array or only 100% icons, among the most common review findings.
+legacy `icons` array or only 100% icons, among the most common review findings. `outside-api`
+there: `Api.asc_*Track*Revisions` inside a command (`ai`) and a walk of `window.parent`/`top`
+for the Desktop bridge (`pdf-bookmarks`) - both real.

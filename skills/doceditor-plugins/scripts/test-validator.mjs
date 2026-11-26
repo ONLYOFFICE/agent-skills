@@ -203,6 +203,30 @@ const CASES = [
     codes: ["menu-array"],
   },
   {
+    name: "reaching the editor through window.parent warns",
+    change: { code: `${GOOD_CODE}\nwindow.parent.Asc.editor.asc_AddMath("x");` },
+    exit: 0,
+    codes: ["outside-api"],
+  },
+  {
+    name: "a bundler's alias for window still reaches the editor's internals",
+    change: { code: `${GOOD_CODE}\nvar e = window, r = e.parent;\nr.Asc.editor.asc_AddMath("x");` },
+    exit: 0,
+    codes: ["outside-api"],
+  },
+  {
+    name: "postMessage to the parent works across origins",
+    change: { code: `${GOOD_CODE}\nwindow.parent.postMessage({ type: "ready" }, "*");` },
+    exit: 0,
+    codes: [],
+  },
+  {
+    name: "jQuery's parent() and a rectangle's top are not frames",
+    change: { code: `${GOOD_CODE}\n$(el).parent().addClass("x");\nconst y = rect.top + node.parentNode.offsetTop;` },
+    exit: 0,
+    codes: [],
+  },
+  {
     name: "toolbar click handler without onToolbarMenuClick in events",
     change: { code: `${GOOD_CODE}\nwindow.Asc.plugin.attachToolbarMenuClickEvent("footer", function () {});` },
     exit: 1,

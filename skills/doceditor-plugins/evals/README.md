@@ -14,16 +14,18 @@ An editor plugin fails without an error - a click that never arrives, a command 
 | 1 | `audit-ticket-helper` | audit | every core rule at once, read from symptoms; plus the review discipline - one correct file left alone, no rewrite |
 | 2 | `explain-command-scope` | explain | a command is source text, `Asc.scope` copied at the call, one `callCommand` in flight |
 | 3 | `build-panel-no-types` | build | no type setup nobody asked for; `"type"` with its flags, absolute `plugins.js`, data into a command, running the validator |
+| 4 | `explain-cross-origin-insert` | explain | stay inside the iframe, the plugin API instead of the editor's internals; data into a command |
 
 Every core rule in `SKILL.md` has at least one assertion behind it:
 
 | Core rule | Scenario |
 |---|---|
-| A command is source text, not a closure; `Asc.scope` copied at the call; plain data only | 1, 2, 3 |
+| A command is source text, not a closure; `Asc.scope` copied at the call; plain data only | 1, 2, 3, 4 |
 | One `callCommand` at a time | 1, 2 |
 | An event reaches the plugin only if the editor knows it listens; the click router | 0, 1 |
 | Answer every `onContextMenuShow`; one object `{ guid, items }` | 0, 1 |
 | `AddToolbarMenuItem` takes one object `{ guid, tabs }` | 1 |
+| Stay inside the iframe; only the plugin API | 4 |
 | Absolute `plugins.js` | 0, 1, 3 |
 | `"type"` read from 8.1.0 | 0, 1, 3 |
 | Check the edition | 1 |

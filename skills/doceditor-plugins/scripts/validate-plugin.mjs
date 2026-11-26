@@ -46,7 +46,13 @@ const EDITOR_EVENTS = new Set([
   "onSlideShowBegin", "onSlideShowEnd", "onSlideShowNextSlide", "onSlideShowSlideChanged",
   "onSelectionEnd", "onSelectionCancel",
 ]);
-const LIBRARY_PATH = /(^|\/)(vendor|vendors|lib|libs|third[-_]?party|node_modules|dist)\/|\.min\.js$|(^|\/)v1\/plugins(-ui)?\.js$/i;
+// Code that leaves the plugin API: the frames around the plugin's iframe, read through a global or
+// through an alias a bundler gave `window` (`r.parent.Asc`); and the editor's internals. postMessage
+// is left out: it works across origins, and a page nested in the plugin's own iframe uses it to talk
+// to the plugin.
+const FRAME_ACCESS = /(?<![\w$])(?:(?:window|self|globalThis)\s*\.\s*(?:parent|top|opener|frameElement)\b(?!\s*\.\s*postMessage\b)|(?:[\w$]+\s*\.\s*)?(?:parent|top|opener)\s*\.\s*(?:Asc|editor|document|frames|window|location)\b)/g;
+const EDITOR_INTERNALS = /\bAsc\s*\.\s*editor\b|\.\s*asc_[A-Za-z]\w*\b/g;
+const LIBRARY_PATH =/(^|\/)(vendor|vendors|lib|libs|third[-_]?party|node_modules|dist)\/|\.min\.js$|(^|\/)v1\/plugins(-ui)?\.js$/i;
 
 /**
  * @typedef {{ level: "error" | "warning" | "marketplace", code: string, where: string, message: string }} Finding
@@ -212,6 +218,17 @@ export function validatePlugin(dir) {
     }
     for (const m of code.matchAll(/executeMethod\(\s*["']((?:Add|Update)(?:ContextMenu|ToolbarMenu)Item)["']\s*,\s*\[\s*\[/g)) {
       add("error", "menu-array", at(m.index), `${m[1]} takes one object ({ guid, ${m[1].includes("Toolbar") ? "tabs" : "items"} }) inside the argument array, not an array of them`);
+    }
+    // One finding per line: `window.parent.Asc.editor.asc_X()` is one way out, not three.
+    const outside = new Map();
+    for (const m of code.matchAll(FRAME_ACCESS)) {
+      if (!outside.has(line(m.index))) outside.set(line(m.index), `"${m[0]}" reaches outside the plugin's iframe: anything read through it throws once the plugin is served from another origin than the editor, as a marketplace install is`);
+    }
+    for (const m of code.matchAll(EDITOR_INTERNALS)) {
+      if (!outside.has(line(m.index))) outside.set(line(m.index), `"${m[0].replace(/^\.\s*/, "")}" is an editor internal, not plugin API: undocumented and changed between versions without notice`);
+    }
+    for (const [n, message] of outside) {
+      add("warning", "outside-api", `${file}:${n}`, `${message}. Use callCommand with the Office JavaScript API or executeMethod`);
     }
   }
 
